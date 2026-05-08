@@ -1,0 +1,418 @@
+[
+  {
+    "fecha": "2026-05-08T13:46:26.898923+00:00",
+    "campo": "dolar_actual",
+    "valor_anterior": 1410,
+    "valor_nuevo": 1500.0,
+    "motivo": "test",
+    "version": 2,
+    "usuario": "local"
+  },
+  {
+    "fecha": "2026-05-08T13:46:26.910208+00:00",
+    "campo": "recargos_urgencia.express",
+    "valor_anterior": 0.15,
+    "valor_nuevo": 0.2,
+    "motivo": "test",
+    "version": 3,
+    "usuario": "local"
+  },
+  {
+    "fecha": "2026-05-08T14:28:19.818567+00:00",
+    "campo": "dolar_actual",
+    "valor_anterior": 1500.0,
+    "valor_nuevo": 1500.0,
+    "motivo": "test",
+    "version": 4,
+    "usuario": "local"
+  },
+  {
+    "fecha": "2026-05-08T14:28:19.828950+00:00",
+    "campo": "recargos_urgencia.express",
+    "valor_anterior": 0.2,
+    "valor_nuevo": 0.2,
+    "motivo": "test",
+    "version": 5,
+    "usuario": "local"
+  },
+  {
+    "fecha": "2026-05-08T14:37:33.505590+00:00",
+    "campo": "dolar_actual",
+    "valor_anterior": 1500.0,
+    "valor_nuevo": 1999.0,
+    "motivo": "test_no_effect",
+    "version": 6,
+    "usuario": "local"
+  },
+  {
+    "fecha": "2026-05-08T14:37:33.530727+00:00",
+    "campo": "dolar_actual",
+    "valor_anterior": 1999.0,
+    "valor_nuevo": 1500.0,
+    "motivo": "test",
+    "version": 7,
+    "usuario": "local"
+  },
+  {
+    "fecha": "2026-05-08T14:37:33.542067+00:00",
+    "campo": "recargos_urgencia.express",
+    "valor_anterior": 0.2,
+    "valor_nuevo": 0.2,
+    "motivo": "test",
+    "version": 8,
+    "usuario": "local"
+  },
+  {
+    "fecha": "2026-05-08T14:38:08.840555+00:00",
+    "campo": "restore_from_final",
+    "valor_anterior": 8,
+    "valor_nuevo": 1,
+    "motivo": "test_setup_valido",
+    "version": 1,
+    "usuario": "local"
+  },
+  {
+    "fecha": "2026-05-08T14:38:08.855580+00:00",
+    "campo": "restore_from_final",
+    "valor_anterior": 1,
+    "valor_nuevo": 1,
+    "motivo": "test_setup_list",
+    "version": 1,
+    "usuario": "local"
+  },
+  {
+    "fecha": "2026-05-08T14:38:08.875151+00:00",
+    "campo": "dolar_actual",
+    "valor_anterior": 1410,
+    "valor_nuevo": 1999.0,
+    "motivo": "test_no_effect",
+    "version": 2,
+    "usuario": "local"
+  },
+  {
+    "fecha": "2026-05-08T14:38:08.950177+00:00",
+    "campo": "dolar_actual",
+    "valor_anterior": 1999.0,
+    "valor_nuevo": 1500.0,
+    "motivo": "test",
+    "version": 3,
+    "usuario": "local"
+  },
+  {
+    "fecha": "2026-05-08T14:38:08.961435+00:00",
+    "campo": "recargos_urgencia.express",
+    "valor_anterior": 0.15,
+    "valor_nuevo": 0.2,
+    "motivo": "test",
+    "version": 4,
+    "usuario": "local"
+  },
+  {
+    "fecha": "2026-05-08T14:38:27.817004+00:00",
+    "campo": "restore_from_final",
+    "valor_anterior": 4,
+    "valor_nuevo": 1,
+    "motivo": "test_setup_valido",
+    "version": 1,
+    "usuario": "local"
+  },
+  {
+    "fecha": "2026-05-08T14:38:27.875641+00:00",
+    "campo": "restore_from_final",
+    "valor_anterior": 1,
+    "valor_nuevo": 1,
+    "motivo": "test_setup_list",
+    "version": 1,
+    "usuario": "local"
+  },
+  {
+    "fecha": "2026-05-08T14:38:27.885037+00:00",
+    "campo": "dolar_actual",
+    "valor_anterior": 1410,
+    "valor_nuevo": 1999.0,
+    "motivo": "test_no_effect",
+    "version": 2,
+    "usuario": "local"
+  },
+  {
+    "fecha": "2026-05-08T14:38:27.978229+00:00",
+    "campo": "dolar_actual",
+    "valor_anterior": 1999.0,
+    "valor_nuevo": 1500.0,
+    "motivo": "test",
+    "version": 3,
+    "usuario": "local"
+  },
+  {
+    "fecha": "2026-05-08T14:38:27.989226+00:00",
+    "campo": "recargos_urgencia.express",
+    "valor_anterior": 0.15,
+    "valor_nuevo": 0.2,
+    "motivo": "test",
+    "version": 4,
+    "usuario": "local"
+  },
+  {
+    "fecha": "2026-05-08T14:38:40.689886+00:00",
+    "campo": "restore_from_final",
+    "valor_anterior": 4,
+    "valor_nuevo": 1,
+    "motivo": "test_setup_valido",
+    "version": 1,
+    "usuario": "local"
+  },
+  {
+    "fecha": "2026-05-08T14:38:40.704711+00:00",
+    "campo": "restore_from_final",
+    "valor_anterior": 1,
+    "valor_nuevo": 1,
+    "motivo": "test_setup_list",
+    "version": 1,
+    "usuario": "local"
+  },
+  {
+    "fecha": "2026-05-08T14:38:40.757014+00:00",
+    "campo": "dolar_actual",
+    "valor_anterior": 1410,
+    "valor_nuevo": 1999.0,
+    "motivo": "test_no_effect",
+    "version": 2,
+    "usuario": "local"
+  },
+  {
+    "fecha": "2026-05-08T14:38:40.850200+00:00",
+    "campo": "dolar_actual",
+    "valor_anterior": 1999.0,
+    "valor_nuevo": 1500.0,
+    "motivo": "test",
+    "version": 3,
+    "usuario": "local"
+  },
+  {
+    "fecha": "2026-05-08T14:38:40.860119+00:00",
+    "campo": "recargos_urgencia.express",
+    "valor_anterior": 0.15,
+    "valor_nuevo": 0.2,
+    "motivo": "test",
+    "version": 4,
+    "usuario": "local"
+  },
+  {
+    "fecha": "2026-05-08T14:43:35.483307+00:00",
+    "campo": "restore_from_final",
+    "valor_anterior": 4,
+    "valor_nuevo": 1,
+    "motivo": "test_setup_approve",
+    "version": 1,
+    "usuario": "local"
+  },
+  {
+    "fecha": "2026-05-08T14:43:35.532014+00:00",
+    "campo": "restore_from_final",
+    "valor_anterior": 1,
+    "valor_nuevo": 1,
+    "motivo": "test_setup_valido",
+    "version": 1,
+    "usuario": "local"
+  },
+  {
+    "fecha": "2026-05-08T14:43:35.550050+00:00",
+    "campo": "restore_from_final",
+    "valor_anterior": 1,
+    "valor_nuevo": 1,
+    "motivo": "test_setup_list",
+    "version": 1,
+    "usuario": "local"
+  },
+  {
+    "fecha": "2026-05-08T14:43:35.584927+00:00",
+    "campo": "dolar_actual",
+    "valor_anterior": 1410,
+    "valor_nuevo": 1999.0,
+    "motivo": "test_no_effect",
+    "version": 2,
+    "usuario": "local"
+  },
+  {
+    "fecha": "2026-05-08T14:43:35.638389+00:00",
+    "campo": "restore_from_final",
+    "valor_anterior": 2,
+    "valor_nuevo": 1,
+    "motivo": "test_setup_rechazado",
+    "version": 1,
+    "usuario": "local"
+  },
+  {
+    "fecha": "2026-05-08T14:43:35.683160+00:00",
+    "campo": "restore_from_final",
+    "valor_anterior": 1,
+    "valor_nuevo": 1,
+    "motivo": "test_setup_promote_ok",
+    "version": 1,
+    "usuario": "local"
+  },
+  {
+    "fecha": "2026-05-08T14:43:35.689431+00:00",
+    "campo": "dolar_actual",
+    "valor_anterior": 1410,
+    "valor_nuevo": 1777.0,
+    "motivo": "test_prom_change",
+    "version": 2,
+    "usuario": "local"
+  },
+  {
+    "fecha": "2026-05-08T14:43:35.737451+00:00",
+    "campo": "promote_candidate",
+    "valor_anterior": "config_final_prev",
+    "valor_nuevo": "CAND-0002-20260508144335",
+    "motivo": "test",
+    "version": 2,
+    "usuario": "local",
+    "backup_creado": "C:\\Users\\baezl\\Desktop\\proyectos\\desgloceExcel\\excel_desfloce\\data\\bajadas_v2\\backups\\bajadas_v2_config_final_20260508_144335.json"
+  },
+  {
+    "fecha": "2026-05-08T14:43:35.748780+00:00",
+    "campo": "restore_from_final",
+    "valor_anterior": 2,
+    "valor_nuevo": 1,
+    "motivo": "test_setup_promote_no_appr",
+    "version": 1,
+    "usuario": "local"
+  },
+  {
+    "fecha": "2026-05-08T14:43:35.793616+00:00",
+    "campo": "restore_from_final",
+    "valor_anterior": 1,
+    "valor_nuevo": 1,
+    "motivo": "test_setup_promote_confirm",
+    "version": 1,
+    "usuario": "local"
+  },
+  {
+    "fecha": "2026-05-08T14:43:35.824108+00:00",
+    "campo": "dolar_actual",
+    "valor_anterior": 1777.0,
+    "valor_nuevo": 1500.0,
+    "motivo": "test",
+    "version": 2,
+    "usuario": "local"
+  },
+  {
+    "fecha": "2026-05-08T14:43:35.834285+00:00",
+    "campo": "recargos_urgencia.express",
+    "valor_anterior": 0.15,
+    "valor_nuevo": 0.2,
+    "motivo": "test",
+    "version": 3,
+    "usuario": "local"
+  },
+  {
+    "fecha": "2026-05-08T14:45:18.423027+00:00",
+    "campo": "restore_from_final",
+    "valor_anterior": 3,
+    "valor_nuevo": 1,
+    "motivo": "test_setup_approve",
+    "version": 1,
+    "usuario": "local"
+  },
+  {
+    "fecha": "2026-05-08T14:45:18.458879+00:00",
+    "campo": "restore_from_final",
+    "valor_anterior": 1,
+    "valor_nuevo": 1,
+    "motivo": "test_setup_valido",
+    "version": 1,
+    "usuario": "local"
+  },
+  {
+    "fecha": "2026-05-08T14:45:18.502112+00:00",
+    "campo": "restore_from_final",
+    "valor_anterior": 1,
+    "valor_nuevo": 1,
+    "motivo": "test_setup_list",
+    "version": 1,
+    "usuario": "local"
+  },
+  {
+    "fecha": "2026-05-08T14:45:18.543884+00:00",
+    "campo": "dolar_actual",
+    "valor_anterior": 1777.0,
+    "valor_nuevo": 1999.0,
+    "motivo": "test_no_effect",
+    "version": 2,
+    "usuario": "local"
+  },
+  {
+    "fecha": "2026-05-08T14:45:18.578264+00:00",
+    "campo": "restore_from_final",
+    "valor_anterior": 2,
+    "valor_nuevo": 1,
+    "motivo": "test_setup_rechazado",
+    "version": 1,
+    "usuario": "local"
+  },
+  {
+    "fecha": "2026-05-08T14:45:18.626834+00:00",
+    "campo": "restore_from_final",
+    "valor_anterior": 1,
+    "valor_nuevo": 1,
+    "motivo": "test_setup_promote_ok",
+    "version": 1,
+    "usuario": "local"
+  },
+  {
+    "fecha": "2026-05-08T14:45:18.643671+00:00",
+    "campo": "dolar_actual",
+    "valor_anterior": 1777.0,
+    "valor_nuevo": 1777.0,
+    "motivo": "test_prom_change",
+    "version": 2,
+    "usuario": "local"
+  },
+  {
+    "fecha": "2026-05-08T14:45:18.688040+00:00",
+    "campo": "promote_candidate",
+    "valor_anterior": "config_final_prev",
+    "valor_nuevo": "CAND-0002-20260508144518",
+    "motivo": "test",
+    "version": 2,
+    "usuario": "local",
+    "backup_creado": "C:\\Users\\baezl\\Desktop\\proyectos\\desgloceExcel\\excel_desfloce\\data\\bajadas_v2\\backups\\bajadas_v2_config_final_20260508_144518.json"
+  },
+  {
+    "fecha": "2026-05-08T14:45:18.708835+00:00",
+    "campo": "restore_from_final",
+    "valor_anterior": 2,
+    "valor_nuevo": 1,
+    "motivo": "test_setup_promote_no_appr",
+    "version": 1,
+    "usuario": "local"
+  },
+  {
+    "fecha": "2026-05-08T14:45:18.757811+00:00",
+    "campo": "restore_from_final",
+    "valor_anterior": 1,
+    "valor_nuevo": 1,
+    "motivo": "test_setup_promote_confirm",
+    "version": 1,
+    "usuario": "local"
+  },
+  {
+    "fecha": "2026-05-08T14:45:18.781224+00:00",
+    "campo": "dolar_actual",
+    "valor_anterior": 1777.0,
+    "valor_nuevo": 1500.0,
+    "motivo": "test",
+    "version": 2,
+    "usuario": "local"
+  },
+  {
+    "fecha": "2026-05-08T14:45:18.792086+00:00",
+    "campo": "recargos_urgencia.express",
+    "valor_anterior": 0.15,
+    "valor_nuevo": 0.2,
+    "motivo": "test",
+    "version": 3,
+    "usuario": "local"
+  }
+]

@@ -251,6 +251,15 @@ select:focus {
   color: #c8d9ff;
 }
 
+.warning-box {
+  margin-top: 12px;
+  border: 1px solid rgba(255, 184, 77, 0.6);
+  background: rgba(120, 82, 16, 0.28);
+  color: #ffe2b8;
+  border-radius: 11px;
+  padding: 12px;
+}
+
 .actions-row {
   margin-top: 16px;
   display: grid;
@@ -398,4 +407,96 @@ select:focus {
   .actions-row {
     grid-template-columns: 1fr;
   }
+}
+
+.content-grid-tabs {
+  grid-template-columns: 1fr;
+}
+
+.tree-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.tree-grid details {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 10px 12px;
+  background: rgba(10, 12, 20, 0.65);
+}
+
+.tree-grid summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: #dce3ff;
+}
+
+.tree-grid ul {
+  margin: 8px 0 0;
+  padding-left: 18px;
+  color: #b7c3e6;
+}
+
+.raw-json {
+  margin-top: 12px;
+}
+
+.raw-json pre {
+  margin: 8px 0 0;
+  padding: 10px;
+  border-radius: 10px;
+  background: #0a0d15;
+  border: 1px solid var(--line);
+  overflow: auto;
+  font-size: 12px;
+}
+
+.config-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(260px, 1fr));
+  gap: 12px;
+}
+
+.config-grid label {
+  display: grid;
+  gap: 8px;
+}
+
+.subhead {
+  margin: 16px 0 8px;
+  color: #dce3ff;
+}
+
+.scales-table {
+  display: grid;
+  gap: 8px;
+}
+
+.scale-row {
+  display: grid;
+  grid-template-columns: 90px 90px 1fr 70px 80px;
+  gap: 8px;
+}
+
+.history-list {
+  display: grid;
+  gap: 6px;
+  color: #afbad8;
+  margin-top: 8px;
+}
+
+.diff-table {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.diff-row {
+  display: grid;
+  grid-template-columns: 1fr 130px 90px auto;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: rgba(15, 19, 28, 0.7);
+  border: 1px solid var(--line);
 }

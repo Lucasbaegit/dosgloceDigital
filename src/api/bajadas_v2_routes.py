@@ -2,11 +2,15 @@
 
 from __future__ import annotations
 
+from copy import deepcopy
+from datetime import datetime, timezone
+import hashlib
 import json
 from pathlib import Path
 from typing import Any
 
 from bajadas_v2 import BajadasV2PricingEngine, load_bajadas_v2_bundle
+from bajadas_v2.config_loader import BajadasV2Bundle
 from bajadas_v2.exceptions import PriceNotFoundError, QuoteInputError
 
 from .schemas import ApiValidationError, QuoteRequestSchema
@@ -17,7 +21,12 @@ class BajadasV2ApiService:
         self.project_root = project_root
         self.engine = BajadasV2PricingEngine(load_bajadas_v2_bundle(project_root))
         self.config_path = project_root / "data" / "bajadas_v2" / "bajadas_v2_config_final.json"
+        self.config_editable_path = project_root / "data" / "bajadas_v2" / "bajadas_v2_config_editable.json"
+        self.config_history_path = project_root / "data" / "bajadas_v2" / "config_history.json"
+        self.config_candidates_path = project_root / "data" / "bajadas_v2" / "config_candidates.json"
+        self.backups_dir = project_root / "data" / "bajadas_v2" / "backups"
         self.snapshot_path = project_root / "data" / "bajadas_v2" / "snapshots" / "bajadas_v2_metrics_snapshot.json"
+        self._ensure_editable_config()
 
     def health(self) -> dict[str, Any]:
         return {"status": "ok", "service": "bajadas_v2_api"}
@@ -59,3 +68,901 @@ class BajadasV2ApiService:
             return 404, {"error": "combinacion_no_encontrada", "detail": str(exc)}
         except Exception as exc:  # pragma: no cover
             return 500, {"error": "internal_error", "detail": str(exc)}
+
+    def get_config(self) -> tuple[int, dict[str, Any]]:
+        return 200, self._read_json(self.config_editable_path)
+
+    def get_config_history(self) -> tuple[int, dict[str, Any]]:
+        return 200, {"history": self._read_json(self.config_history_path)}
+
+    def get_config_tree(self) -> tuple[int, dict[str, Any]]:
+        cfg = self._read_json(self.config_editable_path)
+        return 200, {
+            "version": cfg.get("editable_meta", {}).get("version", 1),
+            "tree": {
+                "dolar": {
+                    "dolar_anterior_excel": cfg.get("dolar_anterior_excel"),
+                    "dolar_actual": cfg.get("dolar_actual"),
+                    "factor_dolar": cfg.get("factor_dolar"),
+                },
+                "factores": {
+                    "factor_xa3": cfg.get("factor_xa3"),
+                    "factores_xl_a4": cfg.get("factores_xl_a4", {}),
+                    "factores_xl_byn": cfg.get("regla_especial_xl_byn", {}).get("factores", {}),
+                },
+                "recargos_urgencia": cfg.get("recargos_urgencia", {}),
+                "escalas_cantidad": cfg.get("escalas_cantidad", []),
+                "reglas_activas": {
+                    "regla_especial_xl_byn": cfg.get("regla_especial_xl_byn", {}).get("activa"),
+                    "correccion_xl_byn_1_1_parentesis": cfg.get("correccion_xl_byn_1_1_parentesis", {}).get("activa"),
+                    "precios_fijos_csv": cfg.get("precios_fijos_csv", {}).get("activos"),
+                },
+            },
+        }
+
+    def get_config_diff(self) -> tuple[int, dict[str, Any]]:
+        final_cfg = self._read_json(self.config_path)
+        editable_cfg = self._read_json(self.config_editable_path)
+        rows = self._build_diff_rows(final_cfg, editable_cfg)
+        return 200, {
+            "summary": {
+                "total": len(rows),
+                "modified": len([r for r in rows if r["estado"] == "modificado"]),
+                "added": len([r for r in rows if r["estado"] == "agregado"]),
+                "deleted": len([r for r in rows if r["estado"] == "eliminado"]),
+            },
+            "diff": rows,
+        }
+
+    def validate_config(self, payload: dict[str, Any] | None = None) -> tuple[int, dict[str, Any]]:
+        cfg = self._read_json(self.config_editable_path)
+        errors: list[str] = []
+        warnings: list[str] = []
+        self._validate_full_config(cfg, errors, warnings)
+        return 200, {"valid": len(errors) == 0, "errors": errors, "warnings": warnings}
+
+    def simulate_config(self, payload: dict[str, Any]) -> tuple[int, dict[str, Any]]:
+        try:
+            quote_payload = payload.get("quote", payload)
+            req = QuoteRequestSchema.from_payload(quote_payload).to_quote_input()
+            use_cfg = bool(payload.get("use_config_editable", True))
+            final_quote = self.engine.quote_as_dict(req)
+            if not use_cfg:
+                return 200, {
+                    "precio_config_final": final_quote,
+                    "precio_config_editable": None,
+                    "diferencia_absoluta": 0.0,
+                    "diferencia_porcentual": 0.0,
+                    "trazabilidad_comparativa": {"mode": "solo_final"},
+                }
+            editable_cfg = self._read_json(self.config_editable_path)
+            sim_engine = self._engine_with_config(editable_cfg)
+            editable_quote = sim_engine.quote_as_dict(req)
+            final_total = float(final_quote["total_con_urgencia"])
+            editable_total = float(editable_quote["total_con_urgencia"])
+            diff_abs = round(editable_total - final_total, 6)
+            diff_pct = round((diff_abs / final_total * 100.0), 6) if final_total else 0.0
+            return 200, {
+                "precio_config_final": final_quote,
+                "precio_config_editable": editable_quote,
+                "diferencia_absoluta": diff_abs,
+                "diferencia_porcentual": diff_pct,
+                "trazabilidad_comparativa": {
+                    "regla_final": final_quote.get("regla_aplicada"),
+                    "regla_editable": editable_quote.get("regla_aplicada"),
+                    "factor_final": final_quote.get("trazabilidad", {}).get("factor_aplicado"),
+                    "factor_editable": editable_quote.get("trazabilidad", {}).get("factor_aplicado"),
+                    "recargo_final": final_quote.get("trazabilidad", {}).get("recargo_urgencia_aplicado"),
+                    "recargo_editable": editable_quote.get("trazabilidad", {}).get("recargo_urgencia_aplicado"),
+                },
+            }
+        except ApiValidationError as exc:
+            return 400, {"error": "validation_error", "detail": str(exc)}
+        except QuoteInputError as exc:
+            return 400, {"error": "urgencia_invalida", "detail": str(exc)}
+        except PriceNotFoundError as exc:
+            return 404, {"error": "combinacion_no_encontrada", "detail": str(exc)}
+        except Exception as exc:  # pragma: no cover
+            return 500, {"error": "internal_error", "detail": str(exc)}
+
+    def create_candidate(self, payload: dict[str, Any]) -> tuple[int, dict[str, Any]]:
+        motivo = str(payload.get("motivo", "staging_manual")).strip() or "staging_manual"
+        validation_status, validation = self.validate_config({})
+        if validation_status != 200:
+            return validation_status, validation
+        if not validation.get("valid", False):
+            return 400, {
+                "error": "validation_error",
+                "detail": "Config editable inválida. No se creó candidato.",
+                "validacion": validation,
+            }
+
+        _, diff_payload = self.get_config_diff()
+        diff_rows = diff_payload.get("diff", [])
+        changed = [r for r in diff_rows if r.get("estado") != "igual"]
+        editable = self._read_json(self.config_editable_path)
+        version = int(editable.get("editable_meta", {}).get("version", 1))
+        candidate_id = f"CAND-{version:04d}-{self._now_compact()}"
+        criticidad_max = self._max_criticidad(changed)
+        candidate = {
+            "candidate_id": candidate_id,
+            "fecha": self._now_iso(),
+            "version": version,
+            "estado": "PENDIENTE_APROBACION",
+            "resumen_diff": diff_payload.get("summary", {}),
+            "cantidad_cambios": len(changed),
+            "criticidad_maxima": criticidad_max,
+            "config_snapshot": editable,
+            "motivo": motivo,
+            "usuario": "local",
+            "hash_config": self._hash_json(editable),
+            "validacion": validation,
+            "warnings": validation.get("warnings", []),
+        }
+        candidates = self._read_json(self.config_candidates_path)
+        if not isinstance(candidates, list):
+            candidates = []
+        candidates.append(candidate)
+        self._write_json(self.config_candidates_path, candidates)
+        return 200, {"status": "ok", "candidate_id": candidate_id, "estado": candidate["estado"]}
+
+    def list_candidates(self) -> tuple[int, dict[str, Any]]:
+        items = self._read_json(self.config_candidates_path)
+        if not isinstance(items, list):
+            items = []
+        resumen = [
+            {
+                "candidate_id": c.get("candidate_id"),
+                "fecha": c.get("fecha"),
+                "version": c.get("version"),
+                "estado": c.get("estado"),
+                "cantidad_cambios": c.get("cantidad_cambios"),
+                "criticidad_maxima": c.get("criticidad_maxima"),
+                "motivo": c.get("motivo"),
+            }
+            for c in items
+        ]
+        return 200, {"candidates": resumen}
+
+    def get_candidate(self, candidate_id: str) -> tuple[int, dict[str, Any]]:
+        items = self._read_json(self.config_candidates_path)
+        if not isinstance(items, list):
+            items = []
+        for c in items:
+            if c.get("candidate_id") == candidate_id:
+                return 200, c
+        return 404, {"error": "not_found", "detail": f"Candidato no encontrado: {candidate_id}"}
+
+    def reject_candidate(self, candidate_id: str, payload: dict[str, Any]) -> tuple[int, dict[str, Any]]:
+        motivo = str(payload.get("motivo_rechazo", "rechazo_manual")).strip() or "rechazo_manual"
+        items = self._read_json(self.config_candidates_path)
+        if not isinstance(items, list):
+            items = []
+        for c in items:
+            if c.get("candidate_id") == candidate_id:
+                c["estado"] = "RECHAZADO"
+                c["fecha_rechazo"] = self._now_iso()
+                c["motivo_rechazo"] = motivo
+                c["usuario_rechazo"] = "local"
+                self._write_json(self.config_candidates_path, items)
+                return 200, {"status": "ok", "candidate_id": candidate_id, "estado": "RECHAZADO"}
+        return 404, {"error": "not_found", "detail": f"Candidato no encontrado: {candidate_id}"}
+
+    def approve_candidate(self, candidate_id: str, payload: dict[str, Any]) -> tuple[int, dict[str, Any]]:
+        motivo = str(payload.get("motivo_aprobacion", "aprobacion_manual")).strip() or "aprobacion_manual"
+        items = self._read_json(self.config_candidates_path)
+        if not isinstance(items, list):
+            items = []
+        for c in items:
+            if c.get("candidate_id") != candidate_id:
+                continue
+            if c.get("estado") != "PENDIENTE_APROBACION":
+                return 400, {"error": "validation_error", "detail": "Solo candidatos PENDIENTE_APROBACION se pueden aprobar."}
+            c["estado"] = "APROBADO"
+            c["fecha_aprobacion"] = self._now_iso()
+            c["motivo_aprobacion"] = motivo
+            c["usuario_aprobacion"] = "local"
+            self._write_json(self.config_candidates_path, items)
+            return 200, {"status": "ok", "candidate_id": candidate_id, "estado": "APROBADO"}
+        return 404, {"error": "not_found", "detail": f"Candidato no encontrado: {candidate_id}"}
+
+    def promote_candidate(self, candidate_id: str, payload: dict[str, Any]) -> tuple[int, dict[str, Any]]:
+        confirm = str(payload.get("confirmacion", "")).strip()
+        if confirm != "PROMOVER_CONFIG_BAJADAS_V2":
+            return 400, {"error": "validation_error", "detail": "Confirmación inválida."}
+        motivo = str(payload.get("motivo", "promocion_manual")).strip() or "promocion_manual"
+        usuario = str(payload.get("usuario", "local")).strip() or "local"
+
+        items = self._read_json(self.config_candidates_path)
+        if not isinstance(items, list):
+            items = []
+        candidate = None
+        for c in items:
+            if c.get("candidate_id") == candidate_id:
+                candidate = c
+                break
+        if not candidate:
+            return 404, {"error": "not_found", "detail": f"Candidato no encontrado: {candidate_id}"}
+        if candidate.get("estado") != "APROBADO":
+            return 400, {"error": "validation_error", "detail": "Solo candidatos APROBADO pueden promoverse."}
+        snapshot = candidate.get("config_snapshot")
+        if not isinstance(snapshot, dict):
+            return 400, {"error": "validation_error", "detail": "Snapshot de candidato inválido."}
+        if self._hash_json(snapshot) != candidate.get("hash_config"):
+            return 400, {"error": "validation_error", "detail": "Hash de candidato no coincide."}
+        errors: list[str] = []
+        warnings: list[str] = []
+        self._validate_full_config(snapshot, errors, warnings)
+        if errors:
+            return 400, {"error": "validation_error", "detail": "Snapshot inválido para promoción.", "errors": errors}
+
+        self.backups_dir.mkdir(parents=True, exist_ok=True)
+        backup_name = f"bajadas_v2_config_final_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}.json"
+        backup_path = self.backups_dir / backup_name
+        current_final = self._read_json(self.config_path)
+        self._write_json(backup_path, current_final)
+
+        self._write_json(self.config_path, snapshot)
+        self.engine = BajadasV2PricingEngine(load_bajadas_v2_bundle(self.project_root))
+
+        candidate["estado"] = "PROMOVIDO"
+        candidate["fecha_promocion"] = self._now_iso()
+        candidate["backup_creado"] = str(backup_path)
+        candidate["usuario_promocion"] = usuario
+        candidate["motivo_promocion"] = motivo
+        self._write_json(self.config_candidates_path, items)
+
+        hist = self._read_json(self.config_history_path)
+        if not isinstance(hist, list):
+            hist = []
+        hist.append(
+            {
+                "fecha": self._now_iso(),
+                "campo": "promote_candidate",
+                "valor_anterior": "config_final_prev",
+                "valor_nuevo": candidate_id,
+                "motivo": motivo,
+                "version": snapshot.get("editable_meta", {}).get("version", 0),
+                "usuario": usuario,
+                "backup_creado": str(backup_path),
+            }
+        )
+        self._write_json(self.config_history_path, hist)
+        return 200, {
+            "status": "ok",
+            "candidate_id": candidate_id,
+            "estado": "PROMOVIDO",
+            "backup_creado": str(backup_path),
+        }
+
+    def get_active_version(self) -> tuple[int, dict[str, Any]]:
+        final_cfg = self._read_json(self.config_path)
+        candidates = self._read_json(self.config_candidates_path)
+        if not isinstance(candidates, list):
+            candidates = []
+        promoted = [c for c in candidates if c.get("estado") == "PROMOVIDO"]
+        promoted.sort(key=lambda c: c.get("fecha_promocion", ""), reverse=True)
+        latest = promoted[0] if promoted else None
+        return 200, {
+            "version_activa": final_cfg.get("editable_meta", {}).get("version"),
+            "fecha_ultima_promocion": latest.get("fecha_promocion") if latest else None,
+            "candidato_origen": latest.get("candidate_id") if latest else None,
+            "hash_config_final": self._hash_json(final_cfg),
+            "ruta_config_final": str(self.config_path),
+            "estado": "productiva",
+        }
+
+    def get_backups(self) -> tuple[int, dict[str, Any]]:
+        self.backups_dir.mkdir(parents=True, exist_ok=True)
+        rows = []
+        for p in sorted(self.backups_dir.glob("bajadas_v2_config_final*.json"), reverse=True):
+            hashv = None
+            warnings: list[str] = []
+            valid = False
+            try:
+                payload = self._read_json(p)
+                hashv = self._hash_json(payload)
+                errors: list[str] = []
+                self._validate_full_config(payload, errors, warnings)
+                valid = len(errors) == 0
+            except Exception:
+                warnings.append("No se pudo parsear JSON del backup.")
+            rows.append(
+                {
+                    "archivo": p.name,
+                    "fecha": datetime.fromtimestamp(p.stat().st_mtime, tz=timezone.utc).isoformat(),
+                    "tamano_bytes": p.stat().st_size,
+                    "hash": hashv,
+                    "valid": valid,
+                    "warnings": warnings,
+                }
+            )
+        return 200, {"backups": rows}
+
+    def get_backup_detail(self, backup_filename: str) -> tuple[int, dict[str, Any]]:
+        path_or_err = self._resolve_backup_filename(backup_filename)
+        if isinstance(path_or_err, tuple):
+            return path_or_err
+        backup_path = path_or_err
+        if not backup_path.exists():
+            return 404, {"error": "not_found", "detail": f"Backup no encontrado: {backup_filename}"}
+        errors: list[str] = []
+        warnings: list[str] = []
+        hashv = None
+        try:
+            payload = self._read_json(backup_path)
+            hashv = self._hash_json(payload)
+            self._validate_full_config(payload, errors, warnings)
+        except Exception as exc:
+            errors.append(f"JSON inválido: {exc}")
+        return 200, {
+            "archivo": backup_path.name,
+            "fecha": datetime.fromtimestamp(backup_path.stat().st_mtime, tz=timezone.utc).isoformat(),
+            "tamano_bytes": backup_path.stat().st_size,
+            "hash": hashv,
+            "valid": len(errors) == 0,
+            "warnings": warnings,
+            "errors": errors,
+        }
+
+    def restore_from_backup(self, backup_filename: str, payload: dict[str, Any]) -> tuple[int, dict[str, Any]]:
+        confirm = str(payload.get("confirmacion", "")).strip()
+        if confirm != "RESTAURAR_BACKUP_BAJADAS_V2":
+            return 400, {"error": "validation_error", "detail": "Confirmación inválida."}
+        motivo = str(payload.get("motivo", "restore_backup_manual")).strip() or "restore_backup_manual"
+        usuario = str(payload.get("usuario", "local")).strip() or "local"
+
+        path_or_err = self._resolve_backup_filename(backup_filename)
+        if isinstance(path_or_err, tuple):
+            return path_or_err
+        backup_path = path_or_err
+        if not backup_path.exists():
+            return 404, {"error": "not_found", "detail": f"Backup no encontrado: {backup_filename}"}
+
+        try:
+            backup_payload = self._read_json(backup_path)
+        except Exception:
+            return 400, {"error": "validation_error", "detail": "Backup inválido: JSON no parseable."}
+        errors: list[str] = []
+        warnings: list[str] = []
+        self._validate_full_config(backup_payload, errors, warnings)
+        if errors:
+            return 400, {"error": "validation_error", "detail": "Backup inválido para restaurar.", "errors": errors}
+
+        self.backups_dir.mkdir(parents=True, exist_ok=True)
+        pre_restore_name = f"bajadas_v2_config_final_pre_restore_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}.json"
+        pre_restore_path = self.backups_dir / pre_restore_name
+        current_final = self._read_json(self.config_path)
+        self._write_json(pre_restore_path, current_final)
+
+        self._write_json(self.config_path, backup_payload)
+        self.engine = BajadasV2PricingEngine(load_bajadas_v2_bundle(self.project_root))
+
+        final_payload = self._read_json(self.config_path)
+        restored_hash = self._hash_json(backup_payload)
+        final_hash = self._hash_json(final_payload)
+
+        hist = self._read_json(self.config_history_path)
+        if not isinstance(hist, list):
+            hist = []
+        hist.append(
+            {
+                "tipo": "RESTORE_BACKUP",
+                "fecha": self._now_iso(),
+                "usuario": usuario,
+                "motivo": motivo,
+                "backup_restaurado": backup_path.name,
+                "backup_pre_restore_creado": pre_restore_path.name,
+                "hash_backup_restaurado": restored_hash,
+                "hash_config_final_resultante": final_hash,
+                "campo": "restore_backup",
+                "valor_anterior": "config_final_prev",
+                "valor_nuevo": backup_path.name,
+                "version": final_payload.get("editable_meta", {}).get("version", 0),
+            }
+        )
+        self._write_json(self.config_history_path, hist)
+        return 200, {
+            "status": "ok",
+            "detail": "Backup restaurado sobre configuración productiva.",
+            "backup_restaurado": backup_path.name,
+            "backup_pre_restore_creado": pre_restore_path.name,
+            "hash_config_final_resultante": final_hash,
+        }
+
+    def restore_preview_from_backup(self, backup_filename: str) -> tuple[int, dict[str, Any]]:
+        path_or_err = self._resolve_backup_filename(backup_filename)
+        if isinstance(path_or_err, tuple):
+            return path_or_err
+        backup_path = path_or_err
+        if not backup_path.exists():
+            return 404, {"error": "not_found", "detail": f"Backup no encontrado: {backup_filename}"}
+
+        errors: list[str] = []
+        warnings: list[str] = []
+        try:
+            backup_payload = self._read_json(backup_path)
+        except Exception as exc:
+            return 400, {"error": "validation_error", "detail": f"Backup inválido: {exc}"}
+        self._validate_full_config(backup_payload, errors, warnings)
+
+        current_final = self._read_json(self.config_path)
+        diff_rows = self._build_diff_rows(current_final, backup_payload)
+        changed = [r for r in diff_rows if r.get("estado") != "igual"]
+        criticidad_max = self._max_criticidad(changed)
+        return 200, {
+            "backup_filename": backup_path.name,
+            "backup_hash": self._hash_json(backup_payload),
+            "config_final_hash_actual": self._hash_json(current_final),
+            "valid": len(errors) == 0,
+            "errors": errors,
+            "warnings": warnings,
+            "diff_preview": [
+                {
+                    "campo": r["campo"],
+                    "valor_actual": r["valor_final"],
+                    "valor_backup": r["valor_editable"],
+                    "estado": r["estado"],
+                    "criticidad": r["criticidad"],
+                    "descripcion": r["descripcion"],
+                }
+                for r in diff_rows
+            ],
+            "resumen": {
+                "cantidad_cambios": len(changed),
+                "criticidad_maxima": criticidad_max,
+                "puede_restaurarse": len(errors) == 0,
+            },
+            "mensaje": "Dry-run: no se modificó la configuración productiva.",
+        }
+
+    def restore_simulate_from_backup(self, backup_filename: str, payload: dict[str, Any]) -> tuple[int, dict[str, Any]]:
+        path_or_err = self._resolve_backup_filename(backup_filename)
+        if isinstance(path_or_err, tuple):
+            return path_or_err
+        backup_path = path_or_err
+        if not backup_path.exists():
+            return 404, {"error": "not_found", "detail": f"Backup no encontrado: {backup_filename}"}
+
+        quote_payload = payload.get("cotizacion")
+        if not isinstance(quote_payload, dict):
+            return 400, {"error": "validation_error", "detail": "cotizacion es obligatoria."}
+
+        try:
+            backup_payload = self._read_json(backup_path)
+        except Exception:
+            return 400, {"error": "validation_error", "detail": "Backup inválido: JSON no parseable."}
+        errors: list[str] = []
+        warnings: list[str] = []
+        self._validate_full_config(backup_payload, errors, warnings)
+        if errors:
+            return 400, {"error": "validation_error", "detail": "Backup inválido para simulación.", "errors": errors}
+
+        try:
+            req = QuoteRequestSchema.from_payload(quote_payload).to_quote_input()
+            result_final = self.engine.quote_as_dict(req)
+            sim_engine = self._engine_with_config(backup_payload)
+            result_backup = sim_engine.quote_as_dict(req)
+        except ApiValidationError as exc:
+            return 400, {"error": "validation_error", "detail": str(exc)}
+        except QuoteInputError as exc:
+            return 400, {"error": "urgencia_invalida", "detail": str(exc)}
+        except PriceNotFoundError as exc:
+            return 404, {
+                "error": "combinacion_no_encontrada",
+                "detail": f"Simulación con backup no pudo cotizar: {exc}",
+            }
+        except Exception as exc:  # pragma: no cover
+            return 500, {"error": "internal_error", "detail": str(exc)}
+
+        unit_final = float(result_final["precio_unitario_sin_iva"])
+        unit_backup = float(result_backup["precio_unitario_sin_iva"])
+        total_final = float(result_final["total_sin_iva"])
+        total_backup = float(result_backup["total_sin_iva"])
+        total_u_final = float(result_final["total_con_urgencia"])
+        total_u_backup = float(result_backup["total_con_urgencia"])
+        diff_total = total_u_backup - total_u_final
+        diff_pct = (diff_total / total_u_final * 100.0) if total_u_final else 0.0
+
+        return 200, {
+            "backup_filename": backup_path.name,
+            "backup_hash": self._hash_json(backup_payload),
+            "config_final_hash_actual": self._hash_json(self._read_json(self.config_path)),
+            "resultado_config_final": result_final,
+            "resultado_backup": result_backup,
+            "diferencia_unitaria_sin_iva": round(unit_backup - unit_final, 6),
+            "diferencia_total_sin_iva": round(total_backup - total_final, 6),
+            "diferencia_total_con_urgencia": round(diff_total, 6),
+            "diferencia_porcentual_total": round(diff_pct, 6),
+            "trazabilidad_comparativa": {
+                "regla_final": result_final.get("regla_aplicada"),
+                "regla_backup": result_backup.get("regla_aplicada"),
+                "fuente_final": result_final.get("fuente"),
+                "fuente_backup": result_backup.get("fuente"),
+                "factor_final": result_final.get("trazabilidad", {}).get("factor_aplicado"),
+                "factor_backup": result_backup.get("trazabilidad", {}).get("factor_aplicado"),
+                "recargo_final": result_final.get("trazabilidad", {}).get("recargo_urgencia_aplicado"),
+                "recargo_backup": result_backup.get("trazabilidad", {}).get("recargo_urgencia_aplicado"),
+            },
+            "mensaje": "Simulación dry-run: no se modificó la configuración productiva.",
+        }
+
+    def restore_config_from_final(self, payload: dict[str, Any]) -> tuple[int, dict[str, Any]]:
+        motivo = str(payload.get("motivo", "restauracion_desde_final")).strip() or "restauracion_desde_final"
+        old_cfg = self._read_json(self.config_editable_path)
+        self._write_json(self.config_editable_path, self._build_editable_from_final())
+        new_cfg = self._read_json(self.config_editable_path)
+        self._append_history(
+            field="restore_from_final",
+            previous=old_cfg.get("editable_meta", {}).get("version"),
+            new=new_cfg.get("editable_meta", {}).get("version"),
+            motivo=motivo,
+            version=new_cfg.get("editable_meta", {}).get("version", 1),
+        )
+        return 200, {"status": "ok", "detail": "Configuración editable restaurada desde config final."}
+
+    def update_config(self, payload: dict[str, Any]) -> tuple[int, dict[str, Any]]:
+        try:
+            field = str(payload.get("field", "")).strip()
+            value = payload.get("value")
+            motivo = str(payload.get("motivo", "actualizacion_manual")).strip() or "actualizacion_manual"
+            if not field:
+                raise ApiValidationError("field es obligatorio.")
+            cfg = self._read_json(self.config_editable_path)
+            old_value = self._deep_get(cfg, field)
+            if old_value is None and field not in {"escalas_cantidad"}:
+                raise ApiValidationError(f"Campo no editable o inexistente: {field}")
+
+            if field == "dolar_actual":
+                numeric = self._require_positive_number(value, field)
+                cfg["dolar_actual"] = numeric
+                cfg["factor_dolar"] = round(numeric / float(cfg["dolar_anterior_excel"]), 9)
+            elif field == "dolar_anterior_excel":
+                numeric = self._require_positive_number(value, field)
+                cfg["dolar_anterior_excel"] = numeric
+                cfg["factor_dolar"] = round(float(cfg["dolar_actual"]) / numeric, 9)
+            elif field == "factor_xa3":
+                cfg["factor_xa3"] = self._require_positive_number(value, field)
+            elif field.startswith("recargos_urgencia."):
+                key = field.split(".", 1)[1]
+                numeric = self._require_percentage(value, field)
+                if key not in cfg.get("recargos_urgencia", {}):
+                    raise ApiValidationError(f"Recargo no reconocido: {key}")
+                cfg["recargos_urgencia"][key] = numeric
+            elif field.startswith("regla_especial_xl_byn.factores."):
+                key = field.split(".", 2)[2]
+                numeric = self._require_positive_number(value, field)
+                factors = cfg.setdefault("regla_especial_xl_byn", {}).setdefault("factores", {})
+                if key not in factors:
+                    raise ApiValidationError(f"Factor XL ByN no reconocido: {key}")
+                factors[key] = numeric
+            elif field == "escalas_cantidad":
+                cfg["escalas_cantidad"] = self._validate_scales(value)
+            elif field.startswith("factores_xl_a4."):
+                key = field.split(".", 1)[1]
+                numeric = self._require_positive_number(value, field)
+                factors = cfg.setdefault("factores_xl_a4", {})
+                factors[key] = numeric
+            else:
+                raise ApiValidationError(f"Campo no editable o no soportado en esta etapa: {field}")
+
+            meta = cfg.setdefault("editable_meta", {"version": 1, "last_updated": None})
+            meta["version"] = int(meta.get("version", 1)) + 1
+            meta["last_updated"] = self._now_iso()
+            self._write_json(self.config_editable_path, cfg)
+            self._append_history(
+                field=field,
+                previous=old_value,
+                new=self._deep_get(cfg, field),
+                motivo=motivo,
+                version=meta["version"],
+            )
+            return 200, {"status": "ok", "field": field, "version": meta["version"]}
+        except ApiValidationError as exc:
+            return 400, {"error": "validation_error", "detail": str(exc)}
+        except Exception as exc:  # pragma: no cover
+            return 500, {"error": "internal_error", "detail": str(exc)}
+
+    def _ensure_editable_config(self) -> None:
+        self.config_editable_path.parent.mkdir(parents=True, exist_ok=True)
+        self.backups_dir.mkdir(parents=True, exist_ok=True)
+        if not self.config_editable_path.exists():
+            self._write_json(self.config_editable_path, self._build_editable_from_final())
+        if not self.config_history_path.exists():
+            self._write_json(self.config_history_path, [])
+        if not self.config_candidates_path.exists():
+            self._write_json(self.config_candidates_path, [])
+
+    def _build_editable_from_final(self) -> dict[str, Any]:
+        base = self._read_json(self.config_path)
+        base["editable_meta"] = {"version": 1, "last_updated": self._now_iso(), "usuario": "local"}
+        base["escalas_cantidad"] = self._build_scales_from_options()
+        base.setdefault("factores_xl_a4", {"xl_global": 1.0, "a4_global": 1.0})
+        return base
+
+    def _build_scales_from_options(self) -> list[dict[str, Any]]:
+        options_path = self.project_root / "frontend" / "src" / "data" / "bajadasOptions.json"
+        if not options_path.exists():
+            return []
+        rows = self._read_json(options_path)
+        labels = sorted({str(r.get("cantidad_rango", "")).strip() for r in rows if r.get("cantidad_rango")})
+        parsed = []
+        for label in labels:
+            if label == "1":
+                parsed.append({"desde": 1, "hasta": 1, "etiqueta": "1", "activa": True})
+                continue
+            parts = label.split("a")
+            if len(parts) != 2:
+                continue
+            try:
+                desde = int(parts[0].strip())
+                hasta = int(parts[1].strip())
+            except ValueError:
+                continue
+            parsed.append({"desde": desde, "hasta": hasta, "etiqueta": f"{desde} a {hasta}", "activa": True})
+        parsed.sort(key=lambda x: (x["desde"], x["hasta"]))
+        canonical: list[dict[str, Any]] = []
+        last_end = 0
+        i = 0
+        while i < len(parsed):
+            start = parsed[i]["desde"]
+            group: list[dict[str, Any]] = []
+            while i < len(parsed) and parsed[i]["desde"] == start:
+                group.append(parsed[i])
+                i += 1
+            group.sort(key=lambda r: (r["hasta"] - r["desde"], r["hasta"]))
+            chosen = group[0]
+            if chosen["desde"] > last_end:
+                canonical.append(chosen)
+                last_end = chosen["hasta"]
+        for idx, row in enumerate(canonical, start=1):
+            row["orden"] = idx
+        return canonical
+
+    def _validate_scales(self, scales: Any) -> list[dict[str, Any]]:
+        if not isinstance(scales, list) or not scales:
+            raise ApiValidationError("escalas_cantidad debe ser una lista no vacía.")
+        validated: list[dict[str, Any]] = []
+        for idx, raw in enumerate(scales, start=1):
+            if not isinstance(raw, dict):
+                raise ApiValidationError("Cada escala debe ser un objeto.")
+            etiqueta = str(raw.get("etiqueta", "")).strip()
+            if not etiqueta:
+                raise ApiValidationError("Etiqueta de escala vacía.")
+            try:
+                desde = int(raw.get("desde"))
+                hasta = int(raw.get("hasta"))
+            except (TypeError, ValueError):
+                raise ApiValidationError("Escalas inválidas: desde/hasta deben ser enteros.")
+            if desde < 1 or hasta < 1 or desde > hasta:
+                raise ApiValidationError("Escalas inválidas: desde/hasta fuera de rango o invertidos.")
+            activa = bool(raw.get("activa", True))
+            orden = int(raw.get("orden", idx))
+            validated.append(
+                {"desde": desde, "hasta": hasta, "etiqueta": etiqueta, "activa": activa, "orden": orden}
+            )
+        active = sorted([r for r in validated if r["activa"]], key=lambda x: (x["desde"], x["hasta"]))
+        for i in range(len(active) - 1):
+            current = active[i]
+            nxt = active[i + 1]
+            if nxt["desde"] <= current["hasta"]:
+                raise ApiValidationError("Escalas superpuestas detectadas.")
+        return sorted(validated, key=lambda x: x["orden"])
+
+    def _append_history(self, *, field: str, previous: Any, new: Any, motivo: str, version: int) -> None:
+        history = self._read_json(self.config_history_path)
+        if not isinstance(history, list):
+            history = []
+        history.append(
+            {
+                "fecha": self._now_iso(),
+                "campo": field,
+                "valor_anterior": previous,
+                "valor_nuevo": new,
+                "motivo": motivo,
+                "version": version,
+                "usuario": "local",
+            }
+        )
+        self._write_json(self.config_history_path, history)
+
+    def _engine_with_config(self, config: dict[str, Any]) -> BajadasV2PricingEngine:
+        bundle = BajadasV2Bundle(
+            config=config,
+            comparativa_final=self.engine.bundle.comparativa_final,
+            precios_objetivo=self.engine.bundle.precios_objetivo,
+        )
+        return BajadasV2PricingEngine(bundle)
+
+    def _validate_full_config(self, cfg: dict[str, Any], errors: list[str], warnings: list[str]) -> None:
+        required_top = [
+            "dolar_anterior_excel",
+            "dolar_actual",
+            "factor_xa3",
+            "recargos_urgencia",
+            "regla_especial_xl_byn",
+            "precios_fijos_csv",
+            "escalas_cantidad",
+        ]
+        for key in required_top:
+            if key not in cfg:
+                errors.append(f"Falta campo obligatorio: {key}")
+
+        try:
+            self._require_positive_number(cfg.get("dolar_anterior_excel"), "dolar_anterior_excel")
+            self._require_positive_number(cfg.get("dolar_actual"), "dolar_actual")
+            self._require_positive_number(cfg.get("factor_xa3"), "factor_xa3")
+        except ApiValidationError as exc:
+            errors.append(str(exc))
+
+        recargos = cfg.get("recargos_urgencia", {})
+        for k in ["normal", "express", "super_express", "ya_24hs"]:
+            if k not in recargos:
+                errors.append(f"Falta recargo: {k}")
+                continue
+            try:
+                self._require_percentage(recargos.get(k), f"recargos_urgencia.{k}")
+            except ApiValidationError as exc:
+                errors.append(str(exc))
+
+        try:
+            self._validate_scales(cfg.get("escalas_cantidad", []))
+        except ApiValidationError as exc:
+            errors.append(str(exc))
+
+        fixed = cfg.get("precios_fijos_csv", {}).get("casos", [])
+        if not isinstance(fixed, list):
+            errors.append("precios_fijos_csv.casos debe ser lista.")
+        else:
+            for idx, case in enumerate(fixed, start=1):
+                if not isinstance(case, dict):
+                    errors.append(f"Caso fijo {idx} inválido.")
+                    continue
+                if "id" not in case or "precio_objetivo_csv" not in case:
+                    errors.append(f"Caso fijo {idx} incompleto (id/precio_objetivo_csv).")
+                else:
+                    try:
+                        self._require_positive_number(case.get("precio_objetivo_csv"), f"precios_fijos_csv.casos[{idx}]")
+                    except ApiValidationError as exc:
+                        errors.append(str(exc))
+
+        if cfg.get("editable_meta", {}).get("version", 0) < 1:
+            warnings.append("editable_meta.version no inicializada correctamente.")
+
+    def _build_diff_rows(self, final_cfg: Any, editable_cfg: Any) -> list[dict[str, Any]]:
+        final_flat = self._flatten(final_cfg)
+        editable_flat = self._flatten(editable_cfg)
+        all_fields = sorted(set(final_flat.keys()) | set(editable_flat.keys()))
+        rows: list[dict[str, Any]] = []
+        for field in all_fields:
+            in_final = field in final_flat
+            in_edit = field in editable_flat
+            if in_final and in_edit and final_flat[field] == editable_flat[field]:
+                estado = "igual"
+            elif in_final and in_edit:
+                estado = "modificado"
+            elif in_edit and not in_final:
+                estado = "agregado"
+            else:
+                estado = "eliminado"
+            rows.append(
+                {
+                    "campo": field,
+                    "valor_final": final_flat.get(field),
+                    "valor_editable": editable_flat.get(field),
+                    "estado": estado,
+                    "criticidad": self._criticidad_for_field(field, estado),
+                    "descripcion": self._descripcion_for_field(field, estado),
+                }
+            )
+        return rows
+
+    @staticmethod
+    def _flatten(data: Any, prefix: str = "") -> dict[str, Any]:
+        out: dict[str, Any] = {}
+        if isinstance(data, dict):
+            for k, v in data.items():
+                new_prefix = f"{prefix}.{k}" if prefix else str(k)
+                out.update(BajadasV2ApiService._flatten(v, new_prefix))
+        elif isinstance(data, list):
+            out[prefix] = deepcopy(data)
+        else:
+            out[prefix] = data
+        return out
+
+    @staticmethod
+    def _criticidad_for_field(field: str, estado: str) -> str:
+        if estado == "igual":
+            return "baja"
+        high_keys = ("dolar", "factor", "recargos_urgencia", "precios_fijos_csv", "regla_especial_xl_byn")
+        mid_keys = ("escalas_cantidad", "editable_meta")
+        if any(k in field for k in high_keys):
+            return "alta"
+        if any(k in field for k in mid_keys):
+            return "media"
+        return "baja"
+
+    @staticmethod
+    def _descripcion_for_field(field: str, estado: str) -> str:
+        return f"Campo {field} en estado {estado} entre config final y editable."
+
+    @staticmethod
+    def _hash_json(data: Any) -> str:
+        raw = json.dumps(data, sort_keys=True, ensure_ascii=False).encode("utf-8")
+        return hashlib.sha256(raw).hexdigest()
+
+    @staticmethod
+    def _max_criticidad(rows: list[dict[str, Any]]) -> str:
+        if not rows:
+            return "baja"
+        rank = {"baja": 1, "media": 2, "alta": 3}
+        best = "baja"
+        for r in rows:
+            c = str(r.get("criticidad", "baja"))
+            if rank.get(c, 1) > rank.get(best, 1):
+                best = c
+        return best
+
+    @staticmethod
+    def _require_positive_number(value: Any, field: str) -> float:
+        try:
+            numeric = float(value)
+        except (TypeError, ValueError) as exc:
+            raise ApiValidationError(f"{field} debe ser numérico.") from exc
+        if numeric <= 0:
+            raise ApiValidationError(f"{field} debe ser mayor a 0.")
+        return numeric
+
+    @staticmethod
+    def _require_percentage(value: Any, field: str) -> float:
+        try:
+            numeric = float(value)
+        except (TypeError, ValueError) as exc:
+            raise ApiValidationError(f"{field} debe ser numérico.") from exc
+        if numeric < 0 or numeric > 1:
+            raise ApiValidationError(f"{field} debe estar entre 0 y 1.")
+        return numeric
+
+    @staticmethod
+    def _deep_get(data: dict[str, Any], dotted: str) -> Any:
+        parts = dotted.split(".")
+        current: Any = data
+        for part in parts:
+            if not isinstance(current, dict) or part not in current:
+                return None
+            current = current[part]
+        return deepcopy(current)
+
+    @staticmethod
+    def _read_json(path: Path) -> Any:
+        with path.open("r", encoding="utf-8-sig") as fh:
+            return json.load(fh)
+
+    @staticmethod
+    def _write_json(path: Path, payload: Any) -> None:
+        with path.open("w", encoding="utf-8") as fh:
+            json.dump(payload, fh, ensure_ascii=False, indent=2)
+
+    @staticmethod
+    def _now_iso() -> str:
+        return datetime.now(timezone.utc).isoformat()
+
+    @staticmethod
+    def _now_compact() -> str:
+        return datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
+
+    def _resolve_backup_filename(self, backup_filename: str) -> Path | tuple[int, dict[str, Any]]:
+        name = str(backup_filename or "").strip()
+        if not name:
+            return 400, {"error": "validation_error", "detail": "backup_filename requerido."}
+        if (
+            ".." in name
+            or "/" in name
+            or "\\" in name
+            or Path(name).is_absolute()
+            or ":" in name
+        ):
+            return 400, {"error": "validation_error", "detail": "backup_filename inválido."}
+        if not name.endswith(".json"):
+            return 400, {"error": "validation_error", "detail": "backup_filename debe terminar en .json."}
+        return self.backups_dir / name

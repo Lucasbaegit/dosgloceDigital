@@ -1,4 +1,4 @@
-"""Minimal internal HTTP API for Bajadas v2."""
+﻿"""Minimal internal HTTP API for Bajadas v2."""
 
 from __future__ import annotations
 
@@ -48,6 +48,51 @@ class ApiHandler(BaseHTTPRequestHandler):
         if path == "/bajadas-v2/metrics":
             self._send_json(200, self.service.metrics())
             return
+        if path == "/bajadas-v2/config":
+            status, payload = self.service.get_config()
+            self._send_json(status, payload)
+            return
+        if path == "/bajadas-v2/config/history":
+            status, payload = self.service.get_config_history()
+            self._send_json(status, payload)
+            return
+        if path == "/bajadas-v2/config/tree":
+            status, payload = self.service.get_config_tree()
+            self._send_json(status, payload)
+            return
+        if path == "/bajadas-v2/config/diff":
+            status, payload = self.service.get_config_diff()
+            self._send_json(status, payload)
+            return
+        if path == "/bajadas-v2/config/candidates":
+            status, payload = self.service.list_candidates()
+            self._send_json(status, payload)
+            return
+        if path == "/bajadas-v2/config/active-version":
+            status, payload = self.service.get_active_version()
+            self._send_json(status, payload)
+            return
+        if path == "/bajadas-v2/config/backups":
+            status, payload = self.service.get_backups()
+            self._send_json(status, payload)
+            return
+        if path.startswith("/bajadas-v2/config/backups/"):
+            backup_filename = path.split("/bajadas-v2/config/backups/", 1)[1].strip("/")
+            if not backup_filename:
+                self._send_json(404, {"error": "not_found", "detail": "backup_filename requerido"})
+                return
+            status, payload = self.service.get_backup_detail(backup_filename)
+            self._send_json(status, payload)
+            return
+        if path.startswith("/bajadas-v2/config/candidate/"):
+            candidate_id = path.split("/bajadas-v2/config/candidate/", 1)[1].strip("/")
+            if not candidate_id:
+                self._send_json(404, {"error": "not_found", "detail": "candidate_id requerido"})
+                return
+            status, payload = self.service.get_candidate(candidate_id)
+            self._send_json(status, payload)
+            return
+
         self._send_json(404, {"error": "not_found", "detail": "Endpoint no encontrado"})
 
     def do_POST(self) -> None:  # noqa: N802
@@ -55,9 +100,25 @@ class ApiHandler(BaseHTTPRequestHandler):
             self._send_json(500, {"error": "internal_error", "detail": "Service no inicializado"})
             return
         path = urlparse(self.path).path
-        if path != "/bajadas-v2/cotizar":
+
+        allowed_exact = {
+            "/bajadas-v2/cotizar",
+            "/bajadas-v2/config/update",
+            "/bajadas-v2/config/restore",
+            "/bajadas-v2/config/validate",
+            "/bajadas-v2/config/simulate",
+            "/bajadas-v2/config/candidate/create",
+        }
+        is_candidate_reject = path.startswith("/bajadas-v2/config/candidate/") and path.endswith("/reject")
+        is_candidate_approve = path.startswith("/bajadas-v2/config/candidate/") and path.endswith("/approve")
+        is_candidate_promote = path.startswith("/bajadas-v2/config/candidate/") and path.endswith("/promote")
+        is_backup_restore = path.startswith("/bajadas-v2/config/backups/") and path.endswith("/restore")
+        is_backup_preview = path.startswith("/bajadas-v2/config/backups/") and path.endswith("/restore-preview")
+        is_backup_simulate = path.startswith("/bajadas-v2/config/backups/") and path.endswith("/restore-simulate")
+        if path not in allowed_exact and not (is_candidate_reject or is_candidate_approve or is_candidate_promote or is_backup_restore or is_backup_preview or is_backup_simulate):
             self._send_json(404, {"error": "not_found", "detail": "Endpoint no encontrado"})
             return
+
         try:
             content_len = int(self.headers.get("Content-Length", "0"))
             raw = self.rfile.read(content_len) if content_len > 0 else b"{}"
@@ -65,7 +126,50 @@ class ApiHandler(BaseHTTPRequestHandler):
         except json.JSONDecodeError:
             self._send_json(400, {"error": "validation_error", "detail": "JSON inválido"})
             return
-        status, response = self.service.cotizar(payload)
+
+        if is_candidate_reject:
+            candidate_id = path.split("/bajadas-v2/config/candidate/", 1)[1].rsplit("/reject", 1)[0].strip("/")
+            status, response = self.service.reject_candidate(candidate_id, payload)
+            self._send_json(status, response)
+            return
+        if is_candidate_approve:
+            candidate_id = path.split("/bajadas-v2/config/candidate/", 1)[1].rsplit("/approve", 1)[0].strip("/")
+            status, response = self.service.approve_candidate(candidate_id, payload)
+            self._send_json(status, response)
+            return
+        if is_candidate_promote:
+            candidate_id = path.split("/bajadas-v2/config/candidate/", 1)[1].rsplit("/promote", 1)[0].strip("/")
+            status, response = self.service.promote_candidate(candidate_id, payload)
+            self._send_json(status, response)
+            return
+        if is_backup_restore:
+            backup_filename = path.split("/bajadas-v2/config/backups/", 1)[1].rsplit("/restore", 1)[0].strip("/")
+            status, response = self.service.restore_from_backup(backup_filename, payload)
+            self._send_json(status, response)
+            return
+        if is_backup_preview:
+            backup_filename = path.split("/bajadas-v2/config/backups/", 1)[1].rsplit("/restore-preview", 1)[0].strip("/")
+            status, response = self.service.restore_preview_from_backup(backup_filename)
+            self._send_json(status, response)
+            return
+        if is_backup_simulate:
+            backup_filename = path.split("/bajadas-v2/config/backups/", 1)[1].rsplit("/restore-simulate", 1)[0].strip("/")
+            status, response = self.service.restore_simulate_from_backup(backup_filename, payload)
+            self._send_json(status, response)
+            return
+
+        if path == "/bajadas-v2/cotizar":
+            status, response = self.service.cotizar(payload)
+        elif path == "/bajadas-v2/config/update":
+            status, response = self.service.update_config(payload)
+        elif path == "/bajadas-v2/config/validate":
+            status, response = self.service.validate_config(payload)
+        elif path == "/bajadas-v2/config/simulate":
+            status, response = self.service.simulate_config(payload)
+        elif path == "/bajadas-v2/config/candidate/create":
+            status, response = self.service.create_candidate(payload)
+        else:
+            status, response = self.service.restore_config_from_final(payload)
         self._send_json(status, response)
 
     def log_message(self, format: str, *args: Any) -> None:

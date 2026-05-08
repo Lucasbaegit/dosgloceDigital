@@ -1,0 +1,312 @@
+{
+  "dolar_anterior_excel": 650,
+  "dolar_actual": 1555.0,
+  "factor_dolar": 2.392307692,
+  "iva_incluido": false,
+  "fuente_precios_objetivo": "precios_pdf_objetivo_limpio.csv",
+  "base_formato": "A3+",
+  "factor_xa3": 1.1,
+  "modelo_base": "Modelo D / D2",
+  "modelo_d_congelado": true,
+  "factores_generales_modelo_d": {
+    "descripcion": "Modelo C + correccion XL ByN 1/1 + regla especial XL ByN",
+    "regla_correccion_xl_byn_1_1_parentesis": {
+      "id": "CORRECCION_XL_BYN_1_1_PARENTESIS",
+      "activa": true,
+      "aplica_a": {
+        "categoria": "Bajadas Blanco y Negro",
+        "formato": "XL",
+        "caras": "1/1"
+      },
+      "antes": "(paper + variable) * AH * AG",
+      "despues": "(paper + variable*AG) * AH",
+      "motivo": "Consistencia con A3+/XA3/A4 1/1"
+    },
+    "segmento_recalibrado_exclusivo": {
+      "categoria": "Bajadas Blanco y Negro",
+      "formato": "XL"
+    },
+    "variante_elegida": "D2",
+    "factores_xl_byn": {
+      "liviano|1/0": 1.9146540157178455,
+      "liviano|1/1": 2.2423559796255113,
+      "pesado|1/0": 1.8553509037156486,
+      "pesado|1/1": 2.428106640886443,
+      "global": 1.9407645534290272
+    },
+    "sin_impacto_en_resto": [
+      "A3+",
+      "XA3",
+      "A4",
+      "fullcolor",
+      "autoadhesivas",
+      "terminaciones",
+      "Kraft"
+    ]
+  },
+  "regla_especial_xl_byn": {
+    "activa": true,
+    "tipo": "por tipo_papel + caras",
+    "factores": {
+      "liviano|1/0": 1.9146540157178455,
+      "liviano|1/1": 2.2423559796255113,
+      "pesado|1/0": 1.8553509037156486,
+      "pesado|1/1": 2.428106640886443,
+      "global": 1.9407645534290272
+    }
+  },
+  "correccion_xl_byn_1_1_parentesis": {
+    "activa": true,
+    "id": "CORRECCION_XL_BYN_1_1_PARENTESIS"
+  },
+  "AN40": {
+    "valor": 2.0,
+    "estado": "PENDIENTE_DE_INTERPRETACION",
+    "accion": "NO_MODIFICAR",
+    "motivo": "la simulaci?n no reduce diferencias altas ni mejora materialmente el ajuste contra CSV limpio"
+  },
+  "precios_fijos_csv": {
+    "activos": true,
+    "casos": [
+      {
+        "id": "MD7-01",
+        "categoria": "Bajadas Blanco y Negro",
+        "modo_color": "blanco_y_negro",
+        "formato": "XL",
+        "tipo_papel": "liviano",
+        "material": "Ilustracion",
+        "gramaje": "80g",
+        "cantidad_rango": "1",
+        "caras": "1/1",
+        "precio_objetivo_csv": 687.0,
+        "precio_estimado_modelo_d": 789.30930482818,
+        "diferencia_absoluta": 102.30930482817996,
+        "diferencia_porcentual": 14.89218410890538,
+        "direccion_diferencia": "sobreestimado",
+        "factor_aplicado": 2.2423559796255113,
+        "causa_probable": "Patron repetido de desvio alto en subsegmento XL ByN liviano 1/1 por rango de cantidad",
+        "clasificacion_recomendada": "REGLA_ESPECIAL_REQUERIDA",
+        "recomendacion_concreta": "Evaluar mini-regla puntual por rango (sin tocar globales). Si se prioriza simplicidad, usar precio fijo CSV.",
+        "decision_usuario": "",
+        "comentario_usuario": ""
+      },
+      {
+        "id": "MD7-02",
+        "categoria": "Bajadas Blanco y Negro",
+        "modo_color": "blanco_y_negro",
+        "formato": "XL",
+        "tipo_papel": "pesado",
+        "material": "Triplex",
+        "gramaje": "Triplex",
+        "cantidad_rango": "1",
+        "caras": "1/0",
+        "precio_objetivo_csv": 884.0,
+        "precio_estimado_modelo_d": 990.7573825841564,
+        "diferencia_absoluta": 106.7573825841564,
+        "diferencia_porcentual": 12.076626989157964,
+        "direccion_diferencia": "sobreestimado",
+        "factor_aplicado": 1.8553509037156486,
+        "causa_probable": "Outlier puntual en XL ByN no absorbido por factor D2 tipo_papel+caras",
+        "clasificacion_recomendada": "PRECIO_FIJO_CSV",
+        "recomendacion_concreta": "Fijar este caso con precio fijo CSV para cierre operativo de Modelo D sin agregar subfactores.",
+        "decision_usuario": "",
+        "comentario_usuario": ""
+      },
+      {
+        "id": "MD7-03",
+        "categoria": "Bajadas Blanco y Negro",
+        "modo_color": "blanco_y_negro",
+        "formato": "XL",
+        "tipo_papel": "pesado",
+        "material": "Triplex",
+        "gramaje": "Triplex",
+        "cantidad_rango": "2 a 50",
+        "caras": "1/0",
+        "precio_objetivo_csv": 724.0,
+        "precio_estimado_modelo_d": 810.7883449237385,
+        "diferencia_absoluta": 86.78834492373846,
+        "diferencia_porcentual": 11.987340459079899,
+        "direccion_diferencia": "sobreestimado",
+        "factor_aplicado": 1.8553509037156486,
+        "causa_probable": "Outlier puntual en XL ByN no absorbido por factor D2 tipo_papel+caras",
+        "clasificacion_recomendada": "PRECIO_FIJO_CSV",
+        "recomendacion_concreta": "Fijar este caso con precio fijo CSV para cierre operativo de Modelo D sin agregar subfactores.",
+        "decision_usuario": "",
+        "comentario_usuario": ""
+      },
+      {
+        "id": "MD7-04",
+        "categoria": "Bajadas Blanco y Negro",
+        "modo_color": "blanco_y_negro",
+        "formato": "XL",
+        "tipo_papel": "pesado",
+        "material": "Triplex",
+        "gramaje": "Triplex",
+        "cantidad_rango": "51 a 100",
+        "caras": "1/0",
+        "precio_objetivo_csv": 683.0,
+        "precio_estimado_modelo_d": 764.4045723308473,
+        "diferencia_absoluta": 81.40457233084726,
+        "diferencia_porcentual": 11.918678232920536,
+        "direccion_diferencia": "sobreestimado",
+        "factor_aplicado": 1.8553509037156486,
+        "causa_probable": "Outlier puntual en XL ByN no absorbido por factor D2 tipo_papel+caras",
+        "clasificacion_recomendada": "PRECIO_FIJO_CSV",
+        "recomendacion_concreta": "Fijar este caso con precio fijo CSV para cierre operativo de Modelo D sin agregar subfactores.",
+        "decision_usuario": "",
+        "comentario_usuario": ""
+      },
+      {
+        "id": "MD7-05",
+        "categoria": "Bajadas Blanco y Negro",
+        "modo_color": "blanco_y_negro",
+        "formato": "XL",
+        "tipo_papel": "pesado",
+        "material": "Triplex",
+        "gramaje": "Triplex",
+        "cantidad_rango": "101 a 500",
+        "caras": "1/0",
+        "precio_objetivo_csv": 643.0,
+        "precio_estimado_modelo_d": 719.8761506416716,
+        "diferencia_absoluta": 76.87615064167164,
+        "diferencia_porcentual": 11.955855465267753,
+        "direccion_diferencia": "sobreestimado",
+        "factor_aplicado": 1.8553509037156486,
+        "causa_probable": "Outlier puntual en XL ByN no absorbido por factor D2 tipo_papel+caras",
+        "clasificacion_recomendada": "PRECIO_FIJO_CSV",
+        "recomendacion_concreta": "Fijar este caso con precio fijo CSV para cierre operativo de Modelo D sin agregar subfactores.",
+        "decision_usuario": "",
+        "comentario_usuario": ""
+      },
+      {
+        "id": "MD7-06",
+        "categoria": "Bajadas Blanco y Negro",
+        "modo_color": "blanco_y_negro",
+        "formato": "XL",
+        "tipo_papel": "pesado",
+        "material": "Triplex",
+        "gramaje": "Triplex",
+        "cantidad_rango": "501 a 1000",
+        "caras": "1/0",
+        "precio_objetivo_csv": 603.0,
+        "precio_estimado_modelo_d": 675.3477289524961,
+        "diferencia_absoluta": 72.34772895249614,
+        "diferencia_porcentual": 11.997965000413954,
+        "direccion_diferencia": "sobreestimado",
+        "factor_aplicado": 1.8553509037156486,
+        "causa_probable": "Outlier puntual en XL ByN no absorbido por factor D2 tipo_papel+caras",
+        "clasificacion_recomendada": "PRECIO_FIJO_CSV",
+        "recomendacion_concreta": "Fijar este caso con precio fijo CSV para cierre operativo de Modelo D sin agregar subfactores.",
+        "decision_usuario": "",
+        "comentario_usuario": ""
+      },
+      {
+        "id": "MD7-07",
+        "categoria": "Bajadas Blanco y Negro",
+        "modo_color": "blanco_y_negro",
+        "formato": "XL",
+        "tipo_papel": "pesado",
+        "material": "Triplex",
+        "gramaje": "Triplex",
+        "cantidad_rango": "1001 a 5000",
+        "caras": "1/0",
+        "precio_objetivo_csv": 563.0,
+        "precio_estimado_modelo_d": 630.8193072633205,
+        "diferencia_absoluta": 67.81930726332052,
+        "diferencia_porcentual": 12.046058128476114,
+        "direccion_diferencia": "sobreestimado",
+        "factor_aplicado": 1.8553509037156486,
+        "causa_probable": "Outlier puntual en XL ByN no absorbido por factor D2 tipo_papel+caras",
+        "clasificacion_recomendada": "PRECIO_FIJO_CSV",
+        "recomendacion_concreta": "Fijar este caso con precio fijo CSV para cierre operativo de Modelo D sin agregar subfactores.",
+        "decision_usuario": "",
+        "comentario_usuario": ""
+      }
+    ]
+  },
+  "recargos_urgencia": {
+    "normal": 0,
+    "express": 0.2,
+    "super_express": 0.3,
+    "ya_24hs": 0.5
+  },
+  "redondeo": {
+    "tipo": "comercial",
+    "unidad": "configurable"
+  },
+  "resguardos": {
+    "excel_original_modificado": false,
+    "csv_limpio_modificado": false,
+    "uso_pdf_ocr": false,
+    "sin_recalibracion_modelo_d": true,
+    "sin_modelo_d3": true,
+    "sin_nuevas_reglas_an40": true
+  },
+  "editable_meta": {
+    "version": 3,
+    "last_updated": "2026-05-08T14:45:18.787010+00:00",
+    "usuario": "local"
+  },
+  "escalas_cantidad": [
+    {
+      "desde": 1,
+      "hasta": 1,
+      "etiqueta": "1",
+      "activa": true,
+      "orden": 1
+    },
+    {
+      "desde": 2,
+      "hasta": 25,
+      "etiqueta": "2 a 25",
+      "activa": true,
+      "orden": 2
+    },
+    {
+      "desde": 26,
+      "hasta": 50,
+      "etiqueta": "26 a 50",
+      "activa": true,
+      "orden": 3
+    },
+    {
+      "desde": 51,
+      "hasta": 100,
+      "etiqueta": "51 a 100",
+      "activa": true,
+      "orden": 4
+    },
+    {
+      "desde": 101,
+      "hasta": 300,
+      "etiqueta": "101 a 300",
+      "activa": true,
+      "orden": 5
+    },
+    {
+      "desde": 301,
+      "hasta": 500,
+      "etiqueta": "301 a 500",
+      "activa": true,
+      "orden": 6
+    },
+    {
+      "desde": 501,
+      "hasta": 1000,
+      "etiqueta": "501 a 1000",
+      "activa": true,
+      "orden": 7
+    },
+    {
+      "desde": 1001,
+      "hasta": 5000,
+      "etiqueta": "1001 a 5000",
+      "activa": true,
+      "orden": 8
+    }
+  ],
+  "factores_xl_a4": {
+    "xl_global": 1.0,
+    "a4_global": 1.0
+  }
+}

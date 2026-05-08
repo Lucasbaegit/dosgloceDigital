@@ -1,4 +1,4 @@
-import argparse
+﻿import argparse
 import os
 import socket
 import subprocess
@@ -6,7 +6,6 @@ import sys
 import time
 import urllib.request
 from pathlib import Path
-from urllib.parse import urlparse
 
 
 def wait_http(url: str, timeout_sec: int = 60, step_sec: float = 1.0) -> bool:
@@ -31,6 +30,11 @@ def is_port_open(host: str, port: int) -> bool:
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Supervisor E2E para API + frontend + Playwright")
     parser.add_argument(
+        "--use-existing-api",
+        default="",
+        help="URL de API ya levantada (ej: http://127.0.0.1:8000). Si se define, NO inicia API.",
+    )
+    parser.add_argument(
         "--use-existing-frontend",
         default="",
         help="URL de frontend ya levantado (ej: http://127.0.0.1:5173). Si se define, NO inicia Vite.",
@@ -44,7 +48,8 @@ def main() -> int:
     root = Path(__file__).resolve().parents[2]
     frontend_dir = root / "frontend"
 
-    api_base = args.api_url.rstrip("/")
+    existing_api = args.use_existing_api.strip()
+    api_base = existing_api.rstrip("/") if existing_api else args.api_url.rstrip("/")
     api_health = f"{api_base}/health"
     api_b2_health = f"{api_base}/bajadas-v2/health"
 
@@ -55,6 +60,11 @@ def main() -> int:
     else:
         frontend_base = "http://127.0.0.1:5173"
         mode = "supervisor_full"
+
+    if existing_api and existing_frontend:
+        mode = "existing_api_and_frontend"
+    elif existing_api:
+        mode = "existing_api"
 
     print(f"[stack] modo_ejecucion: {mode}")
     print(f"[stack] frontend_url_usada: {frontend_base}")
@@ -71,20 +81,23 @@ def main() -> int:
     frontend_started_by_supervisor = False
 
     try:
-        # API: levantar solo si no está disponible
-        if wait_http(api_health, timeout_sec=2, step_sec=0.5):
-            print("[stack] API ya levantada, se reutiliza.")
+        # API
+        if existing_api:
+            print("[stack] API existente: no se inicia API desde supervisor.")
         else:
-            print("[stack] Iniciando API...")
-            api_proc = subprocess.Popen(api_cmd, cwd=str(root))
-            api_started_by_supervisor = True
+            if wait_http(api_health, timeout_sec=2, step_sec=0.5):
+                print("[stack] API ya levantada, se reutiliza.")
+            else:
+                print("[stack] Iniciando API...")
+                api_proc = subprocess.Popen(api_cmd, cwd=str(root))
+                api_started_by_supervisor = True
 
         # Frontend
         if existing_frontend:
             print("[stack] Frontend existente: no se inicia Vite desde supervisor.")
         else:
             if is_port_open("127.0.0.1", 5173):
-                print("[stack] ERROR: Puerto 5173 ocupado. Cerrá procesos Vite anteriores o usá el supervisor para limpiar.")
+                print("[stack] ERROR: Puerto 5173 ocupado. Cerra procesos Vite anteriores o usa el supervisor para limpiar.")
                 return 3
             print("[stack] Iniciando frontend...")
             fe_proc = subprocess.Popen(fe_cmd, cwd=str(frontend_dir))
@@ -108,10 +121,11 @@ def main() -> int:
         print("[stack] Ejecutando Playwright...")
         env = os.environ.copy()
         env["BASE_URL"] = frontend_base
+        env["API_URL"] = api_base
         run = subprocess.run(e2e_cmd, cwd=str(frontend_dir), env=env)
         return run.returncode
     finally:
-        # Cerrar sólo procesos iniciados por el supervisor
+        # Cerrar solo procesos iniciados por el supervisor
         if fe_proc and frontend_started_by_supervisor and fe_proc.poll() is None:
             print(f"[stack] Cerrando frontend (pid={fe_proc.pid})")
             fe_proc.terminate()
