@@ -28,11 +28,16 @@ const NAV_ITEMS = ["Cotizador", "Árbol del precio", "Configuración", "Pedidos"
 const TAB_KEYS = new Set(["Cotizador", "Árbol del precio", "Configuración"]);
 const CARAS = ["4/0", "4/4", "1/0", "1/1"];
 const URGENCIAS = ["normal", "express", "super_express", "ya_24hs"];
+const CATEGORIAS = ["Bajadas Fullcolor/ByN", "Bajadas Autoadhesivas"];
+const AUTOADH_COLUMNAS = ["papel", "especial"];
+const AUTOADH_RANGOS = ["1", "2 a 25", "26 a 50", "51 a 100", "101 a 300", "301 a 500", "501 a 1000"];
 const INITIAL_FORM = {
+  categoria_ui: "Bajadas Fullcolor/ByN",
   formato: "A4",
   tipo_papel: "",
   material: "",
   gramaje: "",
+  columna_precio: "papel",
   cantidad_unidades: "1",
   caras: "4/0",
   urgencia: "normal",
@@ -43,6 +48,24 @@ function inferFromCaras(caras) {
   return {
     modo_color: full ? "fullcolor" : "blanco_y_negro",
     categoria: full ? "Bajadas Fullcolor" : "Bajadas Blanco y Negro",
+  };
+}
+
+function inferQuoteContext(form) {
+  if (form.categoria_ui === "Bajadas Autoadhesivas") {
+    return {
+      categoria: "Bajadas Autoadhesivas",
+      modo_color: "fullcolor",
+      formato: "A3+",
+      caras: "4/0",
+    };
+  }
+  const byCaras = inferFromCaras(form.caras);
+  return {
+    categoria: byCaras.categoria,
+    modo_color: byCaras.modo_color,
+    formato: form.formato,
+    caras: form.caras,
   };
 }
 
@@ -129,11 +152,15 @@ export default function CotizadorBajadasV2() {
   const [cfgBackupPreview, setCfgBackupPreview] = useState(null);
   const [cfgBackupSimulation, setCfgBackupSimulation] = useState(null);
 
-  const inferred = useMemo(() => inferFromCaras(form.caras), [form.caras]);
+  const inferred = useMemo(() => inferQuoteContext(form), [form]);
+  const isAutoadhesivas = inferred.categoria === "Bajadas Autoadhesivas";
 
   const validRows = useMemo(
-    () => optionRows.filter((r) => r.categoria === inferred.categoria && r.modo_color === inferred.modo_color && r.caras === form.caras),
-    [inferred, form.caras]
+    () =>
+      optionRows.filter(
+        (r) => r.categoria === inferred.categoria && r.modo_color === inferred.modo_color && r.caras === inferred.caras
+      ),
+    [inferred]
   );
   const formatoOptions = useMemo(() => uniqueSorted(validRows.map((r) => r.formato)), [validRows]);
   const tipoPapelOptions = useMemo(
@@ -153,21 +180,20 @@ export default function CotizadorBajadasV2() {
       ),
     [validRows, form.formato, form.tipo_papel, form.material]
   );
-  const cantidadOptions = useMemo(
-    () =>
-      uniqueSorted(
-        validRows
-          .filter(
-            (r) =>
-              r.formato === form.formato &&
-              r.tipo_papel === form.tipo_papel &&
-              r.material === form.material &&
-              r.gramaje === form.gramaje
-          )
-          .map((r) => r.cantidad_rango)
-      ),
-    [validRows, form.formato, form.tipo_papel, form.material, form.gramaje]
-  );
+  const cantidadOptions = useMemo(() => {
+    if (isAutoadhesivas) return AUTOADH_RANGOS;
+    return uniqueSorted(
+      validRows
+        .filter(
+          (r) =>
+            r.formato === form.formato &&
+            r.tipo_papel === form.tipo_papel &&
+            r.material === form.material &&
+            r.gramaje === form.gramaje
+        )
+        .map((r) => r.cantidad_rango)
+    );
+  }, [isAutoadhesivas, validRows, form.formato, form.tipo_papel, form.material, form.gramaje]);
   const cantidadUnidades = useMemo(() => Number(form.cantidad_unidades), [form.cantidad_unidades]);
   const derivedRange = useMemo(() => deriveRangeFromQuantity(cantidadUnidades, cantidadOptions), [cantidadUnidades, cantidadOptions]);
 
@@ -338,6 +364,14 @@ export default function CotizadorBajadasV2() {
   useEffect(() => {
     setForm((prev) => {
       const next = { ...prev };
+      if (next.categoria_ui === "Bajadas Autoadhesivas") {
+        next.formato = "A3+";
+        next.caras = "4/0";
+        next.tipo_papel = next.columna_precio || "papel";
+        next.material = next.columna_precio === "especial" ? "OPP blanco/blanco" : "Sticker";
+        next.gramaje = next.columna_precio === "especial" ? "N/A" : "N/A";
+        return next;
+      }
       if (!formatoOptions.includes(next.formato)) next.formato = formatoOptions[0] || "";
       return next;
     });
@@ -346,6 +380,9 @@ export default function CotizadorBajadasV2() {
   useEffect(() => {
     setForm((prev) => {
       const next = { ...prev };
+      if (next.categoria_ui === "Bajadas Autoadhesivas") {
+        return next;
+      }
       if (!tipoPapelOptions.includes(next.tipo_papel)) next.tipo_papel = tipoPapelOptions[0] || "";
       if (!materialOptions.includes(next.material)) next.material = materialOptions[0] || "";
       if (!gramajeOptions.includes(next.gramaje)) next.gramaje = gramajeOptions[0] || "";
@@ -354,9 +391,11 @@ export default function CotizadorBajadasV2() {
   }, [tipoPapelOptions, materialOptions, gramajeOptions]);
 
   const missingFields = useMemo(() => {
-    const required = ["formato", "tipo_papel", "material", "gramaje", "caras", "urgencia"];
+    const required = isAutoadhesivas
+      ? ["urgencia", "columna_precio"]
+      : ["formato", "tipo_papel", "material", "gramaje", "caras", "urgencia"];
     return required.filter((field) => !String(form[field] ?? "").trim());
-  }, [form]);
+  }, [form, isAutoadhesivas]);
 
   const updateField = (field) => (event) => {
     setCopyStatus("");
@@ -459,14 +498,16 @@ export default function CotizadorBajadasV2() {
     const payload = {
       categoria: inferred.categoria,
       modo_color: inferred.modo_color,
-      formato: form.formato,
-      tipo_papel: form.tipo_papel,
-      material: form.material,
-      gramaje: form.gramaje,
+      formato: inferred.formato,
+      tipo_papel: isAutoadhesivas ? form.columna_precio : form.tipo_papel,
+      material: isAutoadhesivas ? (form.columna_precio === "especial" ? "OPP blanco/blanco" : "Sticker") : form.material,
+      gramaje: isAutoadhesivas ? "N/A" : form.gramaje,
       cantidad_unidades: cantidadUnidades,
       cantidad_rango: derivedRange,
-      caras: form.caras,
+      caras: inferred.caras,
       urgencia: form.urgencia,
+      tipo_producto: isAutoadhesivas ? "autoadhesiva" : undefined,
+      columna_precio: isAutoadhesivas ? form.columna_precio : undefined,
     };
 
     setLoading(true);
@@ -732,15 +773,28 @@ export default function CotizadorBajadasV2() {
       <form className="card form-card" onSubmit={handleSubmit}>
         <div className="card-head"><h3>1. Configura tu impresión</h3><span>Enter = calcular</span></div>
         <div className="form-grid">
-          <label><span>Impresión</span><div className="caras-row">{CARAS.map((cara) => <button key={cara} type="button" className={form.caras === cara ? "pill active" : "pill"} onClick={() => setForm((prev) => ({ ...prev, caras: cara }))}>{cara}</button>)}</div></label>
-          <label><span>Categoría (automática)</span><input value={inferred.categoria} readOnly /></label>
-          <label><span>Medida / formato</span><select value={form.formato} onChange={updateField("formato")}>{formatoOptions.map((v) => <option key={v}>{v}</option>)}</select></label>
-          <label><span>Tipo de papel</span><select value={form.tipo_papel} onChange={updateField("tipo_papel")}>{tipoPapelOptions.map((v) => <option key={v}>{v}</option>)}</select></label>
-          <label><span>Material</span><select value={form.material} onChange={updateField("material")}>{materialOptions.map((v) => <option key={v}>{v}</option>)}</select></label>
-          <label><span>Gramaje</span><select value={form.gramaje} onChange={updateField("gramaje")}>{gramajeOptions.map((v) => <option key={v}>{v}</option>)}</select></label>
+          <label><span>Categoría</span><select value={form.categoria_ui} onChange={updateField("categoria_ui")}>{CATEGORIAS.map((v) => <option key={v}>{v}</option>)}</select></label>
+          {!isAutoadhesivas ? (
+            <>
+              <label><span>Impresión</span><div className="caras-row">{CARAS.map((cara) => <button key={cara} type="button" className={form.caras === cara ? "pill active" : "pill"} onClick={() => setForm((prev) => ({ ...prev, caras: cara }))}>{cara}</button>)}</div></label>
+              <label><span>Categoría (automática)</span><input value={inferred.categoria} readOnly /></label>
+              <label><span>Medida / formato</span><select value={form.formato} onChange={updateField("formato")}>{formatoOptions.map((v) => <option key={v}>{v}</option>)}</select></label>
+              <label><span>Tipo de papel</span><select value={form.tipo_papel} onChange={updateField("tipo_papel")}>{tipoPapelOptions.map((v) => <option key={v}>{v}</option>)}</select></label>
+              <label><span>Material</span><select value={form.material} onChange={updateField("material")}>{materialOptions.map((v) => <option key={v}>{v}</option>)}</select></label>
+              <label><span>Gramaje</span><select value={form.gramaje} onChange={updateField("gramaje")}>{gramajeOptions.map((v) => <option key={v}>{v}</option>)}</select></label>
+            </>
+          ) : (
+            <>
+              <label><span>Formato</span><input value="A3+" readOnly /></label>
+              <label><span>Tipo</span><select value={form.columna_precio} onChange={updateField("columna_precio")}>{AUTOADH_COLUMNAS.map((v) => <option key={v}>{v}</option>)}</select></label>
+              <label><span>Modo color</span><input value="fullcolor" readOnly /></label>
+              <label><span>Impresión</span><input value="4/0" readOnly /></label>
+            </>
+          )}
           <label><span>Cantidad</span><input type="number" min={1} step={1} placeholder="Ejemplo: 30" value={form.cantidad_unidades} onChange={updateField("cantidad_unidades")} /><small className="range-hint">Rango aplicado: {derivedRange ?? "Sin rango disponible"}</small></label>
           <label><span>Urgencia</span><select value={form.urgencia} onChange={updateField("urgencia")}>{URGENCIAS.map((v) => <option key={v}>{v}</option>)}</select></label>
         </div>
+        {isAutoadhesivas ? <div className="warning-box">Tinta blanca y laca UV no están incluidas en esta etapa.</div> : null}
         {error ? <div className="error-box">{error}</div> : null}
         {copyStatus ? <div className="info-box" data-testid="copy-status">{copyStatus}</div> : null}
         <div className="actions-row"><button type="submit" className="calculate-btn" disabled={loading}>{loading ? "Calculando..." : "Calcular"}</button><button type="button" className="secondary-btn" data-testid="clear-button" onClick={handleClear}>Limpiar</button></div>

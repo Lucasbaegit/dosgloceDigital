@@ -734,6 +734,68 @@ class TestBajadasV2Api(unittest.TestCase):
         self.assertEqual(status, 404)
         self.assertEqual(body["error"], "combinacion_no_encontrada")
 
+    def test_cotizar_autoadhesiva_papel(self):
+        payload = {
+            "categoria": "Bajadas Autoadhesivas",
+            "modo_color": "fullcolor",
+            "formato": "A3+",
+            "tipo_papel": "papel",
+            "material": "Sticker",
+            "gramaje": "N/A",
+            "cantidad_unidades": 30,
+            "cantidad_rango": "26 a 50",
+            "caras": "4/0",
+            "urgencia": "normal",
+            "tipo_producto": "autoadhesiva",
+            "columna_precio": "papel",
+        }
+        status, body = self._post_json("/bajadas-v2/cotizar", payload)
+        self.assertEqual(status, 200)
+        self.assertEqual(body["regla_aplicada"], "AUTOADHESIVA_PAPEL_HIBRIDO_B_C")
+        self.assertEqual(body["fuente"], "autoadhesivas_objetivo_calibrado")
+        self.assertAlmostEqual(body["total_sin_iva"], body["precio_unitario_sin_iva"] * 30, places=6)
+
+    def test_cotizar_autoadhesiva_especial_express(self):
+        payload = {
+            "categoria": "Bajadas Autoadhesivas",
+            "modo_color": "fullcolor",
+            "formato": "A3+",
+            "tipo_papel": "especial",
+            "material": "OPP blanco",
+            "gramaje": "N/A",
+            "cantidad_unidades": 30,
+            "cantidad_rango": "26 a 50",
+            "caras": "4/0",
+            "urgencia": "express",
+            "tipo_producto": "autoadhesiva",
+            "columna_precio": "especial",
+        }
+        status, body = self._post_json("/bajadas-v2/cotizar", payload)
+        self.assertEqual(status, 200)
+        self.assertEqual(body["regla_aplicada"], "AUTOADHESIVA_ESPECIAL_HIBRIDO_B_C")
+        self.assertEqual(body["fuente"], "autoadhesivas_objetivo_calibrado")
+        self.assertAlmostEqual(body["precio_unitario_sin_iva"], 1389.0, places=6)
+        self.assertAlmostEqual(body["precio_unitario_con_urgencia"], body["precio_unitario_sin_iva"] * 1.15, places=6)
+
+    def test_autoadhesiva_rechaza_tinta_blanca_laca_uv(self):
+        payload = {
+            "categoria": "Bajadas Autoadhesivas",
+            "modo_color": "fullcolor",
+            "formato": "A3+",
+            "tipo_papel": "tinta blanca",
+            "material": "N/A",
+            "gramaje": "N/A",
+            "cantidad_unidades": 30,
+            "cantidad_rango": "26 a 50",
+            "caras": "4/0",
+            "urgencia": "normal",
+            "tipo_producto": "autoadhesiva",
+            "columna_precio": "tinta blanca",
+        }
+        status, body = self._post_json("/bajadas-v2/cotizar", payload)
+        self.assertEqual(status, 400)
+        self.assertEqual(body["error"], "validation_error")
+
 
 if __name__ == "__main__":
     unittest.main()

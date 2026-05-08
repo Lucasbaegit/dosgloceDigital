@@ -1,0 +1,290 @@
+{
+  "source_excel": "C:\\Users\\baezl\\Desktop\\proyectos\\desgloceExcel\\excel_desfloce\\original\\Copia de DIGITAL sistema 2025.xlsx",
+  "sheet": "Bajadas",
+  "used_range": "A1:BF292",
+  "keyword_hits": [
+    {
+      "cell": "S2",
+      "value": "Sticker"
+    },
+    {
+      "cell": "U2",
+      "value": "OPP  blco o blanco"
+    },
+    {
+      "cell": "AA2",
+      "value": "Precio del papel por hoja"
+    },
+    {
+      "cell": "AG2",
+      "value": "Precio del papel por hoja"
+    },
+    {
+      "cell": "Z3",
+      "value": "Precio de papel"
+    },
+    {
+      "cell": "AF3",
+      "value": "Precio de papel"
+    },
+    {
+      "cell": "AH4",
+      "value": "='PAPEL US$'!I24"
+    },
+    {
+      "cell": "AI4",
+      "value": "='PAPEL US$'!J23"
+    },
+    {
+      "cell": "AH5",
+      "value": "='PAPEL US$'!I21"
+    },
+    {
+      "cell": "AI5",
+      "value": "='PAPEL US$'!J20"
+    },
+    {
+      "cell": "AH6",
+      "value": "='PAPEL US$'!I18"
+    },
+    {
+      "cell": "AI6",
+      "value": "='PAPEL US$'!J13"
+    },
+    {
+      "cell": "AH7",
+      "value": "='PAPEL US$'!I17"
+    },
+    {
+      "cell": "AI7",
+      "value": "='PAPEL US$'!J12"
+    },
+    {
+      "cell": "AH8",
+      "value": "='PAPEL US$'!I16"
+    },
+    {
+      "cell": "AI8",
+      "value": "='PAPEL US$'!J11"
+    },
+    {
+      "cell": "AH9",
+      "value": "='PAPEL US$'!I15"
+    },
+    {
+      "cell": "AI9",
+      "value": "='PAPEL US$'!J10"
+    },
+    {
+      "cell": "AH10",
+      "value": "='PAPEL US$'!I8"
+    },
+    {
+      "cell": "AI10",
+      "value": "='PAPEL US$'!J6"
+    },
+    {
+      "cell": "AH11",
+      "value": "='PAPEL US$'!I29"
+    },
+    {
+      "cell": "AI11",
+      "value": "='PAPEL US$'!J29"
+    },
+    {
+      "cell": "S12",
+      "value": "Sticker"
+    },
+    {
+      "cell": "Z12",
+      "value": "Sticker"
+    },
+    {
+      "cell": "AF12",
+      "value": "Sticker"
+    },
+    {
+      "cell": "AH12",
+      "value": "='PAPEL US$'!L33"
+    },
+    {
+      "cell": "AI12",
+      "value": "='PAPEL US$'!J31"
+    },
+    {
+      "cell": "Z13",
+      "value": "OPP"
+    },
+    {
+      "cell": "AF13",
+      "value": "OPP"
+    },
+    {
+      "cell": "AH13",
+      "value": "='PAPEL US$'!I36"
+    },
+    {
+      "cell": "AI13",
+      "value": "='PAPEL US$'!J36"
+    },
+    {
+      "cell": "AC14",
+      "value": "='PAPEL US$'!H48"
+    },
+    {
+      "cell": "AI14",
+      "value": "=AI5+'PAPEL US$'!J49"
+    },
+    {
+      "cell": "Z16",
+      "value": "Coeficiente papel"
+    },
+    {
+      "cell": "AG17",
+      "value": "(costo de papel x coef ganacia) + (costo clic * coef 4/0) + (costo clic x coef 4/4)"
+    },
+    {
+      "cell": "AF18",
+      "value": "COSTO DE PAPEL "
+    },
+    {
+      "cell": "S22",
+      "value": "Sticker"
+    },
+    {
+      "cell": "AH23",
+      "value": "='PAPEL US$'!H48"
+    },
+    {
+      "cell": "Z26",
+      "value": "Sticker"
+    },
+    {
+      "cell": "Z27",
+      "value": "OPP"
+    },
+    {
+      "cell": "Z30",
+      "value": "costo de papel"
+    },
+    {
+      "cell": "S32",
+      "value": "Sticker"
+    },
+    {
+      "cell": "AV37",
+      "value": "ESPECIAL"
+    },
+    {
+      "cell": "Z39",
+      "value": "Sticker"
+    },
+    {
+      "cell": "Z40",
+      "value": "OPP"
+    },
+    {
+      "cell": "A44",
+      "value": "BLANCO Y NEGRO"
+    },
+    {
+      "cell": "S45",
+      "value": "Sticker"
+    },
+    {
+      "cell": "S54",
+      "value": "Sticker"
+    },
+    {
+      "cell": "S63",
+      "value": "Sticker"
+    },
+    {
+      "cell": "AO69",
+      "value": "Sticker"
+    },
+    {
+      "cell": "AR69",
+      "value": "OPP + blco"
+    },
+    {
+      "cell": "S72",
+      "value": "Sticker"
+    }
+  ],
+  "detected_ranges": [
+    {
+      "range": "B4:B10",
+      "labels": [
+        1.0,
+        "2 a 25",
+        "26 a 50",
+        "51 a 100",
+        "101 a 300",
+        "301 a 500",
+        "501 a 1000"
+      ]
+    },
+    {
+      "range": "S4:S10",
+      "title": "Sticker",
+      "caras": "4/0"
+    },
+    {
+      "range": "U4:U10",
+      "title": "OPP  blco o blanco",
+      "caras": "4/0"
+    }
+  ],
+  "historical_visible_prices": [
+    {
+      "range_label": 1.0,
+      "papel_visible_W": 460.0,
+      "especial_visible_X": 588.0,
+      "formula_W": 460.0,
+      "formula_X": 588.0
+    },
+    {
+      "range_label": "2 a 25",
+      "papel_visible_W": 436.0,
+      "especial_visible_X": 557.0,
+      "formula_W": 436.0,
+      "formula_X": 557.0
+    },
+    {
+      "range_label": "26 a 50",
+      "papel_visible_W": 412.0,
+      "especial_visible_X": 526.0,
+      "formula_W": 412.0,
+      "formula_X": 526.0
+    },
+    {
+      "range_label": "51 a 100",
+      "papel_visible_W": 388.0,
+      "especial_visible_X": 495.0,
+      "formula_W": 388.0,
+      "formula_X": 495.0
+    },
+    {
+      "range_label": "101 a 300",
+      "papel_visible_W": 363.0,
+      "especial_visible_X": 464.0,
+      "formula_W": 363.0,
+      "formula_X": 464.0
+    },
+    {
+      "range_label": "301 a 500",
+      "papel_visible_W": 339.0,
+      "especial_visible_X": 433.0,
+      "formula_W": 339.0,
+      "formula_X": 433.0
+    },
+    {
+      "range_label": "501 a 1000",
+      "papel_visible_W": 315.0,
+      "especial_visible_X": 402.0,
+      "formula_W": 315.0,
+      "formula_X": 402.0
+    }
+  ]
+}

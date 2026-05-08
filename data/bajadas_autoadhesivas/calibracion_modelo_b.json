@@ -1,0 +1,623 @@
+{
+  "B1": {
+    "factors": {
+      "factor_autoadhesivo_papel": 0.0018001771801720058,
+      "factor_autoadhesivo_especial": 1.1802182914022914
+    },
+    "papel": [
+      {
+        "cantidad_rango": "1",
+        "key": "global",
+        "factor": 0.0018001771801720058,
+        "precio_base_excel": 523393.0,
+        "precio_calibrado": 942.2001348617666,
+        "precio_objetivo": 1069.0,
+        "diferencia_abs": -126.79986513823337,
+        "diferencia_pct": -11.861540237439979,
+        "estado": "DIFERENCIA_ALTA"
+      },
+      {
+        "cantidad_rango": "2 a 25",
+        "key": "global",
+        "factor": 0.0018001771801720058,
+        "precio_base_excel": 468299.0,
+        "precio_calibrado": 843.0211732973702,
+        "precio_objetivo": 875.0,
+        "diferencia_abs": -31.978826702629817,
+        "diferencia_pct": -3.6547230517291216,
+        "estado": "DIFERENCIA_MEDIA"
+      },
+      {
+        "cantidad_rango": "26 a 50",
+        "key": "global",
+        "factor": 0.0018001771801720058,
+        "precio_base_excel": 454525.5,
+        "precio_calibrado": 818.226432906271,
+        "precio_objetivo": 826.0,
+        "diferencia_abs": -7.773567093728957,
+        "diferencia_pct": -0.9411098176427308,
+        "estado": "OK"
+      },
+      {
+        "cantidad_rango": "51 a 100",
+        "key": "global",
+        "factor": 0.0018001771801720058,
+        "precio_base_excel": 440752.0,
+        "precio_calibrado": 793.4316925151719,
+        "precio_objetivo": 778.0,
+        "diferencia_abs": 15.431692515171903,
+        "diferencia_pct": 1.9835080353691394,
+        "estado": "DIFERENCIA_LEVE"
+      },
+      {
+        "cantidad_rango": "101 a 300",
+        "key": "global",
+        "factor": 0.0018001771801720058,
+        "precio_base_excel": 426978.5,
+        "precio_calibrado": 768.6369521240728,
+        "precio_objetivo": 729.0,
+        "diferencia_abs": 39.636952124072764,
+        "diferencia_pct": 5.437167643905729,
+        "estado": "DIFERENCIA_MEDIA"
+      },
+      {
+        "cantidad_rango": "301 a 500",
+        "key": "global",
+        "factor": 0.0018001771801720058,
+        "precio_base_excel": 413205.0,
+        "precio_calibrado": 743.8422117329736,
+        "precio_objetivo": 680.0,
+        "diferencia_abs": 63.842211732973624,
+        "diferencia_pct": 9.38856054896671,
+        "estado": "DIFERENCIA_ALTA"
+      },
+      {
+        "cantidad_rango": "501 a 1000",
+        "key": "global",
+        "factor": 0.0018001771801720058,
+        "precio_base_excel": 399431.5,
+        "precio_calibrado": 719.0474713418745,
+        "precio_objetivo": 632.0,
+        "diferencia_abs": 87.04747134187448,
+        "diferencia_pct": 13.773334073081406,
+        "estado": "DIFERENCIA_ALTA"
+      }
+    ],
+    "especial": [
+      {
+        "cantidad_rango": "1",
+        "key": "global",
+        "factor": 1.1802182914022914,
+        "precio_base_excel": 1341.8275,
+        "precio_calibrado": 1583.6493594066083,
+        "precio_objetivo": 1797.0,
+        "diferencia_abs": -213.35064059339174,
+        "diferencia_pct": -11.872601034690693,
+        "estado": "DIFERENCIA_ALTA"
+      },
+      {
+        "cantidad_rango": "2 a 25",
+        "key": "global",
+        "factor": 1.1802182914022914,
+        "precio_base_excel": 1200.5825,
+        "precio_calibrado": 1416.9494268374915,
+        "precio_objetivo": 1470.0,
+        "diferencia_abs": -53.0505731625085,
+        "diferencia_pct": -3.6088825280618027,
+        "estado": "DIFERENCIA_MEDIA"
+      },
+      {
+        "cantidad_rango": "26 a 50",
+        "key": "global",
+        "factor": 1.1802182914022914,
+        "precio_base_excel": 1165.27125,
+        "precio_calibrado": 1375.2744436952123,
+        "precio_objetivo": 1389.0,
+        "diferencia_abs": -13.725556304787688,
+        "diferencia_pct": -0.9881610010646283,
+        "estado": "OK"
+      },
+      {
+        "cantidad_rango": "51 a 100",
+        "key": "global",
+        "factor": 1.1802182914022914,
+        "precio_base_excel": 1129.96,
+        "precio_calibrado": 1333.5994605529331,
+        "precio_objetivo": 1307.0,
+        "diferencia_abs": 26.599460552933124,
+        "diferencia_pct": 2.0351538296046767,
+        "estado": "DIFERENCIA_LEVE"
+      },
+      {
+        "cantidad_rango": "101 a 300",
+        "key": "global",
+        "factor": 1.1802182914022914,
+        "precio_base_excel": 1094.64875,
+        "precio_calibrado": 1291.9244774106542,
+        "precio_objetivo": 1225.0,
+        "diferencia_abs": 66.92447741065416,
+        "diferencia_pct": 5.4632226457676865,
+        "estado": "DIFERENCIA_MEDIA"
+      },
+      {
+        "cantidad_rango": "301 a 500",
+        "key": "global",
+        "factor": 1.1802182914022914,
+        "precio_base_excel": 1059.3375,
+        "precio_calibrado": 1250.249494268375,
+        "precio_objetivo": 1144.0,
+        "diferencia_abs": 106.24949426837497,
+        "diferencia_pct": 9.287543205277533,
+        "estado": "DIFERENCIA_ALTA"
+      },
+      {
+        "cantidad_rango": "501 a 1000",
+        "key": "global",
+        "factor": 1.1802182914022914,
+        "precio_base_excel": 1024.02625,
+        "precio_calibrado": 1208.5745111260956,
+        "precio_objetivo": 1062.0,
+        "diferencia_abs": 146.57451112609556,
+        "diferencia_pct": 13.80174304388847,
+        "estado": "DIFERENCIA_ALTA"
+      }
+    ],
+    "summary": {
+      "papel": {
+        "counts": {
+          "OK": 1,
+          "DIFERENCIA_LEVE": 1,
+          "DIFERENCIA_MEDIA": 2,
+          "DIFERENCIA_ALTA": 3
+        },
+        "error_promedio_abs_pct": 6.719991915447831,
+        "error_mediano_abs_pct": 5.437167643905729,
+        "error_max_abs_pct": 13.773334073081406
+      },
+      "especial": {
+        "counts": {
+          "OK": 1,
+          "DIFERENCIA_LEVE": 1,
+          "DIFERENCIA_MEDIA": 2,
+          "DIFERENCIA_ALTA": 3
+        },
+        "error_promedio_abs_pct": 6.72247246976507,
+        "error_mediano_abs_pct": 5.4632226457676865,
+        "error_max_abs_pct": 13.80174304388847
+      },
+      "global": {
+        "counts": {
+          "OK": 2,
+          "DIFERENCIA_LEVE": 2,
+          "DIFERENCIA_MEDIA": 4,
+          "DIFERENCIA_ALTA": 6
+        },
+        "error_promedio_abs_pct": 6.72123219260645,
+        "error_mediano_abs_pct": 5.450195144836708,
+        "error_max_abs_pct": 13.80174304388847
+      }
+    }
+  },
+  "B2": {
+    "factors": {
+      "papel_por_rango": {
+        "1": 0.002042442294795689,
+        "2 a 25": 0.001868464378527394,
+        "26 a 50": 0.0018172797785822798,
+        "51 a 100": 0.0017651649907430935,
+        "101 a 300": 0.0017073459202278335,
+        "301 a 500": 0.001645672245011556,
+        "501 a 1000": 0.0015822487710658775
+      },
+      "especial_por_rango": {
+        "1": 1.3392183421490467,
+        "2 a 25": 1.2244056530892296,
+        "26 a 50": 1.1919971422962679,
+        "51 a 100": 1.1566781124995575,
+        "101 a 300": 1.1190804356191884,
+        "301 a 500": 1.0799202331645956,
+        "501 a 1000": 1.0370827896257544
+      }
+    },
+    "papel": [
+      {
+        "cantidad_rango": "1",
+        "key": "1",
+        "factor": 0.002042442294795689,
+        "precio_base_excel": 523393.0,
+        "precio_calibrado": 1069.0,
+        "precio_objetivo": 1069.0,
+        "diferencia_abs": 0.0,
+        "diferencia_pct": 0.0,
+        "estado": "OK"
+      },
+      {
+        "cantidad_rango": "2 a 25",
+        "key": "2 a 25",
+        "factor": 0.001868464378527394,
+        "precio_base_excel": 468299.0,
+        "precio_calibrado": 875.0,
+        "precio_objetivo": 875.0,
+        "diferencia_abs": 0.0,
+        "diferencia_pct": 0.0,
+        "estado": "OK"
+      },
+      {
+        "cantidad_rango": "26 a 50",
+        "key": "26 a 50",
+        "factor": 0.0018172797785822798,
+        "precio_base_excel": 454525.5,
+        "precio_calibrado": 826.0,
+        "precio_objetivo": 826.0,
+        "diferencia_abs": 0.0,
+        "diferencia_pct": 0.0,
+        "estado": "OK"
+      },
+      {
+        "cantidad_rango": "51 a 100",
+        "key": "51 a 100",
+        "factor": 0.0017651649907430935,
+        "precio_base_excel": 440752.0,
+        "precio_calibrado": 778.0,
+        "precio_objetivo": 778.0,
+        "diferencia_abs": 0.0,
+        "diferencia_pct": 0.0,
+        "estado": "OK"
+      },
+      {
+        "cantidad_rango": "101 a 300",
+        "key": "101 a 300",
+        "factor": 0.0017073459202278335,
+        "precio_base_excel": 426978.5,
+        "precio_calibrado": 729.0,
+        "precio_objetivo": 729.0,
+        "diferencia_abs": 0.0,
+        "diferencia_pct": 0.0,
+        "estado": "OK"
+      },
+      {
+        "cantidad_rango": "301 a 500",
+        "key": "301 a 500",
+        "factor": 0.001645672245011556,
+        "precio_base_excel": 413205.0,
+        "precio_calibrado": 680.0,
+        "precio_objetivo": 680.0,
+        "diferencia_abs": 0.0,
+        "diferencia_pct": 0.0,
+        "estado": "OK"
+      },
+      {
+        "cantidad_rango": "501 a 1000",
+        "key": "501 a 1000",
+        "factor": 0.0015822487710658775,
+        "precio_base_excel": 399431.5,
+        "precio_calibrado": 632.0,
+        "precio_objetivo": 632.0,
+        "diferencia_abs": 0.0,
+        "diferencia_pct": 0.0,
+        "estado": "OK"
+      }
+    ],
+    "especial": [
+      {
+        "cantidad_rango": "1",
+        "key": "1",
+        "factor": 1.3392183421490467,
+        "precio_base_excel": 1341.8275,
+        "precio_calibrado": 1797.0,
+        "precio_objetivo": 1797.0,
+        "diferencia_abs": 0.0,
+        "diferencia_pct": 0.0,
+        "estado": "OK"
+      },
+      {
+        "cantidad_rango": "2 a 25",
+        "key": "2 a 25",
+        "factor": 1.2244056530892296,
+        "precio_base_excel": 1200.5825,
+        "precio_calibrado": 1470.0,
+        "precio_objetivo": 1470.0,
+        "diferencia_abs": 0.0,
+        "diferencia_pct": 0.0,
+        "estado": "OK"
+      },
+      {
+        "cantidad_rango": "26 a 50",
+        "key": "26 a 50",
+        "factor": 1.1919971422962679,
+        "precio_base_excel": 1165.27125,
+        "precio_calibrado": 1389.0,
+        "precio_objetivo": 1389.0,
+        "diferencia_abs": 0.0,
+        "diferencia_pct": 0.0,
+        "estado": "OK"
+      },
+      {
+        "cantidad_rango": "51 a 100",
+        "key": "51 a 100",
+        "factor": 1.1566781124995575,
+        "precio_base_excel": 1129.96,
+        "precio_calibrado": 1307.0,
+        "precio_objetivo": 1307.0,
+        "diferencia_abs": 0.0,
+        "diferencia_pct": 0.0,
+        "estado": "OK"
+      },
+      {
+        "cantidad_rango": "101 a 300",
+        "key": "101 a 300",
+        "factor": 1.1190804356191884,
+        "precio_base_excel": 1094.64875,
+        "precio_calibrado": 1225.0,
+        "precio_objetivo": 1225.0,
+        "diferencia_abs": 0.0,
+        "diferencia_pct": 0.0,
+        "estado": "OK"
+      },
+      {
+        "cantidad_rango": "301 a 500",
+        "key": "301 a 500",
+        "factor": 1.0799202331645956,
+        "precio_base_excel": 1059.3375,
+        "precio_calibrado": 1144.0,
+        "precio_objetivo": 1144.0,
+        "diferencia_abs": 0.0,
+        "diferencia_pct": 0.0,
+        "estado": "OK"
+      },
+      {
+        "cantidad_rango": "501 a 1000",
+        "key": "501 a 1000",
+        "factor": 1.0370827896257544,
+        "precio_base_excel": 1024.02625,
+        "precio_calibrado": 1062.0,
+        "precio_objetivo": 1062.0,
+        "diferencia_abs": 0.0,
+        "diferencia_pct": 0.0,
+        "estado": "OK"
+      }
+    ],
+    "summary": {
+      "papel": {
+        "counts": {
+          "OK": 7,
+          "DIFERENCIA_LEVE": 0,
+          "DIFERENCIA_MEDIA": 0,
+          "DIFERENCIA_ALTA": 0
+        },
+        "error_promedio_abs_pct": 0.0,
+        "error_mediano_abs_pct": 0.0,
+        "error_max_abs_pct": 0.0
+      },
+      "especial": {
+        "counts": {
+          "OK": 7,
+          "DIFERENCIA_LEVE": 0,
+          "DIFERENCIA_MEDIA": 0,
+          "DIFERENCIA_ALTA": 0
+        },
+        "error_promedio_abs_pct": 0.0,
+        "error_mediano_abs_pct": 0.0,
+        "error_max_abs_pct": 0.0
+      },
+      "global": {
+        "counts": {
+          "OK": 14,
+          "DIFERENCIA_LEVE": 0,
+          "DIFERENCIA_MEDIA": 0,
+          "DIFERENCIA_ALTA": 0
+        },
+        "error_promedio_abs_pct": 0.0,
+        "error_mediano_abs_pct": 0.0,
+        "error_max_abs_pct": 0.0
+      }
+    }
+  },
+  "B3": {
+    "factors": {
+      "papel_por_familia": {
+        "tirada_corta": 0.0019214554551745039,
+        "tirada_media": 0.00173717298733495,
+        "tirada_larga": 0.001615035173450203
+      },
+      "especial_por_familia": {
+        "tirada_corta": 1.2597801867701295,
+        "tirada_media": 1.1384759122567185,
+        "tirada_larga": 1.0592273612426166
+      }
+    },
+    "papel": [
+      {
+        "cantidad_rango": "1",
+        "key": "tirada_corta",
+        "factor": 0.0019214554551745039,
+        "precio_base_excel": 523393.0,
+        "precio_calibrado": 1005.6763350501491,
+        "precio_objetivo": 1069.0,
+        "diferencia_abs": -63.32366494985092,
+        "diferencia_pct": -5.923635636094567,
+        "estado": "DIFERENCIA_MEDIA"
+      },
+      {
+        "cantidad_rango": "2 a 25",
+        "key": "tirada_corta",
+        "factor": 0.0019214554551745039,
+        "precio_base_excel": 468299.0,
+        "precio_calibrado": 899.815668202765,
+        "precio_objetivo": 875.0,
+        "diferencia_abs": 24.815668202764982,
+        "diferencia_pct": 2.8360763660302837,
+        "estado": "DIFERENCIA_LEVE"
+      },
+      {
+        "cantidad_rango": "26 a 50",
+        "key": "tirada_corta",
+        "factor": 0.0019214554551745039,
+        "precio_base_excel": 454525.5,
+        "precio_calibrado": 873.350501490919,
+        "precio_objetivo": 826.0,
+        "diferencia_abs": 47.35050149091899,
+        "diferencia_pct": 5.732506233767431,
+        "estado": "DIFERENCIA_MEDIA"
+      },
+      {
+        "cantidad_rango": "51 a 100",
+        "key": "tirada_media",
+        "factor": 0.00173717298733495,
+        "precio_base_excel": 440752.0,
+        "precio_calibrado": 765.6624685138539,
+        "precio_objetivo": 778.0,
+        "diferencia_abs": -12.337531486146077,
+        "diferencia_pct": -1.5858009622295728,
+        "estado": "DIFERENCIA_LEVE"
+      },
+      {
+        "cantidad_rango": "101 a 300",
+        "key": "tirada_media",
+        "factor": 0.00173717298733495,
+        "precio_base_excel": 426978.5,
+        "precio_calibrado": 741.7355163727959,
+        "precio_objetivo": 729.0,
+        "diferencia_abs": 12.735516372795928,
+        "diferencia_pct": 1.746984413277905,
+        "estado": "DIFERENCIA_LEVE"
+      },
+      {
+        "cantidad_rango": "301 a 500",
+        "key": "tirada_larga",
+        "factor": 0.001615035173450203,
+        "precio_base_excel": 413205.0,
+        "precio_calibrado": 667.340608845491,
+        "precio_objetivo": 680.0,
+        "diferencia_abs": -12.659391154508967,
+        "diferencia_pct": -1.8616751697807306,
+        "estado": "DIFERENCIA_LEVE"
+      },
+      {
+        "cantidad_rango": "501 a 1000",
+        "key": "tirada_larga",
+        "factor": 0.001615035173450203,
+        "precio_base_excel": 399431.5,
+        "precio_calibrado": 645.0959218839747,
+        "precio_objetivo": 632.0,
+        "diferencia_abs": 13.095921883974711,
+        "diferencia_pct": 2.0721395386035937,
+        "estado": "DIFERENCIA_LEVE"
+      }
+    ],
+    "especial": [
+      {
+        "cantidad_rango": "1",
+        "key": "tirada_corta",
+        "factor": 1.2597801867701295,
+        "precio_base_excel": 1341.8275,
+        "precio_calibrado": 1690.407698563296,
+        "precio_objetivo": 1797.0,
+        "diferencia_abs": -106.59230143670402,
+        "diferencia_pct": -5.931680658692488,
+        "estado": "DIFERENCIA_MEDIA"
+      },
+      {
+        "cantidad_rango": "2 a 25",
+        "key": "tirada_corta",
+        "factor": 1.2597801867701295,
+        "precio_base_excel": 1200.5825,
+        "precio_calibrado": 1512.470046082949,
+        "precio_objetivo": 1470.0,
+        "diferencia_abs": 42.47004608294901,
+        "diferencia_pct": 2.8891187811529937,
+        "estado": "DIFERENCIA_LEVE"
+      },
+      {
+        "cantidad_rango": "26 a 50",
+        "key": "tirada_corta",
+        "factor": 1.2597801867701295,
+        "precio_base_excel": 1165.27125,
+        "precio_calibrado": 1467.9856329628622,
+        "precio_objetivo": 1389.0,
+        "diferencia_abs": 78.98563296286216,
+        "diferencia_pct": 5.686510652473877,
+        "estado": "DIFERENCIA_MEDIA"
+      },
+      {
+        "cantidad_rango": "51 a 100",
+        "key": "tirada_media",
+        "factor": 1.1384759122567185,
+        "precio_base_excel": 1129.96,
+        "precio_calibrado": 1286.4322418136016,
+        "precio_objetivo": 1307.0,
+        "diferencia_abs": -20.56775818639835,
+        "diferencia_pct": -1.5736616822033933,
+        "estado": "DIFERENCIA_LEVE"
+      },
+      {
+        "cantidad_rango": "101 a 300",
+        "key": "tirada_media",
+        "factor": 1.1384759122567185,
+        "precio_base_excel": 1094.64875,
+        "precio_calibrado": 1246.2312342569267,
+        "precio_objetivo": 1225.0,
+        "diferencia_abs": 21.231234256926655,
+        "diferencia_pct": 1.733161980157278,
+        "estado": "DIFERENCIA_LEVE"
+      },
+      {
+        "cantidad_rango": "301 a 500",
+        "key": "tirada_larga",
+        "factor": 1.0592273612426166,
+        "precio_base_excel": 1059.3375,
+        "precio_calibrado": 1122.0792647903504,
+        "precio_objetivo": 1144.0,
+        "diferencia_abs": -21.920735209649592,
+        "diferencia_pct": -1.9161481826616775,
+        "estado": "DIFERENCIA_LEVE"
+      },
+      {
+        "cantidad_rango": "501 a 1000",
+        "key": "tirada_larga",
+        "factor": 1.0592273612426166,
+        "precio_base_excel": 1024.02625,
+        "precio_calibrado": 1084.676622630672,
+        "precio_objetivo": 1062.0,
+        "diferencia_abs": 22.676622630672,
+        "diferencia_pct": 2.1352752006282487,
+        "estado": "DIFERENCIA_LEVE"
+      }
+    ],
+    "summary": {
+      "papel": {
+        "counts": {
+          "OK": 0,
+          "DIFERENCIA_LEVE": 5,
+          "DIFERENCIA_MEDIA": 2,
+          "DIFERENCIA_ALTA": 0
+        },
+        "error_promedio_abs_pct": 3.108402617112012,
+        "error_mediano_abs_pct": 2.0721395386035937,
+        "error_max_abs_pct": 5.923635636094567
+      },
+      "especial": {
+        "counts": {
+          "OK": 0,
+          "DIFERENCIA_LEVE": 5,
+          "DIFERENCIA_MEDIA": 2,
+          "DIFERENCIA_ALTA": 0
+        },
+        "error_promedio_abs_pct": 3.123651019709994,
+        "error_mediano_abs_pct": 2.1352752006282487,
+        "error_max_abs_pct": 5.931680658692488
+      },
+      "global": {
+        "counts": {
+          "OK": 0,
+          "DIFERENCIA_LEVE": 10,
+          "DIFERENCIA_MEDIA": 4,
+          "DIFERENCIA_ALTA": 0
+        },
+        "error_promedio_abs_pct": 3.1160268184110027,
+        "error_mediano_abs_pct": 2.103707369615921,
+        "error_max_abs_pct": 5.931680658692488
+      }
+    }
+  }
+}

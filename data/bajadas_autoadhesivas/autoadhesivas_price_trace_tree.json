@@ -1,0 +1,1268 @@
+[
+  {
+    "categoria": "Bajadas Autoadhesivas",
+    "formato": "A3+",
+    "columna": "papel",
+    "base_origen_excel": "stickers",
+    "range_label": 1.0,
+    "output_cell": "S4",
+    "tree": {
+      "sheet": "Bajadas",
+      "cell": "S4",
+      "value": 523393,
+      "formula": "=(AC48+AC12)*AH48",
+      "depth": 0,
+      "children": [
+        {
+          "sheet": "Bajadas",
+          "cell": "AC48",
+          "value": 195,
+          "formula": "=AF48*$AM$42",
+          "depth": 1,
+          "children": [
+            {
+              "sheet": "Bajadas",
+              "cell": "AF48",
+              "value": 1.0,
+              "formula": 1.0,
+              "depth": 2,
+              "children": []
+            },
+            {
+              "sheet": "Bajadas",
+              "cell": "AM42",
+              "value": 195,
+              "formula": "=AK42*AN38",
+              "depth": 2,
+              "children": []
+            }
+          ]
+        },
+        {
+          "sheet": "Bajadas",
+          "cell": "AC12",
+          "value": 275275,
+          "formula": "=AI12*$AM$38*AC26",
+          "depth": 1,
+          "children": [
+            {
+              "sheet": "Bajadas",
+              "cell": "AI12",
+              "value": 423.5,
+              "formula": "='PAPEL US$'!J31",
+              "depth": 2,
+              "children": []
+            },
+            {
+              "sheet": "Bajadas",
+              "cell": "AM38",
+              "value": 650.0,
+              "formula": 650.0,
+              "depth": 2,
+              "children": []
+            },
+            {
+              "sheet": "Bajadas",
+              "cell": "AC26",
+              "value": 1.0,
+              "formula": 1.0,
+              "depth": 2,
+              "children": []
+            }
+          ]
+        },
+        {
+          "sheet": "Bajadas",
+          "cell": "AH48",
+          "value": 1.9,
+          "formula": 1.9,
+          "depth": 1,
+          "children": []
+        }
+      ]
+    }
+  },
+  {
+    "categoria": "Bajadas Autoadhesivas",
+    "formato": "A3+",
+    "columna": "papel",
+    "base_origen_excel": "stickers",
+    "range_label": "2 a 25",
+    "output_cell": "S5",
+    "tree": {
+      "sheet": "Bajadas",
+      "cell": "S5",
+      "value": 468299,
+      "formula": "=(AC49+$AC$12*AF49)*$AH$49",
+      "depth": 0,
+      "children": [
+        {
+          "sheet": "Bajadas",
+          "cell": "AC49",
+          "value": 195,
+          "formula": "=AF49*$AM$42",
+          "depth": 1,
+          "children": [
+            {
+              "sheet": "Bajadas",
+              "cell": "AF49",
+              "value": 1.0,
+              "formula": 1.0,
+              "depth": 2,
+              "children": []
+            },
+            {
+              "sheet": "Bajadas",
+              "cell": "AM42",
+              "value": 195,
+              "formula": "=AK42*AN38",
+              "depth": 2,
+              "children": []
+            }
+          ]
+        },
+        {
+          "sheet": "Bajadas",
+          "cell": "AC12",
+          "value": 275275,
+          "formula": "=AI12*$AM$38*AC26",
+          "depth": 1,
+          "children": [
+            {
+              "sheet": "Bajadas",
+              "cell": "AI12",
+              "value": 423.5,
+              "formula": "='PAPEL US$'!J31",
+              "depth": 2,
+              "children": []
+            },
+            {
+              "sheet": "Bajadas",
+              "cell": "AM38",
+              "value": 650.0,
+              "formula": 650.0,
+              "depth": 2,
+              "children": []
+            },
+            {
+              "sheet": "Bajadas",
+              "cell": "AC26",
+              "value": 1.0,
+              "formula": 1.0,
+              "depth": 2,
+              "children": []
+            }
+          ]
+        },
+        {
+          "sheet": "Bajadas",
+          "cell": "AF49",
+          "value": 1.0,
+          "formula": 1.0,
+          "depth": 1,
+          "children": []
+        },
+        {
+          "sheet": "Bajadas",
+          "cell": "AH49",
+          "value": 1.7,
+          "formula": 1.7,
+          "depth": 1,
+          "children": []
+        }
+      ]
+    }
+  },
+  {
+    "categoria": "Bajadas Autoadhesivas",
+    "formato": "A3+",
+    "columna": "papel",
+    "base_origen_excel": "stickers",
+    "range_label": "26 a 50",
+    "output_cell": "S6",
+    "tree": {
+      "sheet": "Bajadas",
+      "cell": "S6",
+      "value": 454525.5,
+      "formula": "=(AC50+$AC$12*AF50)*$AH$50",
+      "depth": 0,
+      "children": [
+        {
+          "sheet": "Bajadas",
+          "cell": "AC50",
+          "value": 195,
+          "formula": "=AF50*$AM$42",
+          "depth": 1,
+          "children": [
+            {
+              "sheet": "Bajadas",
+              "cell": "AF50",
+              "value": 1.0,
+              "formula": 1.0,
+              "depth": 2,
+              "children": []
+            },
+            {
+              "sheet": "Bajadas",
+              "cell": "AM42",
+              "value": 195,
+              "formula": "=AK42*AN38",
+              "depth": 2,
+              "children": []
+            }
+          ]
+        },
+        {
+          "sheet": "Bajadas",
+          "cell": "AC12",
+          "value": 275275,
+          "formula": "=AI12*$AM$38*AC26",
+          "depth": 1,
+          "children": [
+            {
+              "sheet": "Bajadas",
+              "cell": "AI12",
+              "value": 423.5,
+              "formula": "='PAPEL US$'!J31",
+              "depth": 2,
+              "children": []
+            },
+            {
+              "sheet": "Bajadas",
+              "cell": "AM38",
+              "value": 650.0,
+              "formula": 650.0,
+              "depth": 2,
+              "children": []
+            },
+            {
+              "sheet": "Bajadas",
+              "cell": "AC26",
+              "value": 1.0,
+              "formula": 1.0,
+              "depth": 2,
+              "children": []
+            }
+          ]
+        },
+        {
+          "sheet": "Bajadas",
+          "cell": "AF50",
+          "value": 1.0,
+          "formula": 1.0,
+          "depth": 1,
+          "children": []
+        },
+        {
+          "sheet": "Bajadas",
+          "cell": "AH50",
+          "value": 1.65,
+          "formula": 1.65,
+          "depth": 1,
+          "children": []
+        }
+      ]
+    }
+  },
+  {
+    "categoria": "Bajadas Autoadhesivas",
+    "formato": "A3+",
+    "columna": "papel",
+    "base_origen_excel": "stickers",
+    "range_label": "51 a 100",
+    "output_cell": "S7",
+    "tree": {
+      "sheet": "Bajadas",
+      "cell": "S7",
+      "value": 440752,
+      "formula": "=(AC51+$AC$12*AF51)*$AH$51",
+      "depth": 0,
+      "children": [
+        {
+          "sheet": "Bajadas",
+          "cell": "AC51",
+          "value": 195,
+          "formula": "=AF51*$AM$42",
+          "depth": 1,
+          "children": [
+            {
+              "sheet": "Bajadas",
+              "cell": "AF51",
+              "value": 1.0,
+              "formula": 1.0,
+              "depth": 2,
+              "children": []
+            },
+            {
+              "sheet": "Bajadas",
+              "cell": "AM42",
+              "value": 195,
+              "formula": "=AK42*AN38",
+              "depth": 2,
+              "children": []
+            }
+          ]
+        },
+        {
+          "sheet": "Bajadas",
+          "cell": "AC12",
+          "value": 275275,
+          "formula": "=AI12*$AM$38*AC26",
+          "depth": 1,
+          "children": [
+            {
+              "sheet": "Bajadas",
+              "cell": "AI12",
+              "value": 423.5,
+              "formula": "='PAPEL US$'!J31",
+              "depth": 2,
+              "children": []
+            },
+            {
+              "sheet": "Bajadas",
+              "cell": "AM38",
+              "value": 650.0,
+              "formula": 650.0,
+              "depth": 2,
+              "children": []
+            },
+            {
+              "sheet": "Bajadas",
+              "cell": "AC26",
+              "value": 1.0,
+              "formula": 1.0,
+              "depth": 2,
+              "children": []
+            }
+          ]
+        },
+        {
+          "sheet": "Bajadas",
+          "cell": "AF51",
+          "value": 1.0,
+          "formula": 1.0,
+          "depth": 1,
+          "children": []
+        },
+        {
+          "sheet": "Bajadas",
+          "cell": "AH51",
+          "value": 1.6,
+          "formula": 1.6,
+          "depth": 1,
+          "children": []
+        }
+      ]
+    }
+  },
+  {
+    "categoria": "Bajadas Autoadhesivas",
+    "formato": "A3+",
+    "columna": "papel",
+    "base_origen_excel": "stickers",
+    "range_label": "101 a 300",
+    "output_cell": "S8",
+    "tree": {
+      "sheet": "Bajadas",
+      "cell": "S8",
+      "value": 426978.5,
+      "formula": "=(AC52+$AC$12*AF52)*$AH$52",
+      "depth": 0,
+      "children": [
+        {
+          "sheet": "Bajadas",
+          "cell": "AC52",
+          "value": 195,
+          "formula": "=AF52*$AM$42",
+          "depth": 1,
+          "children": [
+            {
+              "sheet": "Bajadas",
+              "cell": "AF52",
+              "value": 1.0,
+              "formula": 1.0,
+              "depth": 2,
+              "children": []
+            },
+            {
+              "sheet": "Bajadas",
+              "cell": "AM42",
+              "value": 195,
+              "formula": "=AK42*AN38",
+              "depth": 2,
+              "children": []
+            }
+          ]
+        },
+        {
+          "sheet": "Bajadas",
+          "cell": "AC12",
+          "value": 275275,
+          "formula": "=AI12*$AM$38*AC26",
+          "depth": 1,
+          "children": [
+            {
+              "sheet": "Bajadas",
+              "cell": "AI12",
+              "value": 423.5,
+              "formula": "='PAPEL US$'!J31",
+              "depth": 2,
+              "children": []
+            },
+            {
+              "sheet": "Bajadas",
+              "cell": "AM38",
+              "value": 650.0,
+              "formula": 650.0,
+              "depth": 2,
+              "children": []
+            },
+            {
+              "sheet": "Bajadas",
+              "cell": "AC26",
+              "value": 1.0,
+              "formula": 1.0,
+              "depth": 2,
+              "children": []
+            }
+          ]
+        },
+        {
+          "sheet": "Bajadas",
+          "cell": "AF52",
+          "value": 1.0,
+          "formula": 1.0,
+          "depth": 1,
+          "children": []
+        },
+        {
+          "sheet": "Bajadas",
+          "cell": "AH52",
+          "value": 1.55,
+          "formula": 1.55,
+          "depth": 1,
+          "children": []
+        }
+      ]
+    }
+  },
+  {
+    "categoria": "Bajadas Autoadhesivas",
+    "formato": "A3+",
+    "columna": "papel",
+    "base_origen_excel": "stickers",
+    "range_label": "301 a 500",
+    "output_cell": "S9",
+    "tree": {
+      "sheet": "Bajadas",
+      "cell": "S9",
+      "value": 413205,
+      "formula": "=(AC53+$AC$12*AF53)*$AH$53",
+      "depth": 0,
+      "children": [
+        {
+          "sheet": "Bajadas",
+          "cell": "AC53",
+          "value": 195,
+          "formula": "=AF53*$AM$42",
+          "depth": 1,
+          "children": [
+            {
+              "sheet": "Bajadas",
+              "cell": "AF53",
+              "value": 1.0,
+              "formula": 1.0,
+              "depth": 2,
+              "children": []
+            },
+            {
+              "sheet": "Bajadas",
+              "cell": "AM42",
+              "value": 195,
+              "formula": "=AK42*AN38",
+              "depth": 2,
+              "children": []
+            }
+          ]
+        },
+        {
+          "sheet": "Bajadas",
+          "cell": "AC12",
+          "value": 275275,
+          "formula": "=AI12*$AM$38*AC26",
+          "depth": 1,
+          "children": [
+            {
+              "sheet": "Bajadas",
+              "cell": "AI12",
+              "value": 423.5,
+              "formula": "='PAPEL US$'!J31",
+              "depth": 2,
+              "children": []
+            },
+            {
+              "sheet": "Bajadas",
+              "cell": "AM38",
+              "value": 650.0,
+              "formula": 650.0,
+              "depth": 2,
+              "children": []
+            },
+            {
+              "sheet": "Bajadas",
+              "cell": "AC26",
+              "value": 1.0,
+              "formula": 1.0,
+              "depth": 2,
+              "children": []
+            }
+          ]
+        },
+        {
+          "sheet": "Bajadas",
+          "cell": "AF53",
+          "value": 1.0,
+          "formula": 1.0,
+          "depth": 1,
+          "children": []
+        },
+        {
+          "sheet": "Bajadas",
+          "cell": "AH53",
+          "value": 1.5,
+          "formula": 1.5,
+          "depth": 1,
+          "children": []
+        }
+      ]
+    }
+  },
+  {
+    "categoria": "Bajadas Autoadhesivas",
+    "formato": "A3+",
+    "columna": "papel",
+    "base_origen_excel": "stickers",
+    "range_label": "501 a 1000",
+    "output_cell": "S10",
+    "tree": {
+      "sheet": "Bajadas",
+      "cell": "S10",
+      "value": 399431.5,
+      "formula": "=(AC54+$AC$12*AF54)*$AH$54",
+      "depth": 0,
+      "children": [
+        {
+          "sheet": "Bajadas",
+          "cell": "AC54",
+          "value": 195,
+          "formula": "=AF54*$AM$42",
+          "depth": 1,
+          "children": [
+            {
+              "sheet": "Bajadas",
+              "cell": "AF54",
+              "value": 1.0,
+              "formula": 1.0,
+              "depth": 2,
+              "children": []
+            },
+            {
+              "sheet": "Bajadas",
+              "cell": "AM42",
+              "value": 195,
+              "formula": "=AK42*AN38",
+              "depth": 2,
+              "children": []
+            }
+          ]
+        },
+        {
+          "sheet": "Bajadas",
+          "cell": "AC12",
+          "value": 275275,
+          "formula": "=AI12*$AM$38*AC26",
+          "depth": 1,
+          "children": [
+            {
+              "sheet": "Bajadas",
+              "cell": "AI12",
+              "value": 423.5,
+              "formula": "='PAPEL US$'!J31",
+              "depth": 2,
+              "children": []
+            },
+            {
+              "sheet": "Bajadas",
+              "cell": "AM38",
+              "value": 650.0,
+              "formula": 650.0,
+              "depth": 2,
+              "children": []
+            },
+            {
+              "sheet": "Bajadas",
+              "cell": "AC26",
+              "value": 1.0,
+              "formula": 1.0,
+              "depth": 2,
+              "children": []
+            }
+          ]
+        },
+        {
+          "sheet": "Bajadas",
+          "cell": "AF54",
+          "value": 1.0,
+          "formula": 1.0,
+          "depth": 1,
+          "children": []
+        },
+        {
+          "sheet": "Bajadas",
+          "cell": "AH54",
+          "value": 1.45,
+          "formula": 1.45,
+          "depth": 1,
+          "children": []
+        }
+      ]
+    }
+  },
+  {
+    "categoria": "Bajadas Autoadhesivas",
+    "formato": "A3+",
+    "columna": "especial",
+    "base_origen_excel": "OPP blanco/blanco",
+    "range_label": 1.0,
+    "output_cell": "U4",
+    "tree": {
+      "sheet": "Bajadas",
+      "cell": "U4",
+      "value": 1341.8275,
+      "formula": "=(AC48+$AC$13*AF48)*AH48",
+      "depth": 0,
+      "children": [
+        {
+          "sheet": "Bajadas",
+          "cell": "AC48",
+          "value": 195,
+          "formula": "=AF48*$AM$42",
+          "depth": 1,
+          "children": [
+            {
+              "sheet": "Bajadas",
+              "cell": "AF48",
+              "value": 1.0,
+              "formula": 1.0,
+              "depth": 2,
+              "children": []
+            },
+            {
+              "sheet": "Bajadas",
+              "cell": "AM42",
+              "value": 195,
+              "formula": "=AK42*AN38",
+              "depth": 2,
+              "children": []
+            }
+          ]
+        },
+        {
+          "sheet": "Bajadas",
+          "cell": "AC13",
+          "value": 511.225,
+          "formula": "=AI13*$AM$38*AC27",
+          "depth": 1,
+          "children": [
+            {
+              "sheet": "Bajadas",
+              "cell": "AI13",
+              "value": 0.7865,
+              "formula": "='PAPEL US$'!J36",
+              "depth": 2,
+              "children": []
+            },
+            {
+              "sheet": "Bajadas",
+              "cell": "AM38",
+              "value": 650.0,
+              "formula": 650.0,
+              "depth": 2,
+              "children": []
+            },
+            {
+              "sheet": "Bajadas",
+              "cell": "AC27",
+              "value": 1.0,
+              "formula": 1.0,
+              "depth": 2,
+              "children": []
+            }
+          ]
+        },
+        {
+          "sheet": "Bajadas",
+          "cell": "AF48",
+          "value": 1.0,
+          "formula": 1.0,
+          "depth": 1,
+          "children": []
+        },
+        {
+          "sheet": "Bajadas",
+          "cell": "AH48",
+          "value": 1.9,
+          "formula": 1.9,
+          "depth": 1,
+          "children": []
+        }
+      ]
+    }
+  },
+  {
+    "categoria": "Bajadas Autoadhesivas",
+    "formato": "A3+",
+    "columna": "especial",
+    "base_origen_excel": "OPP blanco/blanco",
+    "range_label": "2 a 25",
+    "output_cell": "U5",
+    "tree": {
+      "sheet": "Bajadas",
+      "cell": "U5",
+      "value": 1200.5825,
+      "formula": "=(AC49+$AC$13*AF49)*AH49",
+      "depth": 0,
+      "children": [
+        {
+          "sheet": "Bajadas",
+          "cell": "AC49",
+          "value": 195,
+          "formula": "=AF49*$AM$42",
+          "depth": 1,
+          "children": [
+            {
+              "sheet": "Bajadas",
+              "cell": "AF49",
+              "value": 1.0,
+              "formula": 1.0,
+              "depth": 2,
+              "children": []
+            },
+            {
+              "sheet": "Bajadas",
+              "cell": "AM42",
+              "value": 195,
+              "formula": "=AK42*AN38",
+              "depth": 2,
+              "children": []
+            }
+          ]
+        },
+        {
+          "sheet": "Bajadas",
+          "cell": "AC13",
+          "value": 511.225,
+          "formula": "=AI13*$AM$38*AC27",
+          "depth": 1,
+          "children": [
+            {
+              "sheet": "Bajadas",
+              "cell": "AI13",
+              "value": 0.7865,
+              "formula": "='PAPEL US$'!J36",
+              "depth": 2,
+              "children": []
+            },
+            {
+              "sheet": "Bajadas",
+              "cell": "AM38",
+              "value": 650.0,
+              "formula": 650.0,
+              "depth": 2,
+              "children": []
+            },
+            {
+              "sheet": "Bajadas",
+              "cell": "AC27",
+              "value": 1.0,
+              "formula": 1.0,
+              "depth": 2,
+              "children": []
+            }
+          ]
+        },
+        {
+          "sheet": "Bajadas",
+          "cell": "AF49",
+          "value": 1.0,
+          "formula": 1.0,
+          "depth": 1,
+          "children": []
+        },
+        {
+          "sheet": "Bajadas",
+          "cell": "AH49",
+          "value": 1.7,
+          "formula": 1.7,
+          "depth": 1,
+          "children": []
+        }
+      ]
+    }
+  },
+  {
+    "categoria": "Bajadas Autoadhesivas",
+    "formato": "A3+",
+    "columna": "especial",
+    "base_origen_excel": "OPP blanco/blanco",
+    "range_label": "26 a 50",
+    "output_cell": "U6",
+    "tree": {
+      "sheet": "Bajadas",
+      "cell": "U6",
+      "value": 1165.27125,
+      "formula": "=(AC50+$AC$13*AF50)*AH50",
+      "depth": 0,
+      "children": [
+        {
+          "sheet": "Bajadas",
+          "cell": "AC50",
+          "value": 195,
+          "formula": "=AF50*$AM$42",
+          "depth": 1,
+          "children": [
+            {
+              "sheet": "Bajadas",
+              "cell": "AF50",
+              "value": 1.0,
+              "formula": 1.0,
+              "depth": 2,
+              "children": []
+            },
+            {
+              "sheet": "Bajadas",
+              "cell": "AM42",
+              "value": 195,
+              "formula": "=AK42*AN38",
+              "depth": 2,
+              "children": []
+            }
+          ]
+        },
+        {
+          "sheet": "Bajadas",
+          "cell": "AC13",
+          "value": 511.225,
+          "formula": "=AI13*$AM$38*AC27",
+          "depth": 1,
+          "children": [
+            {
+              "sheet": "Bajadas",
+              "cell": "AI13",
+              "value": 0.7865,
+              "formula": "='PAPEL US$'!J36",
+              "depth": 2,
+              "children": []
+            },
+            {
+              "sheet": "Bajadas",
+              "cell": "AM38",
+              "value": 650.0,
+              "formula": 650.0,
+              "depth": 2,
+              "children": []
+            },
+            {
+              "sheet": "Bajadas",
+              "cell": "AC27",
+              "value": 1.0,
+              "formula": 1.0,
+              "depth": 2,
+              "children": []
+            }
+          ]
+        },
+        {
+          "sheet": "Bajadas",
+          "cell": "AF50",
+          "value": 1.0,
+          "formula": 1.0,
+          "depth": 1,
+          "children": []
+        },
+        {
+          "sheet": "Bajadas",
+          "cell": "AH50",
+          "value": 1.65,
+          "formula": 1.65,
+          "depth": 1,
+          "children": []
+        }
+      ]
+    }
+  },
+  {
+    "categoria": "Bajadas Autoadhesivas",
+    "formato": "A3+",
+    "columna": "especial",
+    "base_origen_excel": "OPP blanco/blanco",
+    "range_label": "51 a 100",
+    "output_cell": "U7",
+    "tree": {
+      "sheet": "Bajadas",
+      "cell": "U7",
+      "value": 1129.96,
+      "formula": "=(AC51+$AC$13*AF51)*AH51",
+      "depth": 0,
+      "children": [
+        {
+          "sheet": "Bajadas",
+          "cell": "AC51",
+          "value": 195,
+          "formula": "=AF51*$AM$42",
+          "depth": 1,
+          "children": [
+            {
+              "sheet": "Bajadas",
+              "cell": "AF51",
+              "value": 1.0,
+              "formula": 1.0,
+              "depth": 2,
+              "children": []
+            },
+            {
+              "sheet": "Bajadas",
+              "cell": "AM42",
+              "value": 195,
+              "formula": "=AK42*AN38",
+              "depth": 2,
+              "children": []
+            }
+          ]
+        },
+        {
+          "sheet": "Bajadas",
+          "cell": "AC13",
+          "value": 511.225,
+          "formula": "=AI13*$AM$38*AC27",
+          "depth": 1,
+          "children": [
+            {
+              "sheet": "Bajadas",
+              "cell": "AI13",
+              "value": 0.7865,
+              "formula": "='PAPEL US$'!J36",
+              "depth": 2,
+              "children": []
+            },
+            {
+              "sheet": "Bajadas",
+              "cell": "AM38",
+              "value": 650.0,
+              "formula": 650.0,
+              "depth": 2,
+              "children": []
+            },
+            {
+              "sheet": "Bajadas",
+              "cell": "AC27",
+              "value": 1.0,
+              "formula": 1.0,
+              "depth": 2,
+              "children": []
+            }
+          ]
+        },
+        {
+          "sheet": "Bajadas",
+          "cell": "AF51",
+          "value": 1.0,
+          "formula": 1.0,
+          "depth": 1,
+          "children": []
+        },
+        {
+          "sheet": "Bajadas",
+          "cell": "AH51",
+          "value": 1.6,
+          "formula": 1.6,
+          "depth": 1,
+          "children": []
+        }
+      ]
+    }
+  },
+  {
+    "categoria": "Bajadas Autoadhesivas",
+    "formato": "A3+",
+    "columna": "especial",
+    "base_origen_excel": "OPP blanco/blanco",
+    "range_label": "101 a 300",
+    "output_cell": "U8",
+    "tree": {
+      "sheet": "Bajadas",
+      "cell": "U8",
+      "value": 1094.64875,
+      "formula": "=(AC52+$AC$13*AF52)*AH52",
+      "depth": 0,
+      "children": [
+        {
+          "sheet": "Bajadas",
+          "cell": "AC52",
+          "value": 195,
+          "formula": "=AF52*$AM$42",
+          "depth": 1,
+          "children": [
+            {
+              "sheet": "Bajadas",
+              "cell": "AF52",
+              "value": 1.0,
+              "formula": 1.0,
+              "depth": 2,
+              "children": []
+            },
+            {
+              "sheet": "Bajadas",
+              "cell": "AM42",
+              "value": 195,
+              "formula": "=AK42*AN38",
+              "depth": 2,
+              "children": []
+            }
+          ]
+        },
+        {
+          "sheet": "Bajadas",
+          "cell": "AC13",
+          "value": 511.225,
+          "formula": "=AI13*$AM$38*AC27",
+          "depth": 1,
+          "children": [
+            {
+              "sheet": "Bajadas",
+              "cell": "AI13",
+              "value": 0.7865,
+              "formula": "='PAPEL US$'!J36",
+              "depth": 2,
+              "children": []
+            },
+            {
+              "sheet": "Bajadas",
+              "cell": "AM38",
+              "value": 650.0,
+              "formula": 650.0,
+              "depth": 2,
+              "children": []
+            },
+            {
+              "sheet": "Bajadas",
+              "cell": "AC27",
+              "value": 1.0,
+              "formula": 1.0,
+              "depth": 2,
+              "children": []
+            }
+          ]
+        },
+        {
+          "sheet": "Bajadas",
+          "cell": "AF52",
+          "value": 1.0,
+          "formula": 1.0,
+          "depth": 1,
+          "children": []
+        },
+        {
+          "sheet": "Bajadas",
+          "cell": "AH52",
+          "value": 1.55,
+          "formula": 1.55,
+          "depth": 1,
+          "children": []
+        }
+      ]
+    }
+  },
+  {
+    "categoria": "Bajadas Autoadhesivas",
+    "formato": "A3+",
+    "columna": "especial",
+    "base_origen_excel": "OPP blanco/blanco",
+    "range_label": "301 a 500",
+    "output_cell": "U9",
+    "tree": {
+      "sheet": "Bajadas",
+      "cell": "U9",
+      "value": 1059.3375,
+      "formula": "=(AC53+$AC$13*AF53)*AH53",
+      "depth": 0,
+      "children": [
+        {
+          "sheet": "Bajadas",
+          "cell": "AC53",
+          "value": 195,
+          "formula": "=AF53*$AM$42",
+          "depth": 1,
+          "children": [
+            {
+              "sheet": "Bajadas",
+              "cell": "AF53",
+              "value": 1.0,
+              "formula": 1.0,
+              "depth": 2,
+              "children": []
+            },
+            {
+              "sheet": "Bajadas",
+              "cell": "AM42",
+              "value": 195,
+              "formula": "=AK42*AN38",
+              "depth": 2,
+              "children": []
+            }
+          ]
+        },
+        {
+          "sheet": "Bajadas",
+          "cell": "AC13",
+          "value": 511.225,
+          "formula": "=AI13*$AM$38*AC27",
+          "depth": 1,
+          "children": [
+            {
+              "sheet": "Bajadas",
+              "cell": "AI13",
+              "value": 0.7865,
+              "formula": "='PAPEL US$'!J36",
+              "depth": 2,
+              "children": []
+            },
+            {
+              "sheet": "Bajadas",
+              "cell": "AM38",
+              "value": 650.0,
+              "formula": 650.0,
+              "depth": 2,
+              "children": []
+            },
+            {
+              "sheet": "Bajadas",
+              "cell": "AC27",
+              "value": 1.0,
+              "formula": 1.0,
+              "depth": 2,
+              "children": []
+            }
+          ]
+        },
+        {
+          "sheet": "Bajadas",
+          "cell": "AF53",
+          "value": 1.0,
+          "formula": 1.0,
+          "depth": 1,
+          "children": []
+        },
+        {
+          "sheet": "Bajadas",
+          "cell": "AH53",
+          "value": 1.5,
+          "formula": 1.5,
+          "depth": 1,
+          "children": []
+        }
+      ]
+    }
+  },
+  {
+    "categoria": "Bajadas Autoadhesivas",
+    "formato": "A3+",
+    "columna": "especial",
+    "base_origen_excel": "OPP blanco/blanco",
+    "range_label": "501 a 1000",
+    "output_cell": "U10",
+    "tree": {
+      "sheet": "Bajadas",
+      "cell": "U10",
+      "value": 1024.02625,
+      "formula": "=(AC54+$AC$13*AF54)*AH54",
+      "depth": 0,
+      "children": [
+        {
+          "sheet": "Bajadas",
+          "cell": "AC54",
+          "value": 195,
+          "formula": "=AF54*$AM$42",
+          "depth": 1,
+          "children": [
+            {
+              "sheet": "Bajadas",
+              "cell": "AF54",
+              "value": 1.0,
+              "formula": 1.0,
+              "depth": 2,
+              "children": []
+            },
+            {
+              "sheet": "Bajadas",
+              "cell": "AM42",
+              "value": 195,
+              "formula": "=AK42*AN38",
+              "depth": 2,
+              "children": []
+            }
+          ]
+        },
+        {
+          "sheet": "Bajadas",
+          "cell": "AC13",
+          "value": 511.225,
+          "formula": "=AI13*$AM$38*AC27",
+          "depth": 1,
+          "children": [
+            {
+              "sheet": "Bajadas",
+              "cell": "AI13",
+              "value": 0.7865,
+              "formula": "='PAPEL US$'!J36",
+              "depth": 2,
+              "children": []
+            },
+            {
+              "sheet": "Bajadas",
+              "cell": "AM38",
+              "value": 650.0,
+              "formula": 650.0,
+              "depth": 2,
+              "children": []
+            },
+            {
+              "sheet": "Bajadas",
+              "cell": "AC27",
+              "value": 1.0,
+              "formula": 1.0,
+              "depth": 2,
+              "children": []
+            }
+          ]
+        },
+        {
+          "sheet": "Bajadas",
+          "cell": "AF54",
+          "value": 1.0,
+          "formula": 1.0,
+          "depth": 1,
+          "children": []
+        },
+        {
+          "sheet": "Bajadas",
+          "cell": "AH54",
+          "value": 1.45,
+          "formula": 1.45,
+          "depth": 1,
+          "children": []
+        }
+      ]
+    }
+  }
+]

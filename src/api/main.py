@@ -48,6 +48,14 @@ class ApiHandler(BaseHTTPRequestHandler):
         if path == "/bajadas-v2/metrics":
             self._send_json(200, self.service.metrics())
             return
+        if path == "/bajadas-v2/autoadhesivas/health":
+            status, payload = self.service.autoadhesivas_health()
+            self._send_json(status, payload)
+            return
+        if path == "/bajadas-v2/autoadhesivas/config":
+            status, payload = self.service.autoadhesivas_config()
+            self._send_json(status, payload)
+            return
         if path == "/bajadas-v2/config":
             status, payload = self.service.get_config()
             self._send_json(status, payload)

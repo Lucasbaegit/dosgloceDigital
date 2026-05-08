@@ -20,9 +20,11 @@ class QuoteRequestSchema:
     tipo_papel: str
     material: str
     gramaje: str
-    cantidad_rango: str
+    cantidad_rango: str | None
     cantidad_unidades: int | None
     caras: str
+    tipo_producto: str | None
+    columna_precio: str | None
     terminacion: str | None
     urgencia: str
 
@@ -35,7 +37,6 @@ class QuoteRequestSchema:
             "tipo_papel",
             "material",
             "gramaje",
-            "cantidad_rango",
             "caras",
             "urgencia",
         ]
@@ -50,9 +51,17 @@ class QuoteRequestSchema:
             tipo_papel=str(payload["tipo_papel"]).strip(),
             material=str(payload["material"]).strip(),
             gramaje=str(payload["gramaje"]).strip(),
-            cantidad_rango=str(payload["cantidad_rango"]).strip(),
+            cantidad_rango=(
+                None if payload.get("cantidad_rango") in (None, "") else str(payload.get("cantidad_rango")).strip()
+            ),
             cantidad_unidades=cls._coerce_positive_int(payload.get("cantidad_unidades")),
             caras=str(payload["caras"]).strip(),
+            tipo_producto=(
+                None if payload.get("tipo_producto") in (None, "") else str(payload.get("tipo_producto")).strip()
+            ),
+            columna_precio=(
+                None if payload.get("columna_precio") in (None, "") else str(payload.get("columna_precio")).strip()
+            ),
             terminacion=(None if payload.get("terminacion") in ("", None) else str(payload.get("terminacion"))),
             urgencia=str(payload["urgencia"]).strip().lower(),
         )
@@ -65,7 +74,7 @@ class QuoteRequestSchema:
             tipo_papel=self.tipo_papel,
             material=self.material,
             gramaje=self.gramaje,
-            cantidad_rango=self.cantidad_rango,
+            cantidad_rango=self.cantidad_rango or "",
             cantidad_unidades=self.cantidad_unidades,
             caras=self.caras,
             terminacion=self.terminacion,

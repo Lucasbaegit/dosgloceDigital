@@ -1,0 +1,15 @@
+{
+  "papel": {
+    "formula_usable_directa": false,
+    "status": "PAPEL_FORMULA_EXCEL_NO_USABLE_DIRECTA",
+    "modelo_recomendado": "Hibrido_B_a_C",
+    "decision": "Mantener árbol Excel como trazabilidad técnica y usar tabla calibrada por rango como valor operativo"
+  },
+  "especial": {
+    "formula_usable_directa": true,
+    "status": "FORMULA_USABLE",
+    "modelo_recomendado": "B3",
+    "decision": "Mantener Modelo B3 (columna especial calibrable con error aceptable)"
+  },
+  "tinta_blanca_laca_uv_fuera_alcance": true
+}

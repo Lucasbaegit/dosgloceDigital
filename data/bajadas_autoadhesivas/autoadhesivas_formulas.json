@@ -1,0 +1,526 @@
+{
+  "formulas": [
+    {
+      "cell": "S4",
+      "column_type": "papel_base_stickers",
+      "range_label": 1.0,
+      "formula": "=(AC48+AC12)*AH48",
+      "value": 523393,
+      "references": [
+        {
+          "sheet": "Bajadas",
+          "cell": "AC48",
+          "value": 195,
+          "formula": "=AF48*$AM$42"
+        },
+        {
+          "sheet": "Bajadas",
+          "cell": "AC12",
+          "value": 275275,
+          "formula": "=AI12*$AM$38*AC26"
+        },
+        {
+          "sheet": "Bajadas",
+          "cell": "AH48",
+          "value": 1.9,
+          "formula": 1.9
+        }
+      ]
+    },
+    {
+      "cell": "S5",
+      "column_type": "papel_base_stickers",
+      "range_label": "2 a 25",
+      "formula": "=(AC49+$AC$12*AF49)*$AH$49",
+      "value": 468299,
+      "references": [
+        {
+          "sheet": "Bajadas",
+          "cell": "AC49",
+          "value": 195,
+          "formula": "=AF49*$AM$42"
+        },
+        {
+          "sheet": "Bajadas",
+          "cell": "AC12",
+          "value": 275275,
+          "formula": "=AI12*$AM$38*AC26"
+        },
+        {
+          "sheet": "Bajadas",
+          "cell": "AF49",
+          "value": 1.0,
+          "formula": 1.0
+        },
+        {
+          "sheet": "Bajadas",
+          "cell": "AH49",
+          "value": 1.7,
+          "formula": 1.7
+        }
+      ]
+    },
+    {
+      "cell": "S6",
+      "column_type": "papel_base_stickers",
+      "range_label": "26 a 50",
+      "formula": "=(AC50+$AC$12*AF50)*$AH$50",
+      "value": 454525.5,
+      "references": [
+        {
+          "sheet": "Bajadas",
+          "cell": "AC50",
+          "value": 195,
+          "formula": "=AF50*$AM$42"
+        },
+        {
+          "sheet": "Bajadas",
+          "cell": "AC12",
+          "value": 275275,
+          "formula": "=AI12*$AM$38*AC26"
+        },
+        {
+          "sheet": "Bajadas",
+          "cell": "AF50",
+          "value": 1.0,
+          "formula": 1.0
+        },
+        {
+          "sheet": "Bajadas",
+          "cell": "AH50",
+          "value": 1.65,
+          "formula": 1.65
+        }
+      ]
+    },
+    {
+      "cell": "S7",
+      "column_type": "papel_base_stickers",
+      "range_label": "51 a 100",
+      "formula": "=(AC51+$AC$12*AF51)*$AH$51",
+      "value": 440752,
+      "references": [
+        {
+          "sheet": "Bajadas",
+          "cell": "AC51",
+          "value": 195,
+          "formula": "=AF51*$AM$42"
+        },
+        {
+          "sheet": "Bajadas",
+          "cell": "AC12",
+          "value": 275275,
+          "formula": "=AI12*$AM$38*AC26"
+        },
+        {
+          "sheet": "Bajadas",
+          "cell": "AF51",
+          "value": 1.0,
+          "formula": 1.0
+        },
+        {
+          "sheet": "Bajadas",
+          "cell": "AH51",
+          "value": 1.6,
+          "formula": 1.6
+        }
+      ]
+    },
+    {
+      "cell": "S8",
+      "column_type": "papel_base_stickers",
+      "range_label": "101 a 300",
+      "formula": "=(AC52+$AC$12*AF52)*$AH$52",
+      "value": 426978.5,
+      "references": [
+        {
+          "sheet": "Bajadas",
+          "cell": "AC52",
+          "value": 195,
+          "formula": "=AF52*$AM$42"
+        },
+        {
+          "sheet": "Bajadas",
+          "cell": "AC12",
+          "value": 275275,
+          "formula": "=AI12*$AM$38*AC26"
+        },
+        {
+          "sheet": "Bajadas",
+          "cell": "AF52",
+          "value": 1.0,
+          "formula": 1.0
+        },
+        {
+          "sheet": "Bajadas",
+          "cell": "AH52",
+          "value": 1.55,
+          "formula": 1.55
+        }
+      ]
+    },
+    {
+      "cell": "S9",
+      "column_type": "papel_base_stickers",
+      "range_label": "301 a 500",
+      "formula": "=(AC53+$AC$12*AF53)*$AH$53",
+      "value": 413205,
+      "references": [
+        {
+          "sheet": "Bajadas",
+          "cell": "AC53",
+          "value": 195,
+          "formula": "=AF53*$AM$42"
+        },
+        {
+          "sheet": "Bajadas",
+          "cell": "AC12",
+          "value": 275275,
+          "formula": "=AI12*$AM$38*AC26"
+        },
+        {
+          "sheet": "Bajadas",
+          "cell": "AF53",
+          "value": 1.0,
+          "formula": 1.0
+        },
+        {
+          "sheet": "Bajadas",
+          "cell": "AH53",
+          "value": 1.5,
+          "formula": 1.5
+        }
+      ]
+    },
+    {
+      "cell": "S10",
+      "column_type": "papel_base_stickers",
+      "range_label": "501 a 1000",
+      "formula": "=(AC54+$AC$12*AF54)*$AH$54",
+      "value": 399431.5,
+      "references": [
+        {
+          "sheet": "Bajadas",
+          "cell": "AC54",
+          "value": 195,
+          "formula": "=AF54*$AM$42"
+        },
+        {
+          "sheet": "Bajadas",
+          "cell": "AC12",
+          "value": 275275,
+          "formula": "=AI12*$AM$38*AC26"
+        },
+        {
+          "sheet": "Bajadas",
+          "cell": "AF54",
+          "value": 1.0,
+          "formula": 1.0
+        },
+        {
+          "sheet": "Bajadas",
+          "cell": "AH54",
+          "value": 1.45,
+          "formula": 1.45
+        }
+      ]
+    },
+    {
+      "cell": "U4",
+      "column_type": "especial_base_opp_blanco",
+      "range_label": 1.0,
+      "formula": "=(AC48+$AC$13*AF48)*AH48",
+      "value": 1341.8275,
+      "references": [
+        {
+          "sheet": "Bajadas",
+          "cell": "AC48",
+          "value": 195,
+          "formula": "=AF48*$AM$42"
+        },
+        {
+          "sheet": "Bajadas",
+          "cell": "AC13",
+          "value": 511.225,
+          "formula": "=AI13*$AM$38*AC27"
+        },
+        {
+          "sheet": "Bajadas",
+          "cell": "AF48",
+          "value": 1.0,
+          "formula": 1.0
+        },
+        {
+          "sheet": "Bajadas",
+          "cell": "AH48",
+          "value": 1.9,
+          "formula": 1.9
+        }
+      ]
+    },
+    {
+      "cell": "U5",
+      "column_type": "especial_base_opp_blanco",
+      "range_label": "2 a 25",
+      "formula": "=(AC49+$AC$13*AF49)*AH49",
+      "value": 1200.5825,
+      "references": [
+        {
+          "sheet": "Bajadas",
+          "cell": "AC49",
+          "value": 195,
+          "formula": "=AF49*$AM$42"
+        },
+        {
+          "sheet": "Bajadas",
+          "cell": "AC13",
+          "value": 511.225,
+          "formula": "=AI13*$AM$38*AC27"
+        },
+        {
+          "sheet": "Bajadas",
+          "cell": "AF49",
+          "value": 1.0,
+          "formula": 1.0
+        },
+        {
+          "sheet": "Bajadas",
+          "cell": "AH49",
+          "value": 1.7,
+          "formula": 1.7
+        }
+      ]
+    },
+    {
+      "cell": "U6",
+      "column_type": "especial_base_opp_blanco",
+      "range_label": "26 a 50",
+      "formula": "=(AC50+$AC$13*AF50)*AH50",
+      "value": 1165.27125,
+      "references": [
+        {
+          "sheet": "Bajadas",
+          "cell": "AC50",
+          "value": 195,
+          "formula": "=AF50*$AM$42"
+        },
+        {
+          "sheet": "Bajadas",
+          "cell": "AC13",
+          "value": 511.225,
+          "formula": "=AI13*$AM$38*AC27"
+        },
+        {
+          "sheet": "Bajadas",
+          "cell": "AF50",
+          "value": 1.0,
+          "formula": 1.0
+        },
+        {
+          "sheet": "Bajadas",
+          "cell": "AH50",
+          "value": 1.65,
+          "formula": 1.65
+        }
+      ]
+    },
+    {
+      "cell": "U7",
+      "column_type": "especial_base_opp_blanco",
+      "range_label": "51 a 100",
+      "formula": "=(AC51+$AC$13*AF51)*AH51",
+      "value": 1129.96,
+      "references": [
+        {
+          "sheet": "Bajadas",
+          "cell": "AC51",
+          "value": 195,
+          "formula": "=AF51*$AM$42"
+        },
+        {
+          "sheet": "Bajadas",
+          "cell": "AC13",
+          "value": 511.225,
+          "formula": "=AI13*$AM$38*AC27"
+        },
+        {
+          "sheet": "Bajadas",
+          "cell": "AF51",
+          "value": 1.0,
+          "formula": 1.0
+        },
+        {
+          "sheet": "Bajadas",
+          "cell": "AH51",
+          "value": 1.6,
+          "formula": 1.6
+        }
+      ]
+    },
+    {
+      "cell": "U8",
+      "column_type": "especial_base_opp_blanco",
+      "range_label": "101 a 300",
+      "formula": "=(AC52+$AC$13*AF52)*AH52",
+      "value": 1094.64875,
+      "references": [
+        {
+          "sheet": "Bajadas",
+          "cell": "AC52",
+          "value": 195,
+          "formula": "=AF52*$AM$42"
+        },
+        {
+          "sheet": "Bajadas",
+          "cell": "AC13",
+          "value": 511.225,
+          "formula": "=AI13*$AM$38*AC27"
+        },
+        {
+          "sheet": "Bajadas",
+          "cell": "AF52",
+          "value": 1.0,
+          "formula": 1.0
+        },
+        {
+          "sheet": "Bajadas",
+          "cell": "AH52",
+          "value": 1.55,
+          "formula": 1.55
+        }
+      ]
+    },
+    {
+      "cell": "U9",
+      "column_type": "especial_base_opp_blanco",
+      "range_label": "301 a 500",
+      "formula": "=(AC53+$AC$13*AF53)*AH53",
+      "value": 1059.3375,
+      "references": [
+        {
+          "sheet": "Bajadas",
+          "cell": "AC53",
+          "value": 195,
+          "formula": "=AF53*$AM$42"
+        },
+        {
+          "sheet": "Bajadas",
+          "cell": "AC13",
+          "value": 511.225,
+          "formula": "=AI13*$AM$38*AC27"
+        },
+        {
+          "sheet": "Bajadas",
+          "cell": "AF53",
+          "value": 1.0,
+          "formula": 1.0
+        },
+        {
+          "sheet": "Bajadas",
+          "cell": "AH53",
+          "value": 1.5,
+          "formula": 1.5
+        }
+      ]
+    },
+    {
+      "cell": "U10",
+      "column_type": "especial_base_opp_blanco",
+      "range_label": "501 a 1000",
+      "formula": "=(AC54+$AC$13*AF54)*AH54",
+      "value": 1024.02625,
+      "references": [
+        {
+          "sheet": "Bajadas",
+          "cell": "AC54",
+          "value": 195,
+          "formula": "=AF54*$AM$42"
+        },
+        {
+          "sheet": "Bajadas",
+          "cell": "AC13",
+          "value": 511.225,
+          "formula": "=AI13*$AM$38*AC27"
+        },
+        {
+          "sheet": "Bajadas",
+          "cell": "AF54",
+          "value": 1.0,
+          "formula": 1.0
+        },
+        {
+          "sheet": "Bajadas",
+          "cell": "AH54",
+          "value": 1.45,
+          "formula": 1.45
+        }
+      ]
+    }
+  ],
+  "key_cells": {
+    "S2": {
+      "formula": "Sticker",
+      "value": "Sticker"
+    },
+    "U2": {
+      "formula": "OPP  blco o blanco",
+      "value": "OPP  blco o blanco"
+    },
+    "S3": {
+      "formula": "4/0",
+      "value": "4/0"
+    },
+    "U3": {
+      "formula": "4/0",
+      "value": "4/0"
+    },
+    "AC12": {
+      "formula": "=AI12*$AM$38*AC26",
+      "value": 275275
+    },
+    "AC13": {
+      "formula": "=AI13*$AM$38*AC27",
+      "value": 511.225
+    },
+    "AC48": {
+      "formula": "=AF48*$AM$42",
+      "value": 195
+    },
+    "AH48": {
+      "formula": 1.9,
+      "value": 1.9
+    },
+    "AH49": {
+      "formula": 1.7,
+      "value": 1.7
+    },
+    "AH50": {
+      "formula": 1.65,
+      "value": 1.65
+    },
+    "AH51": {
+      "formula": 1.6,
+      "value": 1.6
+    },
+    "AH52": {
+      "formula": 1.55,
+      "value": 1.55
+    },
+    "AH53": {
+      "formula": 1.5,
+      "value": 1.5
+    },
+    "AH54": {
+      "formula": 1.45,
+      "value": 1.45
+    },
+    "AM38": {
+      "formula": 650.0,
+      "value": 650.0
+    },
+    "AM42": {
+      "formula": "=AK42*AN38",
+      "value": 195
+    }
+  }
+}

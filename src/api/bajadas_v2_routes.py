@@ -12,6 +12,10 @@ from typing import Any
 from bajadas_v2 import BajadasV2PricingEngine, load_bajadas_v2_bundle
 from bajadas_v2.config_loader import BajadasV2Bundle
 from bajadas_v2.exceptions import PriceNotFoundError, QuoteInputError
+from bajadas_autoadhesivas import AutoadhesivasPricingEngine, load_autoadhesivas_bundle
+from bajadas_autoadhesivas.exceptions import PriceNotFoundError as AutoadhesivasPriceNotFoundError
+from bajadas_autoadhesivas.exceptions import QuoteInputError as AutoadhesivasQuoteInputError
+from bajadas_autoadhesivas.types import AutoadhesivasQuoteInput
 
 from .schemas import ApiValidationError, QuoteRequestSchema
 
@@ -20,6 +24,7 @@ class BajadasV2ApiService:
     def __init__(self, project_root: Path):
         self.project_root = project_root
         self.engine = BajadasV2PricingEngine(load_bajadas_v2_bundle(project_root))
+        self.autoadhesivas_engine = AutoadhesivasPricingEngine(load_autoadhesivas_bundle(project_root))
         self.config_path = project_root / "data" / "bajadas_v2" / "bajadas_v2_config_final.json"
         self.config_editable_path = project_root / "data" / "bajadas_v2" / "bajadas_v2_config_editable.json"
         self.config_history_path = project_root / "data" / "bajadas_v2" / "config_history.json"
@@ -38,8 +43,15 @@ class BajadasV2ApiService:
                 "config_final_exists": self.config_path.exists(),
                 "snapshot_exists": self.snapshot_path.exists(),
                 "engine_import_ok": self.engine is not None,
+                "autoadhesivas_engine_import_ok": self.autoadhesivas_engine is not None,
             },
         }
+
+    def autoadhesivas_health(self) -> tuple[int, dict[str, Any]]:
+        return 200, self.autoadhesivas_engine.health()
+
+    def autoadhesivas_config(self) -> tuple[int, dict[str, Any]]:
+        return 200, self.autoadhesivas_engine.get_config()
 
     def metrics(self) -> dict[str, Any]:
         with self.snapshot_path.open("r", encoding="utf-8") as fh:
@@ -58,13 +70,30 @@ class BajadasV2ApiService:
     def cotizar(self, payload: dict[str, Any]) -> tuple[int, dict[str, Any]]:
         try:
             req = QuoteRequestSchema.from_payload(payload)
-            result = self.engine.quote_as_dict(req.to_quote_input())
+            if req.categoria == "Bajadas Autoadhesivas":
+                autoadh_request = AutoadhesivasQuoteInput(
+                    categoria=req.categoria,
+                    modo_color=req.modo_color,
+                    formato=req.formato,
+                    tipo_producto=(req.tipo_producto or "autoadhesiva"),
+                    columna_precio=(req.columna_precio or req.tipo_papel).lower(),
+                    cantidad_unidades=req.cantidad_unidades or 1,
+                    cantidad_rango=req.cantidad_rango,
+                    urgencia=req.urgencia,
+                )
+                result = self.autoadhesivas_engine.quote_as_dict(autoadh_request)
+            else:
+                result = self.engine.quote_as_dict(req.to_quote_input())
             return 200, result
         except ApiValidationError as exc:
             return 400, {"error": "validation_error", "detail": str(exc)}
         except QuoteInputError as exc:
             return 400, {"error": "urgencia_invalida", "detail": str(exc)}
         except PriceNotFoundError as exc:
+            return 404, {"error": "combinacion_no_encontrada", "detail": str(exc)}
+        except AutoadhesivasQuoteInputError as exc:
+            return 400, {"error": "validation_error", "detail": str(exc)}
+        except AutoadhesivasPriceNotFoundError as exc:
             return 404, {"error": "combinacion_no_encontrada", "detail": str(exc)}
         except Exception as exc:  # pragma: no cover
             return 500, {"error": "internal_error", "detail": str(exc)}
