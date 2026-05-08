@@ -19,6 +19,78 @@ test("UI muestra tabs nuevas y controles base", async ({ page }) => {
   await expect(page.getByText(/API (conectada|no disponible)/)).toBeVisible();
 });
 
+test("modo Autoadhesivas guiado: A3+ y 4/0 fijos, tipo papel/especial", async ({ page }) => {
+  await page.goto("/");
+  await page.getByLabel("Categoría").selectOption("Bajadas Autoadhesivas");
+  await expect(page.getByLabel("Formato")).toHaveValue("A3+");
+  await expect(page.getByLabel("Impresión")).toHaveValue("4/0");
+  await expect(page.getByLabel("Modo color")).toHaveValue("fullcolor");
+  await expect(page.getByLabel("Tipo")).toBeVisible();
+  await expect(page.getByText("Tinta blanca y laca UV no están incluidas en esta etapa.")).toBeVisible();
+  await expect(page.getByRole("button", { name: "1/0" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "1/1" })).toHaveCount(0);
+});
+
+test("autoadhesivas papel y especial envían payload válido", async ({ page }) => {
+  await page.goto("/");
+  await page.getByLabel("Categoría").selectOption("Bajadas Autoadhesivas");
+  await page.getByLabel("Cantidad").fill("30");
+  await expect(page.getByText("Rango aplicado: 26 a 50")).toBeVisible();
+
+  let payloadSeen = null;
+  await page.route("http://127.0.0.1:8000/bajadas-v2/cotizar", async (route) => {
+    payloadSeen = JSON.parse(route.request().postData() || "{}");
+    const isEspecial = payloadSeen?.columna_precio === "especial";
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        precio_unitario_sin_iva: isEspecial ? 1389 : 826,
+        precio_unitario_con_urgencia: isEspecial ? 1597.35 : 949.9,
+        cantidad_unidades: 30,
+        cantidad_rango_aplicado: "26 a 50",
+        total_sin_iva: isEspecial ? 41670 : 24780,
+        total_con_urgencia: isEspecial ? 47920.5 : 28497,
+        precio_sin_iva: isEspecial ? 1389 : 826,
+        precio_con_recargo_urgencia: isEspecial ? 1597.35 : 949.9,
+        regla_aplicada: isEspecial ? "AUTOADHESIVA_ESPECIAL_HIBRIDO_B_C" : "AUTOADHESIVA_PAPEL_HIBRIDO_B_C",
+        fuente: "autoadhesivas_objetivo_calibrado",
+        trazabilidad: {
+          origen_excel: isEspecial ? "Bajadas!U4:U10 / OPP blco o blanco" : "Bajadas!S4:S10 / Sticker",
+          recargo_urgencia_aplicado: 0.15,
+          adicionales_excluidos: ["tinta blanca", "laca UV"],
+        },
+      }),
+    });
+  });
+
+  await page.getByRole("button", { name: "Calcular" }).click();
+  expect(payloadSeen).toMatchObject({
+    categoria: "Bajadas Autoadhesivas",
+    modo_color: "fullcolor",
+    formato: "A3+",
+    tipo_papel: "papel",
+    material: "Sticker",
+    gramaje: "N/A",
+    cantidad_unidades: 30,
+    cantidad_rango: "26 a 50",
+    caras: "4/0",
+    urgencia: "normal",
+    tipo_producto: "autoadhesiva",
+    columna_precio: "papel",
+  });
+
+  await page.getByLabel("Tipo").selectOption("especial");
+  await page.getByLabel("Urgencia").selectOption("express");
+  await page.getByRole("button", { name: "Calcular" }).click();
+  expect(payloadSeen).toMatchObject({
+    tipo_papel: "especial",
+    material: "OPP blanco",
+    columna_precio: "especial",
+    urgencia: "express",
+  });
+});
+
 test("cotizacion muestra rango aplicado y total destacado", async ({ page }) => {
   await page.goto("/");
   await page.getByLabel("Medida / formato").selectOption("A3+");

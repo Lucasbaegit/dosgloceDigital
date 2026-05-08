@@ -368,7 +368,7 @@ export default function CotizadorBajadasV2() {
         next.formato = "A3+";
         next.caras = "4/0";
         next.tipo_papel = next.columna_precio || "papel";
-        next.material = next.columna_precio === "especial" ? "OPP blanco/blanco" : "Sticker";
+        next.material = next.columna_precio === "especial" ? "OPP blanco" : "Sticker";
         next.gramaje = next.columna_precio === "especial" ? "N/A" : "N/A";
         return next;
       }
@@ -500,7 +500,7 @@ export default function CotizadorBajadasV2() {
       modo_color: inferred.modo_color,
       formato: inferred.formato,
       tipo_papel: isAutoadhesivas ? form.columna_precio : form.tipo_papel,
-      material: isAutoadhesivas ? (form.columna_precio === "especial" ? "OPP blanco/blanco" : "Sticker") : form.material,
+      material: isAutoadhesivas ? (form.columna_precio === "especial" ? "OPP blanco" : "Sticker") : form.material,
       gramaje: isAutoadhesivas ? "N/A" : form.gramaje,
       cantidad_unidades: cantidadUnidades,
       cantidad_rango: derivedRange,
@@ -545,12 +545,13 @@ export default function CotizadorBajadasV2() {
       <section className="card result-card">
         <div className="card-head"><h3>Árbol del precio</h3><span>Último cálculo</span></div>
         <div className="tree-grid">
-          <details open><summary>Entrada del usuario</summary><ul><li>Formato: {lastPayload.formato}</li><li>Impresión: {lastPayload.caras}</li><li>Tipo papel: {lastPayload.tipo_papel}</li><li>Material: {lastPayload.material}</li><li>Gramaje: {lastPayload.gramaje}</li><li>Cantidad: {lastPayload.cantidad_unidades}</li><li>Urgencia: {lastPayload.urgencia}</li></ul></details>
+          <details open><summary>Entrada del usuario</summary><ul><li>Formato: {lastPayload.formato}</li><li>Impresión: {lastPayload.caras}</li><li>Tipo papel: {lastPayload.tipo_papel}</li><li>Tipo autoadhesivo: {lastPayload.columna_precio ?? "-"}</li><li>Material: {lastPayload.material}</li><li>Gramaje: {lastPayload.gramaje}</li><li>Cantidad: {lastPayload.cantidad_unidades}</li><li>Urgencia: {lastPayload.urgencia}</li></ul></details>
           <details open><summary>Rango aplicado</summary><ul><li>{result.cantidad_rango_aplicado}</li></ul></details>
           <details open><summary>Precio unitario</summary><ul><li>Sin IVA: {formatMoney(result.precio_unitario_sin_iva)}</li><li>Con urgencia: {formatMoney(result.precio_unitario_con_urgencia)}</li></ul></details>
           <details open><summary>Total</summary><ul><li>Sin IVA: {formatMoney(result.total_sin_iva)}</li><li>Con urgencia: {formatMoney(result.total_con_urgencia)}</li></ul></details>
           <details open data-testid="price-tree-rule-section"><summary>Regla</summary><ul><li>regla_aplicada: {result.regla_aplicada}</li><li>fuente: {result.fuente}</li><li>factor_aplicado: {result.trazabilidad?.factor_aplicado ?? "-"}</li><li>regla_especial: {result.trazabilidad?.regla_especial ?? "-"}</li><li>correccion_logica: {result.trazabilidad?.correccion_logica ?? "-"}</li></ul></details>
-          <details open><summary>Origen</summary><ul><li>precio_objetivo_csv: {result.trazabilidad?.precio_objetivo_csv ?? "-"}</li><li>precio_unitario_csv: {result.trazabilidad?.precio_unitario_csv ?? "-"}</li><li>an40_estado: {result.trazabilidad?.an40_estado ?? "-"}</li></ul></details>
+          <details open><summary>Origen</summary><ul><li>origen_excel: {result.trazabilidad?.origen_excel ?? "-"}</li><li>precio_objetivo_csv: {result.trazabilidad?.precio_objetivo_csv ?? result.trazabilidad?.precio_objetivo_pdf ?? "-"}</li><li>precio_unitario_csv: {result.trazabilidad?.precio_unitario_csv ?? "-"}</li><li>modelo_tecnico_referencia: {result.trazabilidad?.modelo_tecnico_referencia ?? "-"}</li><li>precio_b3_referencia: {result.trazabilidad?.precio_b3_referencia ?? "-"}</li><li>an40_estado: {result.trazabilidad?.an40_estado ?? "-"}</li></ul></details>
+          <details open><summary>Adicionales excluidos</summary><ul>{(result.trazabilidad?.adicionales_excluidos ?? []).length ? (result.trazabilidad.adicionales_excluidos.map((item) => <li key={item}>{item}</li>)) : <li>-</li>}</ul></details>
           <details open><summary>Urgencia</summary><ul><li>recargo_urgencia_aplicado: {result.trazabilidad?.recargo_urgencia_aplicado ?? "-"}</li></ul></details>
         </div>
         <details className="raw-json"><summary>Ver JSON técnico</summary><pre>{JSON.stringify({ payload: lastPayload, result }, null, 2)}</pre></details>
