@@ -1,0 +1,68 @@
+{
+  "fuente_csv_limpio": "C:\\Users\\baezl\\Desktop\\proyectos\\desgloceExcel\\excel_desfloce\\data\\bajadas_v2\\precios_pdf_objetivo_limpio.csv",
+  "fuente_json_limpio": "C:\\Users\\baezl\\Desktop\\proyectos\\desgloceExcel\\excel_desfloce\\data\\bajadas_v2\\precios_pdf_objetivo_limpio.json",
+  "columnas_esperadas": [
+    "categoria",
+    "modo_color",
+    "formato",
+    "tipo_papel",
+    "material",
+    "gramaje",
+    "cantidad_rango",
+    "caras",
+    "terminacion",
+    "precio_sin_iva",
+    "pagina_pdf",
+    "fuente",
+    "notas"
+  ],
+  "columnas_presentes": [
+    "categoria",
+    "modo_color",
+    "formato",
+    "tipo_papel",
+    "material",
+    "gramaje",
+    "cantidad_rango",
+    "caras",
+    "terminacion",
+    "precio_sin_iva",
+    "pagina_pdf",
+    "fuente",
+    "notas",
+    "precio_num"
+  ],
+  "validacion_integridad": {
+    "cantidad_total_registros": 742,
+    "formatos_detectados": [
+      "A3",
+      "A3+",
+      "A4",
+      "Oficio",
+      "XL",
+      "por lado"
+    ],
+    "categorias_detectadas": [
+      "Bajadas Autoadhesivas",
+      "Bajadas Blanco y Negro",
+      "Bajadas Blanco y Negro Autoadhesivo",
+      "Bajadas Fullcolor",
+      "Bajadas Kraft",
+      "Terminaciones Bajadas"
+    ],
+    "modos_color_detectados": [
+      "blanco_y_negro",
+      "fullcolor",
+      "terminacion"
+    ],
+    "precios_vacios": 0,
+    "precios_no_numericos": 0,
+    "duplicados_exactos": 0,
+    "combinaciones_sin_precio": 0,
+    "registros_4_4_menor_que_4_0": 0,
+    "registros_cantidad_mayor_mas_cara_unitaria": 0
+  },
+  "anomalias_4_4_menor_que_4_0": [],
+  "anomalias_unitario": [],
+  "status": "OK"
+}

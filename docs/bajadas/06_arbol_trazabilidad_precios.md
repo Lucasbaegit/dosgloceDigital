@@ -1,0 +1,454 @@
+# 06 - Árbol de Trazabilidad de Precios (Bajadas)
+
+Estado: PENDIENTE_DE_INTERPRETACION
+
+- Celdas de salida trazadas: `642`
+- Árboles generados: `642`
+- Familias cubiertas: `A3 PLUS pack color, A3+, A4 ByN, A4 color, XA3, XA3 ByN, XL 32x70, XL ByN`
+- Referencias a PAPEL US$ resueltas: `65`
+
+## Índice por familia
+### A3 PLUS pack color
+- `SB07 / AM45` valor=`=AK45*AM38` formula=`=AK45*AM38`
+- `SB07 / W46` valor=`=Q48*V46/2` formula=`=Q48*V46/2`
+- `SB07 / C47` valor=`=(AA48+AC11)*$AH$48` formula=`=(AA48+AC11)*$AH$48`
+- `SB07 / D47` valor=`=(AA48*AG48+AC11)*$AH$48` formula=`=(AA48*AG48+AC11)*$AH$48`
+- `SB07 / E47` valor=`=(AA48+AC4)*$AH$48` formula=`=(AA48+AC4)*$AH$48`
+- `SB07 / F47` valor=`=(AA48*AG48+AC4)*AH$48` formula=`=(AA48*AG48+AC4)*AH$48`
+- `SB07 / G47` valor=`=(AA48+AC5)*$AH$48` formula=`=(AA48+AC5)*$AH$48`
+- `SB07 / H47` valor=`=(AA48*AG48+AC5)*AH$48` formula=`=(AA48*AG48+AC5)*AH$48`
+- `SB07 / I47` valor=`=(AA48+AC6)*$AH$48` formula=`=(AA48+AC6)*$AH$48`
+- `SB07 / J47` valor=`=(AA48*AG48+AC6)*AH$48` formula=`=(AA48*AG48+AC6)*AH$48`
+- `SB07 / K47` valor=`=(AA48+AC7)*$AH$48` formula=`=(AA48+AC7)*$AH$48`
+- `SB07 / L47` valor=`=(AA48*AG48+AC7)*AH$48` formula=`=(AA48*AG48+AC7)*AH$48`
+### A3+
+- `SB02 / C4` valor=`=(AC48+AC11)*$AH$48` formula=`=(AC48+AC11)*$AH$48`
+- `SB02 / D4` valor=`=(AC48*AG48+AC11)*AH48` formula=`=(AC48*AG48+AC11)*AH48`
+- `SB02 / E4` valor=`=(AC48+AC4)*$AH$48` formula=`=(AC48+AC4)*$AH$48`
+- `SB02 / F4` valor=`=(AC48*AG48+AC4)*AH48` formula=`=(AC48*AG48+AC4)*AH48`
+- `SB02 / G4` valor=`=(AC48+AC5)*$AH$48` formula=`=(AC48+AC5)*$AH$48`
+- `SB02 / H4` valor=`=(AC48*AG48+AC5)*AH48` formula=`=(AC48*AG48+AC5)*AH48`
+- `SB02 / I4` valor=`=(AC48+AC6)*$AH$48` formula=`=(AC48+AC6)*$AH$48`
+- `SB02 / J4` valor=`=(AC48*AG48+AC6)*AH48` formula=`=(AC48*AG48+AC6)*AH48`
+- `SB02 / K4` valor=`=(AC48+AC7)*$AH$48` formula=`=(AC48+AC7)*$AH$48`
+- `SB02 / L4` valor=`=(AC48*AG48+AC7)*AH48` formula=`=(AC48*AG48+AC7)*AH48`
+- `SB02 / M4` valor=`=(AC48+AC8)*$AH$48` formula=`=(AC48+AC8)*$AH$48`
+- `SB02 / N4` valor=`=(AC48*AG48+AC8)*AH48` formula=`=(AC48*AG48+AC8)*AH48`
+### A4 ByN
+- `SB11 / C74` valor=`=(AA48+AD11)*$AH$48` formula=`=(AA48+AD11)*$AH$48`
+- `SB11 / D74` valor=`=(AA48*AG48+AD11)*$AH$48` formula=`=(AA48*AG48+AD11)*$AH$48`
+- `SB11 / E74` valor=`=(AA48+AD4)*$AH$48` formula=`=(AA48+AD4)*$AH$48`
+- `SB11 / F74` valor=`=(AA48*AG48+AD4)*AH$48` formula=`=(AA48*AG48+AD4)*AH$48`
+- `SB11 / G74` valor=`=(AA48+AD5)*$AH$48` formula=`=(AA48+AD5)*$AH$48`
+- `SB11 / H74` valor=`=(AA48*AG48+AD5)*AH$48` formula=`=(AA48*AG48+AD5)*AH$48`
+- `SB11 / I74` valor=`=(AA48+AD6)*$AH$48` formula=`=(AA48+AD6)*$AH$48`
+- `SB11 / J74` valor=`=(AA48*AG48+AD6)*AH$48` formula=`=(AA48*AG48+AD6)*AH$48`
+- `SB11 / K74` valor=`=(AA48+AD7)*$AH$48` formula=`=(AA48+AD7)*$AH$48`
+- `SB11 / L74` valor=`=(AA48*AG48+AD7)*AH$48` formula=`=(AA48*AG48+AD7)*AH$48`
+- `SB11 / M74` valor=`=(AA48+AD8)*$AH$48` formula=`=(AA48+AD8)*$AH$48`
+- `SB11 / N74` valor=`=(AA48*AG48+AD8)*$AH48` formula=`=(AA48*AG48+AD8)*$AH48`
+### A4 color
+- `SB06 / C34` valor=`=(AE48+AD11)*$AH$48` formula=`=(AE48+AD11)*$AH$48`
+- `SB06 / D34` valor=`=(AE48*AG48+AD11)*AH48` formula=`=(AE48*AG48+AD11)*AH48`
+- `SB06 / E34` valor=`=(AE48+AD4)*$AH$48` formula=`=(AE48+AD4)*$AH$48`
+- `SB06 / F34` valor=`=(AE48*AG48+AD4)*AH48` formula=`=(AE48*AG48+AD4)*AH48`
+- `SB06 / G34` valor=`=(AE48+AD5)*$AH$48` formula=`=(AE48+AD5)*$AH$48`
+- `SB06 / H34` valor=`=(AE48*AG48+AD5)*AH48` formula=`=(AE48*AG48+AD5)*AH48`
+- `SB06 / I34` valor=`=(AE48+AD6)*$AH$48` formula=`=(AE48+AD6)*$AH$48`
+- `SB06 / J34` valor=`=(AE48*AG48+AD6)*AH48` formula=`=(AE48*AG48+AD6)*AH48`
+- `SB06 / K34` valor=`=(AE48+AD7)*$AH$48` formula=`=(AE48+AD7)*$AH$48`
+- `SB06 / L34` valor=`=(AE48*AG48+AD7)*AH48` formula=`=(AE48*AG48+AD7)*AH48`
+- `SB06 / M34` valor=`=(AE48+AD8)*$AH$48` formula=`=(AE48+AD8)*$AH$48`
+- `SB06 / N34` valor=`=(AE48*AG48+AD8)*AH48` formula=`=(AE48*AG48+AD8)*AH48`
+### XA3
+- `SB03 / C14` valor=`=(AB48+AB11)*$AH$48` formula=`=(AB48+AB11)*$AH$48`
+- `SB03 / D14` valor=`=(AB48*AG48+AB11)*AH48` formula=`=(AB48*AG48+AB11)*AH48`
+- `SB03 / E14` valor=`=(AB48+AB4)*$AH$48` formula=`=(AB48+AB4)*$AH$48`
+- `SB03 / F14` valor=`=(AB48*AG48+AB4)*AH48` formula=`=(AB48*AG48+AB4)*AH48`
+- `SB03 / G14` valor=`=(AB48+AB5)*$AH$48` formula=`=(AB48+AB5)*$AH$48`
+- `SB03 / H14` valor=`=(AB48*AG48+AB5)*AH48` formula=`=(AB48*AG48+AB5)*AH48`
+- `SB03 / I14` valor=`=(AB48+AB6)*$AH$48` formula=`=(AB48+AB6)*$AH$48`
+- `SB03 / J14` valor=`=(AB48*AG48+AB6)*AH48` formula=`=(AB48*AG48+AB6)*AH48`
+- `SB03 / K14` valor=`=(AB48+AB7)*$AH$48` formula=`=(AB48+AB7)*$AH$48`
+- `SB03 / L14` valor=`=(AB48*AG48+AB7)*AH48` formula=`=(AB48*AG48+AB7)*AH48`
+- `SB03 / M14` valor=`=(AB48+AB8)*$AH$48` formula=`=(AB48+AB8)*$AH$48`
+- `SB03 / N14` valor=`=(AB48*AG48+AB8)*AH48` formula=`=(AB48*AG48+AB8)*AH48`
+### XA3 ByN
+- `SB08 / AA54` valor=`=$AM$45` formula=`=$AM$45`
+- `SB08 / AB54` valor=`=AM43*$AF$54` formula=`=AM43*$AF$54`
+- `SB08 / AC54` valor=`=AF54*$AM$42` formula=`=AF54*$AM$42`
+- `SB08 / AD54` valor=`=AF54*$AM$40` formula=`=AF54*$AM$40`
+- `SB08 / AE54` valor=`=AF54*$AM$41` formula=`=AF54*$AM$41`
+- `SB08 / AA55` valor=`=$AM$45` formula=`=$AM$45`
+- `SB08 / AB55` valor=`=AM43*$AF$55` formula=`=AM43*$AF$55`
+- `SB08 / AC55` valor=`=AF55*$AM$42` formula=`=AF55*$AM$42`
+- `SB08 / AD55` valor=`=AF55*$AM$40` formula=`=AF55*$AM$40`
+- `SB08 / AE55` valor=`=AF55*$AM$41` formula=`=AF55*$AM$41`
+- `SB08 / C56` valor=`=(AA48+AB11)*$AH$48` formula=`=(AA48+AB11)*$AH$48`
+- `SB08 / D56` valor=`=(AA48*AG48+AB11)*$AH$48` formula=`=(AA48*AG48+AB11)*$AH$48`
+### XL 32x70
+- `SB04 / W22` valor=`=W14-W4` formula=`=W14-W4`
+- `SB04 / X22` valor=`=X14-X4` formula=`=X14-X4`
+- `SB04 / W23` valor=`=W15-W5` formula=`=W15-W5`
+- `SB04 / X23` valor=`=X15-X5` formula=`=X15-X5`
+- `SB04 / C24` valor=`=(AD48+AA11)*$AH$48` formula=`=(AD48+AA11)*$AH$48`
+- `SB04 / D24` valor=`=(AD48*AG48+AA11)*AH48` formula=`=(AD48*AG48+AA11)*AH48`
+- `SB04 / E24` valor=`=(AD48+AA4)*$AH$48` formula=`=(AD48+AA4)*$AH$48`
+- `SB04 / F24` valor=`=(AD48*AG48+AA4)*AH48` formula=`=(AD48*AG48+AA4)*AH48`
+- `SB04 / G24` valor=`=(AD48+AA5)*$AH$48` formula=`=(AD48+AA5)*$AH$48`
+- `SB04 / H24` valor=`=(AD48*AG48+AA5)*AH48` formula=`=(AD48*AG48+AA5)*AH48`
+- `SB04 / I24` valor=`=(AD48+AA6)*$AH$48` formula=`=(AD48+AA6)*$AH$48`
+- `SB04 / J24` valor=`=(AD48*AG48+AA6)*AH48` formula=`=(AD48*AG48+AA6)*AH48`
+### XL ByN
+- `SB09 / X63` valor=`=W63*W62` formula=`=W63*W62`
+- `SB09 / AC63` valor=`=$AM$45*AF63` formula=`=$AM$45*AF63`
+- `SB09 / X64` valor=`=W64*W62` formula=`=W64*W62`
+- `SB09 / C65` valor=`=(AA11+AA48*AN40)*AH$48` formula=`=(AA11+AA48*AN40)*AH$48`
+- `SB09 / D65` valor=`=(AA11+AA48*AN40)*AG48*$AH48` formula=`=(AA11+AA48*AN40)*AG48*$AH48`
+- `SB09 / E65` valor=`=(AA4+AA48*AN40)*$AH48` formula=`=(AA4+AA48*AN40)*$AH48`
+- `SB09 / F65` valor=`=(AA4+AA48*AN40)*AH48*AG48` formula=`=(AA4+AA48*AN40)*AH48*AG48`
+- `SB09 / G65` valor=`=(AA5+AA48*AN40)*AH48` formula=`=(AA5+AA48*AN40)*AH48`
+- `SB09 / H65` valor=`=(AA5+AA48*AN40)*AH48*AG48` formula=`=(AA5+AA48*AN40)*AH48*AG48`
+- `SB09 / I65` valor=`=(AA6+AA48*AN40)*AH48` formula=`=(AA6+AA48*AN40)*AH48`
+- `SB09 / J65` valor=`=(AA6+AA48*AN40)*AH48*AG48` formula=`=(AA6+AA48*AN40)*AH48*AG48`
+- `SB09 / K65` valor=`=(AA7+AA48*AN40)*AH48` formula=`=(AA7+AA48*AN40)*AH48`
+
+## Muestra de trazas (formato completo)
+
+Precio:
+- familia: A3+
+- bloque: SB02
+- celda_salida: C4
+- encabezado_detectado: 30x46, 4/0
+- valor_actual: =(AC48+AC11)*$AH$48
+- fórmula: =(AC48+AC11)*$AH$48
+- interpretación_probable: Precio calculado en tabla de Bajadas.
+- árbol_de_origen:
+  - nodo 1: hoja=Bajadas celda=C4 valor==(AC48+AC11)*$AH$48 tipo=formato
+  - nodo 2: hoja=Bajadas celda=AC48 valor==AF48*$AM$42 tipo=coste_impresion
+  - nodo 3: hoja=Bajadas celda=AF48 valor=1.0 tipo=coeficiente
+  - nodo 4: hoja=Bajadas celda=AM42 valor==AK42*AN38 tipo=coste_impresion
+  - nodo 5: hoja=Bajadas celda=AK42 valor=0.3 tipo=auxiliar
+  - nodo 6: hoja=Bajadas celda=AN38 valor=650.0 tipo=auxiliar
+  - nodo 7: hoja=Bajadas celda=AC11 valor==AI11*$AM$38*AC25 tipo=formato
+  - nodo 8: hoja=Bajadas celda=AI11 valor=='PAPEL US$'!J29 tipo=coste_papel
+  - nodo 9: hoja=PAPEL US$ celda=J29 valor==I29*J2 tipo=pendiente_de_interpretacion
+  - nodo 10: hoja=PAPEL US$ celda=I29 valor==H29/I2 tipo=pendiente_de_interpretacion
+- decisiones_detectadas:
+  - Aplicación de coeficientes/multiplicadores en precio. | Bajadas!C4 | estado=dudosa
+  - Composición aditiva de costos parciales. | Bajadas!C4 | estado=dudosa
+- incongruencias:
+  - multiplicacion_por_1 (leve): La fórmula contiene multiplicación por 1.
+  - duplicacion_de_terminos (media): Se repiten referencias en fórmula: J29
+  - constante_sin_etiqueta_cercana (leve): Constante numérica sin etiqueta cercana clara.
+  - constante_sin_etiqueta_cercana (leve): Constante numérica sin etiqueta cercana clara.
+  - constante_sin_etiqueta_cercana (leve): Constante numérica sin etiqueta cercana clara.
+
+Precio:
+- familia: A3+
+- bloque: SB02
+- celda_salida: D4
+- encabezado_detectado: 30x46, 4/0, 4/4
+- valor_actual: =(AC48*AG48+AC11)*AH48
+- fórmula: =(AC48*AG48+AC11)*AH48
+- interpretación_probable: Precio calculado en tabla de Bajadas.
+- árbol_de_origen:
+  - nodo 1: hoja=Bajadas celda=D4 valor==(AC48*AG48+AC11)*AH48 tipo=gramaje
+  - nodo 2: hoja=Bajadas celda=AC48 valor==AF48*$AM$42 tipo=coste_impresion
+  - nodo 3: hoja=Bajadas celda=AF48 valor=1.0 tipo=coeficiente
+  - nodo 4: hoja=Bajadas celda=AM42 valor==AK42*AN38 tipo=coste_impresion
+  - nodo 5: hoja=Bajadas celda=AK42 valor=0.3 tipo=auxiliar
+  - nodo 6: hoja=Bajadas celda=AN38 valor=650.0 tipo=auxiliar
+  - nodo 7: hoja=Bajadas celda=AG48 valor=1.7 tipo=coeficiente
+  - nodo 8: hoja=Bajadas celda=AC11 valor==AI11*$AM$38*AC25 tipo=formato
+  - nodo 9: hoja=Bajadas celda=AI11 valor=='PAPEL US$'!J29 tipo=coste_papel
+  - nodo 10: hoja=PAPEL US$ celda=J29 valor==I29*J2 tipo=pendiente_de_interpretacion
+- decisiones_detectadas:
+  - Aplicación de coeficientes/multiplicadores en precio. | Bajadas!D4 | estado=dudosa
+  - Composición aditiva de costos parciales. | Bajadas!D4 | estado=dudosa
+- incongruencias:
+  - multiplicacion_por_1 (leve): La fórmula contiene multiplicación por 1.
+  - duplicacion_de_terminos (media): Se repiten referencias en fórmula: J29
+  - constante_sin_etiqueta_cercana (leve): Constante numérica sin etiqueta cercana clara.
+  - constante_sin_etiqueta_cercana (leve): Constante numérica sin etiqueta cercana clara.
+  - constante_sin_etiqueta_cercana (leve): Constante numérica sin etiqueta cercana clara.
+
+Precio:
+- familia: A3+
+- bloque: SB02
+- celda_salida: E4
+- encabezado_detectado: 30x46, 4/0, 4/4, 4/0
+- valor_actual: =(AC48+AC4)*$AH$48
+- fórmula: =(AC48+AC4)*$AH$48
+- interpretación_probable: Precio calculado en tabla de Bajadas.
+- árbol_de_origen:
+  - nodo 1: hoja=Bajadas celda=E4 valor==(AC48+AC4)*$AH$48 tipo=formato
+  - nodo 2: hoja=Bajadas celda=AC48 valor==AF48*$AM$42 tipo=coste_impresion
+  - nodo 3: hoja=Bajadas celda=AF48 valor=1.0 tipo=coeficiente
+  - nodo 4: hoja=Bajadas celda=AM42 valor==AK42*AN38 tipo=coste_impresion
+  - nodo 5: hoja=Bajadas celda=AK42 valor=0.3 tipo=auxiliar
+  - nodo 6: hoja=Bajadas celda=AN38 valor=650.0 tipo=auxiliar
+  - nodo 7: hoja=Bajadas celda=AC4 valor==AI4*$AM$38*AC18 tipo=coste_papel
+  - nodo 8: hoja=Bajadas celda=AI4 valor=='PAPEL US$'!J23 tipo=coste_papel
+  - nodo 9: hoja=PAPEL US$ celda=J23 valor==I23*J2 tipo=pendiente_de_interpretacion
+  - nodo 10: hoja=PAPEL US$ celda=I23 valor==H23/I2 tipo=pendiente_de_interpretacion
+- decisiones_detectadas:
+  - Aplicación de coeficientes/multiplicadores en precio. | Bajadas!E4 | estado=dudosa
+  - Composición aditiva de costos parciales. | Bajadas!E4 | estado=dudosa
+- incongruencias:
+  - duplicacion_de_terminos (media): Se repiten referencias en fórmula: J23
+  - constante_sin_etiqueta_cercana (leve): Constante numérica sin etiqueta cercana clara.
+  - constante_sin_etiqueta_cercana (leve): Constante numérica sin etiqueta cercana clara.
+
+Precio:
+- familia: A3+
+- bloque: SB02
+- celda_salida: F4
+- encabezado_detectado: 4/0, 4/4, 4/0, 4/4
+- valor_actual: =(AC48*AG48+AC4)*AH48
+- fórmula: =(AC48*AG48+AC4)*AH48
+- interpretación_probable: Precio calculado en tabla de Bajadas.
+- árbol_de_origen:
+  - nodo 1: hoja=Bajadas celda=F4 valor==(AC48*AG48+AC4)*AH48 tipo=gramaje
+  - nodo 2: hoja=Bajadas celda=AC48 valor==AF48*$AM$42 tipo=coste_impresion
+  - nodo 3: hoja=Bajadas celda=AF48 valor=1.0 tipo=coeficiente
+  - nodo 4: hoja=Bajadas celda=AM42 valor==AK42*AN38 tipo=coste_impresion
+  - nodo 5: hoja=Bajadas celda=AK42 valor=0.3 tipo=auxiliar
+  - nodo 6: hoja=Bajadas celda=AN38 valor=650.0 tipo=auxiliar
+  - nodo 7: hoja=Bajadas celda=AG48 valor=1.7 tipo=coeficiente
+  - nodo 8: hoja=Bajadas celda=AC4 valor==AI4*$AM$38*AC18 tipo=coste_papel
+  - nodo 9: hoja=Bajadas celda=AI4 valor=='PAPEL US$'!J23 tipo=coste_papel
+  - nodo 10: hoja=PAPEL US$ celda=J23 valor==I23*J2 tipo=pendiente_de_interpretacion
+- decisiones_detectadas:
+  - Aplicación de coeficientes/multiplicadores en precio. | Bajadas!F4 | estado=dudosa
+  - Composición aditiva de costos parciales. | Bajadas!F4 | estado=dudosa
+- incongruencias:
+  - duplicacion_de_terminos (media): Se repiten referencias en fórmula: J23
+  - constante_sin_etiqueta_cercana (leve): Constante numérica sin etiqueta cercana clara.
+  - constante_sin_etiqueta_cercana (leve): Constante numérica sin etiqueta cercana clara.
+
+Precio:
+- familia: A3+
+- bloque: SB02
+- celda_salida: G4
+- encabezado_detectado: 4/4, 4/0, 4/4, 4/0
+- valor_actual: =(AC48+AC5)*$AH$48
+- fórmula: =(AC48+AC5)*$AH$48
+- interpretación_probable: Precio calculado en tabla de Bajadas.
+- árbol_de_origen:
+  - nodo 1: hoja=Bajadas celda=G4 valor==(AC48+AC5)*$AH$48 tipo=caras_impresion
+  - nodo 2: hoja=Bajadas celda=AC48 valor==AF48*$AM$42 tipo=coste_impresion
+  - nodo 3: hoja=Bajadas celda=AF48 valor=1.0 tipo=coeficiente
+  - nodo 4: hoja=Bajadas celda=AM42 valor==AK42*AN38 tipo=coste_impresion
+  - nodo 5: hoja=Bajadas celda=AK42 valor=0.3 tipo=auxiliar
+  - nodo 6: hoja=Bajadas celda=AN38 valor=650.0 tipo=auxiliar
+  - nodo 7: hoja=Bajadas celda=AC5 valor==AI5*$AM$38*AC19 tipo=gramaje
+  - nodo 8: hoja=Bajadas celda=AI5 valor=='PAPEL US$'!J20 tipo=coste_papel
+  - nodo 9: hoja=PAPEL US$ celda=J20 valor==I20*J2 tipo=pendiente_de_interpretacion
+  - nodo 10: hoja=PAPEL US$ celda=I20 valor==H20/I2 tipo=pendiente_de_interpretacion
+- decisiones_detectadas:
+  - Aplicación de coeficientes/multiplicadores en precio. | Bajadas!G4 | estado=dudosa
+  - Composición aditiva de costos parciales. | Bajadas!G4 | estado=dudosa
+- incongruencias:
+  - duplicacion_de_terminos (media): Se repiten referencias en fórmula: J20
+  - duplicacion_de_terminos (media): Se repiten referencias en fórmula: I18
+  - constante_sin_etiqueta_cercana (leve): Constante numérica sin etiqueta cercana clara.
+  - constante_sin_etiqueta_cercana (leve): Constante numérica sin etiqueta cercana clara.
+  - constante_sin_etiqueta_cercana (leve): Constante numérica sin etiqueta cercana clara.
+
+Precio:
+- familia: A3+
+- bloque: SB02
+- celda_salida: H4
+- encabezado_detectado: 4/0, 4/4, 4/0, 4/4
+- valor_actual: =(AC48*AG48+AC5)*AH48
+- fórmula: =(AC48*AG48+AC5)*AH48
+- interpretación_probable: Precio calculado en tabla de Bajadas.
+- árbol_de_origen:
+  - nodo 1: hoja=Bajadas celda=H4 valor==(AC48*AG48+AC5)*AH48 tipo=gramaje
+  - nodo 2: hoja=Bajadas celda=AC48 valor==AF48*$AM$42 tipo=coste_impresion
+  - nodo 3: hoja=Bajadas celda=AF48 valor=1.0 tipo=coeficiente
+  - nodo 4: hoja=Bajadas celda=AM42 valor==AK42*AN38 tipo=coste_impresion
+  - nodo 5: hoja=Bajadas celda=AK42 valor=0.3 tipo=auxiliar
+  - nodo 6: hoja=Bajadas celda=AN38 valor=650.0 tipo=auxiliar
+  - nodo 7: hoja=Bajadas celda=AG48 valor=1.7 tipo=coeficiente
+  - nodo 8: hoja=Bajadas celda=AC5 valor==AI5*$AM$38*AC19 tipo=gramaje
+  - nodo 9: hoja=Bajadas celda=AI5 valor=='PAPEL US$'!J20 tipo=coste_papel
+  - nodo 10: hoja=PAPEL US$ celda=J20 valor==I20*J2 tipo=pendiente_de_interpretacion
+- decisiones_detectadas:
+  - Aplicación de coeficientes/multiplicadores en precio. | Bajadas!H4 | estado=dudosa
+  - Composición aditiva de costos parciales. | Bajadas!H4 | estado=dudosa
+- incongruencias:
+  - duplicacion_de_terminos (media): Se repiten referencias en fórmula: J20
+  - duplicacion_de_terminos (media): Se repiten referencias en fórmula: I18
+  - constante_sin_etiqueta_cercana (leve): Constante numérica sin etiqueta cercana clara.
+  - constante_sin_etiqueta_cercana (leve): Constante numérica sin etiqueta cercana clara.
+  - constante_sin_etiqueta_cercana (leve): Constante numérica sin etiqueta cercana clara.
+
+Precio:
+- familia: A3+
+- bloque: SB02
+- celda_salida: I4
+- encabezado_detectado: 4/4, 4/0, 4/4, 4/0
+- valor_actual: =(AC48+AC6)*$AH$48
+- fórmula: =(AC48+AC6)*$AH$48
+- interpretación_probable: Precio calculado en tabla de Bajadas.
+- árbol_de_origen:
+  - nodo 1: hoja=Bajadas celda=I4 valor==(AC48+AC6)*$AH$48 tipo=caras_impresion
+  - nodo 2: hoja=Bajadas celda=AC48 valor==AF48*$AM$42 tipo=coste_impresion
+  - nodo 3: hoja=Bajadas celda=AF48 valor=1.0 tipo=coeficiente
+  - nodo 4: hoja=Bajadas celda=AM42 valor==AK42*AN38 tipo=coste_impresion
+  - nodo 5: hoja=Bajadas celda=AK42 valor=0.3 tipo=auxiliar
+  - nodo 6: hoja=Bajadas celda=AN38 valor=650.0 tipo=auxiliar
+  - nodo 7: hoja=Bajadas celda=AC6 valor==AI6*$AM$38*AC20 tipo=gramaje
+  - nodo 8: hoja=Bajadas celda=AI6 valor=='PAPEL US$'!J13 tipo=coste_papel
+  - nodo 9: hoja=PAPEL US$ celda=J13 valor==I13*J2 tipo=pendiente_de_interpretacion
+  - nodo 10: hoja=PAPEL US$ celda=I13 valor==H13/I2 tipo=pendiente_de_interpretacion
+- decisiones_detectadas:
+  - Aplicación de coeficientes/multiplicadores en precio. | Bajadas!I4 | estado=dudosa
+  - Composición aditiva de costos parciales. | Bajadas!I4 | estado=dudosa
+- incongruencias:
+  - duplicacion_de_terminos (media): Se repiten referencias en fórmula: J13
+  - constante_sin_etiqueta_cercana (leve): Constante numérica sin etiqueta cercana clara.
+  - constante_sin_etiqueta_cercana (leve): Constante numérica sin etiqueta cercana clara.
+
+Precio:
+- familia: A3+
+- bloque: SB02
+- celda_salida: J4
+- encabezado_detectado: 4/0, 4/4, 4/0, 4/4
+- valor_actual: =(AC48*AG48+AC6)*AH48
+- fórmula: =(AC48*AG48+AC6)*AH48
+- interpretación_probable: Precio calculado en tabla de Bajadas.
+- árbol_de_origen:
+  - nodo 1: hoja=Bajadas celda=J4 valor==(AC48*AG48+AC6)*AH48 tipo=gramaje
+  - nodo 2: hoja=Bajadas celda=AC48 valor==AF48*$AM$42 tipo=coste_impresion
+  - nodo 3: hoja=Bajadas celda=AF48 valor=1.0 tipo=coeficiente
+  - nodo 4: hoja=Bajadas celda=AM42 valor==AK42*AN38 tipo=coste_impresion
+  - nodo 5: hoja=Bajadas celda=AK42 valor=0.3 tipo=auxiliar
+  - nodo 6: hoja=Bajadas celda=AN38 valor=650.0 tipo=auxiliar
+  - nodo 7: hoja=Bajadas celda=AG48 valor=1.7 tipo=coeficiente
+  - nodo 8: hoja=Bajadas celda=AC6 valor==AI6*$AM$38*AC20 tipo=gramaje
+  - nodo 9: hoja=Bajadas celda=AI6 valor=='PAPEL US$'!J13 tipo=coste_papel
+  - nodo 10: hoja=PAPEL US$ celda=J13 valor==I13*J2 tipo=pendiente_de_interpretacion
+- decisiones_detectadas:
+  - Aplicación de coeficientes/multiplicadores en precio. | Bajadas!J4 | estado=dudosa
+  - Composición aditiva de costos parciales. | Bajadas!J4 | estado=dudosa
+- incongruencias:
+  - duplicacion_de_terminos (media): Se repiten referencias en fórmula: J13
+  - constante_sin_etiqueta_cercana (leve): Constante numérica sin etiqueta cercana clara.
+  - constante_sin_etiqueta_cercana (leve): Constante numérica sin etiqueta cercana clara.
+
+Precio:
+- familia: A3+
+- bloque: SB02
+- celda_salida: K4
+- encabezado_detectado: 4/4, 4/0, 4/4, 4/0
+- valor_actual: =(AC48+AC7)*$AH$48
+- fórmula: =(AC48+AC7)*$AH$48
+- interpretación_probable: Precio calculado en tabla de Bajadas.
+- árbol_de_origen:
+  - nodo 1: hoja=Bajadas celda=K4 valor==(AC48+AC7)*$AH$48 tipo=caras_impresion
+  - nodo 2: hoja=Bajadas celda=AC48 valor==AF48*$AM$42 tipo=coste_impresion
+  - nodo 3: hoja=Bajadas celda=AF48 valor=1.0 tipo=coeficiente
+  - nodo 4: hoja=Bajadas celda=AM42 valor==AK42*AN38 tipo=coste_impresion
+  - nodo 5: hoja=Bajadas celda=AK42 valor=0.3 tipo=auxiliar
+  - nodo 6: hoja=Bajadas celda=AN38 valor=650.0 tipo=auxiliar
+  - nodo 7: hoja=Bajadas celda=AC7 valor==AI7*$AM$38*AC21 tipo=gramaje
+  - nodo 8: hoja=Bajadas celda=AI7 valor=='PAPEL US$'!J12 tipo=coste_papel
+  - nodo 9: hoja=PAPEL US$ celda=J12 valor==I12*J2 tipo=pendiente_de_interpretacion
+  - nodo 10: hoja=PAPEL US$ celda=I12 valor==H12/I2 tipo=pendiente_de_interpretacion
+- decisiones_detectadas:
+  - Aplicación de coeficientes/multiplicadores en precio. | Bajadas!K4 | estado=dudosa
+  - Composición aditiva de costos parciales. | Bajadas!K4 | estado=dudosa
+- incongruencias:
+  - duplicacion_de_terminos (media): Se repiten referencias en fórmula: J12
+  - constante_sin_etiqueta_cercana (leve): Constante numérica sin etiqueta cercana clara.
+  - constante_sin_etiqueta_cercana (leve): Constante numérica sin etiqueta cercana clara.
+  - referencia_a_celda_vacia (media): La cadena de cálculo usa una celda vacía.
+
+Precio:
+- familia: A3+
+- bloque: SB02
+- celda_salida: L4
+- encabezado_detectado: 4/0, 4/4, 4/0, 4/4
+- valor_actual: =(AC48*AG48+AC7)*AH48
+- fórmula: =(AC48*AG48+AC7)*AH48
+- interpretación_probable: Precio calculado en tabla de Bajadas.
+- árbol_de_origen:
+  - nodo 1: hoja=Bajadas celda=L4 valor==(AC48*AG48+AC7)*AH48 tipo=gramaje
+  - nodo 2: hoja=Bajadas celda=AC48 valor==AF48*$AM$42 tipo=coste_impresion
+  - nodo 3: hoja=Bajadas celda=AF48 valor=1.0 tipo=coeficiente
+  - nodo 4: hoja=Bajadas celda=AM42 valor==AK42*AN38 tipo=coste_impresion
+  - nodo 5: hoja=Bajadas celda=AK42 valor=0.3 tipo=auxiliar
+  - nodo 6: hoja=Bajadas celda=AN38 valor=650.0 tipo=auxiliar
+  - nodo 7: hoja=Bajadas celda=AG48 valor=1.7 tipo=coeficiente
+  - nodo 8: hoja=Bajadas celda=AC7 valor==AI7*$AM$38*AC21 tipo=gramaje
+  - nodo 9: hoja=Bajadas celda=AI7 valor=='PAPEL US$'!J12 tipo=coste_papel
+  - nodo 10: hoja=PAPEL US$ celda=J12 valor==I12*J2 tipo=pendiente_de_interpretacion
+- decisiones_detectadas:
+  - Aplicación de coeficientes/multiplicadores en precio. | Bajadas!L4 | estado=dudosa
+  - Composición aditiva de costos parciales. | Bajadas!L4 | estado=dudosa
+- incongruencias:
+  - duplicacion_de_terminos (media): Se repiten referencias en fórmula: J12
+  - constante_sin_etiqueta_cercana (leve): Constante numérica sin etiqueta cercana clara.
+  - constante_sin_etiqueta_cercana (leve): Constante numérica sin etiqueta cercana clara.
+  - referencia_a_celda_vacia (media): La cadena de cálculo usa una celda vacía.
+
+Precio:
+- familia: A3+
+- bloque: SB02
+- celda_salida: M4
+- encabezado_detectado: 4/4, 4/0, 4/4, 4/0
+- valor_actual: =(AC48+AC8)*$AH$48
+- fórmula: =(AC48+AC8)*$AH$48
+- interpretación_probable: Precio calculado en tabla de Bajadas.
+- árbol_de_origen:
+  - nodo 1: hoja=Bajadas celda=M4 valor==(AC48+AC8)*$AH$48 tipo=caras_impresion
+  - nodo 2: hoja=Bajadas celda=AC48 valor==AF48*$AM$42 tipo=coste_impresion
+  - nodo 3: hoja=Bajadas celda=AF48 valor=1.0 tipo=coeficiente
+  - nodo 4: hoja=Bajadas celda=AM42 valor==AK42*AN38 tipo=coste_impresion
+  - nodo 5: hoja=Bajadas celda=AK42 valor=0.3 tipo=auxiliar
+  - nodo 6: hoja=Bajadas celda=AN38 valor=650.0 tipo=auxiliar
+  - nodo 7: hoja=Bajadas celda=AC8 valor==AI8*$AM$38*AC22 tipo=gramaje
+  - nodo 8: hoja=Bajadas celda=AI8 valor=='PAPEL US$'!J11 tipo=coste_papel
+  - nodo 9: hoja=PAPEL US$ celda=J11 valor==I11*J2 tipo=pendiente_de_interpretacion
+  - nodo 10: hoja=PAPEL US$ celda=I11 valor==H11/I2 tipo=pendiente_de_interpretacion
+- decisiones_detectadas:
+  - Aplicación de coeficientes/multiplicadores en precio. | Bajadas!M4 | estado=dudosa
+  - Composición aditiva de costos parciales. | Bajadas!M4 | estado=dudosa
+- incongruencias:
+  - duplicacion_de_terminos (media): Se repiten referencias en fórmula: J11
+  - multiplicacion_por_1 (leve): La fórmula contiene multiplicación por 1.
+  - multiplicacion_por_1 (leve): La fórmula contiene multiplicación por 1.
+  - duplicacion_de_terminos (media): Se repiten referencias en fórmula: J13
+  - constante_sin_etiqueta_cercana (leve): Constante numérica sin etiqueta cercana clara.
+
+Precio:
+- familia: A3+
+- bloque: SB02
+- celda_salida: N4
+- encabezado_detectado: 4/0, 4/4, 4/0, 4/4
+- valor_actual: =(AC48*AG48+AC8)*AH48
+- fórmula: =(AC48*AG48+AC8)*AH48
+- interpretación_probable: Precio calculado en tabla de Bajadas.
+- árbol_de_origen:
+  - nodo 1: hoja=Bajadas celda=N4 valor==(AC48*AG48+AC8)*AH48 tipo=gramaje
+  - nodo 2: hoja=Bajadas celda=AC48 valor==AF48*$AM$42 tipo=coste_impresion
+  - nodo 3: hoja=Bajadas celda=AF48 valor=1.0 tipo=coeficiente
+  - nodo 4: hoja=Bajadas celda=AM42 valor==AK42*AN38 tipo=coste_impresion
+  - nodo 5: hoja=Bajadas celda=AK42 valor=0.3 tipo=auxiliar
+  - nodo 6: hoja=Bajadas celda=AN38 valor=650.0 tipo=auxiliar
+  - nodo 7: hoja=Bajadas celda=AG48 valor=1.7 tipo=coeficiente
+  - nodo 8: hoja=Bajadas celda=AC8 valor==AI8*$AM$38*AC22 tipo=gramaje
+  - nodo 9: hoja=Bajadas celda=AI8 valor=='PAPEL US$'!J11 tipo=coste_papel
+  - nodo 10: hoja=PAPEL US$ celda=J11 valor==I11*J2 tipo=pendiente_de_interpretacion
+- decisiones_detectadas:
+  - Aplicación de coeficientes/multiplicadores en precio. | Bajadas!N4 | estado=dudosa
+  - Composición aditiva de costos parciales. | Bajadas!N4 | estado=dudosa
+- incongruencias:
+  - duplicacion_de_terminos (media): Se repiten referencias en fórmula: J11
+  - multiplicacion_por_1 (leve): La fórmula contiene multiplicación por 1.
+  - multiplicacion_por_1 (leve): La fórmula contiene multiplicación por 1.
+  - duplicacion_de_terminos (media): Se repiten referencias en fórmula: J13
+  - constante_sin_etiqueta_cercana (leve): Constante numérica sin etiqueta cercana clara.

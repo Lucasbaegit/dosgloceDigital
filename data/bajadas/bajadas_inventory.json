@@ -1,0 +1,1964 @@
+{
+  "workbook": "C:\\Users\\baezl\\Desktop\\proyectos\\desgloceExcel\\excel_desfloce\\original\\Copia de DIGITAL sistema 2025.xlsx",
+  "sheet": "Bajadas",
+  "used_range": {
+    "min_row": 1,
+    "max_row": 92,
+    "min_col": 1,
+    "max_col": 48,
+    "address": "A1:AV92"
+  },
+  "stats": {
+    "non_empty_cells": 1991,
+    "constant_cells": 738,
+    "formula_cells": 1253,
+    "error_cells": 0,
+    "repeated_formula_groups": 20
+  },
+  "possible_internal_blocks": [
+    {
+      "id": "B4",
+      "range": "B4:AQ7",
+      "rows": 4,
+      "cols": 42
+    },
+    {
+      "id": "B5",
+      "range": "B8:AJ14",
+      "rows": 7,
+      "cols": 35
+    },
+    {
+      "id": "B8",
+      "range": "B17:AG19",
+      "rows": 3,
+      "cols": 32
+    },
+    {
+      "id": "B11",
+      "range": "B22:AJ23",
+      "rows": 2,
+      "cols": 35
+    },
+    {
+      "id": "B14",
+      "range": "B26:AK27",
+      "rows": 2,
+      "cols": 36
+    },
+    {
+      "id": "B15",
+      "range": "B28:AR34",
+      "rows": 7,
+      "cols": 43
+    },
+    {
+      "id": "B16",
+      "range": "B35:AL36",
+      "rows": 2,
+      "cols": 37
+    },
+    {
+      "id": "B17",
+      "range": "B37:AV41",
+      "rows": 5,
+      "cols": 47
+    },
+    {
+      "id": "B24",
+      "range": "B48:AP52",
+      "rows": 5,
+      "cols": 41
+    },
+    {
+      "id": "B26",
+      "range": "B54:AP55",
+      "rows": 2,
+      "cols": 41
+    },
+    {
+      "id": "B28",
+      "range": "B57:AG61",
+      "rows": 5,
+      "cols": 32
+    },
+    {
+      "id": "B30",
+      "range": "B63:AG64",
+      "rows": 2,
+      "cols": 32
+    },
+    {
+      "id": "B31",
+      "range": "B65:X66",
+      "rows": 2,
+      "cols": 23
+    },
+    {
+      "id": "B34",
+      "range": "B69:AR70",
+      "rows": 2,
+      "cols": 43
+    },
+    {
+      "id": "B36",
+      "range": "B72:AF77",
+      "rows": 6,
+      "cols": 31
+    },
+    {
+      "id": "B37",
+      "range": "B78:S79",
+      "rows": 2,
+      "cols": 18
+    },
+    {
+      "id": "B39",
+      "range": "B86:E92",
+      "rows": 7,
+      "cols": 4
+    }
+  ],
+  "possible_input_cells": [
+    "AG1",
+    "AJ1",
+    "W4",
+    "X4",
+    "W5",
+    "X5",
+    "W6",
+    "X6",
+    "W7",
+    "X7",
+    "W8",
+    "X8",
+    "W9",
+    "X9",
+    "W10",
+    "X10",
+    "J13",
+    "W14",
+    "X14",
+    "W15",
+    "X15",
+    "W16",
+    "X16",
+    "W17",
+    "X17",
+    "W18",
+    "X18",
+    "AA18",
+    "AC18",
+    "W19",
+    "X19",
+    "AC19",
+    "W20",
+    "X20",
+    "AC20",
+    "AC21",
+    "AC22",
+    "AJ22",
+    "J23",
+    "AC23",
+    "AC24",
+    "AC25",
+    "AC26",
+    "AH26",
+    "AC27",
+    "AH28",
+    "AI28",
+    "AJ28",
+    "AK28",
+    "AO28",
+    "AO30",
+    "AR30",
+    "AO31",
+    "AR31",
+    "AL32",
+    "AO32",
+    "AR32",
+    "L33",
+    "AL33",
+    "AO33",
+    "AR33",
+    "AL34",
+    "AO34",
+    "AR34",
+    "V35",
+    "AL35",
+    "V36",
+    "AL36",
+    "V37",
+    "V38",
+    "AM38",
+    "AN38",
+    "AS38",
+    "V39",
+    "AS39",
+    "AN40",
+    "AS40",
+    "AS41",
+    "AK42",
+    "AS42",
+    "AK43",
+    "AS43",
+    "AS44",
+    "AK45",
+    "V46",
+    "V47",
+    "V48",
+    "AF48",
+    "AG48",
+    "AH48",
+    "V49",
+    "AF49",
+    "AG49",
+    "AH49",
+    "AM49",
+    "V50",
+    "AF50",
+    "AG50",
+    "AH50",
+    "AM50",
+    "AF51",
+    "AG51",
+    "AH51",
+    "AM51",
+    "AF52",
+    "AG52",
+    "AH52",
+    "AM52",
+    "AF53",
+    "AG53",
+    "AH53",
+    "AM53",
+    "AF54",
+    "AG54",
+    "AH54",
+    "AM54",
+    "AF55",
+    "AG55",
+    "AH55",
+    "AM55",
+    "AF58",
+    "AF59",
+    "AF60",
+    "AF61",
+    "W62",
+    "AF62",
+    "W63",
+    "AF63",
+    "W64",
+    "AC64",
+    "W65",
+    "W66",
+    "W67",
+    "W68",
+    "W69"
+  ],
+  "possible_output_cells": [
+    "C4",
+    "D4",
+    "E4",
+    "F4",
+    "G4",
+    "H4",
+    "I4",
+    "J4",
+    "K4",
+    "L4",
+    "M4",
+    "N4",
+    "O4",
+    "P4",
+    "Q4",
+    "R4",
+    "S4",
+    "T4",
+    "AE4",
+    "C5",
+    "D5",
+    "E5",
+    "F5",
+    "G5",
+    "H5",
+    "I5",
+    "J5",
+    "K5",
+    "L5",
+    "M5",
+    "N5",
+    "O5",
+    "P5",
+    "Q5",
+    "R5",
+    "S5",
+    "T5",
+    "AE5",
+    "C6",
+    "D6",
+    "E6",
+    "F6",
+    "G6",
+    "H6",
+    "I6",
+    "K6",
+    "L6",
+    "M6",
+    "N6",
+    "O6",
+    "P6",
+    "Q6",
+    "R6",
+    "S6",
+    "T6",
+    "AE6",
+    "C7",
+    "D7",
+    "E7",
+    "F7",
+    "G7",
+    "H7",
+    "I7",
+    "J7",
+    "K7",
+    "L7",
+    "M7",
+    "N7",
+    "O7",
+    "P7",
+    "R7",
+    "S7",
+    "T7",
+    "AE7",
+    "C8",
+    "D8",
+    "E8",
+    "F8",
+    "G8",
+    "H8",
+    "J8",
+    "K8",
+    "L8",
+    "M8",
+    "N8",
+    "O8",
+    "P8",
+    "R8",
+    "S8",
+    "T8",
+    "AE8",
+    "C9",
+    "D9",
+    "E9",
+    "F9",
+    "G9",
+    "H9",
+    "I9",
+    "J9",
+    "K9",
+    "L9",
+    "M9",
+    "N9",
+    "O9",
+    "P9",
+    "R9",
+    "S9",
+    "T9",
+    "AE9",
+    "C10",
+    "D10",
+    "E10",
+    "F10",
+    "G10",
+    "H10",
+    "I10",
+    "K10",
+    "L10",
+    "M10",
+    "N10",
+    "O10",
+    "P10",
+    "R10",
+    "S10",
+    "T10",
+    "AE10",
+    "C11",
+    "D11",
+    "E11",
+    "F11",
+    "G11",
+    "H11",
+    "I11",
+    "K11",
+    "L11",
+    "M11",
+    "N11",
+    "O11",
+    "P11",
+    "R11",
+    "S11",
+    "T11",
+    "U11",
+    "AE11",
+    "AE12",
+    "AA13",
+    "AB13",
+    "AD13",
+    "AE13",
+    "C14",
+    "D14",
+    "E14",
+    "F14",
+    "G14",
+    "H14",
+    "I14",
+    "J14",
+    "K14",
+    "L14",
+    "M14",
+    "N14",
+    "O14",
+    "P14",
+    "Q14",
+    "R14",
+    "S14",
+    "AA14",
+    "AB14",
+    "AI14",
+    "C15",
+    "D15",
+    "E15",
+    "F15",
+    "G15",
+    "H15",
+    "J15",
+    "K15",
+    "L15",
+    "M15",
+    "N15",
+    "O15",
+    "P15",
+    "Q15",
+    "R15",
+    "S15",
+    "C16",
+    "D16",
+    "E16",
+    "F16",
+    "G16",
+    "H16",
+    "J16",
+    "K16",
+    "L16",
+    "M16",
+    "N16",
+    "O16",
+    "P16",
+    "Q16",
+    "R16"
+  ],
+  "editable_or_business_constants": [
+    {
+      "cell": "B1",
+      "value": "BAJADAS",
+      "type": "str"
+    },
+    {
+      "cell": "W1",
+      "value": "tienda",
+      "type": "str"
+    },
+    {
+      "cell": "AA1",
+      "value": 2.0,
+      "type": "float"
+    },
+    {
+      "cell": "AD1",
+      "value": 0.6,
+      "type": "float"
+    },
+    {
+      "cell": "AG1",
+      "value": 1.5,
+      "type": "float"
+    },
+    {
+      "cell": "AJ1",
+      "value": 0.6,
+      "type": "float"
+    },
+    {
+      "cell": "B2",
+      "value": "A3+ (32x47)",
+      "type": "str"
+    },
+    {
+      "cell": "C2",
+      "value": "Triplex",
+      "type": "str"
+    },
+    {
+      "cell": "E2",
+      "value": "350g",
+      "type": "str"
+    },
+    {
+      "cell": "G2",
+      "value": "300g",
+      "type": "str"
+    },
+    {
+      "cell": "I2",
+      "value": "200g",
+      "type": "str"
+    },
+    {
+      "cell": "K2",
+      "value": "150g",
+      "type": "str"
+    },
+    {
+      "cell": "M2",
+      "value": "115g",
+      "type": "str"
+    },
+    {
+      "cell": "O2",
+      "value": "90g",
+      "type": "str"
+    },
+    {
+      "cell": "Q2",
+      "value": "80 grs",
+      "type": "str"
+    },
+    {
+      "cell": "S2",
+      "value": "Sticker",
+      "type": "str"
+    },
+    {
+      "cell": "T2",
+      "value": "Imán",
+      "type": "str"
+    },
+    {
+      "cell": "U2",
+      "value": "OPP  blco o blanco",
+      "type": "str"
+    },
+    {
+      "cell": "W2",
+      "value": 350.0,
+      "type": "float"
+    },
+    {
+      "cell": "AA2",
+      "value": "Precio del papel por hoja",
+      "type": "str"
+    },
+    {
+      "cell": "AG2",
+      "value": "Precio del papel por hoja",
+      "type": "str"
+    },
+    {
+      "cell": "B3",
+      "value": "30x46",
+      "type": "str"
+    },
+    {
+      "cell": "C3",
+      "value": "4/0",
+      "type": "str"
+    },
+    {
+      "cell": "D3",
+      "value": "4/4",
+      "type": "str"
+    },
+    {
+      "cell": "E3",
+      "value": "4/0",
+      "type": "str"
+    },
+    {
+      "cell": "F3",
+      "value": "4/4",
+      "type": "str"
+    },
+    {
+      "cell": "G3",
+      "value": "4/0",
+      "type": "str"
+    },
+    {
+      "cell": "H3",
+      "value": "4/4",
+      "type": "str"
+    },
+    {
+      "cell": "I3",
+      "value": "4/0",
+      "type": "str"
+    },
+    {
+      "cell": "J3",
+      "value": "4/4",
+      "type": "str"
+    },
+    {
+      "cell": "K3",
+      "value": "4/0",
+      "type": "str"
+    },
+    {
+      "cell": "L3",
+      "value": "4/4",
+      "type": "str"
+    },
+    {
+      "cell": "M3",
+      "value": "4/0",
+      "type": "str"
+    },
+    {
+      "cell": "N3",
+      "value": "4/4",
+      "type": "str"
+    },
+    {
+      "cell": "O3",
+      "value": "4/0",
+      "type": "str"
+    },
+    {
+      "cell": "P3",
+      "value": "4/4",
+      "type": "str"
+    },
+    {
+      "cell": "Q3",
+      "value": "4/0",
+      "type": "str"
+    },
+    {
+      "cell": "R3",
+      "value": "4/4",
+      "type": "str"
+    },
+    {
+      "cell": "S3",
+      "value": "4/0",
+      "type": "str"
+    },
+    {
+      "cell": "T3",
+      "value": "4/0",
+      "type": "str"
+    },
+    {
+      "cell": "U3",
+      "value": "4/0",
+      "type": "str"
+    },
+    {
+      "cell": "Z3",
+      "value": "Precio de papel",
+      "type": "str"
+    },
+    {
+      "cell": "AA3",
+      "value": "XL",
+      "type": "str"
+    },
+    {
+      "cell": "AB3",
+      "value": "33X48",
+      "type": "str"
+    },
+    {
+      "cell": "AC3",
+      "value": "32X47",
+      "type": "str"
+    },
+    {
+      "cell": "AD3",
+      "value": "A4",
+      "type": "str"
+    },
+    {
+      "cell": "AF3",
+      "value": "Precio de papel",
+      "type": "str"
+    },
+    {
+      "cell": "AG3",
+      "value": "XL",
+      "type": "str"
+    },
+    {
+      "cell": "AH3",
+      "value": "33X48",
+      "type": "str"
+    },
+    {
+      "cell": "AI3",
+      "value": "32X47",
+      "type": "str"
+    },
+    {
+      "cell": "AJ3",
+      "value": "A4",
+      "type": "str"
+    },
+    {
+      "cell": "B4",
+      "value": 1.0,
+      "type": "float"
+    },
+    {
+      "cell": "W4",
+      "value": 460.0,
+      "type": "float"
+    },
+    {
+      "cell": "X4",
+      "value": 588.0,
+      "type": "float"
+    },
+    {
+      "cell": "Z4",
+      "value": "350g",
+      "type": "str"
+    },
+    {
+      "cell": "AF4",
+      "value": "350g",
+      "type": "str"
+    },
+    {
+      "cell": "AN4",
+      "value": 28.0,
+      "type": "float"
+    },
+    {
+      "cell": "AO4",
+      "value": 71.0,
+      "type": "float"
+    },
+    {
+      "cell": "AQ4",
+      "value": 2.2,
+      "type": "float"
+    },
+    {
+      "cell": "B5",
+      "value": "2 a 25",
+      "type": "str"
+    },
+    {
+      "cell": "W5",
+      "value": 436.0,
+      "type": "float"
+    },
+    {
+      "cell": "X5",
+      "value": 557.0,
+      "type": "float"
+    },
+    {
+      "cell": "Z5",
+      "value": "300g",
+      "type": "str"
+    },
+    {
+      "cell": "AF5",
+      "value": "300g",
+      "type": "str"
+    },
+    {
+      "cell": "AQ5",
+      "value": 2.0,
+      "type": "float"
+    },
+    {
+      "cell": "B6",
+      "value": "26 a 50",
+      "type": "str"
+    },
+    {
+      "cell": "W6",
+      "value": 412.0,
+      "type": "float"
+    },
+    {
+      "cell": "X6",
+      "value": 526.0,
+      "type": "float"
+    },
+    {
+      "cell": "Z6",
+      "value": "200g",
+      "type": "str"
+    },
+    {
+      "cell": "AF6",
+      "value": "200g",
+      "type": "str"
+    },
+    {
+      "cell": "AQ6",
+      "value": 1.8,
+      "type": "float"
+    },
+    {
+      "cell": "B7",
+      "value": "51 a 100",
+      "type": "str"
+    },
+    {
+      "cell": "W7",
+      "value": 388.0,
+      "type": "float"
+    },
+    {
+      "cell": "X7",
+      "value": 495.0,
+      "type": "float"
+    },
+    {
+      "cell": "Z7",
+      "value": "150g",
+      "type": "str"
+    },
+    {
+      "cell": "AF7",
+      "value": "150g",
+      "type": "str"
+    },
+    {
+      "cell": "AQ7",
+      "value": 1.7,
+      "type": "float"
+    },
+    {
+      "cell": "B8",
+      "value": "101 a 300",
+      "type": "str"
+    },
+    {
+      "cell": "W8",
+      "value": 363.0,
+      "type": "float"
+    },
+    {
+      "cell": "X8",
+      "value": 464.0,
+      "type": "float"
+    },
+    {
+      "cell": "Z8",
+      "value": "115g",
+      "type": "str"
+    },
+    {
+      "cell": "AF8",
+      "value": "115g",
+      "type": "str"
+    },
+    {
+      "cell": "B9",
+      "value": "301 a 500",
+      "type": "str"
+    },
+    {
+      "cell": "W9",
+      "value": 339.0,
+      "type": "float"
+    },
+    {
+      "cell": "X9",
+      "value": 433.0,
+      "type": "float"
+    },
+    {
+      "cell": "Z9",
+      "value": "90g",
+      "type": "str"
+    },
+    {
+      "cell": "AF9",
+      "value": "90g",
+      "type": "str"
+    },
+    {
+      "cell": "B10",
+      "value": "501 a 1000",
+      "type": "str"
+    },
+    {
+      "cell": "W10",
+      "value": 315.0,
+      "type": "float"
+    },
+    {
+      "cell": "X10",
+      "value": 402.0,
+      "type": "float"
+    },
+    {
+      "cell": "Z10",
+      "value": "Obra",
+      "type": "str"
+    },
+    {
+      "cell": "AF10",
+      "value": "Obra",
+      "type": "str"
+    },
+    {
+      "cell": "B11",
+      "value": 1000.0,
+      "type": "float"
+    },
+    {
+      "cell": "W11",
+      "value": 291.0,
+      "type": "float"
+    },
+    {
+      "cell": "X11",
+      "value": 371.0,
+      "type": "float"
+    },
+    {
+      "cell": "Z11",
+      "value": "Triplex",
+      "type": "str"
+    },
+    {
+      "cell": "AF11",
+      "value": "Triplex",
+      "type": "str"
+    },
+    {
+      "cell": "B12",
+      "value": "XA3 (33x48)",
+      "type": "str"
+    },
+    {
+      "cell": "C12",
+      "value": "Triplex",
+      "type": "str"
+    },
+    {
+      "cell": "E12",
+      "value": "350g",
+      "type": "str"
+    },
+    {
+      "cell": "G12",
+      "value": "300g",
+      "type": "str"
+    },
+    {
+      "cell": "I12",
+      "value": "200g",
+      "type": "str"
+    },
+    {
+      "cell": "K12",
+      "value": "150g",
+      "type": "str"
+    },
+    {
+      "cell": "M12",
+      "value": "115g",
+      "type": "str"
+    },
+    {
+      "cell": "O12",
+      "value": "90g",
+      "type": "str"
+    },
+    {
+      "cell": "Q12",
+      "value": "OBRA",
+      "type": "str"
+    },
+    {
+      "cell": "S12",
+      "value": "Sticker",
+      "type": "str"
+    },
+    {
+      "cell": "Z12",
+      "value": "Sticker",
+      "type": "str"
+    },
+    {
+      "cell": "AF12",
+      "value": "Sticker",
+      "type": "str"
+    },
+    {
+      "cell": "B13",
+      "value": "31x47",
+      "type": "str"
+    },
+    {
+      "cell": "C13",
+      "value": "4/0",
+      "type": "str"
+    },
+    {
+      "cell": "D13",
+      "value": "4/4",
+      "type": "str"
+    },
+    {
+      "cell": "E13",
+      "value": "4/0",
+      "type": "str"
+    },
+    {
+      "cell": "F13",
+      "value": "4/4",
+      "type": "str"
+    },
+    {
+      "cell": "G13",
+      "value": "4/0",
+      "type": "str"
+    },
+    {
+      "cell": "H13",
+      "value": "4/4",
+      "type": "str"
+    },
+    {
+      "cell": "I13",
+      "value": "4/0",
+      "type": "str"
+    },
+    {
+      "cell": "J13",
+      "value": "4/4",
+      "type": "str"
+    },
+    {
+      "cell": "K13",
+      "value": "4/0",
+      "type": "str"
+    },
+    {
+      "cell": "L13",
+      "value": "4/4",
+      "type": "str"
+    },
+    {
+      "cell": "M13",
+      "value": "4/0",
+      "type": "str"
+    },
+    {
+      "cell": "N13",
+      "value": "4/4",
+      "type": "str"
+    },
+    {
+      "cell": "O13",
+      "value": "4/0",
+      "type": "str"
+    },
+    {
+      "cell": "P13",
+      "value": "4/4",
+      "type": "str"
+    },
+    {
+      "cell": "Q13",
+      "value": "4/0",
+      "type": "str"
+    },
+    {
+      "cell": "R13",
+      "value": "4/4",
+      "type": "str"
+    },
+    {
+      "cell": "S13",
+      "value": "4/0",
+      "type": "str"
+    },
+    {
+      "cell": "Z13",
+      "value": "OPP",
+      "type": "str"
+    },
+    {
+      "cell": "AF13",
+      "value": "OPP",
+      "type": "str"
+    },
+    {
+      "cell": "B14",
+      "value": 1.0,
+      "type": "float"
+    },
+    {
+      "cell": "W14",
+      "value": 533.0,
+      "type": "float"
+    },
+    {
+      "cell": "X14",
+      "value": 660.0,
+      "type": "float"
+    },
+    {
+      "cell": "Z14",
+      "value": "Imán",
+      "type": "str"
+    },
+    {
+      "cell": "AF14",
+      "value": "Imán",
+      "type": "str"
+    },
+    {
+      "cell": "AJ14",
+      "value": 0.0,
+      "type": "float"
+    },
+    {
+      "cell": "B15",
+      "value": "2 a 25",
+      "type": "str"
+    },
+    {
+      "cell": "W15",
+      "value": 504.0,
+      "type": "float"
+    },
+    {
+      "cell": "X15",
+      "value": 625.0,
+      "type": "float"
+    },
+    {
+      "cell": "B16",
+      "value": "26 a 50",
+      "type": "str"
+    },
+    {
+      "cell": "W16",
+      "value": 476.0,
+      "type": "float"
+    },
+    {
+      "cell": "X16",
+      "value": 590.0,
+      "type": "float"
+    },
+    {
+      "cell": "Z16",
+      "value": "Coeficiente papel",
+      "type": "str"
+    },
+    {
+      "cell": "AB16",
+      "value": "Parametros ajustables",
+      "type": "str"
+    },
+    {
+      "cell": "B17",
+      "value": "51 a 100",
+      "type": "str"
+    },
+    {
+      "cell": "W17",
+      "value": 448.0,
+      "type": "float"
+    },
+    {
+      "cell": "X17",
+      "value": 555.0,
+      "type": "float"
+    },
+    {
+      "cell": "AA17",
+      "value": "XL",
+      "type": "str"
+    },
+    {
+      "cell": "AB17",
+      "value": "33X48",
+      "type": "str"
+    },
+    {
+      "cell": "AC17",
+      "value": "32X47",
+      "type": "str"
+    },
+    {
+      "cell": "AD17",
+      "value": "A4",
+      "type": "str"
+    },
+    {
+      "cell": "AF17",
+      "value": "COSTO DE BAJADA",
+      "type": "str"
+    },
+    {
+      "cell": "AG17",
+      "value": "(costo de papel x coef ganacia) + (costo clic * coef 4/0) + (costo clic x coef 4/4)",
+      "type": "str"
+    },
+    {
+      "cell": "B18",
+      "value": "101 a 300",
+      "type": "str"
+    },
+    {
+      "cell": "W18",
+      "value": 436.0,
+      "type": "float"
+    },
+    {
+      "cell": "X18",
+      "value": 536.0,
+      "type": "float"
+    },
+    {
+      "cell": "Z18",
+      "value": "350g",
+      "type": "str"
+    },
+    {
+      "cell": "AA18",
+      "value": 1.0,
+      "type": "float"
+    },
+    {
+      "cell": "AB18",
+      "value": 1.0,
+      "type": "float"
+    },
+    {
+      "cell": "AC18",
+      "value": 1.0,
+      "type": "float"
+    },
+    {
+      "cell": "AD18",
+      "value": 1.0,
+      "type": "float"
+    },
+    {
+      "cell": "AF18",
+      "value": "COSTO DE PAPEL ",
+      "type": "str"
+    },
+    {
+      "cell": "AG18",
+      "value": "costo de pliego/coef de corte",
+      "type": "str"
+    },
+    {
+      "cell": "B19",
+      "value": "301 a 500",
+      "type": "str"
+    },
+    {
+      "cell": "W19",
+      "value": 392.0,
+      "type": "float"
+    },
+    {
+      "cell": "X19",
+      "value": 486.0,
+      "type": "float"
+    },
+    {
+      "cell": "Z19",
+      "value": "300g",
+      "type": "str"
+    },
+    {
+      "cell": "AA19",
+      "value": 1.0,
+      "type": "float"
+    },
+    {
+      "cell": "AB19",
+      "value": 1.0,
+      "type": "float"
+    },
+    {
+      "cell": "AC19",
+      "value": 1.0,
+      "type": "float"
+    },
+    {
+      "cell": "AD19",
+      "value": 1.0,
+      "type": "float"
+    },
+    {
+      "cell": "AF19",
+      "value": "costo de clic",
+      "type": "str"
+    },
+    {
+      "cell": "AG19",
+      "value": "toner + gastos amortiz",
+      "type": "str"
+    },
+    {
+      "cell": "B20",
+      "value": "501 a 1000",
+      "type": "str"
+    },
+    {
+      "cell": "W20",
+      "value": 363.0,
+      "type": "float"
+    },
+    {
+      "cell": "X20",
+      "value": 451.0,
+      "type": "float"
+    },
+    {
+      "cell": "Z20",
+      "value": "200g",
+      "type": "str"
+    },
+    {
+      "cell": "AA20",
+      "value": 1.0,
+      "type": "float"
+    },
+    {
+      "cell": "AB20",
+      "value": 1.0,
+      "type": "float"
+    },
+    {
+      "cell": "AC20",
+      "value": 1.0,
+      "type": "float"
+    },
+    {
+      "cell": "AD20",
+      "value": 1.0,
+      "type": "float"
+    },
+    {
+      "cell": "B21",
+      "value": 1000.0,
+      "type": "float"
+    },
+    {
+      "cell": "Z21",
+      "value": "150g",
+      "type": "str"
+    },
+    {
+      "cell": "AA21",
+      "value": 1.0,
+      "type": "float"
+    },
+    {
+      "cell": "AB21",
+      "value": 1.0,
+      "type": "float"
+    },
+    {
+      "cell": "AC21",
+      "value": 1.0,
+      "type": "float"
+    },
+    {
+      "cell": "AD21",
+      "value": 1.0,
+      "type": "float"
+    },
+    {
+      "cell": "AG21",
+      "value": "costo de bobina iman",
+      "type": "str"
+    },
+    {
+      "cell": "B22",
+      "value": " XL 32x70",
+      "type": "str"
+    },
+    {
+      "cell": "C22",
+      "value": "Triplex",
+      "type": "str"
+    },
+    {
+      "cell": "E22",
+      "value": "350g",
+      "type": "str"
+    },
+    {
+      "cell": "G22",
+      "value": "300g",
+      "type": "str"
+    },
+    {
+      "cell": "I22",
+      "value": "200g",
+      "type": "str"
+    },
+    {
+      "cell": "K22",
+      "value": "150g",
+      "type": "str"
+    },
+    {
+      "cell": "M22",
+      "value": "115g",
+      "type": "str"
+    },
+    {
+      "cell": "O22",
+      "value": "90g",
+      "type": "str"
+    },
+    {
+      "cell": "Q22",
+      "value": "OBRA",
+      "type": "str"
+    },
+    {
+      "cell": "S22",
+      "value": "Sticker",
+      "type": "str"
+    },
+    {
+      "cell": "Z22",
+      "value": "115g",
+      "type": "str"
+    },
+    {
+      "cell": "AA22",
+      "value": 1.0,
+      "type": "float"
+    },
+    {
+      "cell": "AB22",
+      "value": 1.0,
+      "type": "float"
+    },
+    {
+      "cell": "AC22",
+      "value": 1.0,
+      "type": "float"
+    },
+    {
+      "cell": "AD22",
+      "value": 1.0,
+      "type": "float"
+    },
+    {
+      "cell": "AH22",
+      "value": 21.0,
+      "type": "float"
+    },
+    {
+      "cell": "AI22",
+      "value": "IMAN  A3+",
+      "type": "str"
+    },
+    {
+      "cell": "AJ22",
+      "value": 1.5,
+      "type": "float"
+    },
+    {
+      "cell": "B23",
+      "value": "70x30 cm",
+      "type": "str"
+    },
+    {
+      "cell": "C23",
+      "value": "4/0",
+      "type": "str"
+    },
+    {
+      "cell": "D23",
+      "value": "4/4",
+      "type": "str"
+    },
+    {
+      "cell": "E23",
+      "value": "4/0",
+      "type": "str"
+    },
+    {
+      "cell": "F23",
+      "value": "4/4",
+      "type": "str"
+    },
+    {
+      "cell": "G23",
+      "value": "4/0",
+      "type": "str"
+    },
+    {
+      "cell": "H23",
+      "value": "4/4",
+      "type": "str"
+    },
+    {
+      "cell": "I23",
+      "value": "4/0",
+      "type": "str"
+    },
+    {
+      "cell": "J23",
+      "value": "4/4",
+      "type": "str"
+    },
+    {
+      "cell": "K23",
+      "value": "4/0",
+      "type": "str"
+    },
+    {
+      "cell": "L23",
+      "value": "4/4",
+      "type": "str"
+    },
+    {
+      "cell": "M23",
+      "value": "4/0",
+      "type": "str"
+    },
+    {
+      "cell": "N23",
+      "value": "4/4",
+      "type": "str"
+    },
+    {
+      "cell": "O23",
+      "value": "4/0",
+      "type": "str"
+    },
+    {
+      "cell": "P23",
+      "value": "4/4",
+      "type": "str"
+    },
+    {
+      "cell": "Q23",
+      "value": "4/0",
+      "type": "str"
+    },
+    {
+      "cell": "R23",
+      "value": "4/4",
+      "type": "str"
+    },
+    {
+      "cell": "S23",
+      "value": "4/0",
+      "type": "str"
+    },
+    {
+      "cell": "Z23",
+      "value": "90g",
+      "type": "str"
+    },
+    {
+      "cell": "AA23",
+      "value": 1.0,
+      "type": "float"
+    },
+    {
+      "cell": "AB23",
+      "value": 1.0,
+      "type": "float"
+    },
+    {
+      "cell": "AC23",
+      "value": 1.0,
+      "type": "float"
+    },
+    {
+      "cell": "AD23",
+      "value": 1.0,
+      "type": "float"
+    },
+    {
+      "cell": "AG23",
+      "value": 41.0,
+      "type": "float"
+    },
+    {
+      "cell": "B24",
+      "value": 1.0,
+      "type": "float"
+    },
+    {
+      "cell": "Z24",
+      "value": "OBRA",
+      "type": "str"
+    },
+    {
+      "cell": "AA24",
+      "value": 1.0,
+      "type": "float"
+    },
+    {
+      "cell": "AB24",
+      "value": 1.0,
+      "type": "float"
+    },
+    {
+      "cell": "AC24",
+      "value": 1.0,
+      "type": "float"
+    },
+    {
+      "cell": "AD24",
+      "value": 1.0,
+      "type": "float"
+    },
+    {
+      "cell": "B25",
+      "value": "2 a 25",
+      "type": "str"
+    },
+    {
+      "cell": "Z25",
+      "value": "Triplex",
+      "type": "str"
+    },
+    {
+      "cell": "AA25",
+      "value": 1.0,
+      "type": "float"
+    },
+    {
+      "cell": "AB25",
+      "value": 1.0,
+      "type": "float"
+    },
+    {
+      "cell": "AC25",
+      "value": 1.0,
+      "type": "float"
+    },
+    {
+      "cell": "AD25",
+      "value": 1.0,
+      "type": "float"
+    },
+    {
+      "cell": "AH25",
+      "value": "sobres",
+      "type": "str"
+    },
+    {
+      "cell": "B26",
+      "value": "26 a 50",
+      "type": "str"
+    },
+    {
+      "cell": "Z26",
+      "value": "Sticker",
+      "type": "str"
+    },
+    {
+      "cell": "AA26",
+      "value": 1.0,
+      "type": "float"
+    },
+    {
+      "cell": "AB26",
+      "value": 1.0,
+      "type": "float"
+    },
+    {
+      "cell": "AC26",
+      "value": 1.0,
+      "type": "float"
+    },
+    {
+      "cell": "AD26",
+      "value": 1.0,
+      "type": "float"
+    },
+    {
+      "cell": "AH26",
+      "value": "Sobre Bolsa A4",
+      "type": "str"
+    },
+    {
+      "cell": "AI26",
+      "value": "Sobre bolsa",
+      "type": "str"
+    },
+    {
+      "cell": "AJ26",
+      "value": "Sobre bolsa",
+      "type": "str"
+    },
+    {
+      "cell": "AK26",
+      "value": "Oficio Ingles",
+      "type": "str"
+    },
+    {
+      "cell": "B27",
+      "value": "51 a 100",
+      "type": "str"
+    },
+    {
+      "cell": "Z27",
+      "value": "OPP",
+      "type": "str"
+    },
+    {
+      "cell": "AA27",
+      "value": 1.0,
+      "type": "float"
+    },
+    {
+      "cell": "AB27",
+      "value": 1.0,
+      "type": "float"
+    },
+    {
+      "cell": "AC27",
+      "value": 1.0,
+      "type": "float"
+    },
+    {
+      "cell": "AD27",
+      "value": 1.0,
+      "type": "float"
+    },
+    {
+      "cell": "AH27",
+      "value": "22,9x32,4",
+      "type": "str"
+    },
+    {
+      "cell": "AI27",
+      "value": "27x37",
+      "type": "str"
+    },
+    {
+      "cell": "AJ27",
+      "value": "25x35,3",
+      "type": "str"
+    },
+    {
+      "cell": "AK27",
+      "value": "12x23,5",
+      "type": "str"
+    },
+    {
+      "cell": "B28",
+      "value": "101 a 300",
+      "type": "str"
+    },
+    {
+      "cell": "Z28",
+      "value": "Imán",
+      "type": "str"
+    },
+    {
+      "cell": "AC28",
+      "value": 1.0,
+      "type": "float"
+    },
+    {
+      "cell": "AH28",
+      "value": 0.1242,
+      "type": "float"
+    },
+    {
+      "cell": "AI28",
+      "value": 0.1563,
+      "type": "float"
+    },
+    {
+      "cell": "AJ28",
+      "value": 0.14,
+      "type": "float"
+    },
+    {
+      "cell": "AK28",
+      "value": 0.0483011,
+      "type": "float"
+    },
+    {
+      "cell": "AO28",
+      "value": 2.0,
+      "type": "float"
+    },
+    {
+      "cell": "AP28",
+      "value": "A4",
+      "type": "str"
+    },
+    {
+      "cell": "B29",
+      "value": "301 a 500",
+      "type": "str"
+    },
+    {
+      "cell": "AH29",
+      "value": "Sobre Bolsa A4",
+      "type": "str"
+    },
+    {
+      "cell": "AI29",
+      "value": "Sobre bolsa",
+      "type": "str"
+    },
+    {
+      "cell": "AJ29",
+      "value": "Sobre bolsa",
+      "type": "str"
+    },
+    {
+      "cell": "AK29",
+      "value": "Oficio Ingles",
+      "type": "str"
+    },
+    {
+      "cell": "AO29",
+      "value": "Cantidad",
+      "type": "str"
+    },
+    {
+      "cell": "AP29",
+      "value": "4--0",
+      "type": "str"
+    },
+    {
+      "cell": "AQ29",
+      "value": "1--0",
+      "type": "str"
+    },
+    {
+      "cell": "B30",
+      "value": "501 a 1000",
+      "type": "str"
+    },
+    {
+      "cell": "Z30",
+      "value": "costo de papel",
+      "type": "str"
+    },
+    {
+      "cell": "AG30",
+      "value": "Tamaño ",
+      "type": "str"
+    },
+    {
+      "cell": "AH30",
+      "value": "22,9x32,4",
+      "type": "str"
+    },
+    {
+      "cell": "AI30",
+      "value": "27x37",
+      "type": "str"
+    },
+    {
+      "cell": "AJ30",
+      "value": "25x35,3",
+      "type": "str"
+    },
+    {
+      "cell": "AK30",
+      "value": "12x23,5",
+      "type": "str"
+    },
+    {
+      "cell": "AO30",
+      "value": 100.0,
+      "type": "float"
+    },
+    {
+      "cell": "AR30",
+      "value": 200.0,
+      "type": "float"
+    },
+    {
+      "cell": "B31",
+      "value": 1000.0,
+      "type": "float"
+    },
+    {
+      "cell": "AA31",
+      "value": "XL",
+      "type": "str"
+    },
+    {
+      "cell": "AB31",
+      "value": "33X48",
+      "type": "str"
+    },
+    {
+      "cell": "AC31",
+      "value": "32X47",
+      "type": "str"
+    },
+    {
+      "cell": "AD31",
+      "value": "A4",
+      "type": "str"
+    },
+    {
+      "cell": "AG31",
+      "value": "Cantidad",
+      "type": "str"
+    },
+    {
+      "cell": "AH31",
+      "value": "4/0",
+      "type": "str"
+    },
+    {
+      "cell": "AI31",
+      "value": "4/0",
+      "type": "str"
+    },
+    {
+      "cell": "AJ31",
+      "value": "4/0",
+      "type": "str"
+    },
+    {
+      "cell": "AK31",
+      "value": "4/0",
+      "type": "str"
+    },
+    {
+      "cell": "AO31",
+      "value": 200.0,
+      "type": "float"
+    },
+    {
+      "cell": "AR31",
+      "value": 250.0,
+      "type": "float"
+    }
+  ],
+  "status": "pendiente de interpretación"
+}

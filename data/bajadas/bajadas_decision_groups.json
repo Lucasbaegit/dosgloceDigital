@@ -1,0 +1,2051 @@
+{
+  "cantidad_original_decisiones": 55,
+  "cantidad_grupos_generados": 55,
+  "reduccion_absoluta": 0,
+  "reduccion_porcentual": 0.0,
+  "grupos_por_familia": {
+    "XL 32x70": 24,
+    "A3 PLUS pack color": 11,
+    "XA3 ByN": 13,
+    "XL ByN": 7
+  },
+  "decisiones_minimas_necesarias": 55,
+  "grupos": [
+    {
+      "id_grupo": "GRP-001",
+      "prioridad": 1,
+      "familia": "XL 32x70",
+      "bloque": "SB04",
+      "celdas_incluidas": [
+        "W22"
+      ],
+      "rango_resumido": [
+        "W22"
+      ],
+      "cantidad_decisiones_agrupadas": 1,
+      "problema_comun": "salida_sin_explicacion_coste_impresion",
+      "formula_patron_comun": "CELL-CELL",
+      "encabezado_similar": "bajadas!w22[pendiente_de_interpretacion]==w14-w4 -> bajadas!w14[auxiliar]=533.0 ",
+      "causa_probable_comun": "no aparece coste de impresión/clic explícito o no está etiquetado.",
+      "explicacion_simple": "Casos repetidos en W22:W22 con mismo problema y patrón.",
+      "origen_precio_resumen": "Bajadas!W22 <- Bajadas!W14 <- Bajadas!W4",
+      "referencias_papel_usd": [],
+      "riesgo_si_migra_tal_cual": "Riesgo alto por ausencia de explicación técnica suficiente; posible desvío de precio.",
+      "decision_recomendada_por_defecto": "REQUIERE_REVISION_MANUAL",
+      "opciones_usuario": [
+        "CONSERVAR_PRECIO_EXCEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL_E_IMPRESION",
+        "CREAR_REGLA_NUEVA",
+        "DESCARTAR_COMO_OBSOLETO",
+        "REQUIERE_REVISION_MANUAL"
+      ],
+      "decision_usuario": "",
+      "comentario_usuario": "",
+      "filas_contiguas": "22",
+      "columna_contigua": "W",
+      "ids_decision_originales": [
+        "DEC-001"
+      ]
+    },
+    {
+      "id_grupo": "GRP-013",
+      "prioridad": 1,
+      "familia": "XL 32x70",
+      "bloque": "SB04",
+      "celdas_incluidas": [
+        "W22"
+      ],
+      "rango_resumido": [
+        "W22"
+      ],
+      "cantidad_decisiones_agrupadas": 1,
+      "problema_comun": "salida_sin_explicacion_coste_papel",
+      "formula_patron_comun": "CELL-CELL",
+      "encabezado_similar": "bajadas!w22[pendiente_de_interpretacion]==w14-w4 -> bajadas!w14[auxiliar]=533.0 ",
+      "causa_probable_comun": "no aparece coste de papel explícito/trazable en la salida.",
+      "explicacion_simple": "Casos repetidos en W22:W22 con mismo problema y patrón.",
+      "origen_precio_resumen": "Bajadas!W22 <- Bajadas!W14 <- Bajadas!W4",
+      "referencias_papel_usd": [],
+      "riesgo_si_migra_tal_cual": "Riesgo alto de migrar precio sin justificación completa de componentes.",
+      "decision_recomendada_por_defecto": "RECALCULAR_DESDE_COSTO_PAPEL",
+      "opciones_usuario": [
+        "CONSERVAR_PRECIO_EXCEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL_E_IMPRESION",
+        "CREAR_REGLA_NUEVA",
+        "DESCARTAR_COMO_OBSOLETO",
+        "REQUIERE_REVISION_MANUAL"
+      ],
+      "decision_usuario": "",
+      "comentario_usuario": "",
+      "filas_contiguas": "22",
+      "columna_contigua": "W",
+      "ids_decision_originales": [
+        "DEC-013"
+      ]
+    },
+    {
+      "id_grupo": "GRP-002",
+      "prioridad": 1,
+      "familia": "XL 32x70",
+      "bloque": "SB04",
+      "celdas_incluidas": [
+        "W23"
+      ],
+      "rango_resumido": [
+        "W23"
+      ],
+      "cantidad_decisiones_agrupadas": 1,
+      "problema_comun": "salida_sin_explicacion_coste_impresion",
+      "formula_patron_comun": "CELL-CELL",
+      "encabezado_similar": "bajadas!w23[pendiente_de_interpretacion]==w15-w5 -> bajadas!w15[auxiliar]=504.0 ",
+      "causa_probable_comun": "no aparece coste de impresión/clic explícito o no está etiquetado.",
+      "explicacion_simple": "Casos repetidos en W23:W23 con mismo problema y patrón.",
+      "origen_precio_resumen": "Bajadas!W23 <- Bajadas!W15 <- Bajadas!W5",
+      "referencias_papel_usd": [],
+      "riesgo_si_migra_tal_cual": "Riesgo alto por ausencia de explicación técnica suficiente; posible desvío de precio.",
+      "decision_recomendada_por_defecto": "REQUIERE_REVISION_MANUAL",
+      "opciones_usuario": [
+        "CONSERVAR_PRECIO_EXCEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL_E_IMPRESION",
+        "CREAR_REGLA_NUEVA",
+        "DESCARTAR_COMO_OBSOLETO",
+        "REQUIERE_REVISION_MANUAL"
+      ],
+      "decision_usuario": "",
+      "comentario_usuario": "",
+      "filas_contiguas": "23",
+      "columna_contigua": "W",
+      "ids_decision_originales": [
+        "DEC-002"
+      ]
+    },
+    {
+      "id_grupo": "GRP-014",
+      "prioridad": 1,
+      "familia": "XL 32x70",
+      "bloque": "SB04",
+      "celdas_incluidas": [
+        "W23"
+      ],
+      "rango_resumido": [
+        "W23"
+      ],
+      "cantidad_decisiones_agrupadas": 1,
+      "problema_comun": "salida_sin_explicacion_coste_papel",
+      "formula_patron_comun": "CELL-CELL",
+      "encabezado_similar": "bajadas!w23[pendiente_de_interpretacion]==w15-w5 -> bajadas!w15[auxiliar]=504.0 ",
+      "causa_probable_comun": "no aparece coste de papel explícito/trazable en la salida.",
+      "explicacion_simple": "Casos repetidos en W23:W23 con mismo problema y patrón.",
+      "origen_precio_resumen": "Bajadas!W23 <- Bajadas!W15 <- Bajadas!W5",
+      "referencias_papel_usd": [],
+      "riesgo_si_migra_tal_cual": "Riesgo alto de migrar precio sin justificación completa de componentes.",
+      "decision_recomendada_por_defecto": "RECALCULAR_DESDE_COSTO_PAPEL",
+      "opciones_usuario": [
+        "CONSERVAR_PRECIO_EXCEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL_E_IMPRESION",
+        "CREAR_REGLA_NUEVA",
+        "DESCARTAR_COMO_OBSOLETO",
+        "REQUIERE_REVISION_MANUAL"
+      ],
+      "decision_usuario": "",
+      "comentario_usuario": "",
+      "filas_contiguas": "23",
+      "columna_contigua": "W",
+      "ids_decision_originales": [
+        "DEC-014"
+      ]
+    },
+    {
+      "id_grupo": "GRP-003",
+      "prioridad": 1,
+      "familia": "XL 32x70",
+      "bloque": "SB04",
+      "celdas_incluidas": [
+        "W24"
+      ],
+      "rango_resumido": [
+        "W24"
+      ],
+      "cantidad_decisiones_agrupadas": 1,
+      "problema_comun": "salida_sin_explicacion_coste_impresion",
+      "formula_patron_comun": "CELL-CELL",
+      "encabezado_similar": "bajadas!w24[pendiente_de_interpretacion]==w16-w6 -> bajadas!w16[auxiliar]=476.0 ",
+      "causa_probable_comun": "no aparece coste de impresión/clic explícito o no está etiquetado.",
+      "explicacion_simple": "Casos repetidos en W24:W24 con mismo problema y patrón.",
+      "origen_precio_resumen": "Bajadas!W24 <- Bajadas!W16 <- Bajadas!W6",
+      "referencias_papel_usd": [],
+      "riesgo_si_migra_tal_cual": "Riesgo alto por ausencia de explicación técnica suficiente; posible desvío de precio.",
+      "decision_recomendada_por_defecto": "REQUIERE_REVISION_MANUAL",
+      "opciones_usuario": [
+        "CONSERVAR_PRECIO_EXCEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL_E_IMPRESION",
+        "CREAR_REGLA_NUEVA",
+        "DESCARTAR_COMO_OBSOLETO",
+        "REQUIERE_REVISION_MANUAL"
+      ],
+      "decision_usuario": "",
+      "comentario_usuario": "",
+      "filas_contiguas": "24",
+      "columna_contigua": "W",
+      "ids_decision_originales": [
+        "DEC-003"
+      ]
+    },
+    {
+      "id_grupo": "GRP-015",
+      "prioridad": 1,
+      "familia": "XL 32x70",
+      "bloque": "SB04",
+      "celdas_incluidas": [
+        "W24"
+      ],
+      "rango_resumido": [
+        "W24"
+      ],
+      "cantidad_decisiones_agrupadas": 1,
+      "problema_comun": "salida_sin_explicacion_coste_papel",
+      "formula_patron_comun": "CELL-CELL",
+      "encabezado_similar": "bajadas!w24[pendiente_de_interpretacion]==w16-w6 -> bajadas!w16[auxiliar]=476.0 ",
+      "causa_probable_comun": "no aparece coste de papel explícito/trazable en la salida.",
+      "explicacion_simple": "Casos repetidos en W24:W24 con mismo problema y patrón.",
+      "origen_precio_resumen": "Bajadas!W24 <- Bajadas!W16 <- Bajadas!W6",
+      "referencias_papel_usd": [],
+      "riesgo_si_migra_tal_cual": "Riesgo alto de migrar precio sin justificación completa de componentes.",
+      "decision_recomendada_por_defecto": "RECALCULAR_DESDE_COSTO_PAPEL",
+      "opciones_usuario": [
+        "CONSERVAR_PRECIO_EXCEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL_E_IMPRESION",
+        "CREAR_REGLA_NUEVA",
+        "DESCARTAR_COMO_OBSOLETO",
+        "REQUIERE_REVISION_MANUAL"
+      ],
+      "decision_usuario": "",
+      "comentario_usuario": "",
+      "filas_contiguas": "24",
+      "columna_contigua": "W",
+      "ids_decision_originales": [
+        "DEC-015"
+      ]
+    },
+    {
+      "id_grupo": "GRP-004",
+      "prioridad": 1,
+      "familia": "XL 32x70",
+      "bloque": "SB04",
+      "celdas_incluidas": [
+        "W25"
+      ],
+      "rango_resumido": [
+        "W25"
+      ],
+      "cantidad_decisiones_agrupadas": 1,
+      "problema_comun": "salida_sin_explicacion_coste_impresion",
+      "formula_patron_comun": "CELL-CELL",
+      "encabezado_similar": "bajadas!w25[pendiente_de_interpretacion]==w17-w7 -> bajadas!w17[auxiliar]=448.0 ",
+      "causa_probable_comun": "no aparece coste de impresión/clic explícito o no está etiquetado.",
+      "explicacion_simple": "Casos repetidos en W25:W25 con mismo problema y patrón.",
+      "origen_precio_resumen": "Bajadas!W25 <- Bajadas!W17 <- Bajadas!W7",
+      "referencias_papel_usd": [],
+      "riesgo_si_migra_tal_cual": "Riesgo alto por ausencia de explicación técnica suficiente; posible desvío de precio.",
+      "decision_recomendada_por_defecto": "REQUIERE_REVISION_MANUAL",
+      "opciones_usuario": [
+        "CONSERVAR_PRECIO_EXCEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL_E_IMPRESION",
+        "CREAR_REGLA_NUEVA",
+        "DESCARTAR_COMO_OBSOLETO",
+        "REQUIERE_REVISION_MANUAL"
+      ],
+      "decision_usuario": "",
+      "comentario_usuario": "",
+      "filas_contiguas": "25",
+      "columna_contigua": "W",
+      "ids_decision_originales": [
+        "DEC-004"
+      ]
+    },
+    {
+      "id_grupo": "GRP-016",
+      "prioridad": 1,
+      "familia": "XL 32x70",
+      "bloque": "SB04",
+      "celdas_incluidas": [
+        "W25"
+      ],
+      "rango_resumido": [
+        "W25"
+      ],
+      "cantidad_decisiones_agrupadas": 1,
+      "problema_comun": "salida_sin_explicacion_coste_papel",
+      "formula_patron_comun": "CELL-CELL",
+      "encabezado_similar": "bajadas!w25[pendiente_de_interpretacion]==w17-w7 -> bajadas!w17[auxiliar]=448.0 ",
+      "causa_probable_comun": "no aparece coste de papel explícito/trazable en la salida.",
+      "explicacion_simple": "Casos repetidos en W25:W25 con mismo problema y patrón.",
+      "origen_precio_resumen": "Bajadas!W25 <- Bajadas!W17 <- Bajadas!W7",
+      "referencias_papel_usd": [],
+      "riesgo_si_migra_tal_cual": "Riesgo alto de migrar precio sin justificación completa de componentes.",
+      "decision_recomendada_por_defecto": "RECALCULAR_DESDE_COSTO_PAPEL",
+      "opciones_usuario": [
+        "CONSERVAR_PRECIO_EXCEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL_E_IMPRESION",
+        "CREAR_REGLA_NUEVA",
+        "DESCARTAR_COMO_OBSOLETO",
+        "REQUIERE_REVISION_MANUAL"
+      ],
+      "decision_usuario": "",
+      "comentario_usuario": "",
+      "filas_contiguas": "25",
+      "columna_contigua": "W",
+      "ids_decision_originales": [
+        "DEC-016"
+      ]
+    },
+    {
+      "id_grupo": "GRP-005",
+      "prioridad": 1,
+      "familia": "XL 32x70",
+      "bloque": "SB04",
+      "celdas_incluidas": [
+        "W26"
+      ],
+      "rango_resumido": [
+        "W26"
+      ],
+      "cantidad_decisiones_agrupadas": 1,
+      "problema_comun": "salida_sin_explicacion_coste_impresion",
+      "formula_patron_comun": "CELL-CELL",
+      "encabezado_similar": "bajadas!w26[pendiente_de_interpretacion]==w18-w8 -> bajadas!w18[auxiliar]=436.0 ",
+      "causa_probable_comun": "no aparece coste de impresión/clic explícito o no está etiquetado.",
+      "explicacion_simple": "Casos repetidos en W26:W26 con mismo problema y patrón.",
+      "origen_precio_resumen": "Bajadas!W26 <- Bajadas!W18 <- Bajadas!W8",
+      "referencias_papel_usd": [],
+      "riesgo_si_migra_tal_cual": "Riesgo alto por ausencia de explicación técnica suficiente; posible desvío de precio.",
+      "decision_recomendada_por_defecto": "REQUIERE_REVISION_MANUAL",
+      "opciones_usuario": [
+        "CONSERVAR_PRECIO_EXCEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL_E_IMPRESION",
+        "CREAR_REGLA_NUEVA",
+        "DESCARTAR_COMO_OBSOLETO",
+        "REQUIERE_REVISION_MANUAL"
+      ],
+      "decision_usuario": "",
+      "comentario_usuario": "",
+      "filas_contiguas": "26",
+      "columna_contigua": "W",
+      "ids_decision_originales": [
+        "DEC-005"
+      ]
+    },
+    {
+      "id_grupo": "GRP-017",
+      "prioridad": 1,
+      "familia": "XL 32x70",
+      "bloque": "SB04",
+      "celdas_incluidas": [
+        "W26"
+      ],
+      "rango_resumido": [
+        "W26"
+      ],
+      "cantidad_decisiones_agrupadas": 1,
+      "problema_comun": "salida_sin_explicacion_coste_papel",
+      "formula_patron_comun": "CELL-CELL",
+      "encabezado_similar": "bajadas!w26[pendiente_de_interpretacion]==w18-w8 -> bajadas!w18[auxiliar]=436.0 ",
+      "causa_probable_comun": "no aparece coste de papel explícito/trazable en la salida.",
+      "explicacion_simple": "Casos repetidos en W26:W26 con mismo problema y patrón.",
+      "origen_precio_resumen": "Bajadas!W26 <- Bajadas!W18 <- Bajadas!W8",
+      "referencias_papel_usd": [],
+      "riesgo_si_migra_tal_cual": "Riesgo alto de migrar precio sin justificación completa de componentes.",
+      "decision_recomendada_por_defecto": "RECALCULAR_DESDE_COSTO_PAPEL",
+      "opciones_usuario": [
+        "CONSERVAR_PRECIO_EXCEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL_E_IMPRESION",
+        "CREAR_REGLA_NUEVA",
+        "DESCARTAR_COMO_OBSOLETO",
+        "REQUIERE_REVISION_MANUAL"
+      ],
+      "decision_usuario": "",
+      "comentario_usuario": "",
+      "filas_contiguas": "26",
+      "columna_contigua": "W",
+      "ids_decision_originales": [
+        "DEC-017"
+      ]
+    },
+    {
+      "id_grupo": "GRP-006",
+      "prioridad": 1,
+      "familia": "XL 32x70",
+      "bloque": "SB04",
+      "celdas_incluidas": [
+        "W27"
+      ],
+      "rango_resumido": [
+        "W27"
+      ],
+      "cantidad_decisiones_agrupadas": 1,
+      "problema_comun": "salida_sin_explicacion_coste_impresion",
+      "formula_patron_comun": "CELL-CELL",
+      "encabezado_similar": "bajadas!w27[pendiente_de_interpretacion]==w19-w9 -> bajadas!w19[auxiliar]=392.0 ",
+      "causa_probable_comun": "no aparece coste de impresión/clic explícito o no está etiquetado.",
+      "explicacion_simple": "Casos repetidos en W27:W27 con mismo problema y patrón.",
+      "origen_precio_resumen": "Bajadas!W27 <- Bajadas!W19 <- Bajadas!W9",
+      "referencias_papel_usd": [],
+      "riesgo_si_migra_tal_cual": "Riesgo alto por ausencia de explicación técnica suficiente; posible desvío de precio.",
+      "decision_recomendada_por_defecto": "REQUIERE_REVISION_MANUAL",
+      "opciones_usuario": [
+        "CONSERVAR_PRECIO_EXCEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL_E_IMPRESION",
+        "CREAR_REGLA_NUEVA",
+        "DESCARTAR_COMO_OBSOLETO",
+        "REQUIERE_REVISION_MANUAL"
+      ],
+      "decision_usuario": "",
+      "comentario_usuario": "",
+      "filas_contiguas": "27",
+      "columna_contigua": "W",
+      "ids_decision_originales": [
+        "DEC-006"
+      ]
+    },
+    {
+      "id_grupo": "GRP-018",
+      "prioridad": 1,
+      "familia": "XL 32x70",
+      "bloque": "SB04",
+      "celdas_incluidas": [
+        "W27"
+      ],
+      "rango_resumido": [
+        "W27"
+      ],
+      "cantidad_decisiones_agrupadas": 1,
+      "problema_comun": "salida_sin_explicacion_coste_papel",
+      "formula_patron_comun": "CELL-CELL",
+      "encabezado_similar": "bajadas!w27[pendiente_de_interpretacion]==w19-w9 -> bajadas!w19[auxiliar]=392.0 ",
+      "causa_probable_comun": "no aparece coste de papel explícito/trazable en la salida.",
+      "explicacion_simple": "Casos repetidos en W27:W27 con mismo problema y patrón.",
+      "origen_precio_resumen": "Bajadas!W27 <- Bajadas!W19 <- Bajadas!W9",
+      "referencias_papel_usd": [],
+      "riesgo_si_migra_tal_cual": "Riesgo alto de migrar precio sin justificación completa de componentes.",
+      "decision_recomendada_por_defecto": "RECALCULAR_DESDE_COSTO_PAPEL",
+      "opciones_usuario": [
+        "CONSERVAR_PRECIO_EXCEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL_E_IMPRESION",
+        "CREAR_REGLA_NUEVA",
+        "DESCARTAR_COMO_OBSOLETO",
+        "REQUIERE_REVISION_MANUAL"
+      ],
+      "decision_usuario": "",
+      "comentario_usuario": "",
+      "filas_contiguas": "27",
+      "columna_contigua": "W",
+      "ids_decision_originales": [
+        "DEC-018"
+      ]
+    },
+    {
+      "id_grupo": "GRP-007",
+      "prioridad": 1,
+      "familia": "XL 32x70",
+      "bloque": "SB04",
+      "celdas_incluidas": [
+        "X22"
+      ],
+      "rango_resumido": [
+        "X22"
+      ],
+      "cantidad_decisiones_agrupadas": 1,
+      "problema_comun": "salida_sin_explicacion_coste_impresion",
+      "formula_patron_comun": "CELL-CELL",
+      "encabezado_similar": "bajadas!x22[formato]==x14-x4 -> bajadas!x14[auxiliar]=660.0 -> bajadas!x4[caras_",
+      "causa_probable_comun": "no aparece coste de impresión/clic explícito o no está etiquetado.",
+      "explicacion_simple": "Casos repetidos en X22:X22 con mismo problema y patrón.",
+      "origen_precio_resumen": "Bajadas!X22 <- Bajadas!X14 <- Bajadas!X4",
+      "referencias_papel_usd": [],
+      "riesgo_si_migra_tal_cual": "Riesgo alto por ausencia de explicación técnica suficiente; posible desvío de precio.",
+      "decision_recomendada_por_defecto": "REQUIERE_REVISION_MANUAL",
+      "opciones_usuario": [
+        "CONSERVAR_PRECIO_EXCEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL_E_IMPRESION",
+        "CREAR_REGLA_NUEVA",
+        "DESCARTAR_COMO_OBSOLETO",
+        "REQUIERE_REVISION_MANUAL"
+      ],
+      "decision_usuario": "",
+      "comentario_usuario": "",
+      "filas_contiguas": "22",
+      "columna_contigua": "X",
+      "ids_decision_originales": [
+        "DEC-007"
+      ]
+    },
+    {
+      "id_grupo": "GRP-019",
+      "prioridad": 1,
+      "familia": "XL 32x70",
+      "bloque": "SB04",
+      "celdas_incluidas": [
+        "X22"
+      ],
+      "rango_resumido": [
+        "X22"
+      ],
+      "cantidad_decisiones_agrupadas": 1,
+      "problema_comun": "salida_sin_explicacion_coste_papel",
+      "formula_patron_comun": "CELL-CELL",
+      "encabezado_similar": "bajadas!x22[formato]==x14-x4 -> bajadas!x14[auxiliar]=660.0 -> bajadas!x4[caras_",
+      "causa_probable_comun": "no aparece coste de papel explícito/trazable en la salida.",
+      "explicacion_simple": "Casos repetidos en X22:X22 con mismo problema y patrón.",
+      "origen_precio_resumen": "Bajadas!X22 <- Bajadas!X14 <- Bajadas!X4",
+      "referencias_papel_usd": [],
+      "riesgo_si_migra_tal_cual": "Riesgo alto de migrar precio sin justificación completa de componentes.",
+      "decision_recomendada_por_defecto": "RECALCULAR_DESDE_COSTO_PAPEL",
+      "opciones_usuario": [
+        "CONSERVAR_PRECIO_EXCEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL_E_IMPRESION",
+        "CREAR_REGLA_NUEVA",
+        "DESCARTAR_COMO_OBSOLETO",
+        "REQUIERE_REVISION_MANUAL"
+      ],
+      "decision_usuario": "",
+      "comentario_usuario": "",
+      "filas_contiguas": "22",
+      "columna_contigua": "X",
+      "ids_decision_originales": [
+        "DEC-019"
+      ]
+    },
+    {
+      "id_grupo": "GRP-008",
+      "prioridad": 1,
+      "familia": "XL 32x70",
+      "bloque": "SB04",
+      "celdas_incluidas": [
+        "X23"
+      ],
+      "rango_resumido": [
+        "X23"
+      ],
+      "cantidad_decisiones_agrupadas": 1,
+      "problema_comun": "salida_sin_explicacion_coste_impresion",
+      "formula_patron_comun": "CELL-CELL",
+      "encabezado_similar": "bajadas!x23[formato]==x15-x5 -> bajadas!x15[auxiliar]=625.0 -> bajadas!x5[auxili",
+      "causa_probable_comun": "no aparece coste de impresión/clic explícito o no está etiquetado.",
+      "explicacion_simple": "Casos repetidos en X23:X23 con mismo problema y patrón.",
+      "origen_precio_resumen": "Bajadas!X23 <- Bajadas!X15 <- Bajadas!X5",
+      "referencias_papel_usd": [],
+      "riesgo_si_migra_tal_cual": "Riesgo alto por ausencia de explicación técnica suficiente; posible desvío de precio.",
+      "decision_recomendada_por_defecto": "REQUIERE_REVISION_MANUAL",
+      "opciones_usuario": [
+        "CONSERVAR_PRECIO_EXCEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL_E_IMPRESION",
+        "CREAR_REGLA_NUEVA",
+        "DESCARTAR_COMO_OBSOLETO",
+        "REQUIERE_REVISION_MANUAL"
+      ],
+      "decision_usuario": "",
+      "comentario_usuario": "",
+      "filas_contiguas": "23",
+      "columna_contigua": "X",
+      "ids_decision_originales": [
+        "DEC-008"
+      ]
+    },
+    {
+      "id_grupo": "GRP-020",
+      "prioridad": 1,
+      "familia": "XL 32x70",
+      "bloque": "SB04",
+      "celdas_incluidas": [
+        "X23"
+      ],
+      "rango_resumido": [
+        "X23"
+      ],
+      "cantidad_decisiones_agrupadas": 1,
+      "problema_comun": "salida_sin_explicacion_coste_papel",
+      "formula_patron_comun": "CELL-CELL",
+      "encabezado_similar": "bajadas!x23[formato]==x15-x5 -> bajadas!x15[auxiliar]=625.0 -> bajadas!x5[auxili",
+      "causa_probable_comun": "no aparece coste de papel explícito/trazable en la salida.",
+      "explicacion_simple": "Casos repetidos en X23:X23 con mismo problema y patrón.",
+      "origen_precio_resumen": "Bajadas!X23 <- Bajadas!X15 <- Bajadas!X5",
+      "referencias_papel_usd": [],
+      "riesgo_si_migra_tal_cual": "Riesgo alto de migrar precio sin justificación completa de componentes.",
+      "decision_recomendada_por_defecto": "RECALCULAR_DESDE_COSTO_PAPEL",
+      "opciones_usuario": [
+        "CONSERVAR_PRECIO_EXCEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL_E_IMPRESION",
+        "CREAR_REGLA_NUEVA",
+        "DESCARTAR_COMO_OBSOLETO",
+        "REQUIERE_REVISION_MANUAL"
+      ],
+      "decision_usuario": "",
+      "comentario_usuario": "",
+      "filas_contiguas": "23",
+      "columna_contigua": "X",
+      "ids_decision_originales": [
+        "DEC-020"
+      ]
+    },
+    {
+      "id_grupo": "GRP-009",
+      "prioridad": 1,
+      "familia": "XL 32x70",
+      "bloque": "SB04",
+      "celdas_incluidas": [
+        "X24"
+      ],
+      "rango_resumido": [
+        "X24"
+      ],
+      "cantidad_decisiones_agrupadas": 1,
+      "problema_comun": "salida_sin_explicacion_coste_impresion",
+      "formula_patron_comun": "CELL-CELL",
+      "encabezado_similar": "bajadas!x24[formato]==x16-x6 -> bajadas!x16[auxiliar]=590.0 -> bajadas!x6[auxili",
+      "causa_probable_comun": "no aparece coste de impresión/clic explícito o no está etiquetado.",
+      "explicacion_simple": "Casos repetidos en X24:X24 con mismo problema y patrón.",
+      "origen_precio_resumen": "Bajadas!X24 <- Bajadas!X16 <- Bajadas!X6",
+      "referencias_papel_usd": [],
+      "riesgo_si_migra_tal_cual": "Riesgo alto por ausencia de explicación técnica suficiente; posible desvío de precio.",
+      "decision_recomendada_por_defecto": "REQUIERE_REVISION_MANUAL",
+      "opciones_usuario": [
+        "CONSERVAR_PRECIO_EXCEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL_E_IMPRESION",
+        "CREAR_REGLA_NUEVA",
+        "DESCARTAR_COMO_OBSOLETO",
+        "REQUIERE_REVISION_MANUAL"
+      ],
+      "decision_usuario": "",
+      "comentario_usuario": "",
+      "filas_contiguas": "24",
+      "columna_contigua": "X",
+      "ids_decision_originales": [
+        "DEC-009"
+      ]
+    },
+    {
+      "id_grupo": "GRP-021",
+      "prioridad": 1,
+      "familia": "XL 32x70",
+      "bloque": "SB04",
+      "celdas_incluidas": [
+        "X24"
+      ],
+      "rango_resumido": [
+        "X24"
+      ],
+      "cantidad_decisiones_agrupadas": 1,
+      "problema_comun": "salida_sin_explicacion_coste_papel",
+      "formula_patron_comun": "CELL-CELL",
+      "encabezado_similar": "bajadas!x24[formato]==x16-x6 -> bajadas!x16[auxiliar]=590.0 -> bajadas!x6[auxili",
+      "causa_probable_comun": "no aparece coste de papel explícito/trazable en la salida.",
+      "explicacion_simple": "Casos repetidos en X24:X24 con mismo problema y patrón.",
+      "origen_precio_resumen": "Bajadas!X24 <- Bajadas!X16 <- Bajadas!X6",
+      "referencias_papel_usd": [],
+      "riesgo_si_migra_tal_cual": "Riesgo alto de migrar precio sin justificación completa de componentes.",
+      "decision_recomendada_por_defecto": "RECALCULAR_DESDE_COSTO_PAPEL",
+      "opciones_usuario": [
+        "CONSERVAR_PRECIO_EXCEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL_E_IMPRESION",
+        "CREAR_REGLA_NUEVA",
+        "DESCARTAR_COMO_OBSOLETO",
+        "REQUIERE_REVISION_MANUAL"
+      ],
+      "decision_usuario": "",
+      "comentario_usuario": "",
+      "filas_contiguas": "24",
+      "columna_contigua": "X",
+      "ids_decision_originales": [
+        "DEC-021"
+      ]
+    },
+    {
+      "id_grupo": "GRP-010",
+      "prioridad": 1,
+      "familia": "XL 32x70",
+      "bloque": "SB04",
+      "celdas_incluidas": [
+        "X25"
+      ],
+      "rango_resumido": [
+        "X25"
+      ],
+      "cantidad_decisiones_agrupadas": 1,
+      "problema_comun": "salida_sin_explicacion_coste_impresion",
+      "formula_patron_comun": "CELL-CELL",
+      "encabezado_similar": "bajadas!x25[formato]==x17-x7 -> bajadas!x17[auxiliar]=555.0 -> bajadas!x7[auxili",
+      "causa_probable_comun": "no aparece coste de impresión/clic explícito o no está etiquetado.",
+      "explicacion_simple": "Casos repetidos en X25:X25 con mismo problema y patrón.",
+      "origen_precio_resumen": "Bajadas!X25 <- Bajadas!X17 <- Bajadas!X7",
+      "referencias_papel_usd": [],
+      "riesgo_si_migra_tal_cual": "Riesgo alto por ausencia de explicación técnica suficiente; posible desvío de precio.",
+      "decision_recomendada_por_defecto": "REQUIERE_REVISION_MANUAL",
+      "opciones_usuario": [
+        "CONSERVAR_PRECIO_EXCEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL_E_IMPRESION",
+        "CREAR_REGLA_NUEVA",
+        "DESCARTAR_COMO_OBSOLETO",
+        "REQUIERE_REVISION_MANUAL"
+      ],
+      "decision_usuario": "",
+      "comentario_usuario": "",
+      "filas_contiguas": "25",
+      "columna_contigua": "X",
+      "ids_decision_originales": [
+        "DEC-010"
+      ]
+    },
+    {
+      "id_grupo": "GRP-022",
+      "prioridad": 1,
+      "familia": "XL 32x70",
+      "bloque": "SB04",
+      "celdas_incluidas": [
+        "X25"
+      ],
+      "rango_resumido": [
+        "X25"
+      ],
+      "cantidad_decisiones_agrupadas": 1,
+      "problema_comun": "salida_sin_explicacion_coste_papel",
+      "formula_patron_comun": "CELL-CELL",
+      "encabezado_similar": "bajadas!x25[formato]==x17-x7 -> bajadas!x17[auxiliar]=555.0 -> bajadas!x7[auxili",
+      "causa_probable_comun": "no aparece coste de papel explícito/trazable en la salida.",
+      "explicacion_simple": "Casos repetidos en X25:X25 con mismo problema y patrón.",
+      "origen_precio_resumen": "Bajadas!X25 <- Bajadas!X17 <- Bajadas!X7",
+      "referencias_papel_usd": [],
+      "riesgo_si_migra_tal_cual": "Riesgo alto de migrar precio sin justificación completa de componentes.",
+      "decision_recomendada_por_defecto": "RECALCULAR_DESDE_COSTO_PAPEL",
+      "opciones_usuario": [
+        "CONSERVAR_PRECIO_EXCEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL_E_IMPRESION",
+        "CREAR_REGLA_NUEVA",
+        "DESCARTAR_COMO_OBSOLETO",
+        "REQUIERE_REVISION_MANUAL"
+      ],
+      "decision_usuario": "",
+      "comentario_usuario": "",
+      "filas_contiguas": "25",
+      "columna_contigua": "X",
+      "ids_decision_originales": [
+        "DEC-022"
+      ]
+    },
+    {
+      "id_grupo": "GRP-011",
+      "prioridad": 1,
+      "familia": "XL 32x70",
+      "bloque": "SB04",
+      "celdas_incluidas": [
+        "X26"
+      ],
+      "rango_resumido": [
+        "X26"
+      ],
+      "cantidad_decisiones_agrupadas": 1,
+      "problema_comun": "salida_sin_explicacion_coste_impresion",
+      "formula_patron_comun": "CELL-CELL",
+      "encabezado_similar": "bajadas!x26[formato]==x18-x8 -> bajadas!x18[auxiliar]=536.0 -> bajadas!x8[auxili",
+      "causa_probable_comun": "no aparece coste de impresión/clic explícito o no está etiquetado.",
+      "explicacion_simple": "Casos repetidos en X26:X26 con mismo problema y patrón.",
+      "origen_precio_resumen": "Bajadas!X26 <- Bajadas!X18 <- Bajadas!X8",
+      "referencias_papel_usd": [],
+      "riesgo_si_migra_tal_cual": "Riesgo alto por ausencia de explicación técnica suficiente; posible desvío de precio.",
+      "decision_recomendada_por_defecto": "REQUIERE_REVISION_MANUAL",
+      "opciones_usuario": [
+        "CONSERVAR_PRECIO_EXCEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL_E_IMPRESION",
+        "CREAR_REGLA_NUEVA",
+        "DESCARTAR_COMO_OBSOLETO",
+        "REQUIERE_REVISION_MANUAL"
+      ],
+      "decision_usuario": "",
+      "comentario_usuario": "",
+      "filas_contiguas": "26",
+      "columna_contigua": "X",
+      "ids_decision_originales": [
+        "DEC-011"
+      ]
+    },
+    {
+      "id_grupo": "GRP-023",
+      "prioridad": 1,
+      "familia": "XL 32x70",
+      "bloque": "SB04",
+      "celdas_incluidas": [
+        "X26"
+      ],
+      "rango_resumido": [
+        "X26"
+      ],
+      "cantidad_decisiones_agrupadas": 1,
+      "problema_comun": "salida_sin_explicacion_coste_papel",
+      "formula_patron_comun": "CELL-CELL",
+      "encabezado_similar": "bajadas!x26[formato]==x18-x8 -> bajadas!x18[auxiliar]=536.0 -> bajadas!x8[auxili",
+      "causa_probable_comun": "no aparece coste de papel explícito/trazable en la salida.",
+      "explicacion_simple": "Casos repetidos en X26:X26 con mismo problema y patrón.",
+      "origen_precio_resumen": "Bajadas!X26 <- Bajadas!X18 <- Bajadas!X8",
+      "referencias_papel_usd": [],
+      "riesgo_si_migra_tal_cual": "Riesgo alto de migrar precio sin justificación completa de componentes.",
+      "decision_recomendada_por_defecto": "RECALCULAR_DESDE_COSTO_PAPEL",
+      "opciones_usuario": [
+        "CONSERVAR_PRECIO_EXCEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL_E_IMPRESION",
+        "CREAR_REGLA_NUEVA",
+        "DESCARTAR_COMO_OBSOLETO",
+        "REQUIERE_REVISION_MANUAL"
+      ],
+      "decision_usuario": "",
+      "comentario_usuario": "",
+      "filas_contiguas": "26",
+      "columna_contigua": "X",
+      "ids_decision_originales": [
+        "DEC-023"
+      ]
+    },
+    {
+      "id_grupo": "GRP-012",
+      "prioridad": 1,
+      "familia": "XL 32x70",
+      "bloque": "SB04",
+      "celdas_incluidas": [
+        "X27"
+      ],
+      "rango_resumido": [
+        "X27"
+      ],
+      "cantidad_decisiones_agrupadas": 1,
+      "problema_comun": "salida_sin_explicacion_coste_impresion",
+      "formula_patron_comun": "CELL-CELL",
+      "encabezado_similar": "bajadas!x27[formato]==x19-x9 -> bajadas!x19[auxiliar]=486.0 -> bajadas!x9[auxili",
+      "causa_probable_comun": "no aparece coste de impresión/clic explícito o no está etiquetado.",
+      "explicacion_simple": "Casos repetidos en X27:X27 con mismo problema y patrón.",
+      "origen_precio_resumen": "Bajadas!X27 <- Bajadas!X19 <- Bajadas!X9",
+      "referencias_papel_usd": [],
+      "riesgo_si_migra_tal_cual": "Riesgo alto por ausencia de explicación técnica suficiente; posible desvío de precio.",
+      "decision_recomendada_por_defecto": "REQUIERE_REVISION_MANUAL",
+      "opciones_usuario": [
+        "CONSERVAR_PRECIO_EXCEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL_E_IMPRESION",
+        "CREAR_REGLA_NUEVA",
+        "DESCARTAR_COMO_OBSOLETO",
+        "REQUIERE_REVISION_MANUAL"
+      ],
+      "decision_usuario": "",
+      "comentario_usuario": "",
+      "filas_contiguas": "27",
+      "columna_contigua": "X",
+      "ids_decision_originales": [
+        "DEC-012"
+      ]
+    },
+    {
+      "id_grupo": "GRP-024",
+      "prioridad": 1,
+      "familia": "XL 32x70",
+      "bloque": "SB04",
+      "celdas_incluidas": [
+        "X27"
+      ],
+      "rango_resumido": [
+        "X27"
+      ],
+      "cantidad_decisiones_agrupadas": 1,
+      "problema_comun": "salida_sin_explicacion_coste_papel",
+      "formula_patron_comun": "CELL-CELL",
+      "encabezado_similar": "bajadas!x27[formato]==x19-x9 -> bajadas!x19[auxiliar]=486.0 -> bajadas!x9[auxili",
+      "causa_probable_comun": "no aparece coste de papel explícito/trazable en la salida.",
+      "explicacion_simple": "Casos repetidos en X27:X27 con mismo problema y patrón.",
+      "origen_precio_resumen": "Bajadas!X27 <- Bajadas!X19 <- Bajadas!X9",
+      "referencias_papel_usd": [],
+      "riesgo_si_migra_tal_cual": "Riesgo alto de migrar precio sin justificación completa de componentes.",
+      "decision_recomendada_por_defecto": "RECALCULAR_DESDE_COSTO_PAPEL",
+      "opciones_usuario": [
+        "CONSERVAR_PRECIO_EXCEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL_E_IMPRESION",
+        "CREAR_REGLA_NUEVA",
+        "DESCARTAR_COMO_OBSOLETO",
+        "REQUIERE_REVISION_MANUAL"
+      ],
+      "decision_usuario": "",
+      "comentario_usuario": "",
+      "filas_contiguas": "27",
+      "columna_contigua": "X",
+      "ids_decision_originales": [
+        "DEC-024"
+      ]
+    },
+    {
+      "id_grupo": "GRP-025",
+      "prioridad": 2,
+      "familia": "A3 PLUS pack color",
+      "bloque": "SB07",
+      "celdas_incluidas": [
+        "AB48"
+      ],
+      "rango_resumido": [
+        "AB48"
+      ],
+      "cantidad_decisiones_agrupadas": 1,
+      "problema_comun": "salida_sin_explicacion_coste_papel",
+      "formula_patron_comun": "CELL*CELL",
+      "encabezado_similar": "rango pack color, a3",
+      "causa_probable_comun": "no aparece coste de papel explícito/trazable en la salida.",
+      "explicacion_simple": "Casos repetidos en AB48:AB48 con mismo problema y patrón.",
+      "origen_precio_resumen": "Bajadas!AB48 <- Bajadas!AM43 <- Bajadas!AK43 <- Bajadas!AN38",
+      "referencias_papel_usd": [],
+      "riesgo_si_migra_tal_cual": "Riesgo alto de migrar precio sin justificación completa de componentes.",
+      "decision_recomendada_por_defecto": "RECALCULAR_DESDE_COSTO_PAPEL",
+      "opciones_usuario": [
+        "CONSERVAR_PRECIO_EXCEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL_E_IMPRESION",
+        "CREAR_REGLA_NUEVA",
+        "DESCARTAR_COMO_OBSOLETO",
+        "REQUIERE_REVISION_MANUAL"
+      ],
+      "decision_usuario": "",
+      "comentario_usuario": "",
+      "filas_contiguas": "48",
+      "columna_contigua": "AB",
+      "ids_decision_originales": [
+        "DEC-025"
+      ]
+    },
+    {
+      "id_grupo": "GRP-026",
+      "prioridad": 2,
+      "familia": "A3 PLUS pack color",
+      "bloque": "SB07",
+      "celdas_incluidas": [
+        "AB49"
+      ],
+      "rango_resumido": [
+        "AB49"
+      ],
+      "cantidad_decisiones_agrupadas": 1,
+      "problema_comun": "salida_sin_explicacion_coste_papel",
+      "formula_patron_comun": "CELL*CELL",
+      "encabezado_similar": "2 a 25",
+      "causa_probable_comun": "no aparece coste de papel explícito/trazable en la salida.",
+      "explicacion_simple": "Casos repetidos en AB49:AB49 con mismo problema y patrón.",
+      "origen_precio_resumen": "Bajadas!AB49 <- Bajadas!AM43 <- Bajadas!AK43 <- Bajadas!AN38",
+      "referencias_papel_usd": [],
+      "riesgo_si_migra_tal_cual": "Riesgo alto de migrar precio sin justificación completa de componentes.",
+      "decision_recomendada_por_defecto": "RECALCULAR_DESDE_COSTO_PAPEL",
+      "opciones_usuario": [
+        "CONSERVAR_PRECIO_EXCEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL_E_IMPRESION",
+        "CREAR_REGLA_NUEVA",
+        "DESCARTAR_COMO_OBSOLETO",
+        "REQUIERE_REVISION_MANUAL"
+      ],
+      "decision_usuario": "",
+      "comentario_usuario": "",
+      "filas_contiguas": "49",
+      "columna_contigua": "AB",
+      "ids_decision_originales": [
+        "DEC-026"
+      ]
+    },
+    {
+      "id_grupo": "GRP-027",
+      "prioridad": 2,
+      "familia": "A3 PLUS pack color",
+      "bloque": "SB07",
+      "celdas_incluidas": [
+        "AC48"
+      ],
+      "rango_resumido": [
+        "AC48"
+      ],
+      "cantidad_decisiones_agrupadas": 1,
+      "problema_comun": "salida_sin_explicacion_coste_papel",
+      "formula_patron_comun": "CELL*CELL",
+      "encabezado_similar": "rango pack color, a3, a3",
+      "causa_probable_comun": "no aparece coste de papel explícito/trazable en la salida.",
+      "explicacion_simple": "Casos repetidos en AC48:AC48 con mismo problema y patrón.",
+      "origen_precio_resumen": "Bajadas!AC48 <- Bajadas!AF48 <- Bajadas!AM42 <- Bajadas!AK42",
+      "referencias_papel_usd": [],
+      "riesgo_si_migra_tal_cual": "Riesgo alto de migrar precio sin justificación completa de componentes.",
+      "decision_recomendada_por_defecto": "RECALCULAR_DESDE_COSTO_PAPEL",
+      "opciones_usuario": [
+        "CONSERVAR_PRECIO_EXCEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL_E_IMPRESION",
+        "CREAR_REGLA_NUEVA",
+        "DESCARTAR_COMO_OBSOLETO",
+        "REQUIERE_REVISION_MANUAL"
+      ],
+      "decision_usuario": "",
+      "comentario_usuario": "",
+      "filas_contiguas": "48",
+      "columna_contigua": "AC",
+      "ids_decision_originales": [
+        "DEC-027"
+      ]
+    },
+    {
+      "id_grupo": "GRP-028",
+      "prioridad": 2,
+      "familia": "A3 PLUS pack color",
+      "bloque": "SB07",
+      "celdas_incluidas": [
+        "AC49"
+      ],
+      "rango_resumido": [
+        "AC49"
+      ],
+      "cantidad_decisiones_agrupadas": 1,
+      "problema_comun": "salida_sin_explicacion_coste_papel",
+      "formula_patron_comun": "CELL*CELL",
+      "encabezado_similar": "2 a 25",
+      "causa_probable_comun": "no aparece coste de papel explícito/trazable en la salida.",
+      "explicacion_simple": "Casos repetidos en AC49:AC49 con mismo problema y patrón.",
+      "origen_precio_resumen": "Bajadas!AC49 <- Bajadas!AF49 <- Bajadas!AM42 <- Bajadas!AK42",
+      "referencias_papel_usd": [],
+      "riesgo_si_migra_tal_cual": "Riesgo alto de migrar precio sin justificación completa de componentes.",
+      "decision_recomendada_por_defecto": "RECALCULAR_DESDE_COSTO_PAPEL",
+      "opciones_usuario": [
+        "CONSERVAR_PRECIO_EXCEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL_E_IMPRESION",
+        "CREAR_REGLA_NUEVA",
+        "DESCARTAR_COMO_OBSOLETO",
+        "REQUIERE_REVISION_MANUAL"
+      ],
+      "decision_usuario": "",
+      "comentario_usuario": "",
+      "filas_contiguas": "49",
+      "columna_contigua": "AC",
+      "ids_decision_originales": [
+        "DEC-028"
+      ]
+    },
+    {
+      "id_grupo": "GRP-029",
+      "prioridad": 2,
+      "familia": "A3 PLUS pack color",
+      "bloque": "SB07",
+      "celdas_incluidas": [
+        "AD48"
+      ],
+      "rango_resumido": [
+        "AD48"
+      ],
+      "cantidad_decisiones_agrupadas": 1,
+      "problema_comun": "salida_sin_explicacion_coste_papel",
+      "formula_patron_comun": "CELL*CELL",
+      "encabezado_similar": "a3, a3, xl",
+      "causa_probable_comun": "no aparece coste de papel explícito/trazable en la salida.",
+      "explicacion_simple": "Casos repetidos en AD48:AD48 con mismo problema y patrón.",
+      "origen_precio_resumen": "Bajadas!AD48 <- Bajadas!AF48 <- Bajadas!AM40 <- Bajadas!AM42",
+      "referencias_papel_usd": [],
+      "riesgo_si_migra_tal_cual": "Riesgo alto de migrar precio sin justificación completa de componentes.",
+      "decision_recomendada_por_defecto": "RECALCULAR_DESDE_COSTO_PAPEL",
+      "opciones_usuario": [
+        "CONSERVAR_PRECIO_EXCEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL_E_IMPRESION",
+        "CREAR_REGLA_NUEVA",
+        "DESCARTAR_COMO_OBSOLETO",
+        "REQUIERE_REVISION_MANUAL"
+      ],
+      "decision_usuario": "",
+      "comentario_usuario": "",
+      "filas_contiguas": "48",
+      "columna_contigua": "AD",
+      "ids_decision_originales": [
+        "DEC-029"
+      ]
+    },
+    {
+      "id_grupo": "GRP-030",
+      "prioridad": 2,
+      "familia": "A3 PLUS pack color",
+      "bloque": "SB07",
+      "celdas_incluidas": [
+        "AD49"
+      ],
+      "rango_resumido": [
+        "AD49"
+      ],
+      "cantidad_decisiones_agrupadas": 1,
+      "problema_comun": "salida_sin_explicacion_coste_papel",
+      "formula_patron_comun": "CELL*CELL",
+      "encabezado_similar": "bajadas!ad49[pendiente_de_interpretacion]==af49*$am$40 -> bajadas!af49[auxiliar]",
+      "causa_probable_comun": "no aparece coste de papel explícito/trazable en la salida.",
+      "explicacion_simple": "Casos repetidos en AD49:AD49 con mismo problema y patrón.",
+      "origen_precio_resumen": "Bajadas!AD49 <- Bajadas!AF49 <- Bajadas!AM40 <- Bajadas!AM42",
+      "referencias_papel_usd": [],
+      "riesgo_si_migra_tal_cual": "Riesgo alto de migrar precio sin justificación completa de componentes.",
+      "decision_recomendada_por_defecto": "RECALCULAR_DESDE_COSTO_PAPEL",
+      "opciones_usuario": [
+        "CONSERVAR_PRECIO_EXCEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL_E_IMPRESION",
+        "CREAR_REGLA_NUEVA",
+        "DESCARTAR_COMO_OBSOLETO",
+        "REQUIERE_REVISION_MANUAL"
+      ],
+      "decision_usuario": "",
+      "comentario_usuario": "",
+      "filas_contiguas": "49",
+      "columna_contigua": "AD",
+      "ids_decision_originales": [
+        "DEC-030"
+      ]
+    },
+    {
+      "id_grupo": "GRP-031",
+      "prioridad": 2,
+      "familia": "A3 PLUS pack color",
+      "bloque": "SB07",
+      "celdas_incluidas": [
+        "AE48"
+      ],
+      "rango_resumido": [
+        "AE48"
+      ],
+      "cantidad_decisiones_agrupadas": 1,
+      "problema_comun": "salida_sin_explicacion_coste_papel",
+      "formula_patron_comun": "CELL*CELL",
+      "encabezado_similar": "a3, a3, xl, a4",
+      "causa_probable_comun": "no aparece coste de papel explícito/trazable en la salida.",
+      "explicacion_simple": "Casos repetidos en AE48:AE48 con mismo problema y patrón.",
+      "origen_precio_resumen": "Bajadas!AE48 <- Bajadas!AF48 <- Bajadas!AM41 <- Bajadas!AK41",
+      "referencias_papel_usd": [],
+      "riesgo_si_migra_tal_cual": "Riesgo alto de migrar precio sin justificación completa de componentes.",
+      "decision_recomendada_por_defecto": "RECALCULAR_DESDE_COSTO_PAPEL",
+      "opciones_usuario": [
+        "CONSERVAR_PRECIO_EXCEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL_E_IMPRESION",
+        "CREAR_REGLA_NUEVA",
+        "DESCARTAR_COMO_OBSOLETO",
+        "REQUIERE_REVISION_MANUAL"
+      ],
+      "decision_usuario": "",
+      "comentario_usuario": "",
+      "filas_contiguas": "48",
+      "columna_contigua": "AE",
+      "ids_decision_originales": [
+        "DEC-031"
+      ]
+    },
+    {
+      "id_grupo": "GRP-032",
+      "prioridad": 2,
+      "familia": "A3 PLUS pack color",
+      "bloque": "SB07",
+      "celdas_incluidas": [
+        "AE49"
+      ],
+      "rango_resumido": [
+        "AE49"
+      ],
+      "cantidad_decisiones_agrupadas": 1,
+      "problema_comun": "salida_sin_explicacion_coste_papel",
+      "formula_patron_comun": "CELL*CELL",
+      "encabezado_similar": "bajadas!ae49[pendiente_de_interpretacion]==af49*$am$41 -> bajadas!af49[auxiliar]",
+      "causa_probable_comun": "no aparece coste de papel explícito/trazable en la salida.",
+      "explicacion_simple": "Casos repetidos en AE49:AE49 con mismo problema y patrón.",
+      "origen_precio_resumen": "Bajadas!AE49 <- Bajadas!AF49 <- Bajadas!AM41 <- Bajadas!AK41",
+      "referencias_papel_usd": [],
+      "riesgo_si_migra_tal_cual": "Riesgo alto de migrar precio sin justificación completa de componentes.",
+      "decision_recomendada_por_defecto": "RECALCULAR_DESDE_COSTO_PAPEL",
+      "opciones_usuario": [
+        "CONSERVAR_PRECIO_EXCEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL_E_IMPRESION",
+        "CREAR_REGLA_NUEVA",
+        "DESCARTAR_COMO_OBSOLETO",
+        "REQUIERE_REVISION_MANUAL"
+      ],
+      "decision_usuario": "",
+      "comentario_usuario": "",
+      "filas_contiguas": "49",
+      "columna_contigua": "AE",
+      "ids_decision_originales": [
+        "DEC-032"
+      ]
+    },
+    {
+      "id_grupo": "GRP-033",
+      "prioridad": 2,
+      "familia": "A3 PLUS pack color",
+      "bloque": "SB07",
+      "celdas_incluidas": [
+        "AI49"
+      ],
+      "rango_resumido": [
+        "AI49"
+      ],
+      "cantidad_decisiones_agrupadas": 1,
+      "problema_comun": "salida_sin_explicacion_coste_papel",
+      "formula_patron_comun": "(CELL+CELL)-1",
+      "encabezado_similar": "bajadas!ai49[gramaje]==(af49+ag49)-1 -> bajadas!af49[auxiliar]=1.0 -> bajadas!ag",
+      "causa_probable_comun": "no aparece coste de papel explícito/trazable en la salida.",
+      "explicacion_simple": "Casos repetidos en AI49:AI49 con mismo problema y patrón.",
+      "origen_precio_resumen": "Bajadas!AI49 <- Bajadas!AF49 <- Bajadas!AG49",
+      "referencias_papel_usd": [],
+      "riesgo_si_migra_tal_cual": "Riesgo alto de migrar precio sin justificación completa de componentes.",
+      "decision_recomendada_por_defecto": "RECALCULAR_DESDE_COSTO_PAPEL",
+      "opciones_usuario": [
+        "CONSERVAR_PRECIO_EXCEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL_E_IMPRESION",
+        "CREAR_REGLA_NUEVA",
+        "DESCARTAR_COMO_OBSOLETO",
+        "REQUIERE_REVISION_MANUAL"
+      ],
+      "decision_usuario": "",
+      "comentario_usuario": "",
+      "filas_contiguas": "49",
+      "columna_contigua": "AI",
+      "ids_decision_originales": [
+        "DEC-033"
+      ]
+    },
+    {
+      "id_grupo": "GRP-034",
+      "prioridad": 2,
+      "familia": "A3 PLUS pack color",
+      "bloque": "SB07",
+      "celdas_incluidas": [
+        "AM45"
+      ],
+      "rango_resumido": [
+        "AM45"
+      ],
+      "cantidad_decisiones_agrupadas": 1,
+      "problema_comun": "salida_sin_explicacion_coste_papel",
+      "formula_patron_comun": "CELL*CELL",
+      "encabezado_similar": "costo clic byn",
+      "causa_probable_comun": "no aparece coste de papel explícito/trazable en la salida.",
+      "explicacion_simple": "Casos repetidos en AM45:AM45 con mismo problema y patrón.",
+      "origen_precio_resumen": "Bajadas!AM45 <- Bajadas!AK45 <- Bajadas!AM38",
+      "referencias_papel_usd": [],
+      "riesgo_si_migra_tal_cual": "Riesgo alto de migrar precio sin justificación completa de componentes.",
+      "decision_recomendada_por_defecto": "RECALCULAR_DESDE_COSTO_PAPEL",
+      "opciones_usuario": [
+        "CONSERVAR_PRECIO_EXCEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL_E_IMPRESION",
+        "CREAR_REGLA_NUEVA",
+        "DESCARTAR_COMO_OBSOLETO",
+        "REQUIERE_REVISION_MANUAL"
+      ],
+      "decision_usuario": "",
+      "comentario_usuario": "",
+      "filas_contiguas": "45",
+      "columna_contigua": "AM",
+      "ids_decision_originales": [
+        "DEC-034"
+      ]
+    },
+    {
+      "id_grupo": "GRP-035",
+      "prioridad": 2,
+      "familia": "A3 PLUS pack color",
+      "bloque": "SB07",
+      "celdas_incluidas": [
+        "AO49"
+      ],
+      "rango_resumido": [
+        "AO49"
+      ],
+      "cantidad_decisiones_agrupadas": 1,
+      "problema_comun": "salida_sin_explicacion_coste_papel",
+      "formula_patron_comun": "CELL+CELL",
+      "encabezado_similar": "rango color, 4/0, 4/4",
+      "causa_probable_comun": "no aparece coste de papel explícito/trazable en la salida.",
+      "explicacion_simple": "Casos repetidos en AO49:AO49 con mismo problema y patrón.",
+      "origen_precio_resumen": "Bajadas!AO49 <- Bajadas!AF48 <- Bajadas!AG48",
+      "referencias_papel_usd": [],
+      "riesgo_si_migra_tal_cual": "Riesgo alto de migrar precio sin justificación completa de componentes.",
+      "decision_recomendada_por_defecto": "RECALCULAR_DESDE_COSTO_PAPEL",
+      "opciones_usuario": [
+        "CONSERVAR_PRECIO_EXCEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL_E_IMPRESION",
+        "CREAR_REGLA_NUEVA",
+        "DESCARTAR_COMO_OBSOLETO",
+        "REQUIERE_REVISION_MANUAL"
+      ],
+      "decision_usuario": "",
+      "comentario_usuario": "",
+      "filas_contiguas": "49",
+      "columna_contigua": "AO",
+      "ids_decision_originales": [
+        "DEC-035"
+      ]
+    },
+    {
+      "id_grupo": "GRP-036",
+      "prioridad": 3,
+      "familia": "XA3 ByN",
+      "bloque": "SB08",
+      "celdas_incluidas": [
+        "AA54"
+      ],
+      "rango_resumido": [
+        "AA54"
+      ],
+      "cantidad_decisiones_agrupadas": 1,
+      "problema_comun": "salida_sin_explicacion_coste_papel",
+      "formula_patron_comun": "CELL",
+      "encabezado_similar": "301 a 500, 501 a 1000",
+      "causa_probable_comun": "no aparece coste de papel explícito/trazable en la salida.",
+      "explicacion_simple": "Casos repetidos en AA54:AA54 con mismo problema y patrón.",
+      "origen_precio_resumen": "Bajadas!AA54 <- Bajadas!AM45 <- Bajadas!AK45 <- Bajadas!AM38",
+      "referencias_papel_usd": [],
+      "riesgo_si_migra_tal_cual": "Riesgo alto de migrar precio sin justificación completa de componentes.",
+      "decision_recomendada_por_defecto": "RECALCULAR_DESDE_COSTO_PAPEL",
+      "opciones_usuario": [
+        "CONSERVAR_PRECIO_EXCEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL_E_IMPRESION",
+        "CREAR_REGLA_NUEVA",
+        "DESCARTAR_COMO_OBSOLETO",
+        "REQUIERE_REVISION_MANUAL"
+      ],
+      "decision_usuario": "",
+      "comentario_usuario": "",
+      "filas_contiguas": "54",
+      "columna_contigua": "AA",
+      "ids_decision_originales": [
+        "DEC-036"
+      ]
+    },
+    {
+      "id_grupo": "GRP-037",
+      "prioridad": 3,
+      "familia": "XA3 ByN",
+      "bloque": "SB08",
+      "celdas_incluidas": [
+        "AA55"
+      ],
+      "rango_resumido": [
+        "AA55"
+      ],
+      "cantidad_decisiones_agrupadas": 1,
+      "problema_comun": "salida_sin_explicacion_coste_papel",
+      "formula_patron_comun": "CELL",
+      "encabezado_similar": "501 a 1000",
+      "causa_probable_comun": "no aparece coste de papel explícito/trazable en la salida.",
+      "explicacion_simple": "Casos repetidos en AA55:AA55 con mismo problema y patrón.",
+      "origen_precio_resumen": "Bajadas!AA55 <- Bajadas!AM45 <- Bajadas!AK45 <- Bajadas!AM38",
+      "referencias_papel_usd": [],
+      "riesgo_si_migra_tal_cual": "Riesgo alto de migrar precio sin justificación completa de componentes.",
+      "decision_recomendada_por_defecto": "RECALCULAR_DESDE_COSTO_PAPEL",
+      "opciones_usuario": [
+        "CONSERVAR_PRECIO_EXCEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL_E_IMPRESION",
+        "CREAR_REGLA_NUEVA",
+        "DESCARTAR_COMO_OBSOLETO",
+        "REQUIERE_REVISION_MANUAL"
+      ],
+      "decision_usuario": "",
+      "comentario_usuario": "",
+      "filas_contiguas": "55",
+      "columna_contigua": "AA",
+      "ids_decision_originales": [
+        "DEC-037"
+      ]
+    },
+    {
+      "id_grupo": "GRP-038",
+      "prioridad": 3,
+      "familia": "XA3 ByN",
+      "bloque": "SB08",
+      "celdas_incluidas": [
+        "AB54"
+      ],
+      "rango_resumido": [
+        "AB54"
+      ],
+      "cantidad_decisiones_agrupadas": 1,
+      "problema_comun": "salida_sin_explicacion_coste_papel",
+      "formula_patron_comun": "CELL*CELL",
+      "encabezado_similar": "301 a 500, 501 a 1000",
+      "causa_probable_comun": "no aparece coste de papel explícito/trazable en la salida.",
+      "explicacion_simple": "Casos repetidos en AB54:AB54 con mismo problema y patrón.",
+      "origen_precio_resumen": "Bajadas!AB54 <- Bajadas!AM43 <- Bajadas!AK43 <- Bajadas!AN38",
+      "referencias_papel_usd": [],
+      "riesgo_si_migra_tal_cual": "Riesgo alto de migrar precio sin justificación completa de componentes.",
+      "decision_recomendada_por_defecto": "RECALCULAR_DESDE_COSTO_PAPEL",
+      "opciones_usuario": [
+        "CONSERVAR_PRECIO_EXCEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL_E_IMPRESION",
+        "CREAR_REGLA_NUEVA",
+        "DESCARTAR_COMO_OBSOLETO",
+        "REQUIERE_REVISION_MANUAL"
+      ],
+      "decision_usuario": "",
+      "comentario_usuario": "",
+      "filas_contiguas": "54",
+      "columna_contigua": "AB",
+      "ids_decision_originales": [
+        "DEC-038"
+      ]
+    },
+    {
+      "id_grupo": "GRP-039",
+      "prioridad": 3,
+      "familia": "XA3 ByN",
+      "bloque": "SB08",
+      "celdas_incluidas": [
+        "AB55"
+      ],
+      "rango_resumido": [
+        "AB55"
+      ],
+      "cantidad_decisiones_agrupadas": 1,
+      "problema_comun": "salida_sin_explicacion_coste_papel",
+      "formula_patron_comun": "CELL*CELL",
+      "encabezado_similar": "501 a 1000",
+      "causa_probable_comun": "no aparece coste de papel explícito/trazable en la salida.",
+      "explicacion_simple": "Casos repetidos en AB55:AB55 con mismo problema y patrón.",
+      "origen_precio_resumen": "Bajadas!AB55 <- Bajadas!AM43 <- Bajadas!AK43 <- Bajadas!AN38",
+      "referencias_papel_usd": [],
+      "riesgo_si_migra_tal_cual": "Riesgo alto de migrar precio sin justificación completa de componentes.",
+      "decision_recomendada_por_defecto": "RECALCULAR_DESDE_COSTO_PAPEL",
+      "opciones_usuario": [
+        "CONSERVAR_PRECIO_EXCEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL_E_IMPRESION",
+        "CREAR_REGLA_NUEVA",
+        "DESCARTAR_COMO_OBSOLETO",
+        "REQUIERE_REVISION_MANUAL"
+      ],
+      "decision_usuario": "",
+      "comentario_usuario": "",
+      "filas_contiguas": "55",
+      "columna_contigua": "AB",
+      "ids_decision_originales": [
+        "DEC-039"
+      ]
+    },
+    {
+      "id_grupo": "GRP-040",
+      "prioridad": 3,
+      "familia": "XA3 ByN",
+      "bloque": "SB08",
+      "celdas_incluidas": [
+        "AC54"
+      ],
+      "rango_resumido": [
+        "AC54"
+      ],
+      "cantidad_decisiones_agrupadas": 1,
+      "problema_comun": "salida_sin_explicacion_coste_papel",
+      "formula_patron_comun": "CELL*CELL",
+      "encabezado_similar": "301 a 500, 501 a 1000",
+      "causa_probable_comun": "no aparece coste de papel explícito/trazable en la salida.",
+      "explicacion_simple": "Casos repetidos en AC54:AC54 con mismo problema y patrón.",
+      "origen_precio_resumen": "Bajadas!AC54 <- Bajadas!AF54 <- Bajadas!AM42 <- Bajadas!AK42",
+      "referencias_papel_usd": [],
+      "riesgo_si_migra_tal_cual": "Riesgo alto de migrar precio sin justificación completa de componentes.",
+      "decision_recomendada_por_defecto": "RECALCULAR_DESDE_COSTO_PAPEL",
+      "opciones_usuario": [
+        "CONSERVAR_PRECIO_EXCEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL_E_IMPRESION",
+        "CREAR_REGLA_NUEVA",
+        "DESCARTAR_COMO_OBSOLETO",
+        "REQUIERE_REVISION_MANUAL"
+      ],
+      "decision_usuario": "",
+      "comentario_usuario": "",
+      "filas_contiguas": "54",
+      "columna_contigua": "AC",
+      "ids_decision_originales": [
+        "DEC-040"
+      ]
+    },
+    {
+      "id_grupo": "GRP-041",
+      "prioridad": 3,
+      "familia": "XA3 ByN",
+      "bloque": "SB08",
+      "celdas_incluidas": [
+        "AC55"
+      ],
+      "rango_resumido": [
+        "AC55"
+      ],
+      "cantidad_decisiones_agrupadas": 1,
+      "problema_comun": "salida_sin_explicacion_coste_papel",
+      "formula_patron_comun": "CELL*CELL",
+      "encabezado_similar": "501 a 1000",
+      "causa_probable_comun": "no aparece coste de papel explícito/trazable en la salida.",
+      "explicacion_simple": "Casos repetidos en AC55:AC55 con mismo problema y patrón.",
+      "origen_precio_resumen": "Bajadas!AC55 <- Bajadas!AF55 <- Bajadas!AM42 <- Bajadas!AK42",
+      "referencias_papel_usd": [],
+      "riesgo_si_migra_tal_cual": "Riesgo alto de migrar precio sin justificación completa de componentes.",
+      "decision_recomendada_por_defecto": "RECALCULAR_DESDE_COSTO_PAPEL",
+      "opciones_usuario": [
+        "CONSERVAR_PRECIO_EXCEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL_E_IMPRESION",
+        "CREAR_REGLA_NUEVA",
+        "DESCARTAR_COMO_OBSOLETO",
+        "REQUIERE_REVISION_MANUAL"
+      ],
+      "decision_usuario": "",
+      "comentario_usuario": "",
+      "filas_contiguas": "55",
+      "columna_contigua": "AC",
+      "ids_decision_originales": [
+        "DEC-041"
+      ]
+    },
+    {
+      "id_grupo": "GRP-042",
+      "prioridad": 3,
+      "familia": "XA3 ByN",
+      "bloque": "SB08",
+      "celdas_incluidas": [
+        "AC58"
+      ],
+      "rango_resumido": [
+        "AC58"
+      ],
+      "cantidad_decisiones_agrupadas": 1,
+      "problema_comun": "salida_sin_explicacion_coste_papel",
+      "formula_patron_comun": "CELL*CELL",
+      "encabezado_similar": "rango pack byn, a3",
+      "causa_probable_comun": "no aparece coste de papel explícito/trazable en la salida.",
+      "explicacion_simple": "Casos repetidos en AC58:AC58 con mismo problema y patrón.",
+      "origen_precio_resumen": "Bajadas!AC58 <- Bajadas!AM45 <- Bajadas!AK45 <- Bajadas!AM38",
+      "referencias_papel_usd": [],
+      "riesgo_si_migra_tal_cual": "Riesgo alto de migrar precio sin justificación completa de componentes.",
+      "decision_recomendada_por_defecto": "RECALCULAR_DESDE_COSTO_PAPEL",
+      "opciones_usuario": [
+        "CONSERVAR_PRECIO_EXCEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL_E_IMPRESION",
+        "CREAR_REGLA_NUEVA",
+        "DESCARTAR_COMO_OBSOLETO",
+        "REQUIERE_REVISION_MANUAL"
+      ],
+      "decision_usuario": "",
+      "comentario_usuario": "",
+      "filas_contiguas": "58",
+      "columna_contigua": "AC",
+      "ids_decision_originales": [
+        "DEC-042"
+      ]
+    },
+    {
+      "id_grupo": "GRP-043",
+      "prioridad": 3,
+      "familia": "XA3 ByN",
+      "bloque": "SB08",
+      "celdas_incluidas": [
+        "AD54"
+      ],
+      "rango_resumido": [
+        "AD54"
+      ],
+      "cantidad_decisiones_agrupadas": 1,
+      "problema_comun": "salida_sin_explicacion_coste_papel",
+      "formula_patron_comun": "CELL*CELL",
+      "encabezado_similar": "bajadas!ad54[pendiente_de_interpretacion]==af54*$am$40 -> bajadas!af54[auxiliar]",
+      "causa_probable_comun": "no aparece coste de papel explícito/trazable en la salida.",
+      "explicacion_simple": "Casos repetidos en AD54:AD54 con mismo problema y patrón.",
+      "origen_precio_resumen": "Bajadas!AD54 <- Bajadas!AF54 <- Bajadas!AM40 <- Bajadas!AM42",
+      "referencias_papel_usd": [],
+      "riesgo_si_migra_tal_cual": "Riesgo alto de migrar precio sin justificación completa de componentes.",
+      "decision_recomendada_por_defecto": "RECALCULAR_DESDE_COSTO_PAPEL",
+      "opciones_usuario": [
+        "CONSERVAR_PRECIO_EXCEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL_E_IMPRESION",
+        "CREAR_REGLA_NUEVA",
+        "DESCARTAR_COMO_OBSOLETO",
+        "REQUIERE_REVISION_MANUAL"
+      ],
+      "decision_usuario": "",
+      "comentario_usuario": "",
+      "filas_contiguas": "54",
+      "columna_contigua": "AD",
+      "ids_decision_originales": [
+        "DEC-043"
+      ]
+    },
+    {
+      "id_grupo": "GRP-044",
+      "prioridad": 3,
+      "familia": "XA3 ByN",
+      "bloque": "SB08",
+      "celdas_incluidas": [
+        "AD55"
+      ],
+      "rango_resumido": [
+        "AD55"
+      ],
+      "cantidad_decisiones_agrupadas": 1,
+      "problema_comun": "salida_sin_explicacion_coste_papel",
+      "formula_patron_comun": "CELL*CELL",
+      "encabezado_similar": "bajadas!ad55[pendiente_de_interpretacion]==af55*$am$40 -> bajadas!af55[auxiliar]",
+      "causa_probable_comun": "no aparece coste de papel explícito/trazable en la salida.",
+      "explicacion_simple": "Casos repetidos en AD55:AD55 con mismo problema y patrón.",
+      "origen_precio_resumen": "Bajadas!AD55 <- Bajadas!AF55 <- Bajadas!AM40 <- Bajadas!AM42",
+      "referencias_papel_usd": [],
+      "riesgo_si_migra_tal_cual": "Riesgo alto de migrar precio sin justificación completa de componentes.",
+      "decision_recomendada_por_defecto": "RECALCULAR_DESDE_COSTO_PAPEL",
+      "opciones_usuario": [
+        "CONSERVAR_PRECIO_EXCEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL_E_IMPRESION",
+        "CREAR_REGLA_NUEVA",
+        "DESCARTAR_COMO_OBSOLETO",
+        "REQUIERE_REVISION_MANUAL"
+      ],
+      "decision_usuario": "",
+      "comentario_usuario": "",
+      "filas_contiguas": "55",
+      "columna_contigua": "AD",
+      "ids_decision_originales": [
+        "DEC-044"
+      ]
+    },
+    {
+      "id_grupo": "GRP-045",
+      "prioridad": 3,
+      "familia": "XA3 ByN",
+      "bloque": "SB08",
+      "celdas_incluidas": [
+        "AD58"
+      ],
+      "rango_resumido": [
+        "AD58"
+      ],
+      "cantidad_decisiones_agrupadas": 1,
+      "problema_comun": "salida_sin_explicacion_coste_papel",
+      "formula_patron_comun": "CELL*CELL",
+      "encabezado_similar": "rango pack byn, a3, xl",
+      "causa_probable_comun": "no aparece coste de papel explícito/trazable en la salida.",
+      "explicacion_simple": "Casos repetidos en AD58:AD58 con mismo problema y patrón.",
+      "origen_precio_resumen": "Bajadas!AD58 <- Bajadas!AC58 <- Bajadas!AM45 <- Bajadas!AK45",
+      "referencias_papel_usd": [],
+      "riesgo_si_migra_tal_cual": "Riesgo alto de migrar precio sin justificación completa de componentes.",
+      "decision_recomendada_por_defecto": "RECALCULAR_DESDE_COSTO_PAPEL",
+      "opciones_usuario": [
+        "CONSERVAR_PRECIO_EXCEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL_E_IMPRESION",
+        "CREAR_REGLA_NUEVA",
+        "DESCARTAR_COMO_OBSOLETO",
+        "REQUIERE_REVISION_MANUAL"
+      ],
+      "decision_usuario": "",
+      "comentario_usuario": "",
+      "filas_contiguas": "58",
+      "columna_contigua": "AD",
+      "ids_decision_originales": [
+        "DEC-045"
+      ]
+    },
+    {
+      "id_grupo": "GRP-046",
+      "prioridad": 3,
+      "familia": "XA3 ByN",
+      "bloque": "SB08",
+      "celdas_incluidas": [
+        "AE54"
+      ],
+      "rango_resumido": [
+        "AE54"
+      ],
+      "cantidad_decisiones_agrupadas": 1,
+      "problema_comun": "salida_sin_explicacion_coste_papel",
+      "formula_patron_comun": "CELL*CELL",
+      "encabezado_similar": "bajadas!ae54[pendiente_de_interpretacion]==af54*$am$41 -> bajadas!af54[auxiliar]",
+      "causa_probable_comun": "no aparece coste de papel explícito/trazable en la salida.",
+      "explicacion_simple": "Casos repetidos en AE54:AE54 con mismo problema y patrón.",
+      "origen_precio_resumen": "Bajadas!AE54 <- Bajadas!AF54 <- Bajadas!AM41 <- Bajadas!AK41",
+      "referencias_papel_usd": [],
+      "riesgo_si_migra_tal_cual": "Riesgo alto de migrar precio sin justificación completa de componentes.",
+      "decision_recomendada_por_defecto": "RECALCULAR_DESDE_COSTO_PAPEL",
+      "opciones_usuario": [
+        "CONSERVAR_PRECIO_EXCEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL_E_IMPRESION",
+        "CREAR_REGLA_NUEVA",
+        "DESCARTAR_COMO_OBSOLETO",
+        "REQUIERE_REVISION_MANUAL"
+      ],
+      "decision_usuario": "",
+      "comentario_usuario": "",
+      "filas_contiguas": "54",
+      "columna_contigua": "AE",
+      "ids_decision_originales": [
+        "DEC-046"
+      ]
+    },
+    {
+      "id_grupo": "GRP-047",
+      "prioridad": 3,
+      "familia": "XA3 ByN",
+      "bloque": "SB08",
+      "celdas_incluidas": [
+        "AE55"
+      ],
+      "rango_resumido": [
+        "AE55"
+      ],
+      "cantidad_decisiones_agrupadas": 1,
+      "problema_comun": "salida_sin_explicacion_coste_papel",
+      "formula_patron_comun": "CELL*CELL",
+      "encabezado_similar": "bajadas!ae55[pendiente_de_interpretacion]==af55*$am$41 -> bajadas!af55[auxiliar]",
+      "causa_probable_comun": "no aparece coste de papel explícito/trazable en la salida.",
+      "explicacion_simple": "Casos repetidos en AE55:AE55 con mismo problema y patrón.",
+      "origen_precio_resumen": "Bajadas!AE55 <- Bajadas!AF55 <- Bajadas!AM41 <- Bajadas!AK41",
+      "referencias_papel_usd": [],
+      "riesgo_si_migra_tal_cual": "Riesgo alto de migrar precio sin justificación completa de componentes.",
+      "decision_recomendada_por_defecto": "RECALCULAR_DESDE_COSTO_PAPEL",
+      "opciones_usuario": [
+        "CONSERVAR_PRECIO_EXCEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL_E_IMPRESION",
+        "CREAR_REGLA_NUEVA",
+        "DESCARTAR_COMO_OBSOLETO",
+        "REQUIERE_REVISION_MANUAL"
+      ],
+      "decision_usuario": "",
+      "comentario_usuario": "",
+      "filas_contiguas": "55",
+      "columna_contigua": "AE",
+      "ids_decision_originales": [
+        "DEC-047"
+      ]
+    },
+    {
+      "id_grupo": "GRP-048",
+      "prioridad": 3,
+      "familia": "XA3 ByN",
+      "bloque": "SB08",
+      "celdas_incluidas": [
+        "AE58"
+      ],
+      "rango_resumido": [
+        "AE58"
+      ],
+      "cantidad_decisiones_agrupadas": 1,
+      "problema_comun": "salida_sin_explicacion_coste_papel",
+      "formula_patron_comun": "CELL*CELL",
+      "encabezado_similar": "rango pack byn, a3, xl, a4",
+      "causa_probable_comun": "no aparece coste de papel explícito/trazable en la salida.",
+      "explicacion_simple": "Casos repetidos en AE58:AE58 con mismo problema y patrón.",
+      "origen_precio_resumen": "Bajadas!AE58 <- Bajadas!AC58 <- Bajadas!AM45 <- Bajadas!AK45",
+      "referencias_papel_usd": [],
+      "riesgo_si_migra_tal_cual": "Riesgo alto de migrar precio sin justificación completa de componentes.",
+      "decision_recomendada_por_defecto": "RECALCULAR_DESDE_COSTO_PAPEL",
+      "opciones_usuario": [
+        "CONSERVAR_PRECIO_EXCEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL_E_IMPRESION",
+        "CREAR_REGLA_NUEVA",
+        "DESCARTAR_COMO_OBSOLETO",
+        "REQUIERE_REVISION_MANUAL"
+      ],
+      "decision_usuario": "",
+      "comentario_usuario": "",
+      "filas_contiguas": "58",
+      "columna_contigua": "AE",
+      "ids_decision_originales": [
+        "DEC-048"
+      ]
+    },
+    {
+      "id_grupo": "GRP-049",
+      "prioridad": 4,
+      "familia": "XL ByN",
+      "bloque": "SB09",
+      "celdas_incluidas": [
+        "AC63"
+      ],
+      "rango_resumido": [
+        "AC63"
+      ],
+      "cantidad_decisiones_agrupadas": 1,
+      "problema_comun": "salida_sin_explicacion_coste_papel",
+      "formula_patron_comun": "CELL*CELL",
+      "encabezado_similar": "501 a 1000, 1001 a 5000",
+      "causa_probable_comun": "no aparece coste de papel explícito/trazable en la salida.",
+      "explicacion_simple": "Casos repetidos en AC63:AC63 con mismo problema y patrón.",
+      "origen_precio_resumen": "Bajadas!AC63 <- Bajadas!AM45 <- Bajadas!AK45 <- Bajadas!AM38",
+      "referencias_papel_usd": [],
+      "riesgo_si_migra_tal_cual": "Riesgo alto de migrar precio sin justificación completa de componentes.",
+      "decision_recomendada_por_defecto": "RECALCULAR_DESDE_COSTO_PAPEL",
+      "opciones_usuario": [
+        "CONSERVAR_PRECIO_EXCEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL_E_IMPRESION",
+        "CREAR_REGLA_NUEVA",
+        "DESCARTAR_COMO_OBSOLETO",
+        "REQUIERE_REVISION_MANUAL"
+      ],
+      "decision_usuario": "",
+      "comentario_usuario": "",
+      "filas_contiguas": "63",
+      "columna_contigua": "AC",
+      "ids_decision_originales": [
+        "DEC-049"
+      ]
+    },
+    {
+      "id_grupo": "GRP-050",
+      "prioridad": 4,
+      "familia": "XL ByN",
+      "bloque": "SB09",
+      "celdas_incluidas": [
+        "X63"
+      ],
+      "rango_resumido": [
+        "X63"
+      ],
+      "cantidad_decisiones_agrupadas": 1,
+      "problema_comun": "salida_sin_explicacion_coste_papel",
+      "formula_patron_comun": "CELL*CELL",
+      "encabezado_similar": "bajadas!x63[pendiente_de_interpretacion]==w63*w62 -> bajadas!w63[auxiliar]=130.0",
+      "causa_probable_comun": "no aparece coste de papel explícito/trazable en la salida.",
+      "explicacion_simple": "Casos repetidos en X63:X63 con mismo problema y patrón.",
+      "origen_precio_resumen": "Bajadas!X63 <- Bajadas!W63 <- Bajadas!W62",
+      "referencias_papel_usd": [],
+      "riesgo_si_migra_tal_cual": "Riesgo alto de migrar precio sin justificación completa de componentes.",
+      "decision_recomendada_por_defecto": "RECALCULAR_DESDE_COSTO_PAPEL",
+      "opciones_usuario": [
+        "CONSERVAR_PRECIO_EXCEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL_E_IMPRESION",
+        "CREAR_REGLA_NUEVA",
+        "DESCARTAR_COMO_OBSOLETO",
+        "REQUIERE_REVISION_MANUAL"
+      ],
+      "decision_usuario": "",
+      "comentario_usuario": "",
+      "filas_contiguas": "63",
+      "columna_contigua": "X",
+      "ids_decision_originales": [
+        "DEC-050"
+      ]
+    },
+    {
+      "id_grupo": "GRP-051",
+      "prioridad": 4,
+      "familia": "XL ByN",
+      "bloque": "SB09",
+      "celdas_incluidas": [
+        "X64"
+      ],
+      "rango_resumido": [
+        "X64"
+      ],
+      "cantidad_decisiones_agrupadas": 1,
+      "problema_comun": "salida_sin_explicacion_coste_papel",
+      "formula_patron_comun": "CELL*CELL",
+      "encabezado_similar": "bajadas!x64[pendiente_de_interpretacion]==w64*w62 -> bajadas!w64[auxiliar]=119.6",
+      "causa_probable_comun": "no aparece coste de papel explícito/trazable en la salida.",
+      "explicacion_simple": "Casos repetidos en X64:X64 con mismo problema y patrón.",
+      "origen_precio_resumen": "Bajadas!X64 <- Bajadas!W64 <- Bajadas!W62",
+      "referencias_papel_usd": [],
+      "riesgo_si_migra_tal_cual": "Riesgo alto de migrar precio sin justificación completa de componentes.",
+      "decision_recomendada_por_defecto": "RECALCULAR_DESDE_COSTO_PAPEL",
+      "opciones_usuario": [
+        "CONSERVAR_PRECIO_EXCEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL_E_IMPRESION",
+        "CREAR_REGLA_NUEVA",
+        "DESCARTAR_COMO_OBSOLETO",
+        "REQUIERE_REVISION_MANUAL"
+      ],
+      "decision_usuario": "",
+      "comentario_usuario": "",
+      "filas_contiguas": "64",
+      "columna_contigua": "X",
+      "ids_decision_originales": [
+        "DEC-051"
+      ]
+    },
+    {
+      "id_grupo": "GRP-052",
+      "prioridad": 4,
+      "familia": "XL ByN",
+      "bloque": "SB09",
+      "celdas_incluidas": [
+        "X65"
+      ],
+      "rango_resumido": [
+        "X65"
+      ],
+      "cantidad_decisiones_agrupadas": 1,
+      "problema_comun": "salida_sin_explicacion_coste_papel",
+      "formula_patron_comun": "CELL*CELL",
+      "encabezado_similar": "bajadas!x65[pendiente_de_interpretacion]==w65*w62 -> bajadas!w65[auxiliar]=110.5",
+      "causa_probable_comun": "no aparece coste de papel explícito/trazable en la salida.",
+      "explicacion_simple": "Casos repetidos en X65:X65 con mismo problema y patrón.",
+      "origen_precio_resumen": "Bajadas!X65 <- Bajadas!W65 <- Bajadas!W62",
+      "referencias_papel_usd": [],
+      "riesgo_si_migra_tal_cual": "Riesgo alto de migrar precio sin justificación completa de componentes.",
+      "decision_recomendada_por_defecto": "RECALCULAR_DESDE_COSTO_PAPEL",
+      "opciones_usuario": [
+        "CONSERVAR_PRECIO_EXCEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL_E_IMPRESION",
+        "CREAR_REGLA_NUEVA",
+        "DESCARTAR_COMO_OBSOLETO",
+        "REQUIERE_REVISION_MANUAL"
+      ],
+      "decision_usuario": "",
+      "comentario_usuario": "",
+      "filas_contiguas": "65",
+      "columna_contigua": "X",
+      "ids_decision_originales": [
+        "DEC-052"
+      ]
+    },
+    {
+      "id_grupo": "GRP-053",
+      "prioridad": 4,
+      "familia": "XL ByN",
+      "bloque": "SB09",
+      "celdas_incluidas": [
+        "X66"
+      ],
+      "rango_resumido": [
+        "X66"
+      ],
+      "cantidad_decisiones_agrupadas": 1,
+      "problema_comun": "salida_sin_explicacion_coste_papel",
+      "formula_patron_comun": "CELL*CELL",
+      "encabezado_similar": "bajadas!x66[pendiente_de_interpretacion]==w66*w62 -> bajadas!w66[auxiliar]=91.0 ",
+      "causa_probable_comun": "no aparece coste de papel explícito/trazable en la salida.",
+      "explicacion_simple": "Casos repetidos en X66:X66 con mismo problema y patrón.",
+      "origen_precio_resumen": "Bajadas!X66 <- Bajadas!W66 <- Bajadas!W62",
+      "referencias_papel_usd": [],
+      "riesgo_si_migra_tal_cual": "Riesgo alto de migrar precio sin justificación completa de componentes.",
+      "decision_recomendada_por_defecto": "RECALCULAR_DESDE_COSTO_PAPEL",
+      "opciones_usuario": [
+        "CONSERVAR_PRECIO_EXCEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL_E_IMPRESION",
+        "CREAR_REGLA_NUEVA",
+        "DESCARTAR_COMO_OBSOLETO",
+        "REQUIERE_REVISION_MANUAL"
+      ],
+      "decision_usuario": "",
+      "comentario_usuario": "",
+      "filas_contiguas": "66",
+      "columna_contigua": "X",
+      "ids_decision_originales": [
+        "DEC-053"
+      ]
+    },
+    {
+      "id_grupo": "GRP-054",
+      "prioridad": 4,
+      "familia": "XL ByN",
+      "bloque": "SB09",
+      "celdas_incluidas": [
+        "X67"
+      ],
+      "rango_resumido": [
+        "X67"
+      ],
+      "cantidad_decisiones_agrupadas": 1,
+      "problema_comun": "salida_sin_explicacion_coste_papel",
+      "formula_patron_comun": "CELL*CELL",
+      "encabezado_similar": "bajadas!x67[pendiente_de_interpretacion]==w67*w62 -> bajadas!w67[auxiliar]=92.3 ",
+      "causa_probable_comun": "no aparece coste de papel explícito/trazable en la salida.",
+      "explicacion_simple": "Casos repetidos en X67:X67 con mismo problema y patrón.",
+      "origen_precio_resumen": "Bajadas!X67 <- Bajadas!W67 <- Bajadas!W62",
+      "referencias_papel_usd": [],
+      "riesgo_si_migra_tal_cual": "Riesgo alto de migrar precio sin justificación completa de componentes.",
+      "decision_recomendada_por_defecto": "RECALCULAR_DESDE_COSTO_PAPEL",
+      "opciones_usuario": [
+        "CONSERVAR_PRECIO_EXCEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL_E_IMPRESION",
+        "CREAR_REGLA_NUEVA",
+        "DESCARTAR_COMO_OBSOLETO",
+        "REQUIERE_REVISION_MANUAL"
+      ],
+      "decision_usuario": "",
+      "comentario_usuario": "",
+      "filas_contiguas": "67",
+      "columna_contigua": "X",
+      "ids_decision_originales": [
+        "DEC-054"
+      ]
+    },
+    {
+      "id_grupo": "GRP-055",
+      "prioridad": 4,
+      "familia": "XL ByN",
+      "bloque": "SB09",
+      "celdas_incluidas": [
+        "X68"
+      ],
+      "rango_resumido": [
+        "X68"
+      ],
+      "cantidad_decisiones_agrupadas": 1,
+      "problema_comun": "salida_sin_explicacion_coste_papel",
+      "formula_patron_comun": "CELL*CELL",
+      "encabezado_similar": "bajadas!x68[pendiente_de_interpretacion]==w68*w62 -> bajadas!w68[auxiliar]=83.2 ",
+      "causa_probable_comun": "no aparece coste de papel explícito/trazable en la salida.",
+      "explicacion_simple": "Casos repetidos en X68:X68 con mismo problema y patrón.",
+      "origen_precio_resumen": "Bajadas!X68 <- Bajadas!W68 <- Bajadas!W62",
+      "referencias_papel_usd": [],
+      "riesgo_si_migra_tal_cual": "Riesgo alto de migrar precio sin justificación completa de componentes.",
+      "decision_recomendada_por_defecto": "RECALCULAR_DESDE_COSTO_PAPEL",
+      "opciones_usuario": [
+        "CONSERVAR_PRECIO_EXCEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL",
+        "RECALCULAR_DESDE_COSTO_PAPEL_E_IMPRESION",
+        "CREAR_REGLA_NUEVA",
+        "DESCARTAR_COMO_OBSOLETO",
+        "REQUIERE_REVISION_MANUAL"
+      ],
+      "decision_usuario": "",
+      "comentario_usuario": "",
+      "filas_contiguas": "68",
+      "columna_contigua": "X",
+      "ids_decision_originales": [
+        "DEC-055"
+      ]
+    }
+  ],
+  "status": "PENDIENTE_DE_INTERPRETACION"
+}

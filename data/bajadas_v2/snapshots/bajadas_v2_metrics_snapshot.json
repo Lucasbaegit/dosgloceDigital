@@ -1,0 +1,26 @@
+{
+  "fecha_generacion": "2026-05-08T12:49:56.871984+00:00",
+  "cantidad_total_comparativa": 672,
+  "conteo_estados": {
+    "OK": 533,
+    "DIFERENCIA_LEVE": 51,
+    "DIFERENCIA_MEDIA": 40,
+    "DIFERENCIA_ALTA": 0,
+    "SIN_COMPARACION": 48
+  },
+  "cantidad_casos_regresion": 624,
+  "cantidad_precio_fijo_csv": 7,
+  "cantidad_reglas_especiales": 1,
+  "config_version": null,
+  "checksums": {
+    "bajadas_v2_config_final.json": "8c0e0f36a80ba535be91d0afadfe18a312158255ed014acbefc8eff249c94429",
+    "precios_pdf_objetivo_validado.json": "3c5fb46c06a4d035dfafb0c42e8c6e0a1ede10b018bb653a2b60dd54c71fd794",
+    "regresion_bajadas_v2_cases.json": "db024c256e8b40f0c94a8fc58b6c063492abd286555ce8de46c2d19ff7ed09b7"
+  },
+  "paths": {
+    "comparativa": "C:\\Users\\baezl\\Desktop\\proyectos\\desgloceExcel\\excel_desfloce\\data\\bajadas_v2\\comparativa_bajadas_v2_final.json",
+    "config_final": "C:\\Users\\baezl\\Desktop\\proyectos\\desgloceExcel\\excel_desfloce\\data\\bajadas_v2\\bajadas_v2_config_final.json",
+    "precios_objetivo_validado": "C:\\Users\\baezl\\Desktop\\proyectos\\desgloceExcel\\excel_desfloce\\data\\bajadas_v2\\precios_pdf_objetivo_validado.json",
+    "fixture_regresion": "C:\\Users\\baezl\\Desktop\\proyectos\\desgloceExcel\\excel_desfloce\\tests\\bajadas_v2\\fixtures\\regresion_bajadas_v2_cases.json"
+  }
+}

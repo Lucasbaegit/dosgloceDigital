@@ -1,0 +1,39 @@
+flowchart TD
+  A["Bajadas"]
+  E["Entradas detectadas"]
+  T["Tablas internas"]
+  C["Cálculos intermedios"]
+  D["Dependencia PAPEL US$"]
+  S["Salidas detectadas"]
+  A --> E
+  A --> T
+  A --> C
+  A --> D
+  A --> S
+  SB01["SB01 W1:AJ1\npendiente de interpretación"]
+  T --> SB01
+  SB02["SB02 B2:X11\ncálculo intermedio"]
+  C --> SB02
+  SB03["SB03 B12:X21\ncálculo intermedio"]
+  C --> SB03
+  SB04["SB04 B22:X31\ncálculo intermedio"]
+  C --> SB04
+  SB05["SB05 Z16:AS44\ntabla de referencia"]
+  T --> SB05
+  SB05 --> D
+  SB06["SB06 B32:X44\ncálculo intermedio"]
+  C --> SB06
+  SB07["SB07 B45:AO53\ncálculo intermedio"]
+  C --> SB07
+  SB08["SB08 B54:AG62\ncálculo intermedio"]
+  C --> SB08
+  SB09["SB09 B63:AC71\ncálculo intermedio"]
+  C --> SB09
+  SB10["SB10 AB69:AJ71\ncálculo intermedio"]
+  C --> SB10
+  SB11["SB11 B72:AB79\ncálculo intermedio"]
+  C --> SB11
+  SB12["SB12 B84:E92\nsalida"]
+  S --> SB12
+  P["PENDIENTE_DE_INTERPRETACION"]
+  A --> P
