@@ -149,6 +149,7 @@ class TestBajadasV2Api(unittest.TestCase):
         self.assertAlmostEqual(body["precio_unitario_sin_iva"], body["precio_unitario_con_urgencia"], places=6)
         self.assertAlmostEqual(body["total_sin_iva"], body["total_con_urgencia"], places=6)
         self.assertEqual(body["fuente"], "modelo_d")
+        self.assertEqual(body.get("adicional_laminado", "sin_adicional"), "sin_adicional")
 
     def test_post_cotizar_express_aplica_15_y_total(self):
         payload = {
@@ -174,6 +175,76 @@ class TestBajadasV2Api(unittest.TestCase):
         )
         self.assertAlmostEqual(body["total_sin_iva"], body["precio_unitario_sin_iva"] * 30, places=6)
         self.assertAlmostEqual(body["total_con_urgencia"], body["precio_unitario_con_urgencia"] * 30, places=6)
+
+    def test_cotizar_con_laca_suma_antes_de_urgencia(self):
+        payload = {
+            "categoria": "Bajadas Fullcolor",
+            "modo_color": "fullcolor",
+            "formato": "A3+",
+            "tipo_papel": "liviano",
+            "material": "Ilustracion",
+            "gramaje": "150g",
+            "cantidad_unidades": 30,
+            "cantidad_rango": "26 a 50",
+            "caras": "4/0",
+            "urgencia": "express",
+            "adicional_laminado": "laca",
+        }
+        status, body = self._post_json("/bajadas-v2/cotizar", payload)
+        self.assertEqual(status, 200)
+        self.assertEqual(body["adicional_laminado"], "laca")
+        self.assertIn("adicional_unitario_sin_iva", body)
+        self.assertIn("precio_unitario_con_adicional_sin_iva", body)
+        self.assertAlmostEqual(
+            body["precio_unitario_con_adicional_sin_iva"],
+            body["precio_unitario_sin_iva"] + body["adicional_unitario_sin_iva"],
+            places=6,
+        )
+        self.assertAlmostEqual(
+            body["total_sin_iva"],
+            body["precio_unitario_con_adicional_sin_iva"] * body["cantidad_unidades"],
+            places=6,
+        )
+        rec = float(body["trazabilidad"]["recargo_urgencia_aplicado"])
+        self.assertAlmostEqual(body["total_con_urgencia"], body["total_sin_iva"] * (1 + rec), places=6)
+
+    def test_cotizar_con_brillo_suma_antes_de_urgencia(self):
+        payload = {
+            "categoria": "Bajadas Fullcolor",
+            "modo_color": "fullcolor",
+            "formato": "A3+",
+            "tipo_papel": "liviano",
+            "material": "Ilustracion",
+            "gramaje": "150g",
+            "cantidad_unidades": 30,
+            "cantidad_rango": "26 a 50",
+            "caras": "4/0",
+            "urgencia": "normal",
+            "adicional_laminado": "laminado_brillo",
+        }
+        status, body = self._post_json("/bajadas-v2/cotizar", payload)
+        self.assertEqual(status, 200)
+        self.assertEqual(body["adicional_laminado"], "laminado_brillo")
+        self.assertEqual(body["regla_adicional_aplicada"], "ADICIONAL_LAMINADO_BRILLO_A3PLUS")
+
+    def test_cotizar_con_mate_suma_antes_de_urgencia(self):
+        payload = {
+            "categoria": "Bajadas Fullcolor",
+            "modo_color": "fullcolor",
+            "formato": "A3+",
+            "tipo_papel": "liviano",
+            "material": "Ilustracion",
+            "gramaje": "150g",
+            "cantidad_unidades": 30,
+            "cantidad_rango": "26 a 50",
+            "caras": "4/0",
+            "urgencia": "normal",
+            "adicional_laminado": "laminado_mate",
+        }
+        status, body = self._post_json("/bajadas-v2/cotizar", payload)
+        self.assertEqual(status, 200)
+        self.assertEqual(body["adicional_laminado"], "laminado_mate")
+        self.assertEqual(body["regla_adicional_aplicada"], "ADICIONAL_LAMINADO_MATE_A3PLUS")
 
     def test_post_cotizar_caso_precio_fijo_csv(self):
         payload = {
@@ -717,6 +788,24 @@ class TestBajadasV2Api(unittest.TestCase):
         self.assertEqual(status, 400)
         self.assertEqual(body["error"], "urgencia_invalida")
 
+    def test_error_adicional_invalido(self):
+        payload = {
+            "categoria": "Bajadas Fullcolor",
+            "modo_color": "fullcolor",
+            "formato": "A3+",
+            "tipo_papel": "liviano",
+            "material": "Ilustracion",
+            "gramaje": "150g",
+            "cantidad_unidades": 30,
+            "cantidad_rango": "26 a 50",
+            "caras": "4/0",
+            "urgencia": "normal",
+            "adicional_laminado": "laca+brillo",
+        }
+        status, body = self._post_json("/bajadas-v2/cotizar", payload)
+        self.assertEqual(status, 400)
+        self.assertEqual(body["error"], "validation_error")
+
     def test_error_combinacion_inexistente(self):
         payload = {
             "categoria": "Bajadas Fullcolor",
@@ -776,6 +865,48 @@ class TestBajadasV2Api(unittest.TestCase):
         self.assertEqual(body["fuente"], "autoadhesivas_objetivo_calibrado")
         self.assertAlmostEqual(body["precio_unitario_sin_iva"], 1389.0, places=6)
         self.assertAlmostEqual(body["precio_unitario_con_urgencia"], body["precio_unitario_sin_iva"] * 1.15, places=6)
+
+    def test_autoadhesiva_papel_con_laca(self):
+        payload = {
+            "categoria": "Bajadas Autoadhesivas",
+            "modo_color": "fullcolor",
+            "formato": "A3+",
+            "tipo_papel": "papel",
+            "material": "Sticker",
+            "gramaje": "N/A",
+            "cantidad_unidades": 30,
+            "cantidad_rango": "26 a 50",
+            "caras": "4/0",
+            "urgencia": "express",
+            "tipo_producto": "autoadhesiva",
+            "columna_precio": "papel",
+            "adicional_laminado": "laca",
+        }
+        status, body = self._post_json("/bajadas-v2/cotizar", payload)
+        self.assertEqual(status, 200)
+        self.assertEqual(body["adicional_laminado"], "laca")
+        self.assertEqual(body["regla_adicional_aplicada"], "ADICIONAL_LACA_UV_A3PLUS")
+
+    def test_autoadhesiva_especial_con_laminado_mate(self):
+        payload = {
+            "categoria": "Bajadas Autoadhesivas",
+            "modo_color": "fullcolor",
+            "formato": "A3+",
+            "tipo_papel": "especial",
+            "material": "OPP blanco",
+            "gramaje": "N/A",
+            "cantidad_unidades": 30,
+            "cantidad_rango": "26 a 50",
+            "caras": "4/0",
+            "urgencia": "normal",
+            "tipo_producto": "autoadhesiva",
+            "columna_precio": "especial",
+            "adicional_laminado": "laminado_mate",
+        }
+        status, body = self._post_json("/bajadas-v2/cotizar", payload)
+        self.assertEqual(status, 200)
+        self.assertEqual(body["adicional_laminado"], "laminado_mate")
+        self.assertEqual(body["regla_adicional_aplicada"], "ADICIONAL_LAMINADO_MATE_A3PLUS")
 
     def test_autoadhesiva_rechaza_tinta_blanca_laca_uv(self):
         payload = {

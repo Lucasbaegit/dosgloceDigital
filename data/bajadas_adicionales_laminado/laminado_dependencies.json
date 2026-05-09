@@ -1,0 +1,46 @@
+{
+  "internal_cells": [
+    "A2",
+    "A3",
+    "A4",
+    "B1",
+    "B4",
+    "C1",
+    "C2",
+    "D2",
+    "I2",
+    "C5",
+    "L7:L13",
+    "C7:C13",
+    "D7:D13",
+    "E7:E13"
+  ],
+  "named_context": [
+    {
+      "cell": "A3",
+      "meaning": "Costo base hoja A3+ (32x47cm)"
+    },
+    {
+      "cell": "C2",
+      "meaning": "Laminado por lado (factor base)"
+    },
+    {
+      "cell": "D2",
+      "meaning": "Coeficiente/margen intermedio"
+    },
+    {
+      "cell": "I2",
+      "meaning": "Coeficiente para derivar laca UV"
+    },
+    {
+      "cell": "L7:L13",
+      "meaning": "Escala por cantidad para costo unitario decreciente"
+    },
+    {
+      "cell": "C23",
+      "meaning": "Dólar de referencia presente en hoja Laminado (no referencia directa a PAPEL US$)"
+    }
+  ],
+  "external_sheet_references": [],
+  "external_file_references": []
+}

@@ -31,6 +31,12 @@ const URGENCIAS = ["normal", "express", "super_express", "ya_24hs"];
 const CATEGORIAS = ["Bajadas Fullcolor/ByN", "Bajadas Autoadhesivas"];
 const AUTOADH_COLUMNAS = ["papel", "especial"];
 const AUTOADH_RANGOS = ["1", "2 a 25", "26 a 50", "51 a 100", "101 a 300", "301 a 500", "501 a 1000"];
+const ADICIONALES = [
+  { label: "Sin adicional", value: "sin_adicional" },
+  { label: "Laca UV", value: "laca" },
+  { label: "Laminado brillo", value: "laminado_brillo" },
+  { label: "Laminado mate", value: "laminado_mate" },
+];
 const INITIAL_FORM = {
   categoria_ui: "Bajadas Fullcolor/ByN",
   formato: "A4",
@@ -41,6 +47,7 @@ const INITIAL_FORM = {
   cantidad_unidades: "1",
   caras: "4/0",
   urgencia: "normal",
+  adicional_laminado: "sin_adicional",
 };
 
 function inferFromCaras(caras) {
@@ -448,7 +455,7 @@ export default function CotizadorBajadasV2() {
   };
 
   const handleClear = () => {
-    setForm((prev) => ({ ...prev, cantidad_unidades: "1", urgencia: "normal" }));
+    setForm((prev) => ({ ...prev, cantidad_unidades: "1", urgencia: "normal", adicional_laminado: "sin_adicional" }));
     setResult(null);
     setLastPayload(null);
     setError("");
@@ -465,6 +472,9 @@ export default function CotizadorBajadasV2() {
       `Papel: ${form.tipo_papel} / ${form.material} / ${form.gramaje}`,
       `Cantidad: ${result.cantidad_unidades ?? form.cantidad_unidades}`,
       `Rango aplicado: ${result.cantidad_rango_aplicado ?? derivedRange ?? "-"}`,
+      `Adicional: ${result.adicional_laminado ?? form.adicional_laminado ?? "sin_adicional"}`,
+      `Adicional unitario: ${formatMoney(result.adicional_unitario_sin_iva ?? 0)}`,
+      `Precio unitario con adicional: ${formatMoney(result.precio_unitario_con_adicional_sin_iva ?? result.precio_unitario_sin_iva ?? result.precio_sin_iva)}`,
       `Total sin IVA: ${formatMoney(result.total_sin_iva ?? result.precio_sin_iva)}`,
       `Total con urgencia: ${formatMoney(result.total_con_urgencia ?? result.precio_con_recargo_urgencia)}`,
     ].join("\n");
@@ -506,6 +516,7 @@ export default function CotizadorBajadasV2() {
       cantidad_rango: derivedRange,
       caras: inferred.caras,
       urgencia: form.urgencia,
+      adicional_laminado: form.adicional_laminado || "sin_adicional",
       tipo_producto: isAutoadhesivas ? "autoadhesiva" : undefined,
       columna_precio: isAutoadhesivas ? form.columna_precio : undefined,
     };
@@ -548,6 +559,7 @@ export default function CotizadorBajadasV2() {
           <details open><summary>Entrada del usuario</summary><ul><li>Formato: {lastPayload.formato}</li><li>Impresión: {lastPayload.caras}</li><li>Tipo papel: {lastPayload.tipo_papel}</li><li>Tipo autoadhesivo: {lastPayload.columna_precio ?? "-"}</li><li>Material: {lastPayload.material}</li><li>Gramaje: {lastPayload.gramaje}</li><li>Cantidad: {lastPayload.cantidad_unidades}</li><li>Urgencia: {lastPayload.urgencia}</li></ul></details>
           <details open><summary>Rango aplicado</summary><ul><li>{result.cantidad_rango_aplicado}</li></ul></details>
           <details open><summary>Precio unitario</summary><ul><li>Sin IVA: {formatMoney(result.precio_unitario_sin_iva)}</li><li>Con urgencia: {formatMoney(result.precio_unitario_con_urgencia)}</li></ul></details>
+          <details open><summary>Adicional laminado/laca</summary><ul><li>selección: {result.adicional_laminado ?? "sin_adicional"}</li><li>adicional_unitario_sin_iva: {formatMoney(result.adicional_unitario_sin_iva ?? 0)}</li><li>regla_adicional_aplicada: {result.regla_adicional_aplicada ?? "-"}</li><li>fuente_adicional: {result.fuente_adicional ?? "-"}</li><li>rango_aplicado: {result.trazabilidad?.adicional_laminado?.rango_aplicado ?? "-"}</li><li>nota: Laca / laminado se suma antes de urgencia.</li><li>no_combinable: true</li></ul></details>
           <details open><summary>Total</summary><ul><li>Sin IVA: {formatMoney(result.total_sin_iva)}</li><li>Con urgencia: {formatMoney(result.total_con_urgencia)}</li></ul></details>
           <details open data-testid="price-tree-rule-section"><summary>Regla</summary><ul><li>regla_aplicada: {result.regla_aplicada}</li><li>fuente: {result.fuente}</li><li>factor_aplicado: {result.trazabilidad?.factor_aplicado ?? "-"}</li><li>regla_especial: {result.trazabilidad?.regla_especial ?? "-"}</li><li>correccion_logica: {result.trazabilidad?.correccion_logica ?? "-"}</li></ul></details>
           <details open><summary>Origen</summary><ul><li>origen_excel: {result.trazabilidad?.origen_excel ?? "-"}</li><li>precio_objetivo_csv: {result.trazabilidad?.precio_objetivo_csv ?? result.trazabilidad?.precio_objetivo_pdf ?? "-"}</li><li>precio_unitario_csv: {result.trazabilidad?.precio_unitario_csv ?? "-"}</li><li>modelo_tecnico_referencia: {result.trazabilidad?.modelo_tecnico_referencia ?? "-"}</li><li>precio_b3_referencia: {result.trazabilidad?.precio_b3_referencia ?? "-"}</li><li>an40_estado: {result.trazabilidad?.an40_estado ?? "-"}</li></ul></details>
@@ -794,8 +806,10 @@ export default function CotizadorBajadasV2() {
           )}
           <label><span>Cantidad</span><input type="number" min={1} step={1} placeholder="Ejemplo: 30" value={form.cantidad_unidades} onChange={updateField("cantidad_unidades")} /><small className="range-hint">Rango aplicado: {derivedRange ?? "Sin rango disponible"}</small></label>
           <label><span>Urgencia</span><select value={form.urgencia} onChange={updateField("urgencia")}>{URGENCIAS.map((v) => <option key={v}>{v}</option>)}</select></label>
+          <label><span>Adicional</span><select value={form.adicional_laminado} onChange={updateField("adicional_laminado")}>{ADICIONALES.map((a) => <option key={a.value} value={a.value}>{a.label}</option>)}</select></label>
         </div>
         {isAutoadhesivas ? <div className="warning-box">Tinta blanca y laca UV no están incluidas en esta etapa.</div> : null}
+        <div className="info-box">Laca / laminado se suma antes de urgencia.</div>
         {error ? <div className="error-box">{error}</div> : null}
         {copyStatus ? <div className="info-box" data-testid="copy-status">{copyStatus}</div> : null}
         <div className="actions-row"><button type="submit" className="calculate-btn" disabled={loading}>{loading ? "Calculando..." : "Calcular"}</button><button type="button" className="secondary-btn" data-testid="clear-button" onClick={handleClear}>Limpiar</button></div>
@@ -812,10 +826,16 @@ export default function CotizadorBajadasV2() {
               <div className="total-panel"><p>Total final con urgencia</p><h3>{formatMoney(result.total_con_urgencia ?? result.precio_con_recargo_urgencia)}</h3><small>Total sin IVA: {formatMoney(result.total_sin_iva ?? result.precio_sin_iva)}</small></div>
             </div>
             <div className="detail-list">
+              <div><strong>Precio base unitario</strong><span>{formatMoney(result.precio_unitario_base_sin_iva ?? result.precio_unitario_sin_iva ?? result.precio_sin_iva)}</span></div>
+              <div><strong>Adicional seleccionado</strong><span>{result.adicional_laminado ?? "sin_adicional"}</span></div>
+              <div><strong>Adicional unitario sin IVA</strong><span>{formatMoney(result.adicional_unitario_sin_iva ?? 0)}</span></div>
+              <div><strong>Precio unitario con adicional</strong><span>{formatMoney(result.precio_unitario_con_adicional_sin_iva ?? result.precio_unitario_sin_iva ?? result.precio_sin_iva)}</span></div>
               <div><strong>Cantidad ingresada</strong><span>{result.cantidad_unidades ?? form.cantidad_unidades}</span></div>
               <div><strong>Rango aplicado</strong><span>{result.cantidad_rango_aplicado ?? derivedRange ?? "-"}</span></div>
               <div><strong>Regla aplicada</strong><span>{result.regla_aplicada}</span></div>
               <div><strong>Fuente</strong><span>{result.fuente}</span></div>
+              <div><strong>Regla adicional aplicada</strong><span>{result.regla_adicional_aplicada ?? "-"}</span></div>
+              <div><strong>Fuente adicional</strong><span>{result.fuente_adicional ?? "-"}</span></div>
               <div><strong>Recargo aplicado</strong><span>{result.trazabilidad?.recargo_urgencia_aplicado ?? "-"}</span></div>
             </div>
             <div className="copy-row"><button type="button" className="secondary-btn" data-testid="copy-result-button" onClick={handleCopy}>Copiar resultado</button></div>

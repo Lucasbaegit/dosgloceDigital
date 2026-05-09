@@ -1,0 +1,145 @@
+{
+  "laca": {
+    "base": "A3+ por pliego",
+    "quantity_scale": "B7:B13",
+    "path": [
+      {
+        "node": "Costo unitario base",
+        "cell": "C5",
+        "formula": "=A2/B4*C4*C1",
+        "value": 35.2403546
+      },
+      {
+        "node": "Escala cantidad",
+        "cell": "Lx",
+        "formula": "valor fijo por tramo",
+        "values": {
+          "L7": 4.0,
+          "L8": 3.7,
+          "L9": 3.4,
+          "L10": 3.1,
+          "L11": 2.9,
+          "L12": 2.7,
+          "L13": 2.5
+        }
+      },
+      {
+        "node": "Aplicación laca",
+        "cell": "Ex",
+        "formula": "=Cx/I2",
+        "values": {
+          "E7": 136.2627045,
+          "E8": 126.0430016,
+          "E9": 115.8232988,
+          "E10": 105.603596,
+          "E11": 98.79046073,
+          "E12": 91.97732551,
+          "E13": 85.16419028
+        }
+      },
+      {
+        "node": "Resultado unitario",
+        "cell": "E7:E13",
+        "meaning": "precio unitario por pliego A3+ según escala"
+      }
+    ],
+    "dependencies": [
+      "C5",
+      "L7:L13",
+      "I2",
+      "C7:C13"
+    ]
+  },
+  "laminado_brillo": {
+    "base": "A3+ por pliego",
+    "quantity_scale": "B7:B13",
+    "path": [
+      {
+        "node": "Costo unitario base",
+        "cell": "C5",
+        "formula": "=A2/B4*C4*C1",
+        "value": 35.2403546
+      },
+      {
+        "node": "Escala cantidad",
+        "cell": "Lx",
+        "values": {
+          "L7": 4.0,
+          "L8": 3.7,
+          "L9": 3.4,
+          "L10": 3.1,
+          "L11": 2.9,
+          "L12": 2.7,
+          "L13": 2.5
+        }
+      },
+      {
+        "node": "Aplicación brillo",
+        "cell": "Cx",
+        "formula": "=C5*Lx*D2",
+        "values": {
+          "C7": 163.5152453,
+          "C8": 151.2516019,
+          "C9": 138.9879585,
+          "C10": 126.7243151,
+          "C11": 118.5485529,
+          "C12": 110.3727906,
+          "C13": 102.1970283
+        }
+      },
+      {
+        "node": "Resultado unitario",
+        "cell": "C7:C13",
+        "meaning": "precio unitario brillo por pliego A3+"
+      }
+    ],
+    "dependencies": [
+      "C5",
+      "L7:L13",
+      "D2"
+    ]
+  },
+  "laminado_mate": {
+    "base": "A3+ por pliego",
+    "quantity_scale": "B7:B13",
+    "path": [
+      {
+        "node": "Base brillo",
+        "cell": "Cx",
+        "formula": "=C5*Lx*D2",
+        "values": {
+          "C7": 163.5152453,
+          "C8": 151.2516019,
+          "C9": 138.9879585,
+          "C10": 126.7243151,
+          "C11": 118.5485529,
+          "C12": 110.3727906,
+          "C13": 102.1970283
+        }
+      },
+      {
+        "node": "Derivación mate",
+        "cell": "Dx",
+        "formula": "=Cx*D2",
+        "values": {
+          "D7": 189.6776846,
+          "D8": 175.4518583,
+          "D9": 161.2260319,
+          "D10": 147.0002056,
+          "D11": 137.5163213,
+          "D12": 128.0324371,
+          "D13": 118.5485529
+        }
+      },
+      {
+        "node": "Resultado unitario",
+        "cell": "D7:D13",
+        "meaning": "precio unitario mate por pliego A3+"
+      }
+    ],
+    "dependencies": [
+      "C7:C13",
+      "D2"
+    ]
+  }
+}

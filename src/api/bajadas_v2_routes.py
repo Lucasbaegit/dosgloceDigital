@@ -16,6 +16,8 @@ from bajadas_autoadhesivas import AutoadhesivasPricingEngine, load_autoadhesivas
 from bajadas_autoadhesivas.exceptions import PriceNotFoundError as AutoadhesivasPriceNotFoundError
 from bajadas_autoadhesivas.exceptions import QuoteInputError as AutoadhesivasQuoteInputError
 from bajadas_autoadhesivas.types import AutoadhesivasQuoteInput
+from bajadas_adicionales_laminado import LaminadoAdicionalesPricingEngine, QuoteInputError as LaminadoQuoteInputError, load_laminado_bundle
+from bajadas_adicionales_laminado.types import LaminadoQuoteInput
 
 from .schemas import ApiValidationError, QuoteRequestSchema
 
@@ -25,6 +27,8 @@ class BajadasV2ApiService:
         self.project_root = project_root
         self.engine = BajadasV2PricingEngine(load_bajadas_v2_bundle(project_root))
         self.autoadhesivas_engine = AutoadhesivasPricingEngine(load_autoadhesivas_bundle(project_root))
+        self.laminado_engine = LaminadoAdicionalesPricingEngine(load_laminado_bundle(project_root))
+        self.usar_adicionales_laminado_v1 = False
         self.config_path = project_root / "data" / "bajadas_v2" / "bajadas_v2_config_final.json"
         self.config_editable_path = project_root / "data" / "bajadas_v2" / "bajadas_v2_config_editable.json"
         self.config_history_path = project_root / "data" / "bajadas_v2" / "config_history.json"
@@ -84,6 +88,7 @@ class BajadasV2ApiService:
                 result = self.autoadhesivas_engine.quote_as_dict(autoadh_request)
             else:
                 result = self.engine.quote_as_dict(req.to_quote_input())
+            result = self._apply_laminado_adicional_opt_in(result, req)
             return 200, result
         except ApiValidationError as exc:
             return 400, {"error": "validation_error", "detail": str(exc)}
@@ -95,8 +100,70 @@ class BajadasV2ApiService:
             return 400, {"error": "validation_error", "detail": str(exc)}
         except AutoadhesivasPriceNotFoundError as exc:
             return 404, {"error": "combinacion_no_encontrada", "detail": str(exc)}
+        except LaminadoQuoteInputError as exc:
+            return 400, {"error": "validation_error", "detail": str(exc)}
         except Exception as exc:  # pragma: no cover
             return 500, {"error": "internal_error", "detail": str(exc)}
+
+    def _apply_laminado_adicional_opt_in(self, result: dict[str, Any], req: QuoteRequestSchema) -> dict[str, Any]:
+        adicional = (req.adicional_laminado or "sin_adicional").lower()
+        valid = {"sin_adicional", "laca", "laminado_brillo", "laminado_mate"}
+        if adicional not in valid:
+            raise ApiValidationError("adicional_laminado inválido. Valores permitidos: sin_adicional, laca, laminado_brillo, laminado_mate.")
+
+        # Opt-in behavior: if field is omitted, keep previous behavior unchanged.
+        if req.adicional_laminado is None:
+            result["adicional_laminado"] = "sin_adicional"
+            return result
+
+        qty = int(result.get("cantidad_unidades", req.cantidad_unidades or 1))
+        laminado_out = self.laminado_engine.quote_as_dict(
+            LaminadoQuoteInput(
+                adicional=adicional,
+                formato="A3+",
+                cantidad_unidades=qty,
+                urgencia=req.urgencia,
+            )
+        )
+
+        base_unit = float(result["precio_unitario_sin_iva"])
+        recargo = float(result.get("trazabilidad", {}).get("recargo_urgencia_aplicado", 0.0))
+        factor_urgencia = 1.0 + recargo
+        adicional_unit = float(laminado_out["adicional_unitario_sin_iva"])
+
+        precio_unitario_con_adicional = round(base_unit + adicional_unit, 6)
+        total_sin_iva = round(precio_unitario_con_adicional * qty, 6)
+        total_con_urgencia = round(total_sin_iva * factor_urgencia, 6)
+
+        result["adicional_laminado"] = adicional
+        result["adicional_unitario_sin_iva"] = round(adicional_unit, 6)
+        result["adicional_unitario_con_urgencia"] = float(laminado_out["adicional_unitario_con_urgencia"])
+        result["total_adicional_sin_iva"] = float(laminado_out["total_adicional_sin_iva"])
+        result["total_adicional_con_urgencia"] = float(laminado_out["total_adicional_con_urgencia"])
+        result["precio_unitario_base_sin_iva"] = round(base_unit, 6)
+        result["precio_unitario_con_adicional_sin_iva"] = precio_unitario_con_adicional
+        result["regla_adicional_aplicada"] = laminado_out["regla_aplicada"]
+        result["fuente_adicional"] = laminado_out["fuente"]
+
+        # Keep compatibility fields untouched for base unit:
+        # precio_unitario_sin_iva, precio_sin_iva remain base.
+        # Totals are updated to combined base+adicional before urgencia.
+        result["total_sin_iva"] = total_sin_iva
+        result["total_con_urgencia"] = total_con_urgencia
+
+        trace = result.setdefault("trazabilidad", {})
+        trace["adicional_laminado"] = {
+            "seleccion": adicional,
+            "hoja_origen": "Laminado",
+            "formato_base": "A3+",
+            "rango_aplicado": laminado_out["rango_aplicado"],
+            "adicional_unitario": round(adicional_unit, 6),
+            "regla_aplicada": laminado_out["regla_aplicada"],
+            "fuente": laminado_out["fuente"],
+            "nota": "Se suma antes de urgencia.",
+            "no_combinable": True,
+        }
+        return result
 
     def get_config(self) -> tuple[int, dict[str, Any]]:
         return 200, self._read_json(self.config_editable_path)

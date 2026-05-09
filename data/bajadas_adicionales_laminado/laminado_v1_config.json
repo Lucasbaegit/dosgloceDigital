@@ -1,0 +1,183 @@
+{
+  "version": "laminado_v1",
+  "formato_base": "A3+",
+  "hoja_origen": "Laminado",
+  "rango_origen": "A1:R29",
+  "adicionales_disponibles": [
+    "sin_adicional",
+    "laca",
+    "laminado_brillo",
+    "laminado_mate"
+  ],
+  "origen_laca": {
+    "encabezado": "E6",
+    "salidas": "E7:E13",
+    "formula": "Cx/I2"
+  },
+  "origen_brillo": {
+    "encabezado": "C6",
+    "salidas": "C7:C13",
+    "formula": "C5*Lx*D2"
+  },
+  "origen_mate": {
+    "encabezado": "D6",
+    "salidas": "D7:D13",
+    "formula": "Cx*D2"
+  },
+  "urgencias": {
+    "normal": 0,
+    "express": 0.15,
+    "super_express": 0.3,
+    "ya_24hs": 0.5
+  },
+  "escalas": [
+    {
+      "etiqueta": "0 - 10",
+      "desde": 1,
+      "hasta": 10
+    },
+    {
+      "etiqueta": "11 - 50",
+      "desde": 11,
+      "hasta": 50
+    },
+    {
+      "etiqueta": "51 - 100",
+      "desde": 51,
+      "hasta": 100
+    },
+    {
+      "etiqueta": "101 - 500",
+      "desde": 101,
+      "hasta": 500
+    },
+    {
+      "etiqueta": "501 - 1000",
+      "desde": 501,
+      "hasta": 1000
+    },
+    {
+      "etiqueta": "1001+",
+      "desde": 1001,
+      "hasta": null
+    }
+  ],
+  "duplicado_1001": {
+    "fila_auditada_1": "B12",
+    "fila_auditada_2": "B13",
+    "estado": "PENDIENTE_INTERPRETACION",
+    "resolucion_operativa": "Se usa fila 13 para 1001+ por continuidad decreciente de escala y costo unitario.",
+    "evidencia": {
+      "laca": {
+        "E12": 91.97732551,
+        "E13": 85.16419028
+      },
+      "brillo": {
+        "C12": 110.3727906,
+        "C13": 102.1970283
+      },
+      "mate": {
+        "D12": 128.0324371,
+        "D13": 118.5485529
+      }
+    }
+  },
+  "adicionales": {
+    "sin_adicional": {
+      "regla": "ADICIONAL_SIN_CARGO_A3PLUS",
+      "formula": "0",
+      "dependencias": [],
+      "celdas": {
+        "0 - 10": "N/A",
+        "11 - 50": "N/A",
+        "51 - 100": "N/A",
+        "101 - 500": "N/A",
+        "501 - 1000": "N/A",
+        "1001+": "N/A"
+      },
+      "unitarios": {
+        "0 - 10": 0,
+        "11 - 50": 0,
+        "51 - 100": 0,
+        "101 - 500": 0,
+        "501 - 1000": 0,
+        "1001+": 0
+      }
+    },
+    "laca": {
+      "regla": "ADICIONAL_LACA_UV_A3PLUS",
+      "formula": "Cx/I2",
+      "dependencias": [
+        "C5",
+        "I2",
+        "Lx",
+        "Cx"
+      ],
+      "celdas": {
+        "0 - 10": "E7",
+        "11 - 50": "E8",
+        "51 - 100": "E9",
+        "101 - 500": "E10",
+        "501 - 1000": "E11",
+        "1001+": "E13"
+      },
+      "unitarios": {
+        "0 - 10": 136.2627045,
+        "11 - 50": 126.0430016,
+        "51 - 100": 115.8232988,
+        "101 - 500": 105.603596,
+        "501 - 1000": 98.79046073,
+        "1001+": 85.16419028
+      }
+    },
+    "laminado_brillo": {
+      "regla": "ADICIONAL_LAMINADO_BRILLO_A3PLUS",
+      "formula": "C5*Lx*D2",
+      "dependencias": [
+        "C5",
+        "D2",
+        "Lx"
+      ],
+      "celdas": {
+        "0 - 10": "C7",
+        "11 - 50": "C8",
+        "51 - 100": "C9",
+        "101 - 500": "C10",
+        "501 - 1000": "C11",
+        "1001+": "C13"
+      },
+      "unitarios": {
+        "0 - 10": 163.5152453,
+        "11 - 50": 151.2516019,
+        "51 - 100": 138.9879585,
+        "101 - 500": 126.7243151,
+        "501 - 1000": 118.5485529,
+        "1001+": 102.1970283
+      }
+    },
+    "laminado_mate": {
+      "regla": "ADICIONAL_LAMINADO_MATE_A3PLUS",
+      "formula": "Cx*D2",
+      "dependencias": [
+        "Cx",
+        "D2"
+      ],
+      "celdas": {
+        "0 - 10": "D7",
+        "11 - 50": "D8",
+        "51 - 100": "D9",
+        "101 - 500": "D10",
+        "501 - 1000": "D11",
+        "1001+": "D13"
+      },
+      "unitarios": {
+        "0 - 10": 189.6776846,
+        "11 - 50": 175.4518583,
+        "51 - 100": 161.2260319,
+        "101 - 500": 147.0002056,
+        "501 - 1000": 137.5163213,
+        "1001+": 118.5485529
+      }
+    }
+  }
+}

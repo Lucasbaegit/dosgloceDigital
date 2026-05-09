@@ -17,6 +17,7 @@ test("UI muestra tabs nuevas y controles base", async ({ page }) => {
   await expect(page.getByRole("button", { name: "Configuración" })).toBeVisible();
   await expect(page.locator('img[src="/logoPromo.jpg"]')).toBeVisible();
   await expect(page.getByText(/API (conectada|no disponible)/)).toBeVisible();
+  await expect(page.getByLabel("Adicional")).toBeVisible();
 });
 
 test("modo Autoadhesivas guiado: A3+ y 4/0 fijos, tipo papel/especial", async ({ page }) => {
@@ -98,6 +99,7 @@ test("cotizacion muestra rango aplicado y total destacado", async ({ page }) => 
   await page.getByLabel("Material").selectOption("Ilustracion");
   await page.getByLabel("Gramaje").selectOption("150g");
   await page.getByLabel("Cantidad").fill("30");
+  await page.getByLabel("Adicional").selectOption("laca");
   await expect(page.getByText("Rango aplicado: 26 a 50")).toBeVisible();
 
   await page.route("http://127.0.0.1:8000/bajadas-v2/cotizar", async (route) => {
@@ -107,6 +109,12 @@ test("cotizacion muestra rango aplicado y total destacado", async ({ page }) => 
       body: JSON.stringify({
         precio_unitario_sin_iva: 855,
         precio_unitario_con_urgencia: 983.25,
+        precio_unitario_base_sin_iva: 855,
+        precio_unitario_con_adicional_sin_iva: 981.043002,
+        adicional_laminado: "laca",
+        adicional_unitario_sin_iva: 126.043002,
+        regla_adicional_aplicada: "ADICIONAL_LACA_UV_A3PLUS",
+        fuente_adicional: "excel_laminado_readonly_a3plus",
         cantidad_unidades: 30,
         cantidad_rango_aplicado: "26 a 50",
         total_sin_iva: 25650,
@@ -123,6 +131,8 @@ test("cotizacion muestra rango aplicado y total destacado", async ({ page }) => 
   await page.getByRole("button", { name: "Calcular" }).click();
   await expect(page.getByText("Total final con urgencia")).toBeVisible();
   await expect(page.getByRole("heading", { name: "$29.497,5 ARS" })).toBeVisible();
+  await expect(page.getByText("Adicional unitario sin IVA")).toBeVisible();
+  await expect(page.getByText("Precio unitario con adicional")).toBeVisible();
 });
 
 test("tab Árbol del precio muestra composición del último cálculo", async ({ page }) => {
@@ -132,6 +142,7 @@ test("tab Árbol del precio muestra composición del último cálculo", async ({
   await page.getByLabel("Material").selectOption("Ilustracion");
   await page.getByLabel("Gramaje").selectOption("150g");
   await page.getByLabel("Cantidad").fill("30");
+  await page.getByLabel("Adicional").selectOption("laca");
 
   await page.route("http://127.0.0.1:8000/bajadas-v2/cotizar", async (route) => {
     await route.fulfill({
@@ -140,6 +151,12 @@ test("tab Árbol del precio muestra composición del último cálculo", async ({
       body: JSON.stringify({
         precio_unitario_sin_iva: 855,
         precio_unitario_con_urgencia: 855,
+        precio_unitario_base_sin_iva: 855,
+        precio_unitario_con_adicional_sin_iva: 981.043002,
+        adicional_laminado: "laca",
+        adicional_unitario_sin_iva: 126.043002,
+        regla_adicional_aplicada: "ADICIONAL_LACA_UV_A3PLUS",
+        fuente_adicional: "excel_laminado_readonly_a3plus",
         cantidad_unidades: 30,
         cantidad_rango_aplicado: "26 a 50",
         total_sin_iva: 25650,
@@ -158,6 +175,7 @@ test("tab Árbol del precio muestra composición del último cálculo", async ({
   await expect(page.getByText("Entrada del usuario")).toBeVisible();
   await expect(page.getByText("Rango aplicado")).toBeVisible();
   await expect(page.getByTestId("price-tree-rule-section")).toBeVisible();
+  await expect(page.getByText("Adicional laminado/laca")).toBeVisible();
 });
 
 test("tab Configuración carga y permite ver historial", async ({ page }) => {
@@ -176,6 +194,7 @@ test("botón Limpiar y Copiar resultado", async ({ page }) => {
   await page.getByLabel("Material").selectOption("Ilustracion");
   await page.getByLabel("Gramaje").selectOption("150g");
   await page.getByLabel("Cantidad").fill("30");
+  await page.getByLabel("Adicional").selectOption("laminado_brillo");
 
   await page.route("http://127.0.0.1:8000/bajadas-v2/cotizar", async (route) => {
     await route.fulfill({
@@ -184,6 +203,12 @@ test("botón Limpiar y Copiar resultado", async ({ page }) => {
       body: JSON.stringify({
         precio_unitario_sin_iva: 855,
         precio_unitario_con_urgencia: 855,
+        precio_unitario_base_sin_iva: 855,
+        precio_unitario_con_adicional_sin_iva: 1006.251602,
+        adicional_laminado: "laminado_brillo",
+        adicional_unitario_sin_iva: 151.251602,
+        regla_adicional_aplicada: "ADICIONAL_LAMINADO_BRILLO_A3PLUS",
+        fuente_adicional: "excel_laminado_readonly_a3plus",
         cantidad_unidades: 30,
         cantidad_rango_aplicado: "26 a 50",
         total_sin_iva: 25650,
@@ -202,4 +227,43 @@ test("botón Limpiar y Copiar resultado", async ({ page }) => {
   await expect(page.getByTestId("copy-status")).toContainText(/Resultado copiado\.|No se pudo copiar automáticamente\./);
   await page.getByTestId("clear-button").click();
   await expect(page.getByLabel("Cantidad")).toHaveValue("1");
+  await expect(page.getByLabel("Adicional")).toHaveValue("sin_adicional");
+});
+
+test("autoadhesivas especial + laminado mate calcula y muestra regla adicional", async ({ page }) => {
+  await page.goto("/");
+  await page.getByLabel("Categoría").selectOption("Bajadas Autoadhesivas");
+  await page.getByLabel("Tipo").selectOption("especial");
+  await page.getByLabel("Cantidad").fill("30");
+  await page.getByLabel("Adicional").selectOption("laminado_mate");
+
+  await page.route("http://127.0.0.1:8000/bajadas-v2/cotizar", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        precio_unitario_sin_iva: 1389,
+        precio_unitario_con_urgencia: 1389,
+        precio_unitario_base_sin_iva: 1389,
+        precio_unitario_con_adicional_sin_iva: 1564.451858,
+        adicional_laminado: "laminado_mate",
+        adicional_unitario_sin_iva: 175.451858,
+        regla_adicional_aplicada: "ADICIONAL_LAMINADO_MATE_A3PLUS",
+        fuente_adicional: "excel_laminado_readonly_a3plus",
+        cantidad_unidades: 30,
+        cantidad_rango_aplicado: "26 a 50",
+        total_sin_iva: 46933.55574,
+        total_con_urgencia: 46933.55574,
+        precio_sin_iva: 1389,
+        precio_con_recargo_urgencia: 1389,
+        regla_aplicada: "AUTOADHESIVA_ESPECIAL_HIBRIDO_B_C",
+        fuente: "autoadhesivas_objetivo_calibrado",
+        trazabilidad: { recargo_urgencia_aplicado: 0 },
+      }),
+    });
+  });
+
+  await page.getByRole("button", { name: "Calcular" }).click();
+  await expect(page.getByText("Regla adicional aplicada")).toBeVisible();
+  await expect(page.getByText("ADICIONAL_LAMINADO_MATE_A3PLUS")).toBeVisible();
 });

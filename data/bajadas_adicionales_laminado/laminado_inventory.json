@@ -1,0 +1,117 @@
+{
+  "excel_file": "C:\\Users\\baezl\\Desktop\\proyectos\\desgloceExcel\\excel_desfloce\\original\\Copia de DIGITAL sistema 2025.xlsx",
+  "sheet": "Laminado",
+  "used_range": "A1:R29",
+  "max_row": 229,
+  "max_col": 26,
+  "key_headers": {
+    "brillo": "C6",
+    "mate": "D6",
+    "laca_uv": "E6",
+    "scale_labels": "B7:B13",
+    "a3plus_context": "B3"
+  },
+  "scale_rows": [
+    {
+      "row": 7,
+      "label_cell": "B7",
+      "label": "0 - 10",
+      "parsed": {
+        "raw": "0 - 10",
+        "from": 0,
+        "to": 10
+      }
+    },
+    {
+      "row": 8,
+      "label_cell": "B8",
+      "label": "11-50",
+      "parsed": {
+        "raw": "11-50",
+        "from": 11,
+        "to": 50
+      }
+    },
+    {
+      "row": 9,
+      "label_cell": "B9",
+      "label": "51-100",
+      "parsed": {
+        "raw": "51-100",
+        "from": 51,
+        "to": 100
+      }
+    },
+    {
+      "row": 10,
+      "label_cell": "B10",
+      "label": "101-500",
+      "parsed": {
+        "raw": "101-500",
+        "from": 101,
+        "to": 500
+      }
+    },
+    {
+      "row": 11,
+      "label_cell": "B11",
+      "label": "501-1000",
+      "parsed": {
+        "raw": "501-1000",
+        "from": 501,
+        "to": 1000
+      }
+    },
+    {
+      "row": 12,
+      "label_cell": "B12",
+      "label": "1001 +",
+      "parsed": {
+        "raw": "1001 +",
+        "from": 1001,
+        "to": null
+      }
+    },
+    {
+      "row": 13,
+      "label_cell": "B13",
+      "label": "1001 +",
+      "parsed": {
+        "raw": "1001 +",
+        "from": 1001,
+        "to": null
+      }
+    }
+  ],
+  "additional_blocks": {
+    "laca": {
+      "range": "E7:E13",
+      "header_cell": "E6",
+      "header": "Laca UV"
+    },
+    "laminado_brillo": {
+      "range": "C7:C13",
+      "header_cell": "C6",
+      "header": "brillo"
+    },
+    "laminado_mate": {
+      "range": "D7:D13",
+      "header_cell": "D6",
+      "header": "mate"
+    }
+  },
+  "a3_plus_evidence": [
+    {
+      "cell": "B3",
+      "value": "Tamaño de hoja A3Plus (32x47cm)"
+    },
+    {
+      "cell": "G16",
+      "value": "A3"
+    },
+    {
+      "cell": "G25",
+      "value": "hoja A3+ 33x48"
+    }
+  ]
+}

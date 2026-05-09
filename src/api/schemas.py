@@ -27,6 +27,7 @@ class QuoteRequestSchema:
     columna_precio: str | None
     terminacion: str | None
     urgencia: str
+    adicional_laminado: str | None
 
     @classmethod
     def from_payload(cls, payload: dict[str, Any]) -> "QuoteRequestSchema":
@@ -64,6 +65,11 @@ class QuoteRequestSchema:
             ),
             terminacion=(None if payload.get("terminacion") in ("", None) else str(payload.get("terminacion"))),
             urgencia=str(payload["urgencia"]).strip().lower(),
+            adicional_laminado=(
+                None
+                if payload.get("adicional_laminado") in (None, "")
+                else str(payload.get("adicional_laminado")).strip().lower()
+            ),
         )
 
     def to_quote_input(self) -> QuoteInput:
