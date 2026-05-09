@@ -11,6 +11,7 @@ test.beforeEach(async ({ page }) => {
 });
 
 test("UI muestra tabs nuevas y controles base", async ({ page }) => {
+  await page.setViewportSize({ width: 1366, height: 900 });
   await page.goto("/");
   await expect(page.getByRole("button", { name: "Cotizador" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Árbol del precio" })).toBeVisible();
@@ -18,6 +19,7 @@ test("UI muestra tabs nuevas y controles base", async ({ page }) => {
   await expect(page.locator('img[src="/logoPromo.jpg"]')).toBeVisible();
   await expect(page.getByText(/API (conectada|no disponible)/)).toBeVisible();
   await expect(page.getByLabel("Adicional")).toBeVisible();
+  await expect(page.getByTestId("result-panel")).toBeVisible();
 });
 
 test("modo Autoadhesivas guiado: A3+ y 4/0 fijos, tipo papel/especial", async ({ page }) => {

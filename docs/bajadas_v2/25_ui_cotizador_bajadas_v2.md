@@ -106,3 +106,16 @@ Se mejorÃ³ la pantalla de cotizaciÃ³n con foco de uso operativo:
 - BotÃ³n `Copiar resultado` con resumen operativo listo para pegar.
 - Estado vacÃ­o mejorado: `CompletÃ¡ los datos y presionÃ¡ Calcular.`
 - Errores de API/combinaciÃ³n/cantidad/campos mejorados.
+
+## Ajuste layout compacto (desktop-first)
+
+Se compactó el bloque `1. Configura tu impresión` para reducir scroll y mantener visible `2. Resultado` al costado derecho.
+
+- Layout nuevo (cotizador):
+  - contenedor: `.cotizador-layout`
+  - desktop `>= 1280px`: `minmax(640px, 1.2fr) / minmax(360px, 0.8fr)`
+  - tablet `900px–1279px`: intento de dos columnas
+  - fallback `< 1140px`: una columna con resultado debajo
+- Resultado sticky en desktop:
+  - `.result-sticky { position: sticky; top: 24px; }`
+- Se mantuvo Enter en `onSubmit` y lógica de cálculo sin cambios.

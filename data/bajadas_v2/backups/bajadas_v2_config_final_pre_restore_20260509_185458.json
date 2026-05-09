@@ -1,7 +1,7 @@
 {
   "dolar_anterior_excel": 650,
-  "dolar_actual": 1888.0,
-  "factor_dolar": 2.904615385,
+  "dolar_actual": 1410,
+  "factor_dolar": 2.169230769,
   "iva_incluido": false,
   "fuente_precios_objetivo": "precios_pdf_objetivo_limpio.csv",
   "base_formato": "A3+",
@@ -241,72 +241,5 @@
     "sin_recalibracion_modelo_d": true,
     "sin_modelo_d3": true,
     "sin_nuevas_reglas_an40": true
-  },
-  "editable_meta": {
-    "version": 1,
-    "last_updated": "2026-05-09T18:54:59.951737+00:00",
-    "usuario": "local"
-  },
-  "escalas_cantidad": [
-    {
-      "desde": 1,
-      "hasta": 1,
-      "etiqueta": "1",
-      "activa": true,
-      "orden": 1
-    },
-    {
-      "desde": 2,
-      "hasta": 25,
-      "etiqueta": "2 a 25",
-      "activa": true,
-      "orden": 2
-    },
-    {
-      "desde": 26,
-      "hasta": 50,
-      "etiqueta": "26 a 50",
-      "activa": true,
-      "orden": 3
-    },
-    {
-      "desde": 51,
-      "hasta": 100,
-      "etiqueta": "51 a 100",
-      "activa": true,
-      "orden": 4
-    },
-    {
-      "desde": 101,
-      "hasta": 300,
-      "etiqueta": "101 a 300",
-      "activa": true,
-      "orden": 5
-    },
-    {
-      "desde": 301,
-      "hasta": 500,
-      "etiqueta": "301 a 500",
-      "activa": true,
-      "orden": 6
-    },
-    {
-      "desde": 501,
-      "hasta": 1000,
-      "etiqueta": "501 a 1000",
-      "activa": true,
-      "orden": 7
-    },
-    {
-      "desde": 1001,
-      "hasta": 5000,
-      "etiqueta": "1001 a 5000",
-      "activa": true,
-      "orden": 8
-    }
-  ],
-  "factores_xl_a4": {
-    "xl_global": 1.0,
-    "a4_global": 1.0
   }
 }

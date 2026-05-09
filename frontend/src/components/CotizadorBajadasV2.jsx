@@ -782,10 +782,10 @@ export default function CotizadorBajadasV2() {
   };
 
   const renderCotizador = () => (
-    <>
-      <form className="card form-card" onSubmit={handleSubmit}>
+    <div className="cotizador-layout" data-testid="cotizador-layout">
+      <form className="card form-card compact-card" onSubmit={handleSubmit}>
         <div className="card-head"><h3>1. Configura tu impresión</h3><span>Enter = calcular</span></div>
-        <div className="form-grid">
+        <div className="form-grid compact-grid">
           <label><span>Categoría</span><select value={form.categoria_ui} onChange={updateField("categoria_ui")}>{CATEGORIAS.map((v) => <option key={v}>{v}</option>)}</select></label>
           {!isAutoadhesivas ? (
             <>
@@ -808,14 +808,14 @@ export default function CotizadorBajadasV2() {
           <label><span>Urgencia</span><select value={form.urgencia} onChange={updateField("urgencia")}>{URGENCIAS.map((v) => <option key={v}>{v}</option>)}</select></label>
           <label><span>Adicional</span><select value={form.adicional_laminado} onChange={updateField("adicional_laminado")}>{ADICIONALES.map((a) => <option key={a.value} value={a.value}>{a.label}</option>)}</select></label>
         </div>
-        {isAutoadhesivas ? <div className="warning-box">Tinta blanca y laca UV no están incluidas en esta etapa.</div> : null}
-        <div className="info-box">Laca / laminado se suma antes de urgencia.</div>
+        {isAutoadhesivas ? <div className="warning-box compact-note">Tinta blanca y laca UV no están incluidas en esta etapa.</div> : null}
+        <div className="info-box compact-note">Laca / laminado se suma antes de urgencia.</div>
         {error ? <div className="error-box">{error}</div> : null}
         {copyStatus ? <div className="info-box" data-testid="copy-status">{copyStatus}</div> : null}
-        <div className="actions-row"><button type="submit" className="calculate-btn" disabled={loading}>{loading ? "Calculando..." : "Calcular"}</button><button type="button" className="secondary-btn" data-testid="clear-button" onClick={handleClear}>Limpiar</button></div>
+        <div className="actions-row compact-actions"><button type="submit" className="calculate-btn" disabled={loading}>{loading ? "Calculando..." : "Calcular"}</button><button type="button" className="secondary-btn compact-clear-btn" data-testid="clear-button" onClick={handleClear}>Limpiar</button></div>
       </form>
 
-      <section className="card result-card">
+      <section className="card result-card result-sticky" data-testid="result-panel">
         <div className="card-head"><h3>2. Resultado</h3><span>{loading ? "Consultando API..." : "Actualizado"}</span></div>
         {!result ? (
           <div className="placeholder"><p>Completá los datos y presioná Calcular.</p></div>
@@ -842,7 +842,7 @@ export default function CotizadorBajadasV2() {
           </>
         )}
       </section>
-    </>
+    </div>
   );
 
   return (
