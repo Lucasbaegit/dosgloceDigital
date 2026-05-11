@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+import mimetypes
 from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
@@ -13,6 +14,7 @@ from .bajadas_v2_routes import BajadasV2ApiService
 
 class ApiHandler(BaseHTTPRequestHandler):
     service: BajadasV2ApiService | None = None
+    static_dir: Path | None = None
 
     def _send_json(self, status_code: int, payload: dict[str, Any]) -> None:
         body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
@@ -101,6 +103,8 @@ class ApiHandler(BaseHTTPRequestHandler):
             self._send_json(status, payload)
             return
 
+        if self._try_serve_static(path):
+            return
         self._send_json(404, {"error": "not_found", "detail": "Endpoint no encontrado"})
 
     def do_POST(self) -> None:  # noqa: N802
@@ -183,11 +187,47 @@ class ApiHandler(BaseHTTPRequestHandler):
     def log_message(self, format: str, *args: Any) -> None:
         return
 
+    def _try_serve_static(self, path: str) -> bool:
+        """
+        Serve frontend static files from build directory if present.
+        For SPA routes, fallback to index.html.
+        """
+        if self.static_dir is None or not self.static_dir.exists():
+            return False
+
+        normalized = path.strip("/") or "index.html"
+        candidate = (self.static_dir / normalized).resolve()
+        try:
+            candidate.relative_to(self.static_dir.resolve())
+        except ValueError:
+            return False
+
+        if candidate.is_file():
+            self._send_file(candidate)
+            return True
+
+        index = self.static_dir / "index.html"
+        if index.exists():
+            self._send_file(index)
+            return True
+        return False
+
+    def _send_file(self, file_path: Path) -> None:
+        data = file_path.read_bytes()
+        content_type = mimetypes.guess_type(str(file_path))[0] or "application/octet-stream"
+        self.send_response(200)
+        self.send_header("Content-Type", content_type)
+        self.send_header("Content-Length", str(len(data)))
+        self.end_headers()
+        self.wfile.write(data)
+
 
 def create_server(host: str = "127.0.0.1", port: int = 8000, project_root: Path | None = None) -> ThreadingHTTPServer:
     root = project_root or Path(__file__).resolve().parents[2]
     service = BajadasV2ApiService(root)
     ApiHandler.service = service
+    static_dist = root / "frontend" / "dist"
+    ApiHandler.static_dir = static_dist if static_dist.exists() else None
     return ThreadingHTTPServer((host, port), ApiHandler)
 
 
