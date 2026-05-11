@@ -866,6 +866,61 @@ class TestBajadasV2Api(unittest.TestCase):
         self.assertAlmostEqual(body["precio_unitario_sin_iva"], 1389.0, places=6)
         self.assertAlmostEqual(body["precio_unitario_con_urgencia"], body["precio_unitario_sin_iva"] * 1.15, places=6)
 
+    def test_cotizar_fullcolor_xa3(self):
+        payload = {
+            "categoria": "Bajadas Fullcolor",
+            "modo_color": "fullcolor",
+            "formato": "XA3",
+            "tipo_papel": "liviano",
+            "material": "Ilustracion",
+            "gramaje": "150g",
+            "cantidad_unidades": 30,
+            "cantidad_rango": "26 a 50",
+            "caras": "4/0",
+            "urgencia": "normal",
+        }
+        status, body = self._post_json("/bajadas-v2/cotizar", payload)
+        self.assertEqual(status, 200)
+        self.assertEqual(body["regla_aplicada"], "FACTOR_XA3_1_10")
+        self.assertAlmostEqual(float(body["trazabilidad"]["factor_aplicado"]), 1.10, places=8)
+
+    def test_cotizar_byn_xa3(self):
+        payload = {
+            "categoria": "Bajadas Blanco y Negro",
+            "modo_color": "blanco_y_negro",
+            "formato": "XA3",
+            "tipo_papel": "liviano",
+            "material": "Ilustracion",
+            "gramaje": "150g",
+            "cantidad_unidades": 30,
+            "cantidad_rango": "1",
+            "caras": "1/0",
+            "urgencia": "normal",
+        }
+        status, body = self._post_json("/bajadas-v2/cotizar", payload)
+        self.assertEqual(status, 200)
+        self.assertEqual(body["regla_aplicada"], "FACTOR_XA3_1_10")
+
+    def test_cotizar_autoadhesiva_xa3(self):
+        payload = {
+            "categoria": "Bajadas Autoadhesivas",
+            "modo_color": "fullcolor",
+            "formato": "XA3",
+            "tipo_papel": "papel",
+            "material": "Sticker",
+            "gramaje": "N/A",
+            "cantidad_unidades": 30,
+            "cantidad_rango": "26 a 50",
+            "caras": "4/0",
+            "urgencia": "normal",
+            "tipo_producto": "autoadhesiva",
+            "columna_precio": "papel",
+        }
+        status, body = self._post_json("/bajadas-v2/cotizar", payload)
+        self.assertEqual(status, 200)
+        self.assertAlmostEqual(float(body["trazabilidad"]["factor_aplicado"]), 1.10, places=8)
+        self.assertEqual(body["trazabilidad"]["base_formato"], "A3+")
+
     def test_autoadhesiva_papel_con_laca(self):
         payload = {
             "categoria": "Bajadas Autoadhesivas",

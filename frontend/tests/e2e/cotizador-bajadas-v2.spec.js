@@ -12,20 +12,24 @@ test.beforeEach(async ({ page }) => {
 
 test("UI muestra tabs nuevas y controles base", async ({ page }) => {
   await page.setViewportSize({ width: 1366, height: 900 });
-  await page.goto("/");
+  await page.goto("/", { waitUntil: "networkidle" });
   await expect(page.getByRole("button", { name: "Cotizador" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Árbol del precio" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Configuración" })).toBeVisible();
   await expect(page.locator('img[src="/logoPromo.jpg"]')).toBeVisible();
   await expect(page.getByText(/API (conectada|no disponible)/)).toBeVisible();
   await expect(page.getByLabel("Adicional")).toBeVisible();
+  await expect(page.getByTestId("formato-select")).toBeVisible();
+  await page.getByTestId("print-option-1-0").click();
+  await expect(page.getByTestId("formato-select")).toBeVisible();
   await expect(page.getByTestId("result-panel")).toBeVisible();
 });
 
 test("modo Autoadhesivas guiado: A3+ y 4/0 fijos, tipo papel/especial", async ({ page }) => {
-  await page.goto("/");
-  await page.getByLabel("Categoría").selectOption("Bajadas Autoadhesivas");
-  await expect(page.getByLabel("Formato")).toHaveValue("A3+");
+  await page.goto("/", { waitUntil: "networkidle" });
+  await page.getByTestId("categoria-select").selectOption("Bajadas Autoadhesivas");
+  await expect(page.getByTestId("formato-select")).toHaveValue("A3+");
+  await expect(page.getByTestId("formato-select").locator("option[value='XA3']")).toHaveCount(1);
   await expect(page.getByLabel("Impresión")).toHaveValue("4/0");
   await expect(page.getByLabel("Modo color")).toHaveValue("fullcolor");
   await expect(page.getByLabel("Tipo")).toBeVisible();
@@ -35,8 +39,9 @@ test("modo Autoadhesivas guiado: A3+ y 4/0 fijos, tipo papel/especial", async ({
 });
 
 test("autoadhesivas papel y especial envían payload válido", async ({ page }) => {
-  await page.goto("/");
-  await page.getByLabel("Categoría").selectOption("Bajadas Autoadhesivas");
+  await page.goto("/", { waitUntil: "networkidle" });
+  await page.getByTestId("categoria-select").selectOption("Bajadas Autoadhesivas");
+  await page.getByTestId("formato-select").selectOption("XA3");
   await page.getByLabel("Cantidad").fill("30");
   await expect(page.getByText("Rango aplicado: 26 a 50")).toBeVisible();
 
@@ -71,7 +76,7 @@ test("autoadhesivas papel y especial envían payload válido", async ({ page }) 
   expect(payloadSeen).toMatchObject({
     categoria: "Bajadas Autoadhesivas",
     modo_color: "fullcolor",
-    formato: "A3+",
+    formato: "XA3",
     tipo_papel: "papel",
     material: "Sticker",
     gramaje: "N/A",
@@ -83,19 +88,20 @@ test("autoadhesivas papel y especial envían payload válido", async ({ page }) 
     columna_precio: "papel",
   });
 
-  await page.getByLabel("Tipo").selectOption("especial");
+  await page.getByTestId("autoadh-tipo-select").selectOption("especial");
   await page.getByLabel("Urgencia").selectOption("express");
   await page.getByRole("button", { name: "Calcular" }).click();
   expect(payloadSeen).toMatchObject({
     tipo_papel: "especial",
     material: "OPP blanco",
     columna_precio: "especial",
+    formato: "XA3",
     urgencia: "express",
   });
 });
 
 test("cotizacion muestra rango aplicado y total destacado", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/", { waitUntil: "networkidle" });
   await page.getByLabel("Medida / formato").selectOption("A3+");
   await page.getByLabel("Tipo de papel").selectOption("liviano");
   await page.getByLabel("Material").selectOption("Ilustracion");
@@ -138,7 +144,7 @@ test("cotizacion muestra rango aplicado y total destacado", async ({ page }) => 
 });
 
 test("tab Árbol del precio muestra composición del último cálculo", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/", { waitUntil: "networkidle" });
   await page.getByLabel("Medida / formato").selectOption("A3+");
   await page.getByLabel("Tipo de papel").selectOption("liviano");
   await page.getByLabel("Material").selectOption("Ilustracion");
@@ -181,7 +187,7 @@ test("tab Árbol del precio muestra composición del último cálculo", async ({
 });
 
 test("tab Configuración carga y permite ver historial", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/", { waitUntil: "networkidle" });
   await page.getByRole("button", { name: "Configuración" }).click();
   await expect(page.getByTestId("config-editable-title")).toBeVisible();
   await expect(page.getByText("Escalas de cantidad")).toBeVisible();
@@ -190,7 +196,7 @@ test("tab Configuración carga y permite ver historial", async ({ page }) => {
 });
 
 test("botón Limpiar y Copiar resultado", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/", { waitUntil: "networkidle" });
   await page.getByLabel("Medida / formato").selectOption("A3+");
   await page.getByLabel("Tipo de papel").selectOption("liviano");
   await page.getByLabel("Material").selectOption("Ilustracion");
@@ -233,9 +239,9 @@ test("botón Limpiar y Copiar resultado", async ({ page }) => {
 });
 
 test("autoadhesivas especial + laminado mate calcula y muestra regla adicional", async ({ page }) => {
-  await page.goto("/");
-  await page.getByLabel("Categoría").selectOption("Bajadas Autoadhesivas");
-  await page.getByLabel("Tipo").selectOption("especial");
+  await page.goto("/", { waitUntil: "networkidle" });
+  await page.getByTestId("categoria-select").selectOption("Bajadas Autoadhesivas");
+  await page.getByTestId("autoadh-tipo-select").selectOption("especial");
   await page.getByLabel("Cantidad").fill("30");
   await page.getByLabel("Adicional").selectOption("laminado_mate");
 
@@ -268,4 +274,67 @@ test("autoadhesivas especial + laminado mate calcula y muestra regla adicional",
   await page.getByRole("button", { name: "Calcular" }).click();
   await expect(page.getByText("Regla adicional aplicada")).toBeVisible();
   await expect(page.getByText("ADICIONAL_LAMINADO_MATE_A3PLUS")).toBeVisible();
+});
+
+test("XA3 visible en Fullcolor, ByN y Autoadhesivas", async ({ page }) => {
+  await page.goto("/", { waitUntil: "networkidle" });
+
+  await page.getByTestId("categoria-select").selectOption("Bajadas Fullcolor/ByN");
+  await page.getByTestId("print-option-4-0").click();
+  await expect(page.getByTestId("formato-select").locator("option[value='XA3']")).toHaveCount(1);
+  await page.getByTestId("formato-select").selectOption("XA3");
+  await expect(page.getByLabel("Tipo de papel").locator("option[value='liviano']")).toHaveCount(1);
+
+  await page.getByTestId("print-option-1-0").click();
+  await expect(page.getByTestId("formato-select").locator("option[value='XA3']")).toHaveCount(1);
+  await page.getByTestId("formato-select").selectOption("XA3");
+  await expect(page.getByLabel("Tipo de papel").locator("option[value='liviano']")).toHaveCount(1);
+
+  await page.getByTestId("categoria-select").selectOption("Bajadas Autoadhesivas");
+  await expect(page.getByTestId("formato-select").locator("option[value='A3+']")).toHaveCount(1);
+  await expect(page.getByTestId("formato-select").locator("option[value='XA3']")).toHaveCount(1);
+  await expect(page.getByTestId("autoadh-tipo-select").locator("option[value='papel']")).toHaveCount(1);
+  await expect(page.getByTestId("autoadh-tipo-select").locator("option[value='especial']")).toHaveCount(1);
+});
+
+test("XA3 muestra trazabilidad de derivación 1.10", async ({ page }) => {
+  await page.goto("/", { waitUntil: "networkidle" });
+  await page.getByTestId("categoria-select").selectOption("Bajadas Fullcolor/ByN");
+  await page.getByTestId("print-option-4-0").click();
+  await page.getByTestId("formato-select").selectOption("XA3");
+  await page.getByLabel("Tipo de papel").selectOption("liviano");
+  await page.getByLabel("Material").selectOption("Ilustracion");
+  await page.getByLabel("Gramaje").selectOption("150g");
+  await page.getByLabel("Cantidad").fill("30");
+
+  await page.route("http://127.0.0.1:8000/bajadas-v2/cotizar", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        precio_unitario_sin_iva: 940.5,
+        precio_unitario_con_urgencia: 940.5,
+        cantidad_unidades: 30,
+        cantidad_rango_aplicado: "26 a 50",
+        total_sin_iva: 28215,
+        total_con_urgencia: 28215,
+        precio_sin_iva: 940.5,
+        precio_con_recargo_urgencia: 940.5,
+        regla_aplicada: "FACTOR_XA3_1_10",
+        fuente: "modelo_d",
+        trazabilidad: {
+          base_formato: "A3+",
+          factor_aplicado: 1.10,
+          regla_especial: "FACTOR_XA3_1_10",
+          recargo_urgencia_aplicado: 0
+        },
+      }),
+    });
+  });
+
+  await page.getByRole("button", { name: "Calcular" }).click();
+  await page.getByTestId("tab-price-tree").click();
+  await expect(page.getByText("base_formato: A3+")).toBeVisible();
+  await expect(page.getByText("factor_aplicado: 1.1")).toBeVisible();
+  await expect(page.getByText("regla_especial: FACTOR_XA3_1_10")).toBeVisible();
 });

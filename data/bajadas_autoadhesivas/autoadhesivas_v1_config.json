@@ -3,6 +3,7 @@
   "fuente_objetivo": "precios_autoadhesivas_objetivo.json",
   "modelo_papel": "HIBRIDO_B_C",
   "modelo_especial": "HIBRIDO_B_C",
+  "factor_xa3": 1.1,
   "origen_excel_papel": "Bajadas!S4:S10 / Sticker",
   "origen_excel_especial": "Bajadas!U4:U10 / OPP blco o blanco",
   "adicionales_excluidos": [

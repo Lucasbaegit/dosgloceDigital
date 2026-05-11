@@ -18,6 +18,9 @@ class AutoadhesivasQuoteInput:
 
 @dataclass(frozen=True)
 class AutoadhesivasQuoteTrace:
+    base_formato: str
+    factor_aplicado: float
+    regla_especial: Optional[str]
     origen_excel: str
     modelo_aplicado: str
     motivo_calibracion: str

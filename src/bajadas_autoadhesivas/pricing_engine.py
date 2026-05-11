@@ -13,6 +13,7 @@ from .types import AutoadhesivasQuoteInput, AutoadhesivasQuoteResult, Autoadhesi
 class AutoadhesivasPricingEngine:
     VALID_URGENCIA = {"normal", "express", "super_express", "ya_24hs"}
     VALID_COLUMNA = {"papel", "especial"}
+    VALID_FORMATOS = {"A3+", "XA3"}
     VALID_RANGES = ["1", "2 a 25", "26 a 50", "51 a 100", "101 a 300", "301 a 500", "501 a 1000"]
 
     def __init__(self, bundle: AutoadhesivasBundle):
@@ -21,6 +22,7 @@ class AutoadhesivasPricingEngine:
         self.recargos = bundle.config["urgencias"]
         self.rangos = bundle.config["rangos"]
         self.adicionales_excluidos = bundle.config.get("adicionales_excluidos", [])
+        self.factor_xa3 = float(bundle.config.get("factor_xa3", 1.10))
 
         objetivos = [r for r in bundle.objetivo_rows if r.get("activo")]
         self._papel_objetivo = {
@@ -51,6 +53,8 @@ class AutoadhesivasPricingEngine:
             raise QuoteInputError("La cantidad ingresada no entra en ningún rango disponible para esta combinación.")
 
         recargo = float(self.recargos[request.urgencia])
+        factor_formato = self.factor_xa3 if request.formato == "XA3" else 1.0
+        regla_formato = "FACTOR_XA3_1_10" if request.formato == "XA3" else None
 
         if request.columna_precio == "papel":
             precio_unit = self._papel_objetivo.get(rango)
@@ -59,6 +63,9 @@ class AutoadhesivasPricingEngine:
             regla = "AUTOADHESIVA_PAPEL_HIBRIDO_B_C"
             fuente = "autoadhesivas_objetivo_calibrado"
             trace = AutoadhesivasQuoteTrace(
+                base_formato="A3+",
+                factor_aplicado=factor_formato,
+                regla_especial=regla_formato,
                 origen_excel=self.config["origen_excel_papel"],
                 modelo_aplicado=self.config["modelo_papel"],
                 motivo_calibracion="Fórmula Excel Sticker no usable directa por magnitud. Se aplica tabla calibrada por rango.",
@@ -85,6 +92,9 @@ class AutoadhesivasPricingEngine:
             regla = "AUTOADHESIVA_ESPECIAL_HIBRIDO_B_C"
             fuente = "autoadhesivas_objetivo_calibrado"
             trace = AutoadhesivasQuoteTrace(
+                base_formato="A3+",
+                factor_aplicado=factor_formato,
+                regla_especial=regla_formato,
                 origen_excel=self.config["origen_excel_especial"],
                 modelo_aplicado=self.config["modelo_especial"],
                 motivo_calibracion="Estructura Excel OPP/blanco mantenida como trazabilidad; precio operativo por tabla vigente.",
@@ -103,7 +113,7 @@ class AutoadhesivasPricingEngine:
                 adicionales_excluidos=self.adicionales_excluidos,
             )
 
-        unit = round(float(precio_unit), 6)
+        unit = round(float(precio_unit) * factor_formato, 6)
         unit_u = round(unit * (1.0 + recargo), 6)
         total = round(unit * request.cantidad_unidades, 6)
         total_u = round(unit_u * request.cantidad_unidades, 6)
@@ -154,8 +164,8 @@ class AutoadhesivasPricingEngine:
             raise QuoteInputError("categoria inválida para motor Autoadhesivas v1.")
         if request.modo_color != "fullcolor":
             raise QuoteInputError("modo_color inválido para Autoadhesivas v1 (solo fullcolor).")
-        if request.formato != "A3+":
-            raise QuoteInputError("formato inválido para Autoadhesivas v1 (solo A3+).")
+        if request.formato not in self.VALID_FORMATOS:
+            raise QuoteInputError("formato inválido para Autoadhesivas v1 (permitidos: A3+, XA3).")
         if request.tipo_producto != "autoadhesiva":
             raise QuoteInputError("tipo_producto inválido para Autoadhesivas v1.")
         if request.cantidad_unidades < 1:

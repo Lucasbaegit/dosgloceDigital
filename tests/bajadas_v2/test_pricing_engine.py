@@ -65,6 +65,25 @@ class TestPricingEngine(unittest.TestCase):
         self.assertAlmostEqual(result.precio_sin_iva, float(row["precio_estimado_v2"]) * 1.10, places=5)
         self.assertEqual(result.cantidad_unidades, 30)
 
+    def test_calculo_xa3_factor_110_byn(self):
+        row = self._pick_row(formato="A3+", modo_color="blanco_y_negro", caras="1/0")
+        q = QuoteInput(
+            categoria=row["categoria"],
+            modo_color=row["modo_color"],
+            formato="XA3",
+            tipo_papel=row["tipo_papel"],
+            material=row["material"],
+            gramaje=row["gramaje"],
+            cantidad_rango=row["cantidad_rango"],
+            caras=row["caras"],
+            cantidad_unidades=30,
+            terminacion=row.get("terminacion"),
+            urgencia="normal",
+        )
+        result = self.engine.quote(q)
+        self.assertEqual(result.regla_aplicada, "FACTOR_XA3_1_10")
+        self.assertAlmostEqual(result.trazabilidad.factor_aplicado, 1.10, places=8)
+
 
 if __name__ == "__main__":
     unittest.main()

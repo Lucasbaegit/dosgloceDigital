@@ -30,6 +30,7 @@ const CARAS = ["4/0", "4/4", "1/0", "1/1"];
 const URGENCIAS = ["normal", "express", "super_express", "ya_24hs"];
 const CATEGORIAS = ["Bajadas Fullcolor/ByN", "Bajadas Autoadhesivas"];
 const AUTOADH_COLUMNAS = ["papel", "especial"];
+const AUTOADH_FORMATOS = ["A3+", "XA3"];
 const AUTOADH_RANGOS = ["1", "2 a 25", "26 a 50", "51 a 100", "101 a 300", "301 a 500", "501 a 1000"];
 const ADICIONALES = [
   { label: "Sin adicional", value: "sin_adicional" },
@@ -63,7 +64,7 @@ function inferQuoteContext(form) {
     return {
       categoria: "Bajadas Autoadhesivas",
       modo_color: "fullcolor",
-      formato: "A3+",
+      formato: form.formato,
       caras: "4/0",
     };
   }
@@ -161,6 +162,10 @@ export default function CotizadorBajadasV2() {
 
   const inferred = useMemo(() => inferQuoteContext(form), [form]);
   const isAutoadhesivas = inferred.categoria === "Bajadas Autoadhesivas";
+  const formatoDataSource = useMemo(() => {
+    if (form.formato === "XA3") return "A3+";
+    return form.formato;
+  }, [form.formato]);
 
   const validRows = useMemo(
     () =>
@@ -170,22 +175,29 @@ export default function CotizadorBajadasV2() {
     [inferred]
   );
   const formatoOptions = useMemo(() => uniqueSorted(validRows.map((r) => r.formato)), [validRows]);
+  const effectiveFormatoOptions = useMemo(() => {
+    if (isAutoadhesivas) return AUTOADH_FORMATOS;
+    if (formatoOptions.includes("A3+") && !formatoOptions.includes("XA3")) {
+      return uniqueSorted([...formatoOptions, "XA3"]);
+    }
+    return formatoOptions;
+  }, [isAutoadhesivas, formatoOptions]);
   const tipoPapelOptions = useMemo(
-    () => uniqueSorted(validRows.filter((r) => r.formato === form.formato).map((r) => r.tipo_papel)),
-    [validRows, form.formato]
+    () => uniqueSorted(validRows.filter((r) => r.formato === formatoDataSource).map((r) => r.tipo_papel)),
+    [validRows, formatoDataSource]
   );
   const materialOptions = useMemo(
-    () => uniqueSorted(validRows.filter((r) => r.formato === form.formato && r.tipo_papel === form.tipo_papel).map((r) => r.material)),
-    [validRows, form.formato, form.tipo_papel]
+    () => uniqueSorted(validRows.filter((r) => r.formato === formatoDataSource && r.tipo_papel === form.tipo_papel).map((r) => r.material)),
+    [validRows, formatoDataSource, form.tipo_papel]
   );
   const gramajeOptions = useMemo(
     () =>
       uniqueSorted(
         validRows
-          .filter((r) => r.formato === form.formato && r.tipo_papel === form.tipo_papel && r.material === form.material)
+          .filter((r) => r.formato === formatoDataSource && r.tipo_papel === form.tipo_papel && r.material === form.material)
           .map((r) => r.gramaje)
       ),
-    [validRows, form.formato, form.tipo_papel, form.material]
+    [validRows, formatoDataSource, form.tipo_papel, form.material]
   );
   const cantidadOptions = useMemo(() => {
     if (isAutoadhesivas) return AUTOADH_RANGOS;
@@ -193,14 +205,14 @@ export default function CotizadorBajadasV2() {
       validRows
         .filter(
           (r) =>
-            r.formato === form.formato &&
+            r.formato === formatoDataSource &&
             r.tipo_papel === form.tipo_papel &&
             r.material === form.material &&
             r.gramaje === form.gramaje
         )
         .map((r) => r.cantidad_rango)
     );
-  }, [isAutoadhesivas, validRows, form.formato, form.tipo_papel, form.material, form.gramaje]);
+  }, [isAutoadhesivas, validRows, formatoDataSource, form.tipo_papel, form.material, form.gramaje]);
   const cantidadUnidades = useMemo(() => Number(form.cantidad_unidades), [form.cantidad_unidades]);
   const derivedRange = useMemo(() => deriveRangeFromQuantity(cantidadUnidades, cantidadOptions), [cantidadUnidades, cantidadOptions]);
 
@@ -372,17 +384,17 @@ export default function CotizadorBajadasV2() {
     setForm((prev) => {
       const next = { ...prev };
       if (next.categoria_ui === "Bajadas Autoadhesivas") {
-        next.formato = "A3+";
+        if (!AUTOADH_FORMATOS.includes(next.formato)) next.formato = "A3+";
         next.caras = "4/0";
         next.tipo_papel = next.columna_precio || "papel";
         next.material = next.columna_precio === "especial" ? "OPP blanco" : "Sticker";
         next.gramaje = next.columna_precio === "especial" ? "N/A" : "N/A";
         return next;
       }
-      if (!formatoOptions.includes(next.formato)) next.formato = formatoOptions[0] || "";
+      if (!effectiveFormatoOptions.includes(next.formato)) next.formato = effectiveFormatoOptions[0] || "";
       return next;
     });
-  }, [formatoOptions]);
+  }, [effectiveFormatoOptions]);
 
   useEffect(() => {
     setForm((prev) => {
@@ -561,7 +573,7 @@ export default function CotizadorBajadasV2() {
           <details open><summary>Precio unitario</summary><ul><li>Sin IVA: {formatMoney(result.precio_unitario_sin_iva)}</li><li>Con urgencia: {formatMoney(result.precio_unitario_con_urgencia)}</li></ul></details>
           <details open><summary>Adicional laminado/laca</summary><ul><li>selección: {result.adicional_laminado ?? "sin_adicional"}</li><li>adicional_unitario_sin_iva: {formatMoney(result.adicional_unitario_sin_iva ?? 0)}</li><li>regla_adicional_aplicada: {result.regla_adicional_aplicada ?? "-"}</li><li>fuente_adicional: {result.fuente_adicional ?? "-"}</li><li>rango_aplicado: {result.trazabilidad?.adicional_laminado?.rango_aplicado ?? "-"}</li><li>nota: Laca / laminado se suma antes de urgencia.</li><li>no_combinable: true</li></ul></details>
           <details open><summary>Total</summary><ul><li>Sin IVA: {formatMoney(result.total_sin_iva)}</li><li>Con urgencia: {formatMoney(result.total_con_urgencia)}</li></ul></details>
-          <details open data-testid="price-tree-rule-section"><summary>Regla</summary><ul><li>regla_aplicada: {result.regla_aplicada}</li><li>fuente: {result.fuente}</li><li>factor_aplicado: {result.trazabilidad?.factor_aplicado ?? "-"}</li><li>regla_especial: {result.trazabilidad?.regla_especial ?? "-"}</li><li>correccion_logica: {result.trazabilidad?.correccion_logica ?? "-"}</li></ul></details>
+          <details open data-testid="price-tree-rule-section"><summary>Regla</summary><ul><li>regla_aplicada: {result.regla_aplicada}</li><li>fuente: {result.fuente}</li><li>base_formato: {result.trazabilidad?.base_formato ?? "-"}</li><li>factor_aplicado: {result.trazabilidad?.factor_aplicado ?? "-"}</li><li>regla_especial: {result.trazabilidad?.regla_especial ?? "-"}</li><li>correccion_logica: {result.trazabilidad?.correccion_logica ?? "-"}</li></ul></details>
           <details open><summary>Origen</summary><ul><li>origen_excel: {result.trazabilidad?.origen_excel ?? "-"}</li><li>precio_objetivo_csv: {result.trazabilidad?.precio_objetivo_csv ?? result.trazabilidad?.precio_objetivo_pdf ?? "-"}</li><li>precio_unitario_csv: {result.trazabilidad?.precio_unitario_csv ?? "-"}</li><li>modelo_tecnico_referencia: {result.trazabilidad?.modelo_tecnico_referencia ?? "-"}</li><li>precio_b3_referencia: {result.trazabilidad?.precio_b3_referencia ?? "-"}</li><li>an40_estado: {result.trazabilidad?.an40_estado ?? "-"}</li></ul></details>
           <details open><summary>Adicionales excluidos</summary><ul>{(result.trazabilidad?.adicionales_excluidos ?? []).length ? (result.trazabilidad.adicionales_excluidos.map((item) => <li key={item}>{item}</li>)) : <li>-</li>}</ul></details>
           <details open><summary>Urgencia</summary><ul><li>recargo_urgencia_aplicado: {result.trazabilidad?.recargo_urgencia_aplicado ?? "-"}</li></ul></details>
@@ -786,26 +798,26 @@ export default function CotizadorBajadasV2() {
       <form className="card form-card compact-card" onSubmit={handleSubmit}>
         <div className="card-head"><h3>1. Configura tu impresión</h3><span>Enter = calcular</span></div>
         <div className="form-grid compact-grid">
-          <label><span>Categoría</span><select value={form.categoria_ui} onChange={updateField("categoria_ui")}>{CATEGORIAS.map((v) => <option key={v}>{v}</option>)}</select></label>
+          <label><span>Categoría</span><select data-testid="categoria-select" value={form.categoria_ui} onChange={updateField("categoria_ui")}>{CATEGORIAS.map((v) => <option key={v} value={v}>{v}</option>)}</select></label>
           {!isAutoadhesivas ? (
             <>
-              <label><span>Impresión</span><div className="caras-row">{CARAS.map((cara) => <button key={cara} type="button" className={form.caras === cara ? "pill active" : "pill"} onClick={() => setForm((prev) => ({ ...prev, caras: cara }))}>{cara}</button>)}</div></label>
+              <label><span>Impresión</span><div className="caras-row">{CARAS.map((cara) => <button key={cara} data-testid={`print-option-${cara.replace("/", "-")}`} type="button" className={form.caras === cara ? "pill active" : "pill"} onClick={() => setForm((prev) => ({ ...prev, caras: cara }))}>{cara}</button>)}</div></label>
               <label><span>Categoría (automática)</span><input value={inferred.categoria} readOnly /></label>
-              <label><span>Medida / formato</span><select value={form.formato} onChange={updateField("formato")}>{formatoOptions.map((v) => <option key={v}>{v}</option>)}</select></label>
-              <label><span>Tipo de papel</span><select value={form.tipo_papel} onChange={updateField("tipo_papel")}>{tipoPapelOptions.map((v) => <option key={v}>{v}</option>)}</select></label>
-              <label><span>Material</span><select value={form.material} onChange={updateField("material")}>{materialOptions.map((v) => <option key={v}>{v}</option>)}</select></label>
-              <label><span>Gramaje</span><select value={form.gramaje} onChange={updateField("gramaje")}>{gramajeOptions.map((v) => <option key={v}>{v}</option>)}</select></label>
+              <label><span>Medida / formato</span><select data-testid="formato-select" value={form.formato} onChange={updateField("formato")}>{effectiveFormatoOptions.map((v) => <option key={v} value={v}>{v}</option>)}</select></label>
+              <label><span>Tipo de papel</span><select value={form.tipo_papel} onChange={updateField("tipo_papel")}>{tipoPapelOptions.map((v) => <option key={v} value={v}>{v}</option>)}</select></label>
+              <label><span>Material</span><select value={form.material} onChange={updateField("material")}>{materialOptions.map((v) => <option key={v} value={v}>{v}</option>)}</select></label>
+              <label><span>Gramaje</span><select value={form.gramaje} onChange={updateField("gramaje")}>{gramajeOptions.map((v) => <option key={v} value={v}>{v}</option>)}</select></label>
             </>
           ) : (
             <>
-              <label><span>Formato</span><input value="A3+" readOnly /></label>
-              <label><span>Tipo</span><select value={form.columna_precio} onChange={updateField("columna_precio")}>{AUTOADH_COLUMNAS.map((v) => <option key={v}>{v}</option>)}</select></label>
+              <label><span>Medida / formato</span><select data-testid="formato-select" value={form.formato} onChange={updateField("formato")}>{AUTOADH_FORMATOS.map((v) => <option key={v} value={v}>{v}</option>)}</select></label>
+              <label><span>Tipo</span><select data-testid="autoadh-tipo-select" value={form.columna_precio} onChange={updateField("columna_precio")}>{AUTOADH_COLUMNAS.map((v) => <option key={v} value={v}>{v}</option>)}</select></label>
               <label><span>Modo color</span><input value="fullcolor" readOnly /></label>
               <label><span>Impresión</span><input value="4/0" readOnly /></label>
             </>
           )}
           <label><span>Cantidad</span><input type="number" min={1} step={1} placeholder="Ejemplo: 30" value={form.cantidad_unidades} onChange={updateField("cantidad_unidades")} /><small className="range-hint">Rango aplicado: {derivedRange ?? "Sin rango disponible"}</small></label>
-          <label><span>Urgencia</span><select value={form.urgencia} onChange={updateField("urgencia")}>{URGENCIAS.map((v) => <option key={v}>{v}</option>)}</select></label>
+          <label><span>Urgencia</span><select value={form.urgencia} onChange={updateField("urgencia")}>{URGENCIAS.map((v) => <option key={v} value={v}>{v}</option>)}</select></label>
           <label><span>Adicional</span><select value={form.adicional_laminado} onChange={updateField("adicional_laminado")}>{ADICIONALES.map((a) => <option key={a.value} value={a.value}>{a.label}</option>)}</select></label>
         </div>
         {isAutoadhesivas ? <div className="warning-box compact-note">Tinta blanca y laca UV no están incluidas en esta etapa.</div> : null}
