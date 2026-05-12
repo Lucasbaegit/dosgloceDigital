@@ -10,6 +10,8 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "src"))
 
 from api.main import create_server
+from api.main import ApiHandler
+from bajadas_v2.trace import build_lookup_key
 
 
 class TestBajadasV2Api(unittest.TestCase):
@@ -263,6 +265,126 @@ class TestBajadasV2Api(unittest.TestCase):
         self.assertEqual(status, 200)
         self.assertEqual(body["fuente"], "precio_fijo_csv")
         self.assertEqual(body["regla_aplicada"], "PRECIO_FIJO_CSV")
+
+    def test_post_cotizar_kraft_byn_80g_1(self):
+        payload = {
+            "categoria": "Bajadas Kraft",
+            "modo_color": "blanco_y_negro",
+            "formato": "A3",
+            "tipo_papel": "kraft",
+            "material": "Kraft",
+            "gramaje": "80g",
+            "cantidad_unidades": 1,
+            "cantidad_rango": "1",
+            "caras": "1/0",
+            "urgencia": "normal",
+            "adicional_laminado": "sin_adicional",
+        }
+        status, body = self._post_json("/bajadas-v2/cotizar", payload)
+        self.assertEqual(status, 200)
+        self.assertAlmostEqual(body["precio_unitario_sin_iva"], 251.1, places=6)
+        self.assertAlmostEqual(body["total_sin_iva"], 251.1, places=6)
+        self.assertEqual(body["regla_aplicada"], "KRAFT_A3_MATRIZ_PDF_ESPECIFICA")
+        self.assertEqual(body["fuente"], "kraft_pdf_pagina_5")
+
+    def test_post_cotizar_kraft_fullcolor_80g_1(self):
+        payload = {
+            "categoria": "Bajadas Kraft",
+            "modo_color": "fullcolor",
+            "formato": "A3",
+            "tipo_papel": "kraft",
+            "material": "Kraft",
+            "gramaje": "80g",
+            "cantidad_unidades": 1,
+            "cantidad_rango": "1",
+            "caras": "4/0",
+            "urgencia": "normal",
+            "adicional_laminado": "sin_adicional",
+        }
+        status, body = self._post_json("/bajadas-v2/cotizar", payload)
+        self.assertEqual(status, 200)
+        self.assertAlmostEqual(body["precio_unitario_sin_iva"], 782, places=6)
+        self.assertAlmostEqual(body["total_sin_iva"], 782, places=6)
+
+    def test_post_cotizar_kraft_fullcolor_200g_25(self):
+        payload = {
+            "categoria": "Bajadas Kraft",
+            "modo_color": "fullcolor",
+            "formato": "A3",
+            "tipo_papel": "kraft",
+            "material": "Kraft",
+            "gramaje": "200g",
+            "cantidad_unidades": 25,
+            "cantidad_rango": "2 a 25",
+            "caras": "4/4",
+            "urgencia": "normal",
+            "adicional_laminado": "sin_adicional",
+        }
+        status, body = self._post_json("/bajadas-v2/cotizar", payload)
+        self.assertEqual(status, 200)
+        self.assertAlmostEqual(body["precio_unitario_sin_iva"], 1102, places=6)
+        self.assertAlmostEqual(body["total_sin_iva"], 27550, places=6)
+
+    def test_post_cotizar_kraft_byn_200g_1(self):
+        payload = {
+            "categoria": "Bajadas Kraft",
+            "modo_color": "blanco_y_negro",
+            "formato": "A3",
+            "tipo_papel": "kraft",
+            "material": "Kraft",
+            "gramaje": "200g",
+            "cantidad_unidades": 1,
+            "cantidad_rango": "1",
+            "caras": "1/0",
+            "urgencia": "normal",
+            "adicional_laminado": "sin_adicional",
+        }
+        status, body = self._post_json("/bajadas-v2/cotizar", payload)
+        self.assertEqual(status, 200)
+        self.assertAlmostEqual(body["precio_unitario_sin_iva"], 397.3, places=6)
+        self.assertAlmostEqual(body["total_sin_iva"], 397.3, places=6)
+
+    def test_no_habilita_sin_comparacion_no_kraft(self):
+        payload = {
+            "categoria": "Bajadas Fullcolor",
+            "modo_color": "fullcolor",
+            "formato": "A3+",
+            "tipo_papel": "liviano",
+            "material": "Ilustracion",
+            "gramaje": "150g",
+            "cantidad_unidades": 1,
+            "cantidad_rango": "1",
+            "caras": "4/0",
+            "urgencia": "normal",
+        }
+        service = ApiHandler.service
+        self.assertIsNotNone(service)
+        key = build_lookup_key(payload)
+        original = service.engine._comparativa_index.get(key)
+        try:
+            service.engine._comparativa_index[key] = {
+                **(original or {}),
+                "categoria": payload["categoria"],
+                "modo_color": payload["modo_color"],
+                "formato": payload["formato"],
+                "tipo_papel": payload["tipo_papel"],
+                "material": payload["material"],
+                "gramaje": payload["gramaje"],
+                "cantidad_rango": payload["cantidad_rango"],
+                "caras": payload["caras"],
+                "estado": "SIN_COMPARACION",
+                "precio_objetivo_csv": 123.45,
+                "precio_estimado_v2": None,
+            }
+            status, body = self._post_json("/bajadas-v2/cotizar", payload)
+            self.assertEqual(status, 404)
+            self.assertEqual(body["error"], "combinacion_no_encontrada")
+            self.assertIn("SIN_COMPARACION", body["detail"])
+        finally:
+            if original is None:
+                service.engine._comparativa_index.pop(key, None)
+            else:
+                service.engine._comparativa_index[key] = original
 
     def test_update_dolar_valido(self):
         status, body = self._post_json("/bajadas-v2/config/update", {"field": "dolar_actual", "value": 1500, "motivo": "test"})

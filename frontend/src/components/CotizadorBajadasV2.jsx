@@ -28,10 +28,15 @@ const NAV_ITEMS = ["Cotizador", "Árbol del precio", "Configuración", "Pedidos"
 const TAB_KEYS = new Set(["Cotizador", "Árbol del precio", "Configuración"]);
 const CARAS = ["4/0", "4/4", "1/0", "1/1"];
 const URGENCIAS = ["normal", "express", "super_express", "ya_24hs"];
-const CATEGORIAS = ["Bajadas Fullcolor/ByN", "Bajadas Autoadhesivas"];
+const CATEGORIAS = ["Bajadas Fullcolor/ByN", "Bajadas Autoadhesivas", "Bajadas Kraft"];
 const AUTOADH_COLUMNAS = ["papel", "especial"];
 const AUTOADH_FORMATOS = ["A3+", "XA3"];
 const AUTOADH_RANGOS = ["1", "2 a 25", "26 a 50", "51 a 100", "101 a 300", "301 a 500", "501 a 1000"];
+const KRAFT_FORMATOS = ["A3"];
+const KRAFT_TIPO_PAPEL = "kraft";
+const KRAFT_MATERIAL = "Kraft";
+const KRAFT_GRAMAJES = ["80g", "200g"];
+const KRAFT_RANGOS = ["1", "2 a 25", "26 a 50", "51 a 100", "101 a 300", "301 a 500"];
 const ADICIONALES = [
   { label: "Sin adicional", value: "sin_adicional" },
   { label: "Laca UV", value: "laca" },
@@ -66,6 +71,15 @@ function inferQuoteContext(form) {
       modo_color: "fullcolor",
       formato: form.formato,
       caras: "4/0",
+    };
+  }
+  if (form.categoria_ui === "Bajadas Kraft") {
+    const byCaras = inferFromCaras(form.caras);
+    return {
+      categoria: "Bajadas Kraft",
+      modo_color: byCaras.modo_color,
+      formato: form.formato,
+      caras: form.caras,
     };
   }
   const byCaras = inferFromCaras(form.caras);
@@ -162,10 +176,12 @@ export default function CotizadorBajadasV2() {
 
   const inferred = useMemo(() => inferQuoteContext(form), [form]);
   const isAutoadhesivas = inferred.categoria === "Bajadas Autoadhesivas";
+  const isKraft = inferred.categoria === "Bajadas Kraft";
   const formatoDataSource = useMemo(() => {
+    if (isKraft) return form.formato;
     if (form.formato === "XA3") return "A3+";
     return form.formato;
-  }, [form.formato]);
+  }, [form.formato, isKraft]);
 
   const validRows = useMemo(
     () =>
@@ -176,6 +192,7 @@ export default function CotizadorBajadasV2() {
   );
   const formatoOptions = useMemo(() => uniqueSorted(validRows.map((r) => r.formato)), [validRows]);
   const effectiveFormatoOptions = useMemo(() => {
+    if (isKraft) return KRAFT_FORMATOS;
     if (isAutoadhesivas) return AUTOADH_FORMATOS;
     if (formatoOptions.includes("A3+") && !formatoOptions.includes("XA3")) {
       return uniqueSorted([...formatoOptions, "XA3"]);
@@ -200,6 +217,7 @@ export default function CotizadorBajadasV2() {
     [validRows, formatoDataSource, form.tipo_papel, form.material]
   );
   const cantidadOptions = useMemo(() => {
+    if (isKraft) return KRAFT_RANGOS;
     if (isAutoadhesivas) return AUTOADH_RANGOS;
     return uniqueSorted(
       validRows
@@ -212,7 +230,7 @@ export default function CotizadorBajadasV2() {
         )
         .map((r) => r.cantidad_rango)
     );
-  }, [isAutoadhesivas, validRows, formatoDataSource, form.tipo_papel, form.material, form.gramaje]);
+  }, [isKraft, isAutoadhesivas, validRows, formatoDataSource, form.tipo_papel, form.material, form.gramaje]);
   const cantidadUnidades = useMemo(() => Number(form.cantidad_unidades), [form.cantidad_unidades]);
   const derivedRange = useMemo(() => deriveRangeFromQuantity(cantidadUnidades, cantidadOptions), [cantidadUnidades, cantidadOptions]);
 
@@ -391,6 +409,14 @@ export default function CotizadorBajadasV2() {
         next.gramaje = next.columna_precio === "especial" ? "N/A" : "N/A";
         return next;
       }
+      if (next.categoria_ui === "Bajadas Kraft") {
+        if (!KRAFT_FORMATOS.includes(next.formato)) next.formato = "A3";
+        if (!CARAS.includes(next.caras)) next.caras = "4/0";
+        next.tipo_papel = KRAFT_TIPO_PAPEL;
+        next.material = KRAFT_MATERIAL;
+        if (!KRAFT_GRAMAJES.includes(next.gramaje)) next.gramaje = KRAFT_GRAMAJES[0];
+        return next;
+      }
       if (!effectiveFormatoOptions.includes(next.formato)) next.formato = effectiveFormatoOptions[0] || "";
       return next;
     });
@@ -400,6 +426,12 @@ export default function CotizadorBajadasV2() {
     setForm((prev) => {
       const next = { ...prev };
       if (next.categoria_ui === "Bajadas Autoadhesivas") {
+        return next;
+      }
+      if (next.categoria_ui === "Bajadas Kraft") {
+        next.tipo_papel = KRAFT_TIPO_PAPEL;
+        next.material = KRAFT_MATERIAL;
+        if (!KRAFT_GRAMAJES.includes(next.gramaje)) next.gramaje = KRAFT_GRAMAJES[0];
         return next;
       }
       if (!tipoPapelOptions.includes(next.tipo_papel)) next.tipo_papel = tipoPapelOptions[0] || "";
@@ -521,9 +553,9 @@ export default function CotizadorBajadasV2() {
       categoria: inferred.categoria,
       modo_color: inferred.modo_color,
       formato: inferred.formato,
-      tipo_papel: isAutoadhesivas ? form.columna_precio : form.tipo_papel,
-      material: isAutoadhesivas ? (form.columna_precio === "especial" ? "OPP blanco" : "Sticker") : form.material,
-      gramaje: isAutoadhesivas ? "N/A" : form.gramaje,
+      tipo_papel: isAutoadhesivas ? form.columna_precio : (isKraft ? KRAFT_TIPO_PAPEL : form.tipo_papel),
+      material: isAutoadhesivas ? (form.columna_precio === "especial" ? "OPP blanco" : "Sticker") : (isKraft ? KRAFT_MATERIAL : form.material),
+      gramaje: isAutoadhesivas ? "N/A" : (isKraft ? form.gramaje : form.gramaje),
       cantidad_unidades: cantidadUnidades,
       cantidad_rango: derivedRange,
       caras: inferred.caras,
@@ -804,9 +836,9 @@ export default function CotizadorBajadasV2() {
               <label><span>Impresión</span><div className="caras-row">{CARAS.map((cara) => <button key={cara} data-testid={`print-option-${cara.replace("/", "-")}`} type="button" className={form.caras === cara ? "pill active" : "pill"} onClick={() => setForm((prev) => ({ ...prev, caras: cara }))}>{cara}</button>)}</div></label>
               <label><span>Categoría (automática)</span><input value={inferred.categoria} readOnly /></label>
               <label><span>Medida / formato</span><select data-testid="formato-select" value={form.formato} onChange={updateField("formato")}>{effectiveFormatoOptions.map((v) => <option key={v} value={v}>{v}</option>)}</select></label>
-              <label><span>Tipo de papel</span><select value={form.tipo_papel} onChange={updateField("tipo_papel")}>{tipoPapelOptions.map((v) => <option key={v} value={v}>{v}</option>)}</select></label>
-              <label><span>Material</span><select value={form.material} onChange={updateField("material")}>{materialOptions.map((v) => <option key={v} value={v}>{v}</option>)}</select></label>
-              <label><span>Gramaje</span><select value={form.gramaje} onChange={updateField("gramaje")}>{gramajeOptions.map((v) => <option key={v} value={v}>{v}</option>)}</select></label>
+              <label><span>Tipo de papel</span><select value={form.tipo_papel} onChange={updateField("tipo_papel")} disabled={isKraft}>{(isKraft ? [KRAFT_TIPO_PAPEL] : tipoPapelOptions).map((v) => <option key={v} value={v}>{v}</option>)}</select></label>
+              <label><span>Material</span><select value={form.material} onChange={updateField("material")} disabled={isKraft}>{(isKraft ? [KRAFT_MATERIAL] : materialOptions).map((v) => <option key={v} value={v}>{v}</option>)}</select></label>
+              <label><span>Gramaje</span><select value={form.gramaje} onChange={updateField("gramaje")}>{(isKraft ? KRAFT_GRAMAJES : gramajeOptions).map((v) => <option key={v} value={v}>{v}</option>)}</select></label>
             </>
           ) : (
             <>

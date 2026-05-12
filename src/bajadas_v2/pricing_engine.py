@@ -1,4 +1,4 @@
-"""Production pricing engine for Bajadas v2."""
+﻿"""Production pricing engine for Bajadas v2."""
 
 from __future__ import annotations
 
@@ -31,7 +31,7 @@ class BajadasV2PricingEngine:
 
     def quote(self, request: QuoteInput) -> QuoteResult:
         if request.urgencia not in self.VALID_URGENCIA:
-            raise QuoteInputError(f"Urgencia inválida: {request.urgencia}")
+            raise QuoteInputError(f"Urgencia invÃ¡lida: {request.urgencia}")
 
         key = build_lookup_key(request)
         fixed_case = self._fixed_index.get(key)
@@ -51,12 +51,22 @@ class BajadasV2PricingEngine:
             fuente = "modelo_d"
         elif row:
             if row.get("estado") == "SIN_COMPARACION":
-                raise PriceNotFoundError("La combinación existe pero quedó en SIN_COMPARACION.")
-            precio = float(row["precio_estimado_v2"])
-            factor = self._resolve_factor(request, row)
-            regla = self._resolve_rule(request, row)
-            fuente = "modelo_d"
-            precio_objetivo = self._coerce_float(row.get("precio_objetivo_csv"))
+                if self._is_kraft_pdf_enabled(row):
+                    precio_objetivo = self._coerce_float(row.get("precio_objetivo_csv"))
+                    if precio_objetivo is None:
+                        raise PriceNotFoundError("Bajadas Kraft en SIN_COMPARACION sin precio objetivo válido.")
+                    precio = precio_objetivo
+                    factor = None
+                    regla = "KRAFT_A3_MATRIZ_PDF_ESPECIFICA"
+                    fuente = "kraft_pdf_pagina_5"
+                else:
+                    raise PriceNotFoundError("La combinación existe pero quedó en SIN_COMPARACION.")
+            else:
+                precio = float(row["precio_estimado_v2"])
+                factor = self._resolve_factor(request, row)
+                regla = self._resolve_rule(request, row)
+                fuente = "modelo_d"
+                precio_objetivo = self._coerce_float(row.get("precio_objetivo_csv"))
         else:
             raise PriceNotFoundError("No se encontró la combinación solicitada en el baseline final.")
 
@@ -128,6 +138,8 @@ class BajadasV2PricingEngine:
         }
 
     def _resolve_special_rule(self, request: QuoteInput) -> str | None:
+        if request.categoria == "Bajadas Kraft":
+            return "KRAFT_A3_PDF_PAGINA_5_OVERRIDE_SIN_COMPARACION"
         if (
             request.categoria == "Bajadas Blanco y Negro"
             and request.formato == "XL"
@@ -159,6 +171,16 @@ class BajadasV2PricingEngine:
             return self._coerce_float(row.get("factor_aplicado"))
         return None
 
+    def _is_kraft_pdf_enabled(self, row: dict[str, Any]) -> bool:
+        if row.get("estado") != "SIN_COMPARACION":
+            return False
+        if row.get("categoria") != "Bajadas Kraft":
+            return False
+        precio_objetivo = self._coerce_float(row.get("precio_objetivo_csv"))
+        if precio_objetivo is None or precio_objetivo <= 0:
+            return False
+        return True
+
     def _resolve_rule(self, request: QuoteInput, row: dict[str, Any]) -> str:
         if request.formato == "XA3":
             return "FACTOR_XA3_1_10"
@@ -174,3 +196,4 @@ class BajadasV2PricingEngine:
             return float(value)
         except (TypeError, ValueError):
             return None
+
