@@ -1,0 +1,10 @@
+{
+  "producto": "Stickers Corte Recto",
+  "fuente_pdf": "lista-low.pdf página 15",
+  "excel_historico": {
+    "hojas_relacionadas": ["Productos"],
+    "estado_reconstruccion": "referencia_historica",
+    "observacion": "Sin fórmula única confiable que reproduzca el PDF vigente."
+  },
+  "decision": "usar_matriz_pdf_como_fuente_final"
+}

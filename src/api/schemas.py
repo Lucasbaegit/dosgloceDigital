@@ -215,3 +215,145 @@ class FolletosQuoteRequestSchema:
             cantidad_unidades=qty,
             urgencia=str(payload["urgencia"]).strip().lower(),
         )
+
+
+@dataclass(frozen=True)
+class CarpetasQuoteRequestSchema:
+    categoria: str
+    producto: str
+    formato: str
+    papel: str
+    gramaje: str
+    terminacion: str
+    caras: str
+    cantidad_unidades: int
+    solapa_impresa: bool
+    urgencia: str
+
+    @classmethod
+    def from_payload(cls, payload: dict[str, Any]) -> "CarpetasQuoteRequestSchema":
+        required = [
+            "categoria",
+            "producto",
+            "formato",
+            "papel",
+            "gramaje",
+            "terminacion",
+            "caras",
+            "cantidad_unidades",
+            "urgencia",
+        ]
+        missing = [k for k in required if k not in payload or payload[k] in (None, "")]
+        if missing:
+            raise ApiValidationError(f"Campos faltantes: {', '.join(missing)}")
+        try:
+            qty = int(payload["cantidad_unidades"])
+        except (TypeError, ValueError) as exc:
+            raise ApiValidationError("cantidad_unidades debe ser entero.") from exc
+        return cls(
+            categoria=str(payload["categoria"]).strip(),
+            producto=str(payload["producto"]).strip(),
+            formato=str(payload["formato"]).strip(),
+            papel=str(payload["papel"]).strip(),
+            gramaje=str(payload["gramaje"]).strip(),
+            terminacion=str(payload["terminacion"]).strip().lower(),
+            caras=str(payload["caras"]).strip(),
+            cantidad_unidades=qty,
+            solapa_impresa=bool(payload.get("solapa_impresa", False)),
+            urgencia=str(payload["urgencia"]).strip().lower(),
+        )
+
+
+@dataclass(frozen=True)
+class SobresQuoteRequestSchema:
+    categoria: str
+    producto: str
+    tipo_sobre: str
+    papel: str
+    color: str
+    caras: str
+    cantidad_unidades: int
+    urgencia: str
+
+    @classmethod
+    def from_payload(cls, payload: dict[str, Any]) -> "SobresQuoteRequestSchema":
+        required = ["categoria", "producto", "tipo_sobre", "papel", "color", "caras", "cantidad_unidades", "urgencia"]
+        missing = [k for k in required if k not in payload or payload[k] in (None, "")]
+        if missing:
+            raise ApiValidationError(f"Campos faltantes: {', '.join(missing)}")
+        try:
+            qty = int(payload["cantidad_unidades"])
+        except (TypeError, ValueError) as exc:
+            raise ApiValidationError("cantidad_unidades debe ser entero.") from exc
+        return cls(
+            categoria=str(payload["categoria"]).strip(),
+            producto=str(payload["producto"]).strip(),
+            tipo_sobre=str(payload["tipo_sobre"]).strip(),
+            papel=str(payload["papel"]).strip(),
+            color=str(payload["color"]).strip().lower(),
+            caras=str(payload["caras"]).strip(),
+            cantidad_unidades=qty,
+            urgencia=str(payload["urgencia"]).strip().lower(),
+        )
+
+
+@dataclass(frozen=True)
+class StickersCorteRectoQuoteRequestSchema:
+    categoria: str
+    producto: str
+    formato: str
+    terminacion: str
+    cantidad_unidades: int
+    urgencia: str
+
+    @classmethod
+    def from_payload(cls, payload: dict[str, Any]) -> "StickersCorteRectoQuoteRequestSchema":
+        required = ["categoria", "producto", "formato", "terminacion", "cantidad_unidades", "urgencia"]
+        missing = [k for k in required if k not in payload or payload[k] in (None, "")]
+        if missing:
+            raise ApiValidationError(f"Campos faltantes: {', '.join(missing)}")
+        try:
+            qty = int(payload["cantidad_unidades"])
+        except (TypeError, ValueError) as exc:
+            raise ApiValidationError("cantidad_unidades debe ser entero.") from exc
+        return cls(
+            categoria=str(payload["categoria"]).strip(),
+            producto=str(payload["producto"]).strip(),
+            formato=str(payload["formato"]).strip(),
+            terminacion=str(payload["terminacion"]).strip().lower(),
+            cantidad_unidades=qty,
+            urgencia=str(payload["urgencia"]).strip().lower(),
+        )
+
+
+@dataclass(frozen=True)
+class ImanesCorteRectoQuoteRequestSchema:
+    categoria: str
+    producto: str
+    formato: str
+    papel: str
+    gramaje: str
+    terminacion: str
+    cantidad_unidades: int
+    urgencia: str
+
+    @classmethod
+    def from_payload(cls, payload: dict[str, Any]) -> "ImanesCorteRectoQuoteRequestSchema":
+        required = ["categoria", "producto", "formato", "papel", "gramaje", "terminacion", "cantidad_unidades", "urgencia"]
+        missing = [k for k in required if k not in payload or payload[k] in (None, "")]
+        if missing:
+            raise ApiValidationError(f"Campos faltantes: {', '.join(missing)}")
+        try:
+            qty = int(payload["cantidad_unidades"])
+        except (TypeError, ValueError) as exc:
+            raise ApiValidationError("cantidad_unidades debe ser entero.") from exc
+        return cls(
+            categoria=str(payload["categoria"]).strip(),
+            producto=str(payload["producto"]).strip(),
+            formato=str(payload["formato"]).strip(),
+            papel=str(payload["papel"]).strip(),
+            gramaje=str(payload["gramaje"]).strip(),
+            terminacion=str(payload["terminacion"]).strip().lower(),
+            cantidad_unidades=qty,
+            urgencia=str(payload["urgencia"]).strip().lower(),
+        )

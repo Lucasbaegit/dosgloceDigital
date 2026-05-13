@@ -30,11 +30,31 @@ from folletos import FolletosPricingEngine, load_folletos_bundle
 from folletos.exceptions import PriceNotFoundError as FolletosPriceNotFoundError
 from folletos.exceptions import QuoteInputError as FolletosQuoteInputError
 from folletos.types import FolletosQuoteInput
+from carpetas import CarpetasPricingEngine, load_carpetas_bundle
+from carpetas.exceptions import PriceNotFoundError as CarpetasPriceNotFoundError
+from carpetas.exceptions import QuoteInputError as CarpetasQuoteInputError
+from carpetas.types import CarpetasQuoteInput
+from sobres import SobresPricingEngine, load_sobres_bundle
+from sobres.exceptions import PriceNotFoundError as SobresPriceNotFoundError
+from sobres.exceptions import QuoteInputError as SobresQuoteInputError
+from sobres.types import SobresQuoteInput
+from stickers_corte_recto import StickersCorteRectoPricingEngine, load_stickers_corte_recto_bundle
+from stickers_corte_recto.exceptions import PriceNotFoundError as StickersCorteRectoPriceNotFoundError
+from stickers_corte_recto.exceptions import QuoteInputError as StickersCorteRectoQuoteInputError
+from stickers_corte_recto.types import StickersCorteRectoQuoteInput
+from imanes_corte_recto import ImanesCorteRectoPricingEngine, load_imanes_corte_recto_bundle
+from imanes_corte_recto.exceptions import PriceNotFoundError as ImanesCorteRectoPriceNotFoundError
+from imanes_corte_recto.exceptions import QuoteInputError as ImanesCorteRectoQuoteInputError
+from imanes_corte_recto.types import ImanesCorteRectoQuoteInput
 
 from .schemas import (
     ApiValidationError,
+    CarpetasQuoteRequestSchema,
     FolletosQuoteRequestSchema,
+    ImanesCorteRectoQuoteRequestSchema,
     QuoteRequestSchema,
+    SobresQuoteRequestSchema,
+    StickersCorteRectoQuoteRequestSchema,
     Tarjetas9x5QuoteRequestSchema,
     TarjetasPostalesQuoteRequestSchema,
 )
@@ -49,6 +69,10 @@ class BajadasV2ApiService:
         self.tarjetas_9x5_engine = Tarjetas9x5PricingEngine(load_tarjetas_9x5_bundle(project_root))
         self.tarjetas_postales_engine = TarjetasPostalesPricingEngine(load_tarjetas_postales_bundle(project_root))
         self.folletos_engine = FolletosPricingEngine(load_folletos_bundle(project_root))
+        self.carpetas_engine = CarpetasPricingEngine(load_carpetas_bundle(project_root))
+        self.sobres_engine = SobresPricingEngine(load_sobres_bundle(project_root))
+        self.stickers_corte_recto_engine = StickersCorteRectoPricingEngine(load_stickers_corte_recto_bundle(project_root))
+        self.imanes_corte_recto_engine = ImanesCorteRectoPricingEngine(load_imanes_corte_recto_bundle(project_root))
         self.usar_adicionales_laminado_v1 = False
         self.config_path = project_root / "data" / "bajadas_v2" / "bajadas_v2_config_final.json"
         self.config_editable_path = project_root / "data" / "bajadas_v2" / "bajadas_v2_config_editable.json"
@@ -215,6 +239,132 @@ class BajadasV2ApiService:
                 return 400, {"error": "caras_no_compatibles", "detail": detail}
             return 400, {"error": "validation_error", "detail": detail}
         except FolletosPriceNotFoundError as exc:
+            detail = str(exc)
+            if detail == "cantidad_fuera_de_matriz":
+                return 404, {"error": "cantidad_fuera_de_matriz", "detail": detail}
+            return 404, {"error": "combinacion_no_encontrada", "detail": detail}
+        except Exception as exc:  # pragma: no cover
+            return 500, {"error": "internal_error", "detail": str(exc)}
+
+    def cotizar_carpetas(self, payload: dict[str, Any]) -> tuple[int, dict[str, Any]]:
+        try:
+            req = CarpetasQuoteRequestSchema.from_payload(payload)
+            quote = CarpetasQuoteInput(
+                categoria=req.categoria,
+                producto=req.producto,
+                formato=req.formato,
+                papel=req.papel,
+                gramaje=req.gramaje,
+                terminacion=req.terminacion,
+                caras=req.caras,
+                cantidad_unidades=req.cantidad_unidades,
+                solapa_impresa=req.solapa_impresa,
+                urgencia=req.urgencia,
+            )
+            return 200, self.carpetas_engine.quote_as_dict(quote)
+        except ApiValidationError as exc:
+            return 400, {"error": "validation_error", "detail": str(exc)}
+        except CarpetasQuoteInputError as exc:
+            detail = str(exc)
+            if "terminacion_no_soportada" in detail:
+                return 400, {"error": "terminacion_no_soportada", "detail": detail}
+            if "caras_no_soportadas" in detail:
+                return 400, {"error": "caras_no_soportadas", "detail": detail}
+            if "urgencia_invalida" in detail:
+                return 400, {"error": "urgencia_invalida", "detail": detail}
+            return 400, {"error": "validation_error", "detail": detail}
+        except CarpetasPriceNotFoundError as exc:
+            detail = str(exc)
+            if detail == "cantidad_fuera_de_matriz":
+                return 404, {"error": "cantidad_fuera_de_matriz", "detail": detail}
+            return 404, {"error": "combinacion_no_encontrada", "detail": detail}
+        except Exception as exc:  # pragma: no cover
+            return 500, {"error": "internal_error", "detail": str(exc)}
+
+    def cotizar_sobres(self, payload: dict[str, Any]) -> tuple[int, dict[str, Any]]:
+        try:
+            req = SobresQuoteRequestSchema.from_payload(payload)
+            quote = SobresQuoteInput(
+                categoria=req.categoria,
+                producto=req.producto,
+                tipo_sobre=req.tipo_sobre,
+                papel=req.papel,
+                color=req.color,
+                caras=req.caras,
+                cantidad_unidades=req.cantidad_unidades,
+                urgencia=req.urgencia,
+            )
+            return 200, self.sobres_engine.quote_as_dict(quote)
+        except ApiValidationError as exc:
+            return 400, {"error": "validation_error", "detail": str(exc)}
+        except SobresQuoteInputError as exc:
+            detail = str(exc)
+            if "caras_no_soportadas" in detail:
+                return 400, {"error": "caras_no_soportadas", "detail": detail}
+            if "tipo_sobre_no_soportado" in detail:
+                return 400, {"error": "tipo_sobre_no_soportado", "detail": detail}
+            return 400, {"error": "validation_error", "detail": detail}
+        except SobresPriceNotFoundError as exc:
+            detail = str(exc)
+            if detail == "cantidad_fuera_de_matriz":
+                return 404, {"error": "cantidad_fuera_de_matriz", "detail": detail}
+            return 404, {"error": "combinacion_no_encontrada", "detail": detail}
+        except Exception as exc:  # pragma: no cover
+            return 500, {"error": "internal_error", "detail": str(exc)}
+
+    def cotizar_stickers_corte_recto(self, payload: dict[str, Any]) -> tuple[int, dict[str, Any]]:
+        try:
+            req = StickersCorteRectoQuoteRequestSchema.from_payload(payload)
+            quote = StickersCorteRectoQuoteInput(
+                categoria=req.categoria,
+                producto=req.producto,
+                formato=req.formato,
+                terminacion=req.terminacion,
+                cantidad_unidades=req.cantidad_unidades,
+                urgencia=req.urgencia,
+            )
+            return 200, self.stickers_corte_recto_engine.quote_as_dict(quote)
+        except ApiValidationError as exc:
+            return 400, {"error": "validation_error", "detail": str(exc)}
+        except StickersCorteRectoQuoteInputError as exc:
+            detail = str(exc)
+            if "formato_no_soportado" in detail:
+                return 400, {"error": "formato_no_soportado", "detail": detail}
+            if "terminacion_no_soportada" in detail:
+                return 400, {"error": "terminacion_no_soportada", "detail": detail}
+            return 400, {"error": "validation_error", "detail": detail}
+        except StickersCorteRectoPriceNotFoundError as exc:
+            detail = str(exc)
+            if detail == "cantidad_fuera_de_matriz":
+                return 404, {"error": "cantidad_fuera_de_matriz", "detail": detail}
+            return 404, {"error": "combinacion_no_encontrada", "detail": detail}
+        except Exception as exc:  # pragma: no cover
+            return 500, {"error": "internal_error", "detail": str(exc)}
+
+    def cotizar_imanes_corte_recto(self, payload: dict[str, Any]) -> tuple[int, dict[str, Any]]:
+        try:
+            req = ImanesCorteRectoQuoteRequestSchema.from_payload(payload)
+            quote = ImanesCorteRectoQuoteInput(
+                categoria=req.categoria,
+                producto=req.producto,
+                formato=req.formato,
+                papel=req.papel,
+                gramaje=req.gramaje,
+                terminacion=req.terminacion,
+                cantidad_unidades=req.cantidad_unidades,
+                urgencia=req.urgencia,
+            )
+            return 200, self.imanes_corte_recto_engine.quote_as_dict(quote)
+        except ApiValidationError as exc:
+            return 400, {"error": "validation_error", "detail": str(exc)}
+        except ImanesCorteRectoQuoteInputError as exc:
+            detail = str(exc)
+            if "formato_no_soportado" in detail:
+                return 400, {"error": "formato_no_soportado", "detail": detail}
+            if "terminacion_no_soportada" in detail:
+                return 400, {"error": "terminacion_no_soportada", "detail": detail}
+            return 400, {"error": "validation_error", "detail": detail}
+        except ImanesCorteRectoPriceNotFoundError as exc:
             detail = str(exc)
             if detail == "cantidad_fuera_de_matriz":
                 return 404, {"error": "cantidad_fuera_de_matriz", "detail": detail}

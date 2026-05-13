@@ -338,3 +338,35 @@ test("XA3 muestra trazabilidad de derivación 1.10", async ({ page }) => {
   await expect(page.getByText("factor_aplicado: 1.1")).toBeVisible();
   await expect(page.getByText("regla_especial: FACTOR_XA3_1_10")).toBeVisible();
 });
+
+test("stickers corte recto calcula totales de matriz PDF", async ({ page }) => {
+  await page.goto("/", { waitUntil: "networkidle" });
+  await page.getByTestId("categoria-select").selectOption("Stickers Corte Recto");
+  await page.getByLabel("Formato").selectOption("6x4");
+  await page.getByLabel("Terminación").selectOption("sin_laca_uv");
+  await page.getByLabel("Cantidad").fill("100");
+  await page.getByRole("button", { name: "Calcular" }).click();
+  await expect(page.getByTestId("result-panel")).toContainText("2.765");
+
+  await page.getByLabel("Formato").selectOption("10x7");
+  await page.getByLabel("Terminación").selectOption("con_laca_uv");
+  await page.getByLabel("Cantidad").fill("1000");
+  await page.getByRole("button", { name: "Calcular" }).click();
+  await expect(page.getByTestId("result-panel")).toContainText("61.703");
+});
+
+test("imanes corte recto calcula totales de matriz PDF", async ({ page }) => {
+  await page.goto("/", { waitUntil: "networkidle" });
+  await page.getByTestId("categoria-select").selectOption("Imanes Corte Recto");
+  await page.getByLabel("Formato").selectOption("6x4");
+  await page.getByLabel("Terminación").selectOption("sin_laca_uv");
+  await page.getByLabel("Cantidad").fill("100");
+  await page.getByRole("button", { name: "Calcular" }).click();
+  await expect(page.getByTestId("result-panel")).toContainText("7.526");
+
+  await page.getByLabel("Formato").selectOption("10x7");
+  await page.getByLabel("Terminación").selectOption("con_laca_uv");
+  await page.getByLabel("Cantidad").fill("1000");
+  await page.getByRole("button", { name: "Calcular" }).click();
+  await expect(page.getByTestId("result-panel")).toContainText("153.680");
+});

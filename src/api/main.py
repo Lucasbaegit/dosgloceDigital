@@ -67,6 +67,18 @@ class ApiHandler(BaseHTTPRequestHandler):
         if path == "/folletos/health":
             self._send_json(200, self.service.folletos_engine.health())
             return
+        if path == "/carpetas/health":
+            self._send_json(200, self.service.carpetas_engine.health())
+            return
+        if path == "/sobres/health":
+            self._send_json(200, self.service.sobres_engine.health())
+            return
+        if path == "/stickers-corte-recto/health":
+            self._send_json(200, self.service.stickers_corte_recto_engine.health())
+            return
+        if path == "/imanes-corte-recto/health":
+            self._send_json(200, self.service.imanes_corte_recto_engine.health())
+            return
         if path == "/bajadas-v2/config":
             status, payload = self.service.get_config()
             self._send_json(status, payload)
@@ -127,6 +139,10 @@ class ApiHandler(BaseHTTPRequestHandler):
             "/tarjetas-9x5/cotizar",
             "/tarjetas-postales/cotizar",
             "/folletos/cotizar",
+            "/carpetas/cotizar",
+            "/sobres/cotizar",
+            "/stickers-corte-recto/cotizar",
+            "/imanes-corte-recto/cotizar",
             "/bajadas-v2/config/update",
             "/bajadas-v2/config/restore",
             "/bajadas-v2/config/validate",
@@ -190,6 +206,14 @@ class ApiHandler(BaseHTTPRequestHandler):
             status, response = self.service.cotizar_tarjetas_postales(payload)
         elif path == "/folletos/cotizar":
             status, response = self.service.cotizar_folletos(payload)
+        elif path == "/carpetas/cotizar":
+            status, response = self.service.cotizar_carpetas(payload)
+        elif path == "/sobres/cotizar":
+            status, response = self.service.cotizar_sobres(payload)
+        elif path == "/stickers-corte-recto/cotizar":
+            status, response = self.service.cotizar_stickers_corte_recto(payload)
+        elif path == "/imanes-corte-recto/cotizar":
+            status, response = self.service.cotizar_imanes_corte_recto(payload)
         elif path == "/bajadas-v2/config/update":
             status, response = self.service.update_config(payload)
         elif path == "/bajadas-v2/config/validate":
