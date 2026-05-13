@@ -1,7 +1,9 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 from dataclasses import asdict
 from typing import Any
+
+from pricing_trace import build_pdf_matrix_trace
 
 from .config_loader import TarjetasPostalesBundle
 from .exceptions import PriceNotFoundError, QuoteInputError
@@ -30,17 +32,37 @@ class TarjetasPostalesPricingEngine:
         total_u = round(total * (1 + recargo), 6)
         unit = round(total / request.cantidad_unidades, 6)
         unit_u = round(total_u / request.cantidad_unidades, 6)
-        trace = {
-            "rama": "tarjetas_postales",
-            "origen_precio_final": "PDF página 12 - Tarjetas Postales",
-            "origen_logico_excel": "Productos (histórico)",
-            "motivo_override": "Excel histórico no reproduce PDF vigente.",
-            "convencion_precio": "precio_total_por_paquete",
-            "terminacion": request.terminacion,
-            "caras": request.caras,
-            "precio_objetivo_pdf": total,
-            "recargo_urgencia_aplicado": recargo,
-        }
+        trace = build_pdf_matrix_trace(
+            rama="tarjetas_postales",
+            fuente_precio_final="PDF página 12 - Tarjetas Postales",
+            fuente_logica_excel="Productos (histórico)",
+            motivo_override="Excel histórico no reproduce PDF vigente.",
+            precio_pdf_objetivo=total,
+            precio_unitario_derivado=unit,
+            cantidad_unidades=request.cantidad_unidades,
+            variables_detectadas=[
+                "precio_papel_300g",
+                "click_color",
+                "costo_laca_uv",
+                "costo_laminado_brillo",
+                "costo_laminado_mate",
+                "coeficiente_cantidad",
+                "multiplicador_comercial",
+                "factor_ajuste_pdf",
+            ],
+            variables_usadas={
+                "papel": request.papel,
+                "gramaje": request.gramaje,
+                "terminacion": request.terminacion,
+                "caras": request.caras,
+            },
+            recargo_urgencia_aplicado=recargo,
+            extras={
+                "convencion_precio": "precio_total_por_paquete",
+                "terminacion": request.terminacion,
+                "caras": request.caras,
+            },
+        )
         return TarjetasPostalesQuoteResult(
             precio_unitario_sin_iva=unit,
             precio_unitario_con_urgencia=unit_u,

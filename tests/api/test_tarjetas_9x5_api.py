@@ -58,6 +58,14 @@ class TestTarjetas9x5Api(unittest.TestCase):
         self.assertEqual(status, 200)
         self.assertAlmostEqual(body["total_sin_iva"], 5139, places=6)
         self.assertEqual(body["regla_aplicada"], "TARJETAS_9X5_MATRIZ_PDF_P12")
+        self.assertEqual(body["trazabilidad"]["modo_precio"], "pdf_fijo")
+        self.assertEqual(body["trazabilidad"]["futuro_modo_precio"], "formula_editable_calibrada")
+        self.assertEqual(body["trazabilidad"]["modo_calculo"], "matriz_pdf_con_variables_detectadas")
+        self.assertIn("variables_detectadas", body["trazabilidad"])
+        self.assertIn("variables_usadas", body["trazabilidad"])
+        self.assertIn("precio_pdf_objetivo", body["trazabilidad"])
+        self.assertIn("config_variables_base", body["trazabilidad"])
+        self.assertIn("motivo_no_formula_pura", body["trazabilidad"])
 
     def test_tarjetas_1000_laminado_mate_4_4(self):
         status, body = self._post_json("/tarjetas-9x5/cotizar", self._payload(1000, "laminado_mate", "4/4"))

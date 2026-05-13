@@ -123,6 +123,26 @@ class BajadasV2PricingEngine:
         result = self.quote(request)
         payload = asdict(result)
         payload["trazabilidad"] = asdict(result.trazabilidad)
+        if request.categoria == "Bajadas Kraft":
+            payload["trazabilidad"].update(
+                {
+                    "modo_precio": "pdf_fijo",
+                    "futuro_modo_precio": "formula_editable_calibrada",
+                    "modo_calculo": "matriz_pdf_con_variables_detectadas",
+                    "fuente_precio_final": "PDF página 5 - Bajadas Fullcolor / Kraft A3",
+                    "fuente_logica_excel": "Excel histórico (rama Kraft general no alineada al PDF vigente)",
+                    "motivo_override": "Kraft A3 se publica por matriz comercial PDF específica.",
+                    "variables_detectadas": [
+                        "precio_papel_kraft_80g",
+                        "precio_papel_kraft_200g",
+                        "click_color",
+                        "click_blanco_negro",
+                        "coeficiente_cantidad",
+                        "multiplicador_comercial",
+                        "factor_ajuste_pdf",
+                    ],
+                }
+            )
         return payload
 
     def summary_metrics(self) -> dict[str, Any]:

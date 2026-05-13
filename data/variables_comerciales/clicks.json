@@ -1,0 +1,19 @@
+{
+  "version": "clicks_v1",
+  "fuente_historica": "Excel",
+  "items": [
+    {
+      "nombre": "click_color",
+      "modo_color": "fullcolor",
+      "editable": true,
+      "activo_en_calculo_actual": false
+    },
+    {
+      "nombre": "click_blanco_negro",
+      "modo_color": "escala_grises",
+      "editable": true,
+      "activo_en_calculo_actual": false
+    }
+  ]
+}
+

@@ -53,6 +53,14 @@ class TestTarjetasPostalesFolletosApi(unittest.TestCase):
         })
         self.assertEqual(status, 200)
         self.assertAlmostEqual(body["total_sin_iva"], 10932, places=6)
+        self.assertEqual(body["trazabilidad"]["modo_precio"], "pdf_fijo")
+        self.assertEqual(body["trazabilidad"]["futuro_modo_precio"], "formula_editable_calibrada")
+        self.assertEqual(body["trazabilidad"]["modo_calculo"], "matriz_pdf_con_variables_detectadas")
+        self.assertIn("variables_detectadas", body["trazabilidad"])
+        self.assertIn("variables_usadas", body["trazabilidad"])
+        self.assertIn("precio_pdf_objetivo", body["trazabilidad"])
+        self.assertIn("config_variables_base", body["trazabilidad"])
+        self.assertIn("motivo_no_formula_pura", body["trazabilidad"])
 
     def test_tarjetas_postales_fuera_matriz(self):
         status, body = self._post("/tarjetas-postales/cotizar", {
@@ -83,6 +91,14 @@ class TestTarjetasPostalesFolletosApi(unittest.TestCase):
         })
         self.assertEqual(status, 200)
         self.assertAlmostEqual(body["total_sin_iva"], 119247, places=6)
+        self.assertEqual(body["trazabilidad"]["modo_precio"], "pdf_fijo")
+        self.assertEqual(body["trazabilidad"]["futuro_modo_precio"], "formula_editable_calibrada")
+        self.assertEqual(body["trazabilidad"]["modo_calculo"], "matriz_pdf_con_variables_detectadas")
+        self.assertIn("variables_detectadas", body["trazabilidad"])
+        self.assertIn("variables_usadas", body["trazabilidad"])
+        self.assertIn("precio_pdf_objetivo", body["trazabilidad"])
+        self.assertIn("config_variables_base", body["trazabilidad"])
+        self.assertIn("motivo_no_formula_pura", body["trazabilidad"])
 
     def test_folletos_caras_incompatibles(self):
         status, body = self._post("/folletos/cotizar", {

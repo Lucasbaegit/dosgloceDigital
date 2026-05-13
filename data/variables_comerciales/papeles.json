@@ -1,0 +1,35 @@
+{
+  "version": "papeles_v1",
+  "fuente_historica": "Excel",
+  "items": [
+    {
+      "producto": "Tarjetas Personales 9x5",
+      "papel": "300g Ilustracion",
+      "gramaje": "300g",
+      "editable": true,
+      "activo_en_calculo_actual": false
+    },
+    {
+      "producto": "Tarjetas Postales",
+      "papel": "300g Ilustracion",
+      "gramaje": "300g",
+      "editable": true,
+      "activo_en_calculo_actual": false
+    },
+    {
+      "producto": "Folletos",
+      "papel": "150g Ilustracion",
+      "gramaje": "150g",
+      "editable": true,
+      "activo_en_calculo_actual": false
+    },
+    {
+      "producto": "Folletos",
+      "papel": "80g Ilustracion",
+      "gramaje": "80g",
+      "editable": true,
+      "activo_en_calculo_actual": false
+    }
+  ]
+}
+

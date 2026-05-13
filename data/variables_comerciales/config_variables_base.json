@@ -1,0 +1,26 @@
+{
+  "version": "variables_comerciales_v1",
+  "modo_aplicacion_actual": "solo_trazabilidad",
+  "modo_precio_default": "pdf_fijo",
+  "futuro_modo_precio": "formula_editable_calibrada",
+  "descripcion": "Variables base detectadas para futura calibración editable sin afectar precios actuales.",
+  "variables_globales": {
+    "dolar": {
+      "editable": true,
+      "activo_en_calculo_actual": false
+    },
+    "minimos_comerciales": {
+      "editable": true,
+      "activo_en_calculo_actual": false
+    },
+    "redondeos": {
+      "editable": true,
+      "activo_en_calculo_actual": false
+    },
+    "factor_ajuste_comercial": {
+      "editable": true,
+      "activo_en_calculo_actual": false
+    }
+  }
+}
+
