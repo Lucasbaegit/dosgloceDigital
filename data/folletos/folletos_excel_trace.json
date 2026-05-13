@@ -1,0 +1,23 @@
+{
+  "origen_excel_historico": {
+    "archivo": "original/Copia de DIGITAL sistema 2025.xlsx",
+    "hoja_principal": "Productos",
+    "bloques_relevantes_aproximados": [
+      "folletos / volantes",
+      "formatos 10x10, 10x15, 15x21, A4"
+    ],
+    "variables_detectadas": [
+      "costo_papel_150g",
+      "costo_papel_80g",
+      "click_fullcolor",
+      "click_byn",
+      "coeficientes_tamaño",
+      "coeficientes_cantidad"
+    ]
+  },
+  "conclusion": {
+    "estado_reproduccion_pdf": "desalineado",
+    "uso_operativo": "matriz_pdf_override_comercial",
+    "uso_trazabilidad": "si"
+  }
+}

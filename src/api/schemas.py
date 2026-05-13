@@ -98,3 +98,120 @@ class QuoteRequestSchema:
         if parsed < 1:
             raise ApiValidationError("cantidad_unidades debe ser mayor o igual a 1.")
         return parsed
+
+
+@dataclass(frozen=True)
+class Tarjetas9x5QuoteRequestSchema:
+    categoria: str
+    producto: str
+    formato: str
+    papel: str
+    gramaje: str
+    terminacion: str
+    caras: str
+    cantidad_unidades: int
+    urgencia: str
+
+    @classmethod
+    def from_payload(cls, payload: dict[str, Any]) -> "Tarjetas9x5QuoteRequestSchema":
+        required = [
+            "categoria",
+            "producto",
+            "formato",
+            "papel",
+            "gramaje",
+            "terminacion",
+            "caras",
+            "cantidad_unidades",
+            "urgencia",
+        ]
+        missing = [key for key in required if key not in payload or payload[key] in (None, "")]
+        if missing:
+            raise ApiValidationError(f"Campos faltantes: {', '.join(missing)}")
+
+        try:
+            qty = int(payload["cantidad_unidades"])
+        except (TypeError, ValueError) as exc:
+            raise ApiValidationError("cantidad_unidades debe ser entero.") from exc
+
+        return cls(
+            categoria=str(payload["categoria"]).strip(),
+            producto=str(payload["producto"]).strip(),
+            formato=str(payload["formato"]).strip(),
+            papel=str(payload["papel"]).strip(),
+            gramaje=str(payload["gramaje"]).strip(),
+            terminacion=str(payload["terminacion"]).strip().lower(),
+            caras=str(payload["caras"]).strip(),
+            cantidad_unidades=qty,
+            urgencia=str(payload["urgencia"]).strip().lower(),
+        )
+
+
+@dataclass(frozen=True)
+class TarjetasPostalesQuoteRequestSchema:
+    categoria: str
+    producto: str
+    formato: str
+    papel: str
+    gramaje: str
+    terminacion: str
+    caras: str
+    cantidad_unidades: int
+    urgencia: str
+
+    @classmethod
+    def from_payload(cls, payload: dict[str, Any]) -> "TarjetasPostalesQuoteRequestSchema":
+        required = ["categoria", "producto", "formato", "papel", "gramaje", "terminacion", "caras", "cantidad_unidades", "urgencia"]
+        missing = [k for k in required if k not in payload or payload[k] in (None, "")]
+        if missing:
+            raise ApiValidationError(f"Campos faltantes: {', '.join(missing)}")
+        try:
+            qty = int(payload["cantidad_unidades"])
+        except (TypeError, ValueError) as exc:
+            raise ApiValidationError("cantidad_unidades debe ser entero.") from exc
+        return cls(
+            categoria=str(payload["categoria"]).strip(),
+            producto=str(payload["producto"]).strip(),
+            formato=str(payload["formato"]).strip(),
+            papel=str(payload["papel"]).strip(),
+            gramaje=str(payload["gramaje"]).strip(),
+            terminacion=str(payload["terminacion"]).strip().lower(),
+            caras=str(payload["caras"]).strip(),
+            cantidad_unidades=qty,
+            urgencia=str(payload["urgencia"]).strip().lower(),
+        )
+
+
+@dataclass(frozen=True)
+class FolletosQuoteRequestSchema:
+    categoria: str
+    producto: str
+    formato: str
+    papel: str
+    gramaje: str
+    modo_color: str
+    caras: str
+    cantidad_unidades: int
+    urgencia: str
+
+    @classmethod
+    def from_payload(cls, payload: dict[str, Any]) -> "FolletosQuoteRequestSchema":
+        required = ["categoria", "producto", "formato", "papel", "gramaje", "modo_color", "caras", "cantidad_unidades", "urgencia"]
+        missing = [k for k in required if k not in payload or payload[k] in (None, "")]
+        if missing:
+            raise ApiValidationError(f"Campos faltantes: {', '.join(missing)}")
+        try:
+            qty = int(payload["cantidad_unidades"])
+        except (TypeError, ValueError) as exc:
+            raise ApiValidationError("cantidad_unidades debe ser entero.") from exc
+        return cls(
+            categoria=str(payload["categoria"]).strip(),
+            producto=str(payload["producto"]).strip(),
+            formato=str(payload["formato"]).strip(),
+            papel=str(payload["papel"]).strip(),
+            gramaje=str(payload["gramaje"]).strip(),
+            modo_color=str(payload["modo_color"]).strip().lower(),
+            caras=str(payload["caras"]).strip(),
+            cantidad_unidades=qty,
+            urgencia=str(payload["urgencia"]).strip().lower(),
+        )

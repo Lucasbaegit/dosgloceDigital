@@ -1,0 +1,19 @@
+{
+  "origen_excel_historico": {
+    "archivo": "original/Copia de DIGITAL sistema 2025.xlsx",
+    "hoja_principal": "Productos",
+    "bloque_relevante_aproximado": "BA:BI (Tarjetas relacionadas)",
+    "variables_detectadas": [
+      "costo_papel",
+      "click_fullcolor",
+      "click_escala_grises",
+      "factores_por_cantidad",
+      "costos_terminacion_laca_laminado"
+    ]
+  },
+  "conclusion": {
+    "estado_reproduccion_pdf": "desalineado",
+    "uso_operativo": "matriz_pdf_override_comercial",
+    "uso_trazabilidad": "si"
+  }
+}

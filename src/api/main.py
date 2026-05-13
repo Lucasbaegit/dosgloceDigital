@@ -58,6 +58,15 @@ class ApiHandler(BaseHTTPRequestHandler):
             status, payload = self.service.autoadhesivas_config()
             self._send_json(status, payload)
             return
+        if path == "/tarjetas-9x5/health":
+            self._send_json(200, self.service.tarjetas_9x5_engine.health())
+            return
+        if path == "/tarjetas-postales/health":
+            self._send_json(200, self.service.tarjetas_postales_engine.health())
+            return
+        if path == "/folletos/health":
+            self._send_json(200, self.service.folletos_engine.health())
+            return
         if path == "/bajadas-v2/config":
             status, payload = self.service.get_config()
             self._send_json(status, payload)
@@ -115,6 +124,9 @@ class ApiHandler(BaseHTTPRequestHandler):
 
         allowed_exact = {
             "/bajadas-v2/cotizar",
+            "/tarjetas-9x5/cotizar",
+            "/tarjetas-postales/cotizar",
+            "/folletos/cotizar",
             "/bajadas-v2/config/update",
             "/bajadas-v2/config/restore",
             "/bajadas-v2/config/validate",
@@ -172,6 +184,12 @@ class ApiHandler(BaseHTTPRequestHandler):
 
         if path == "/bajadas-v2/cotizar":
             status, response = self.service.cotizar(payload)
+        elif path == "/tarjetas-9x5/cotizar":
+            status, response = self.service.cotizar_tarjetas_9x5(payload)
+        elif path == "/tarjetas-postales/cotizar":
+            status, response = self.service.cotizar_tarjetas_postales(payload)
+        elif path == "/folletos/cotizar":
+            status, response = self.service.cotizar_folletos(payload)
         elif path == "/bajadas-v2/config/update":
             status, response = self.service.update_config(payload)
         elif path == "/bajadas-v2/config/validate":

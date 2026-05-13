@@ -18,8 +18,26 @@ from bajadas_autoadhesivas.exceptions import QuoteInputError as AutoadhesivasQuo
 from bajadas_autoadhesivas.types import AutoadhesivasQuoteInput
 from bajadas_adicionales_laminado import LaminadoAdicionalesPricingEngine, QuoteInputError as LaminadoQuoteInputError, load_laminado_bundle
 from bajadas_adicionales_laminado.types import LaminadoQuoteInput
+from tarjetas_9x5 import Tarjetas9x5PricingEngine, load_tarjetas_9x5_bundle
+from tarjetas_9x5.exceptions import PriceNotFoundError as TarjetasPriceNotFoundError
+from tarjetas_9x5.exceptions import QuoteInputError as TarjetasQuoteInputError
+from tarjetas_9x5.types import Tarjetas9x5QuoteInput
+from tarjetas_postales import TarjetasPostalesPricingEngine, load_tarjetas_postales_bundle
+from tarjetas_postales.exceptions import PriceNotFoundError as TarjetasPostalesPriceNotFoundError
+from tarjetas_postales.exceptions import QuoteInputError as TarjetasPostalesQuoteInputError
+from tarjetas_postales.types import TarjetasPostalesQuoteInput
+from folletos import FolletosPricingEngine, load_folletos_bundle
+from folletos.exceptions import PriceNotFoundError as FolletosPriceNotFoundError
+from folletos.exceptions import QuoteInputError as FolletosQuoteInputError
+from folletos.types import FolletosQuoteInput
 
-from .schemas import ApiValidationError, QuoteRequestSchema
+from .schemas import (
+    ApiValidationError,
+    FolletosQuoteRequestSchema,
+    QuoteRequestSchema,
+    Tarjetas9x5QuoteRequestSchema,
+    TarjetasPostalesQuoteRequestSchema,
+)
 
 
 class BajadasV2ApiService:
@@ -28,6 +46,9 @@ class BajadasV2ApiService:
         self.engine = BajadasV2PricingEngine(load_bajadas_v2_bundle(project_root))
         self.autoadhesivas_engine = AutoadhesivasPricingEngine(load_autoadhesivas_bundle(project_root))
         self.laminado_engine = LaminadoAdicionalesPricingEngine(load_laminado_bundle(project_root))
+        self.tarjetas_9x5_engine = Tarjetas9x5PricingEngine(load_tarjetas_9x5_bundle(project_root))
+        self.tarjetas_postales_engine = TarjetasPostalesPricingEngine(load_tarjetas_postales_bundle(project_root))
+        self.folletos_engine = FolletosPricingEngine(load_folletos_bundle(project_root))
         self.usar_adicionales_laminado_v1 = False
         self.config_path = project_root / "data" / "bajadas_v2" / "bajadas_v2_config_final.json"
         self.config_editable_path = project_root / "data" / "bajadas_v2" / "bajadas_v2_config_editable.json"
@@ -102,6 +123,102 @@ class BajadasV2ApiService:
             return 404, {"error": "combinacion_no_encontrada", "detail": str(exc)}
         except LaminadoQuoteInputError as exc:
             return 400, {"error": "validation_error", "detail": str(exc)}
+        except Exception as exc:  # pragma: no cover
+            return 500, {"error": "internal_error", "detail": str(exc)}
+
+    def cotizar_tarjetas_9x5(self, payload: dict[str, Any]) -> tuple[int, dict[str, Any]]:
+        try:
+            req = Tarjetas9x5QuoteRequestSchema.from_payload(payload)
+            quote = Tarjetas9x5QuoteInput(
+                categoria=req.categoria,
+                producto=req.producto,
+                formato=req.formato,
+                papel=req.papel,
+                gramaje=req.gramaje,
+                terminacion=req.terminacion,
+                caras=req.caras,
+                cantidad_unidades=req.cantidad_unidades,
+                urgencia=req.urgencia,
+            )
+            return 200, self.tarjetas_9x5_engine.quote_as_dict(quote)
+        except ApiValidationError as exc:
+            return 400, {"error": "validation_error", "detail": str(exc)}
+        except TarjetasQuoteInputError as exc:
+            detail = str(exc)
+            if "terminacion_no_soportada" in detail:
+                return 400, {"error": "terminacion_no_soportada", "detail": detail}
+            if "caras_no_soportadas" in detail:
+                return 400, {"error": "caras_no_soportadas", "detail": detail}
+            if "urgencia_invalida" in detail:
+                return 400, {"error": "urgencia_invalida", "detail": detail}
+            return 400, {"error": "validation_error", "detail": detail}
+        except TarjetasPriceNotFoundError as exc:
+            detail = str(exc)
+            if detail == "cantidad_fuera_de_matriz":
+                return 404, {"error": "cantidad_fuera_de_matriz", "detail": detail}
+            return 404, {"error": "combinacion_no_encontrada", "detail": detail}
+        except Exception as exc:  # pragma: no cover
+            return 500, {"error": "internal_error", "detail": str(exc)}
+
+    def cotizar_tarjetas_postales(self, payload: dict[str, Any]) -> tuple[int, dict[str, Any]]:
+        try:
+            req = TarjetasPostalesQuoteRequestSchema.from_payload(payload)
+            quote = TarjetasPostalesQuoteInput(
+                categoria=req.categoria,
+                producto=req.producto,
+                formato=req.formato,
+                papel=req.papel,
+                gramaje=req.gramaje,
+                terminacion=req.terminacion,
+                caras=req.caras,
+                cantidad_unidades=req.cantidad_unidades,
+                urgencia=req.urgencia,
+            )
+            return 200, self.tarjetas_postales_engine.quote_as_dict(quote)
+        except ApiValidationError as exc:
+            return 400, {"error": "validation_error", "detail": str(exc)}
+        except TarjetasPostalesQuoteInputError as exc:
+            detail = str(exc)
+            if "terminacion_no_soportada" in detail:
+                return 400, {"error": "terminacion_no_soportada", "detail": detail}
+            return 400, {"error": "validation_error", "detail": detail}
+        except TarjetasPostalesPriceNotFoundError as exc:
+            detail = str(exc)
+            if detail == "cantidad_fuera_de_matriz":
+                return 404, {"error": "cantidad_fuera_de_matriz", "detail": detail}
+            return 404, {"error": "combinacion_no_encontrada", "detail": detail}
+        except Exception as exc:  # pragma: no cover
+            return 500, {"error": "internal_error", "detail": str(exc)}
+
+    def cotizar_folletos(self, payload: dict[str, Any]) -> tuple[int, dict[str, Any]]:
+        try:
+            req = FolletosQuoteRequestSchema.from_payload(payload)
+            quote = FolletosQuoteInput(
+                categoria=req.categoria,
+                producto=req.producto,
+                formato=req.formato,
+                papel=req.papel,
+                gramaje=req.gramaje,
+                modo_color=req.modo_color,
+                caras=req.caras,
+                cantidad_unidades=req.cantidad_unidades,
+                urgencia=req.urgencia,
+            )
+            return 200, self.folletos_engine.quote_as_dict(quote)
+        except ApiValidationError as exc:
+            return 400, {"error": "validation_error", "detail": str(exc)}
+        except FolletosQuoteInputError as exc:
+            detail = str(exc)
+            if "formato_no_soportado" in detail:
+                return 400, {"error": "formato_no_soportado", "detail": detail}
+            if "caras_no_compatibles" in detail:
+                return 400, {"error": "caras_no_compatibles", "detail": detail}
+            return 400, {"error": "validation_error", "detail": detail}
+        except FolletosPriceNotFoundError as exc:
+            detail = str(exc)
+            if detail == "cantidad_fuera_de_matriz":
+                return 404, {"error": "cantidad_fuera_de_matriz", "detail": detail}
+            return 404, {"error": "combinacion_no_encontrada", "detail": detail}
         except Exception as exc:  # pragma: no cover
             return 500, {"error": "internal_error", "detail": str(exc)}
 

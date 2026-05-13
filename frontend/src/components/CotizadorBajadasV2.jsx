@@ -2,6 +2,9 @@
 import {
   approveBajadasConfigCandidate,
   cotizarBajadaV2,
+  cotizarFolletos,
+  cotizarTarjetas9x5,
+  cotizarTarjetasPostales,
   createBajadasConfigCandidate,
   fetchBajadasActiveVersion,
   fetchBajadasBackupDetail,
@@ -28,7 +31,14 @@ const NAV_ITEMS = ["Cotizador", "Árbol del precio", "Configuración", "Pedidos"
 const TAB_KEYS = new Set(["Cotizador", "Árbol del precio", "Configuración"]);
 const CARAS = ["4/0", "4/4", "1/0", "1/1"];
 const URGENCIAS = ["normal", "express", "super_express", "ya_24hs"];
-const CATEGORIAS = ["Bajadas Fullcolor/ByN", "Bajadas Autoadhesivas", "Bajadas Kraft"];
+const CATEGORIAS = [
+  "Bajadas Fullcolor/ByN",
+  "Bajadas Autoadhesivas",
+  "Bajadas Kraft",
+  "Tarjetas Personales 9x5",
+  "Tarjetas Postales",
+  "Folletos",
+];
 const AUTOADH_COLUMNAS = ["papel", "especial"];
 const AUTOADH_FORMATOS = ["A3+", "XA3"];
 const AUTOADH_RANGOS = ["1", "2 a 25", "26 a 50", "51 a 100", "101 a 300", "301 a 500", "501 a 1000"];
@@ -37,6 +47,30 @@ const KRAFT_TIPO_PAPEL = "kraft";
 const KRAFT_MATERIAL = "Kraft";
 const KRAFT_GRAMAJES = ["80g", "200g"];
 const KRAFT_RANGOS = ["1", "2 a 25", "26 a 50", "51 a 100", "101 a 300", "301 a 500"];
+const TARJETAS_FORMATOS = ["9x5"];
+const TARJETAS_PAPEL = "300g Ilustracion";
+const TARJETAS_GRAMAJE = "300g";
+const TARJETAS_CARAS = ["4/0", "4/4"];
+const TARJETAS_CANTIDADES = ["100", "200", "300", "500", "1000"];
+const TARJETAS_TERMINACIONES = [
+  { label: "Sin laminar", value: "sin_laminar" },
+  { label: "Laca UV", value: "laca_uv" },
+  { label: "Laminado brillo", value: "laminado_brillo" },
+  { label: "Laminado mate", value: "laminado_mate" },
+];
+const POSTALES_FORMATOS = ["postal"];
+const POSTALES_PAPEL = "300g Ilustracion";
+const POSTALES_GRAMAJE = "300g";
+const POSTALES_CARAS = ["4/0", "4/4"];
+const POSTALES_CANTIDADES = ["100", "200", "300", "500", "1000"];
+const POSTALES_TERMINACIONES = TARJETAS_TERMINACIONES;
+const FOLLETOS_FORMATOS = ["10x10", "10x15", "15x21", "A4"];
+const FOLLETOS_PAPELES = [
+  { papel: "150g Ilustracion", gramaje: "150g" },
+  { papel: "80g Ilustracion", gramaje: "80g" },
+];
+const FOLLETOS_MODO_COLOR = ["fullcolor", "escala_grises"];
+const FOLLETOS_CANTIDADES = ["100", "200", "300", "500", "1000"];
 const ADICIONALES = [
   { label: "Sin adicional", value: "sin_adicional" },
   { label: "Laca UV", value: "laca" },
@@ -54,6 +88,9 @@ const INITIAL_FORM = {
   caras: "4/0",
   urgencia: "normal",
   adicional_laminado: "sin_adicional",
+  terminacion_tarjetas: "sin_laminar",
+  papel_folleto: "150g Ilustracion",
+  modo_color_folleto: "fullcolor",
 };
 
 function inferFromCaras(caras) {
@@ -81,6 +118,20 @@ function inferQuoteContext(form) {
       formato: form.formato,
       caras: form.caras,
     };
+  }
+  if (form.categoria_ui === "Tarjetas Personales 9x5") {
+    return {
+      categoria: "Tarjetas Personales",
+      modo_color: "fullcolor",
+      formato: "9x5",
+      caras: form.caras,
+    };
+  }
+  if (form.categoria_ui === "Tarjetas Postales") {
+    return { categoria: "Tarjetas Postales", modo_color: "fullcolor", formato: "postal", caras: form.caras };
+  }
+  if (form.categoria_ui === "Folletos") {
+    return { categoria: "Folletos", modo_color: form.modo_color_folleto, formato: form.formato, caras: form.caras };
   }
   const byCaras = inferFromCaras(form.caras);
   return {
@@ -177,11 +228,15 @@ export default function CotizadorBajadasV2() {
   const inferred = useMemo(() => inferQuoteContext(form), [form]);
   const isAutoadhesivas = inferred.categoria === "Bajadas Autoadhesivas";
   const isKraft = inferred.categoria === "Bajadas Kraft";
+  const isTarjetas = inferred.categoria === "Tarjetas Personales";
+  const isPostales = inferred.categoria === "Tarjetas Postales";
+  const isFolletos = inferred.categoria === "Folletos";
+  const isMatrixProduct = isTarjetas || isPostales || isFolletos;
   const formatoDataSource = useMemo(() => {
-    if (isKraft) return form.formato;
+    if (isKraft || isTarjetas || isPostales || isFolletos) return form.formato;
     if (form.formato === "XA3") return "A3+";
     return form.formato;
-  }, [form.formato, isKraft]);
+  }, [form.formato, isKraft, isTarjetas, isPostales, isFolletos]);
 
   const validRows = useMemo(
     () =>
@@ -193,12 +248,15 @@ export default function CotizadorBajadasV2() {
   const formatoOptions = useMemo(() => uniqueSorted(validRows.map((r) => r.formato)), [validRows]);
   const effectiveFormatoOptions = useMemo(() => {
     if (isKraft) return KRAFT_FORMATOS;
+    if (isTarjetas) return TARJETAS_FORMATOS;
+    if (isPostales) return POSTALES_FORMATOS;
+    if (isFolletos) return FOLLETOS_FORMATOS;
     if (isAutoadhesivas) return AUTOADH_FORMATOS;
     if (formatoOptions.includes("A3+") && !formatoOptions.includes("XA3")) {
       return uniqueSorted([...formatoOptions, "XA3"]);
     }
     return formatoOptions;
-  }, [isAutoadhesivas, formatoOptions]);
+  }, [isAutoadhesivas, isKraft, isTarjetas, isPostales, isFolletos, formatoOptions]);
   const tipoPapelOptions = useMemo(
     () => uniqueSorted(validRows.filter((r) => r.formato === formatoDataSource).map((r) => r.tipo_papel)),
     [validRows, formatoDataSource]
@@ -218,6 +276,9 @@ export default function CotizadorBajadasV2() {
   );
   const cantidadOptions = useMemo(() => {
     if (isKraft) return KRAFT_RANGOS;
+    if (isTarjetas) return TARJETAS_CANTIDADES;
+    if (isPostales) return POSTALES_CANTIDADES;
+    if (isFolletos) return FOLLETOS_CANTIDADES;
     if (isAutoadhesivas) return AUTOADH_RANGOS;
     return uniqueSorted(
       validRows
@@ -230,7 +291,7 @@ export default function CotizadorBajadasV2() {
         )
         .map((r) => r.cantidad_rango)
     );
-  }, [isKraft, isAutoadhesivas, validRows, formatoDataSource, form.tipo_papel, form.material, form.gramaje]);
+  }, [isKraft, isTarjetas, isPostales, isFolletos, isAutoadhesivas, validRows, formatoDataSource, form.tipo_papel, form.material, form.gramaje]);
   const cantidadUnidades = useMemo(() => Number(form.cantidad_unidades), [form.cantidad_unidades]);
   const derivedRange = useMemo(() => deriveRangeFromQuantity(cantidadUnidades, cantidadOptions), [cantidadUnidades, cantidadOptions]);
 
@@ -417,6 +478,41 @@ export default function CotizadorBajadasV2() {
         if (!KRAFT_GRAMAJES.includes(next.gramaje)) next.gramaje = KRAFT_GRAMAJES[0];
         return next;
       }
+      if (next.categoria_ui === "Tarjetas Personales 9x5") {
+        next.formato = "9x5";
+        if (!TARJETAS_CARAS.includes(next.caras)) next.caras = "4/0";
+        next.tipo_papel = TARJETAS_PAPEL;
+        next.material = TARJETAS_PAPEL;
+        next.gramaje = TARJETAS_GRAMAJE;
+        if (!TARJETAS_CANTIDADES.includes(String(next.cantidad_unidades))) next.cantidad_unidades = "100";
+        if (!TARJETAS_TERMINACIONES.some((t) => t.value === next.terminacion_tarjetas)) next.terminacion_tarjetas = "sin_laminar";
+        next.adicional_laminado = "sin_adicional";
+        return next;
+      }
+      if (next.categoria_ui === "Tarjetas Postales") {
+        next.formato = "postal";
+        if (!POSTALES_CARAS.includes(next.caras)) next.caras = "4/0";
+        next.tipo_papel = POSTALES_PAPEL;
+        next.material = POSTALES_PAPEL;
+        next.gramaje = POSTALES_GRAMAJE;
+        if (!POSTALES_CANTIDADES.includes(String(next.cantidad_unidades))) next.cantidad_unidades = "100";
+        if (!POSTALES_TERMINACIONES.some((t) => t.value === next.terminacion_tarjetas)) next.terminacion_tarjetas = "sin_laminar";
+        next.adicional_laminado = "sin_adicional";
+        return next;
+      }
+      if (next.categoria_ui === "Folletos") {
+        if (!FOLLETOS_FORMATOS.includes(next.formato)) next.formato = FOLLETOS_FORMATOS[0];
+        if (!FOLLETOS_CANTIDADES.includes(String(next.cantidad_unidades))) next.cantidad_unidades = "100";
+        if (!FOLLETOS_MODO_COLOR.includes(next.modo_color_folleto)) next.modo_color_folleto = "fullcolor";
+        if (!FOLLETOS_PAPELES.find((p) => p.papel === next.papel_folleto)) next.papel_folleto = FOLLETOS_PAPELES[0].papel;
+        next.tipo_papel = next.papel_folleto;
+        next.material = next.papel_folleto;
+        next.gramaje = FOLLETOS_PAPELES.find((p) => p.papel === next.papel_folleto)?.gramaje || "150g";
+        const validCaras = next.modo_color_folleto === "fullcolor" ? ["4/0", "4/4"] : ["1/0", "1/1"];
+        if (!validCaras.includes(next.caras)) next.caras = validCaras[0];
+        next.adicional_laminado = "sin_adicional";
+        return next;
+      }
       if (!effectiveFormatoOptions.includes(next.formato)) next.formato = effectiveFormatoOptions[0] || "";
       return next;
     });
@@ -425,7 +521,12 @@ export default function CotizadorBajadasV2() {
   useEffect(() => {
     setForm((prev) => {
       const next = { ...prev };
-      if (next.categoria_ui === "Bajadas Autoadhesivas") {
+      if (
+        next.categoria_ui === "Bajadas Autoadhesivas" ||
+        next.categoria_ui === "Tarjetas Personales 9x5" ||
+        next.categoria_ui === "Tarjetas Postales" ||
+        next.categoria_ui === "Folletos"
+      ) {
         return next;
       }
       if (next.categoria_ui === "Bajadas Kraft") {
@@ -441,12 +542,32 @@ export default function CotizadorBajadasV2() {
     });
   }, [tipoPapelOptions, materialOptions, gramajeOptions]);
 
+  useEffect(() => {
+    if (!isFolletos) return;
+    setForm((prev) => {
+      const next = { ...prev };
+      const paper = FOLLETOS_PAPELES.find((p) => p.papel === next.papel_folleto) || FOLLETOS_PAPELES[0];
+      next.tipo_papel = paper.papel;
+      next.material = paper.papel;
+      next.gramaje = paper.gramaje;
+      const allowedCaras = next.modo_color_folleto === "fullcolor" ? ["4/0", "4/4"] : ["1/0", "1/1"];
+      if (!allowedCaras.includes(next.caras)) next.caras = allowedCaras[0];
+      return next;
+    });
+  }, [isFolletos, form.papel_folleto, form.modo_color_folleto]);
+
   const missingFields = useMemo(() => {
     const required = isAutoadhesivas
       ? ["urgencia", "columna_precio"]
+      : isTarjetas
+      ? ["formato", "tipo_papel", "material", "gramaje", "caras", "urgencia", "terminacion_tarjetas"]
+      : isPostales
+      ? ["formato", "tipo_papel", "material", "gramaje", "caras", "urgencia", "terminacion_tarjetas"]
+      : isFolletos
+      ? ["formato", "tipo_papel", "material", "gramaje", "caras", "urgencia", "modo_color_folleto"]
       : ["formato", "tipo_papel", "material", "gramaje", "caras", "urgencia"];
     return required.filter((field) => !String(form[field] ?? "").trim());
-  }, [form, isAutoadhesivas]);
+  }, [form, isAutoadhesivas, isTarjetas, isPostales, isFolletos]);
 
   const updateField = (field) => (event) => {
     setCopyStatus("");
@@ -499,7 +620,20 @@ export default function CotizadorBajadasV2() {
   };
 
   const handleClear = () => {
-    setForm((prev) => ({ ...prev, cantidad_unidades: "1", urgencia: "normal", adicional_laminado: "sin_adicional" }));
+    setForm((prev) => ({
+      ...prev,
+      cantidad_unidades:
+        prev.categoria_ui === "Tarjetas Personales 9x5" ||
+        prev.categoria_ui === "Tarjetas Postales" ||
+        prev.categoria_ui === "Folletos"
+          ? "100"
+          : "1",
+      urgencia: "normal",
+      adicional_laminado: "sin_adicional",
+      terminacion_tarjetas: "sin_laminar",
+      papel_folleto: "150g Ilustracion",
+      modo_color_folleto: "fullcolor",
+    }));
     setResult(null);
     setLastPayload(null);
     setError("");
@@ -515,7 +649,7 @@ export default function CotizadorBajadasV2() {
       `Impresión: ${form.caras}`,
       `Papel: ${form.tipo_papel} / ${form.material} / ${form.gramaje}`,
       `Cantidad: ${result.cantidad_unidades ?? form.cantidad_unidades}`,
-      `Rango aplicado: ${result.cantidad_rango_aplicado ?? derivedRange ?? "-"}`,
+      `${isMatrixProduct ? "Cantidad de matriz" : "Rango aplicado"}: ${isMatrixProduct ? String(result.cantidad_unidades ?? form.cantidad_unidades ?? "-") : (result.cantidad_rango_aplicado ?? derivedRange ?? "-")}`,
       `Adicional: ${result.adicional_laminado ?? form.adicional_laminado ?? "sin_adicional"}`,
       `Adicional unitario: ${formatMoney(result.adicional_unitario_sin_iva ?? 0)}`,
       `Precio unitario con adicional: ${formatMoney(result.precio_unitario_con_adicional_sin_iva ?? result.precio_unitario_sin_iva ?? result.precio_sin_iva)}`,
@@ -544,34 +678,96 @@ export default function CotizadorBajadasV2() {
       setError("Cantidad inválida. Ingresá un entero mayor o igual a 1.");
       return;
     }
-    if (!derivedRange) {
+    if (!isMatrixProduct && !derivedRange) {
       setError("La cantidad ingresada no entra en ningún rango disponible para esta combinación.");
       return;
     }
+    if (isTarjetas && !TARJETAS_CANTIDADES.includes(String(cantidadUnidades))) {
+      setError("Tarjetas 9x5 solo permite cantidades: 100, 200, 300, 500 o 1000.");
+      return;
+    }
+    if (isPostales && !POSTALES_CANTIDADES.includes(String(cantidadUnidades))) {
+      setError("Tarjetas Postales solo permite cantidades: 100, 200, 300, 500 o 1000.");
+      return;
+    }
+    if (isFolletos && !FOLLETOS_CANTIDADES.includes(String(cantidadUnidades))) {
+      setError("Folletos solo permite cantidades: 100, 200, 300, 500 o 1000.");
+      return;
+    }
 
-    const payload = {
-      categoria: inferred.categoria,
-      modo_color: inferred.modo_color,
-      formato: inferred.formato,
-      tipo_papel: isAutoadhesivas ? form.columna_precio : (isKraft ? KRAFT_TIPO_PAPEL : form.tipo_papel),
-      material: isAutoadhesivas ? (form.columna_precio === "especial" ? "OPP blanco" : "Sticker") : (isKraft ? KRAFT_MATERIAL : form.material),
-      gramaje: isAutoadhesivas ? "N/A" : (isKraft ? form.gramaje : form.gramaje),
-      cantidad_unidades: cantidadUnidades,
-      cantidad_rango: derivedRange,
-      caras: inferred.caras,
-      urgencia: form.urgencia,
-      adicional_laminado: form.adicional_laminado || "sin_adicional",
-      tipo_producto: isAutoadhesivas ? "autoadhesiva" : undefined,
-      columna_precio: isAutoadhesivas ? form.columna_precio : undefined,
-    };
+    const payload = isTarjetas
+      ? {
+          categoria: "Tarjetas Personales",
+          producto: "9x5",
+          formato: "9x5",
+          papel: TARJETAS_PAPEL,
+          gramaje: TARJETAS_GRAMAJE,
+          terminacion: form.terminacion_tarjetas,
+          caras: inferred.caras,
+          cantidad_unidades: cantidadUnidades,
+          urgencia: form.urgencia,
+        }
+      : isPostales
+      ? {
+          categoria: "Tarjetas Postales",
+          producto: "postal",
+          formato: "postal",
+          papel: POSTALES_PAPEL,
+          gramaje: POSTALES_GRAMAJE,
+          terminacion: form.terminacion_tarjetas,
+          caras: inferred.caras,
+          cantidad_unidades: cantidadUnidades,
+          urgencia: form.urgencia,
+        }
+      : isFolletos
+      ? {
+          categoria: "Folletos",
+          producto: "folleto",
+          formato: form.formato,
+          papel: form.papel_folleto,
+          gramaje: FOLLETOS_PAPELES.find((p) => p.papel === form.papel_folleto)?.gramaje || "150g",
+          modo_color: form.modo_color_folleto,
+          caras: inferred.caras,
+          cantidad_unidades: cantidadUnidades,
+          urgencia: form.urgencia,
+        }
+      : {
+          categoria: inferred.categoria,
+          modo_color: inferred.modo_color,
+          formato: inferred.formato,
+          tipo_papel: isAutoadhesivas ? form.columna_precio : (isKraft ? KRAFT_TIPO_PAPEL : form.tipo_papel),
+          material: isAutoadhesivas ? (form.columna_precio === "especial" ? "OPP blanco" : "Sticker") : (isKraft ? KRAFT_MATERIAL : form.material),
+          gramaje: isAutoadhesivas ? "N/A" : (isKraft ? form.gramaje : form.gramaje),
+          cantidad_unidades: cantidadUnidades,
+          cantidad_rango: derivedRange,
+          caras: inferred.caras,
+          urgencia: form.urgencia,
+          adicional_laminado: form.adicional_laminado || "sin_adicional",
+          tipo_producto: isAutoadhesivas ? "autoadhesiva" : undefined,
+          columna_precio: isAutoadhesivas ? form.columna_precio : undefined,
+        };
 
     setLoading(true);
     try {
-      const response = await cotizarBajadaV2(payload);
+      const response = isTarjetas
+        ? await cotizarTarjetas9x5(payload)
+        : isPostales
+        ? await cotizarTarjetasPostales(payload)
+        : isFolletos
+        ? await cotizarFolletos(payload)
+        : await cotizarBajadaV2(payload);
       setResult(response);
       setLastPayload(payload);
     } catch (err) {
-      if (err.code === "combinacion_no_encontrada") {
+      if (err.code === "cantidad_fuera_de_matriz") {
+        setError("Cantidad fuera de matriz para este producto.");
+      } else if (err.code === "terminacion_no_soportada") {
+        setError("Terminación no soportada.");
+      } else if (err.code === "formato_no_soportado") {
+        setError("Formato no soportado para Folletos.");
+      } else if (err.code === "caras_no_compatibles") {
+        setError("Caras incompatibles con modo color.");
+      } else if (err.code === "combinacion_no_encontrada") {
         setError("La combinación seleccionada no existe en la tabla de Bajadas v2. Revisá formato, papel, gramaje y rango.");
       } else if (err.code === "urgencia_invalida") {
         setError("Urgencia inválida. Revisá el campo Urgencia.");
@@ -600,7 +796,7 @@ export default function CotizadorBajadasV2() {
       <section className="card result-card">
         <div className="card-head"><h3>Árbol del precio</h3><span>Último cálculo</span></div>
         <div className="tree-grid">
-          <details open><summary>Entrada del usuario</summary><ul><li>Formato: {lastPayload.formato}</li><li>Impresión: {lastPayload.caras}</li><li>Tipo papel: {lastPayload.tipo_papel}</li><li>Tipo autoadhesivo: {lastPayload.columna_precio ?? "-"}</li><li>Material: {lastPayload.material}</li><li>Gramaje: {lastPayload.gramaje}</li><li>Cantidad: {lastPayload.cantidad_unidades}</li><li>Urgencia: {lastPayload.urgencia}</li></ul></details>
+          <details open><summary>Entrada del usuario</summary><ul><li>Formato: {lastPayload.formato}</li><li>Impresión: {lastPayload.caras}</li><li>Tipo papel: {lastPayload.tipo_papel ?? lastPayload.papel ?? "-"}</li><li>Tipo autoadhesivo: {lastPayload.columna_precio ?? "-"}</li><li>Terminación: {lastPayload.terminacion ?? "-"}</li><li>Material: {lastPayload.material ?? lastPayload.papel ?? "-"}</li><li>Gramaje: {lastPayload.gramaje}</li><li>Cantidad: {lastPayload.cantidad_unidades}</li><li>Urgencia: {lastPayload.urgencia}</li></ul></details>
           <details open><summary>Rango aplicado</summary><ul><li>{result.cantidad_rango_aplicado}</li></ul></details>
           <details open><summary>Precio unitario</summary><ul><li>Sin IVA: {formatMoney(result.precio_unitario_sin_iva)}</li><li>Con urgencia: {formatMoney(result.precio_unitario_con_urgencia)}</li></ul></details>
           <details open><summary>Adicional laminado/laca</summary><ul><li>selección: {result.adicional_laminado ?? "sin_adicional"}</li><li>adicional_unitario_sin_iva: {formatMoney(result.adicional_unitario_sin_iva ?? 0)}</li><li>regla_adicional_aplicada: {result.regla_adicional_aplicada ?? "-"}</li><li>fuente_adicional: {result.fuente_adicional ?? "-"}</li><li>rango_aplicado: {result.trazabilidad?.adicional_laminado?.rango_aplicado ?? "-"}</li><li>nota: Laca / laminado se suma antes de urgencia.</li><li>no_combinable: true</li></ul></details>
@@ -831,7 +1027,7 @@ export default function CotizadorBajadasV2() {
         <div className="card-head"><h3>1. Configura tu impresión</h3><span>Enter = calcular</span></div>
         <div className="form-grid compact-grid">
           <label><span>Categoría</span><select data-testid="categoria-select" value={form.categoria_ui} onChange={updateField("categoria_ui")}>{CATEGORIAS.map((v) => <option key={v} value={v}>{v}</option>)}</select></label>
-          {!isAutoadhesivas ? (
+          {!isAutoadhesivas && !isTarjetas && !isPostales && !isFolletos ? (
             <>
               <label><span>Impresión</span><div className="caras-row">{CARAS.map((cara) => <button key={cara} data-testid={`print-option-${cara.replace("/", "-")}`} type="button" className={form.caras === cara ? "pill active" : "pill"} onClick={() => setForm((prev) => ({ ...prev, caras: cara }))}>{cara}</button>)}</div></label>
               <label><span>Categoría (automática)</span><input value={inferred.categoria} readOnly /></label>
@@ -840,20 +1036,49 @@ export default function CotizadorBajadasV2() {
               <label><span>Material</span><select value={form.material} onChange={updateField("material")} disabled={isKraft}>{(isKraft ? [KRAFT_MATERIAL] : materialOptions).map((v) => <option key={v} value={v}>{v}</option>)}</select></label>
               <label><span>Gramaje</span><select value={form.gramaje} onChange={updateField("gramaje")}>{(isKraft ? KRAFT_GRAMAJES : gramajeOptions).map((v) => <option key={v} value={v}>{v}</option>)}</select></label>
             </>
-          ) : (
+          ) : isAutoadhesivas ? (
             <>
               <label><span>Medida / formato</span><select data-testid="formato-select" value={form.formato} onChange={updateField("formato")}>{AUTOADH_FORMATOS.map((v) => <option key={v} value={v}>{v}</option>)}</select></label>
               <label><span>Tipo</span><select data-testid="autoadh-tipo-select" value={form.columna_precio} onChange={updateField("columna_precio")}>{AUTOADH_COLUMNAS.map((v) => <option key={v} value={v}>{v}</option>)}</select></label>
               <label><span>Modo color</span><input value="fullcolor" readOnly /></label>
               <label><span>Impresión</span><input value="4/0" readOnly /></label>
             </>
+          ) : isTarjetas ? (
+            <>
+              <label><span>Producto</span><input value="Tarjetas Personales 9x5" readOnly /></label>
+              <label><span>Medida / formato</span><select data-testid="formato-select" value={form.formato} onChange={updateField("formato")}>{TARJETAS_FORMATOS.map((v) => <option key={v} value={v}>{v}</option>)}</select></label>
+              <label><span>Papel</span><input value={TARJETAS_PAPEL} readOnly /></label>
+              <label><span>Gramaje</span><input value={TARJETAS_GRAMAJE} readOnly /></label>
+              <label><span>Impresión</span><div className="caras-row">{TARJETAS_CARAS.map((cara) => <button key={cara} data-testid={`print-option-${cara.replace("/", "-")}`} type="button" className={form.caras === cara ? "pill active" : "pill"} onClick={() => setForm((prev) => ({ ...prev, caras: cara }))}>{cara}</button>)}</div></label>
+              <label><span>Terminación</span><select value={form.terminacion_tarjetas} onChange={updateField("terminacion_tarjetas")}>{TARJETAS_TERMINACIONES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}</select></label>
+            </>
+          ) : isPostales ? (
+            <>
+              <label><span>Producto</span><input value="Tarjetas Postales" readOnly /></label>
+              <label><span>Formato</span><select data-testid="formato-select" value={form.formato} onChange={updateField("formato")}>{POSTALES_FORMATOS.map((v) => <option key={v} value={v}>{v}</option>)}</select></label>
+              <label><span>Papel</span><input value={POSTALES_PAPEL} readOnly /></label>
+              <label><span>Gramaje</span><input value={POSTALES_GRAMAJE} readOnly /></label>
+              <label><span>Impresión</span><div className="caras-row">{POSTALES_CARAS.map((cara) => <button key={cara} data-testid={`print-option-${cara.replace("/", "-")}`} type="button" className={form.caras === cara ? "pill active" : "pill"} onClick={() => setForm((prev) => ({ ...prev, caras: cara }))}>{cara}</button>)}</div></label>
+              <label><span>Terminación</span><select value={form.terminacion_tarjetas} onChange={updateField("terminacion_tarjetas")}>{POSTALES_TERMINACIONES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}</select></label>
+            </>
+          ) : isFolletos ? (
+            <>
+              <label><span>Producto</span><input value="Folletos" readOnly /></label>
+              <label><span>Formato</span><select data-testid="formato-select" value={form.formato} onChange={updateField("formato")}>{FOLLETOS_FORMATOS.map((v) => <option key={v} value={v}>{v}</option>)}</select></label>
+              <label><span>Papel</span><select value={form.papel_folleto} onChange={updateField("papel_folleto")}>{FOLLETOS_PAPELES.map((p) => <option key={p.papel} value={p.papel}>{p.papel}</option>)}</select></label>
+              <label><span>Modo color</span><select value={form.modo_color_folleto} onChange={updateField("modo_color_folleto")}>{FOLLETOS_MODO_COLOR.map((m) => <option key={m} value={m}>{m}</option>)}</select></label>
+              <label><span>Impresión</span><div className="caras-row">{(form.modo_color_folleto === "fullcolor" ? ["4/0", "4/4"] : ["1/0", "1/1"]).map((cara) => <button key={cara} data-testid={`print-option-${cara.replace("/", "-")}`} type="button" className={form.caras === cara ? "pill active" : "pill"} onClick={() => setForm((prev) => ({ ...prev, caras: cara }))}>{cara}</button>)}</div></label>
+              <label><span>Gramaje</span><input value={FOLLETOS_PAPELES.find((p) => p.papel === form.papel_folleto)?.gramaje || "-"} readOnly /></label>
+            </>
+          ) : (
+            <></>
           )}
-          <label><span>Cantidad</span><input type="number" min={1} step={1} placeholder="Ejemplo: 30" value={form.cantidad_unidades} onChange={updateField("cantidad_unidades")} /><small className="range-hint">Rango aplicado: {derivedRange ?? "Sin rango disponible"}</small></label>
+          <label><span>Cantidad</span><input type="number" min={1} step={1} placeholder={isMatrixProduct ? "100, 200, 300, 500, 1000" : "Ejemplo: 30"} value={form.cantidad_unidades} onChange={updateField("cantidad_unidades")} /><small className="range-hint">{isMatrixProduct ? `Cantidad de matriz: ${cantidadUnidades || "-"}` : `Rango aplicado: ${derivedRange ?? "Sin rango disponible"}`}</small></label>
           <label><span>Urgencia</span><select value={form.urgencia} onChange={updateField("urgencia")}>{URGENCIAS.map((v) => <option key={v} value={v}>{v}</option>)}</select></label>
-          <label><span>Adicional</span><select value={form.adicional_laminado} onChange={updateField("adicional_laminado")}>{ADICIONALES.map((a) => <option key={a.value} value={a.value}>{a.label}</option>)}</select></label>
+          {!isTarjetas && !isPostales && !isFolletos ? <label><span>Adicional</span><select value={form.adicional_laminado} onChange={updateField("adicional_laminado")}>{ADICIONALES.map((a) => <option key={a.value} value={a.value}>{a.label}</option>)}</select></label> : null}
         </div>
         {isAutoadhesivas ? <div className="warning-box compact-note">Tinta blanca y laca UV no están incluidas en esta etapa.</div> : null}
-        <div className="info-box compact-note">Laca / laminado se suma antes de urgencia.</div>
+        {isTarjetas || isPostales || isFolletos ? <div className="info-box compact-note">Este producto usa precio total por paquete/cantidad según PDF vigente.</div> : <div className="info-box compact-note">Laca / laminado se suma antes de urgencia.</div>}
         {error ? <div className="error-box">{error}</div> : null}
         {copyStatus ? <div className="info-box" data-testid="copy-status">{copyStatus}</div> : null}
         <div className="actions-row compact-actions"><button type="submit" className="calculate-btn" disabled={loading}>{loading ? "Calculando..." : "Calcular"}</button><button type="button" className="secondary-btn compact-clear-btn" data-testid="clear-button" onClick={handleClear}>Limpiar</button></div>
@@ -875,7 +1100,11 @@ export default function CotizadorBajadasV2() {
               <div><strong>Adicional unitario sin IVA</strong><span>{formatMoney(result.adicional_unitario_sin_iva ?? 0)}</span></div>
               <div><strong>Precio unitario con adicional</strong><span>{formatMoney(result.precio_unitario_con_adicional_sin_iva ?? result.precio_unitario_sin_iva ?? result.precio_sin_iva)}</span></div>
               <div><strong>Cantidad ingresada</strong><span>{result.cantidad_unidades ?? form.cantidad_unidades}</span></div>
-              <div><strong>Rango aplicado</strong><span>{result.cantidad_rango_aplicado ?? derivedRange ?? "-"}</span></div>
+              {isMatrixProduct ? (
+                <div><strong>Cantidad de matriz</strong><span>{result.cantidad_unidades ?? form.cantidad_unidades}</span></div>
+              ) : (
+                <div><strong>Rango aplicado</strong><span>{result.cantidad_rango_aplicado ?? derivedRange ?? "-"}</span></div>
+              )}
               <div><strong>Regla aplicada</strong><span>{result.regla_aplicada}</span></div>
               <div><strong>Fuente</strong><span>{result.fuente}</span></div>
               <div><strong>Regla adicional aplicada</strong><span>{result.regla_adicional_aplicada ?? "-"}</span></div>
