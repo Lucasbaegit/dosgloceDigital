@@ -357,3 +357,42 @@ class ImanesCorteRectoQuoteRequestSchema:
             cantidad_unidades=qty,
             urgencia=str(payload["urgencia"]).strip().lower(),
         )
+
+
+@dataclass(frozen=True)
+class StickersCircularesQuoteRequestSchema:
+    categoria: str
+    producto: str
+    material: str
+    formato: str
+    terminacion: str
+    cantidad_unidades: int
+    urgencia: str
+    modo_precio: str | None
+    variables_override: dict[str, Any] | None
+
+    @classmethod
+    def from_payload(cls, payload: dict[str, Any]) -> "StickersCircularesQuoteRequestSchema":
+        required = ["categoria", "producto", "material", "formato", "terminacion", "cantidad_unidades", "urgencia"]
+        missing = [k for k in required if k not in payload or payload[k] in (None, "")]
+        if missing:
+            raise ApiValidationError(f"Campos faltantes: {', '.join(missing)}")
+        try:
+            qty = int(payload["cantidad_unidades"])
+        except (TypeError, ValueError) as exc:
+            raise ApiValidationError("cantidad_unidades debe ser entero.") from exc
+        return cls(
+            categoria=str(payload["categoria"]).strip(),
+            producto=str(payload["producto"]).strip(),
+            material=str(payload["material"]).strip(),
+            formato=str(payload["formato"]).strip(),
+            terminacion=str(payload["terminacion"]).strip().lower(),
+            cantidad_unidades=qty,
+            urgencia=str(payload["urgencia"]).strip().lower(),
+            modo_precio=(
+                None if payload.get("modo_precio") in (None, "") else str(payload.get("modo_precio")).strip().lower()
+            ),
+            variables_override=(
+                payload.get("variables_override") if isinstance(payload.get("variables_override"), dict) else None
+            ),
+        )

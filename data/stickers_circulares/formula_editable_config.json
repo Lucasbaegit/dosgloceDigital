@@ -1,0 +1,49 @@
+﻿{
+  "version": "stickers_circulares_formula_editable_v1",
+  "modo_precio_default": "formula_editable_calibrada",
+  "modos_soportados": ["formula_editable_calibrada", "pdf_fijo"],
+  "convencion_precio": "precio_total_por_paquete",
+  "variables": {
+    "material_base": {
+      "obra_ilustracion_90g": 14.0,
+      "fluo_kraft_marron": 15.5
+    },
+    "click_color_base": 3.0,
+    "laca_uv_factor": 1.176,
+    "corte_circular_factor": 1.0,
+    "coeficiente_tamano": {
+      "1cm": 0.78,
+      "2cm": 0.78,
+      "3cm": 0.71,
+      "4cm": 1.16,
+      "5cm": 1.42,
+      "6cm": 1.71,
+      "7cm": 2.03,
+      "8cm": 2.39,
+      "9cm": 2.78,
+      "10cm": 3.19,
+      "11cm": 3.63,
+      "12-15cm": 4.10,
+      "16-17cm": 4.60,
+      "18-20cm": 5.13
+    },
+    "coeficiente_cantidad": {
+      "100": 100.0,
+      "200": 171.0,
+      "300": 245.0,
+      "500": 390.0,
+      "1000": 749.0
+    },
+    "multiplicador_comercial": 1.0
+  },
+  "pendientes": [
+    "desglose exacto de merma por tamaño",
+    "incidencia exacta de troquelado circular por diámetro",
+    "normalización de costo de click por sustrato"
+  ],
+  "fuente_excel": {
+    "hoja": "circulares",
+    "referencias": ["C8:K12", "C16:K20", "P23:Y37"],
+    "nota": "Formula histórica reconstruida y calibrada contra PDF hoja 8"
+  }
+}

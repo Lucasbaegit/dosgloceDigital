@@ -370,3 +370,21 @@ test("imanes corte recto calcula totales de matriz PDF", async ({ page }) => {
   await page.getByRole("button", { name: "Calcular" }).click();
   await expect(page.getByTestId("result-panel")).toContainText("153.680");
 });
+
+test("stickers circulares calcula totales de matriz PDF", async ({ page }) => {
+  await page.goto("/", { waitUntil: "networkidle" });
+  await page.getByTestId("categoria-select").selectOption("Stickers Circulares");
+  await page.getByLabel("Material").selectOption("obra_ilustracion_90g");
+  await page.getByLabel("Formato / diámetro").selectOption("1cm");
+  await page.getByLabel("Terminación").selectOption("sin_laca_uv");
+  await page.getByLabel("Cantidad").fill("100");
+  await page.getByRole("button", { name: "Calcular" }).click();
+  await expect(page.getByTestId("result-panel")).toContainText("2.313");
+
+  await page.getByLabel("Material").selectOption("fluo_kraft_marron");
+  await page.getByLabel("Formato / diámetro").selectOption("18-20cm");
+  await page.getByLabel("Terminación").selectOption("con_laca_uv");
+  await page.getByLabel("Cantidad").fill("1000");
+  await page.getByRole("button", { name: "Calcular" }).click();
+  await expect(page.getByTestId("result-panel")).toContainText("481.291");
+});

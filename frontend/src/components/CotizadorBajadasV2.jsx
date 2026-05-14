@@ -4,6 +4,7 @@ import {
   cotizarBajadaV2,
   cotizarFolletos,
   cotizarImanesCorteRecto,
+  cotizarStickersCirculares,
   cotizarCarpetas,
   cotizarStickersCorteRecto,
   cotizarSobres,
@@ -46,6 +47,7 @@ const CATEGORIAS = [
   "Sobres",
   "Stickers Corte Recto",
   "Imanes Corte Recto",
+  "Stickers Circulares",
 ];
 const AUTOADH_COLUMNAS = ["papel", "especial"];
 const AUTOADH_FORMATOS = ["A3+", "XA3"];
@@ -107,6 +109,28 @@ const STICKERS_CANTIDADES = ["100", "200", "300", "500", "1000"];
 const IMANES_FORMATOS = ["6x4", "7x5", "9x5", "10x7"];
 const IMANES_TERMINACIONES = STICKERS_TERMINACIONES;
 const IMANES_CANTIDADES = ["100", "200", "300", "500", "1000"];
+const STICKERS_CIRCULARES_MATERIALES = [
+  { value: "obra_ilustracion_90g", label: "Papel obra/ilustración 90g" },
+  { value: "fluo_kraft_marron", label: "Papel flúo / Kraft marrón" },
+];
+const STICKERS_CIRCULARES_FORMATOS = [
+  "1cm",
+  "2cm",
+  "3cm",
+  "4cm",
+  "5cm",
+  "6cm",
+  "7cm",
+  "8cm",
+  "9cm",
+  "10cm",
+  "11cm",
+  "12-15cm",
+  "16-17cm",
+  "18-20cm",
+];
+const STICKERS_CIRCULARES_TERMINACIONES = STICKERS_TERMINACIONES;
+const STICKERS_CIRCULARES_CANTIDADES = ["100", "200", "300", "500", "1000"];
 const ADICIONALES = [
   { label: "Sin adicional", value: "sin_adicional" },
   { label: "Laca UV", value: "laca" },
@@ -132,6 +156,8 @@ const INITIAL_FORM = {
   tipo_sobre: "sobre_bolsa_a4_22_9x32_4",
   terminacion_stickers: "sin_laca_uv",
   terminacion_imanes: "sin_laca_uv",
+  material_stickers_circulares: "obra_ilustracion_90g",
+  terminacion_stickers_circulares: "sin_laca_uv",
 };
 
 function inferFromCaras(caras) {
@@ -185,6 +211,9 @@ function inferQuoteContext(form) {
   }
   if (form.categoria_ui === "Imanes Corte Recto") {
     return { categoria: "Imanes Corte Recto", modo_color: "fullcolor", formato: form.formato, caras: "4/0" };
+  }
+  if (form.categoria_ui === "Stickers Circulares") {
+    return { categoria: "Stickers Circulares", modo_color: "fullcolor", formato: form.formato, caras: "4/0" };
   }
   const byCaras = inferFromCaras(form.caras);
   return {
@@ -288,12 +317,13 @@ export default function CotizadorBajadasV2() {
   const isSobres = inferred.categoria === "Sobres";
   const isStickers = inferred.categoria === "Stickers Corte Recto";
   const isImanes = inferred.categoria === "Imanes Corte Recto";
-  const isMatrixProduct = isTarjetas || isPostales || isFolletos || isSobres || isStickers || isImanes;
+  const isStickersCirculares = inferred.categoria === "Stickers Circulares";
+  const isMatrixProduct = isTarjetas || isPostales || isFolletos || isSobres || isStickers || isImanes || isStickersCirculares;
   const formatoDataSource = useMemo(() => {
-    if (isKraft || isTarjetas || isPostales || isFolletos || isCarpetas || isSobres || isStickers || isImanes) return form.formato;
+    if (isKraft || isTarjetas || isPostales || isFolletos || isCarpetas || isSobres || isStickers || isImanes || isStickersCirculares) return form.formato;
     if (form.formato === "XA3") return "A3+";
     return form.formato;
-  }, [form.formato, isKraft, isTarjetas, isPostales, isFolletos]);
+  }, [form.formato, isKraft, isTarjetas, isPostales, isFolletos, isCarpetas, isSobres, isStickers, isImanes, isStickersCirculares]);
 
   const validRows = useMemo(
     () =>
@@ -312,12 +342,13 @@ export default function CotizadorBajadasV2() {
     if (isSobres) return ["sobre"];
     if (isStickers) return STICKERS_FORMATOS;
     if (isImanes) return IMANES_FORMATOS;
+    if (isStickersCirculares) return STICKERS_CIRCULARES_FORMATOS;
     if (isAutoadhesivas) return AUTOADH_FORMATOS;
     if (formatoOptions.includes("A3+") && !formatoOptions.includes("XA3")) {
       return uniqueSorted([...formatoOptions, "XA3"]);
     }
     return formatoOptions;
-  }, [isAutoadhesivas, isKraft, isTarjetas, isPostales, isFolletos, isCarpetas, isSobres, isStickers, isImanes, formatoOptions]);
+  }, [isAutoadhesivas, isKraft, isTarjetas, isPostales, isFolletos, isCarpetas, isSobres, isStickers, isImanes, isStickersCirculares, formatoOptions]);
   const tipoPapelOptions = useMemo(
     () => uniqueSorted(validRows.filter((r) => r.formato === formatoDataSource).map((r) => r.tipo_papel)),
     [validRows, formatoDataSource]
@@ -344,6 +375,7 @@ export default function CotizadorBajadasV2() {
     if (isSobres) return SOBRES_CANTIDADES;
     if (isStickers) return STICKERS_CANTIDADES;
     if (isImanes) return IMANES_CANTIDADES;
+    if (isStickersCirculares) return STICKERS_CIRCULARES_CANTIDADES;
     if (isAutoadhesivas) return AUTOADH_RANGOS;
     return uniqueSorted(
       validRows
@@ -356,7 +388,7 @@ export default function CotizadorBajadasV2() {
         )
         .map((r) => r.cantidad_rango)
     );
-  }, [isKraft, isTarjetas, isPostales, isFolletos, isCarpetas, isSobres, isStickers, isImanes, isAutoadhesivas, validRows, formatoDataSource, form.tipo_papel, form.material, form.gramaje]);
+  }, [isKraft, isTarjetas, isPostales, isFolletos, isCarpetas, isSobres, isStickers, isImanes, isStickersCirculares, isAutoadhesivas, validRows, formatoDataSource, form.tipo_papel, form.material, form.gramaje]);
   const cantidadUnidades = useMemo(() => Number(form.cantidad_unidades), [form.cantidad_unidades]);
   const derivedRange = useMemo(() => deriveRangeFromQuantity(cantidadUnidades, cantidadOptions), [cantidadUnidades, cantidadOptions]);
 
@@ -622,6 +654,18 @@ export default function CotizadorBajadasV2() {
         next.adicional_laminado = "sin_adicional";
         return next;
       }
+      if (next.categoria_ui === "Stickers Circulares") {
+        if (!STICKERS_CIRCULARES_FORMATOS.includes(next.formato)) next.formato = STICKERS_CIRCULARES_FORMATOS[0];
+        next.caras = "4/0";
+        next.tipo_papel = "sticker_circular";
+        next.material = next.material_stickers_circulares || STICKERS_CIRCULARES_MATERIALES[0].value;
+        next.gramaje = "N/A";
+        if (!STICKERS_CIRCULARES_CANTIDADES.includes(String(next.cantidad_unidades))) next.cantidad_unidades = "100";
+        if (!STICKERS_CIRCULARES_TERMINACIONES.some((t) => t.value === next.terminacion_stickers_circulares)) next.terminacion_stickers_circulares = "sin_laca_uv";
+        if (!STICKERS_CIRCULARES_MATERIALES.some((m) => m.value === next.material_stickers_circulares)) next.material_stickers_circulares = STICKERS_CIRCULARES_MATERIALES[0].value;
+        next.adicional_laminado = "sin_adicional";
+        return next;
+      }
       if (!effectiveFormatoOptions.includes(next.formato)) next.formato = effectiveFormatoOptions[0] || "";
       return next;
     });
@@ -638,7 +682,8 @@ export default function CotizadorBajadasV2() {
         next.categoria_ui === "Carpetas" ||
         next.categoria_ui === "Sobres" ||
         next.categoria_ui === "Stickers Corte Recto" ||
-        next.categoria_ui === "Imanes Corte Recto"
+        next.categoria_ui === "Imanes Corte Recto" ||
+        next.categoria_ui === "Stickers Circulares"
       ) {
         return next;
       }
@@ -686,9 +731,11 @@ export default function CotizadorBajadasV2() {
       ? ["formato", "terminacion_stickers", "urgencia"]
       : isImanes
       ? ["formato", "tipo_papel", "material", "gramaje", "terminacion_imanes", "urgencia"]
+      : isStickersCirculares
+      ? ["formato", "material_stickers_circulares", "terminacion_stickers_circulares", "urgencia"]
       : ["formato", "tipo_papel", "material", "gramaje", "caras", "urgencia"];
     return required.filter((field) => !String(form[field] ?? "").trim());
-  }, [form, isAutoadhesivas, isTarjetas, isPostales, isFolletos, isCarpetas, isSobres, isStickers, isImanes]);
+  }, [form, isAutoadhesivas, isTarjetas, isPostales, isFolletos, isCarpetas, isSobres, isStickers, isImanes, isStickersCirculares]);
 
   const updateField = (field) => (event) => {
     setCopyStatus("");
@@ -749,7 +796,8 @@ export default function CotizadorBajadasV2() {
         prev.categoria_ui === "Folletos" ||
         prev.categoria_ui === "Sobres" ||
         prev.categoria_ui === "Stickers Corte Recto" ||
-        prev.categoria_ui === "Imanes Corte Recto"
+        prev.categoria_ui === "Imanes Corte Recto" ||
+        prev.categoria_ui === "Stickers Circulares"
           ? "100"
           : "1",
       urgencia: "normal",
@@ -758,6 +806,8 @@ export default function CotizadorBajadasV2() {
       terminacion_carpetas: "sin_laminar",
       terminacion_stickers: "sin_laca_uv",
       terminacion_imanes: "sin_laca_uv",
+      material_stickers_circulares: STICKERS_CIRCULARES_MATERIALES[0].value,
+      terminacion_stickers_circulares: "sin_laca_uv",
       solapa_impresa: false,
       tipo_sobre: SOBRES_TIPOS[0].value,
       papel_folleto: "150g Ilustracion",
@@ -837,6 +887,10 @@ export default function CotizadorBajadasV2() {
     }
     if (isImanes && !IMANES_CANTIDADES.includes(String(cantidadUnidades))) {
       setError("Imanes Corte Recto solo permite cantidades: 100, 200, 300, 500 o 1000.");
+      return;
+    }
+    if (isStickersCirculares && !STICKERS_CIRCULARES_CANTIDADES.includes(String(cantidadUnidades))) {
+      setError("Stickers Circulares solo permite cantidades: 100, 200, 300, 500 o 1000.");
       return;
     }
 
@@ -920,6 +974,16 @@ export default function CotizadorBajadasV2() {
           cantidad_unidades: cantidadUnidades,
           urgencia: form.urgencia,
         }
+      : isStickersCirculares
+      ? {
+          categoria: "Stickers Circulares",
+          producto: "sticker_circular",
+          material: form.material_stickers_circulares,
+          formato: form.formato,
+          terminacion: form.terminacion_stickers_circulares,
+          cantidad_unidades: cantidadUnidades,
+          urgencia: form.urgencia,
+        }
       : {
           categoria: inferred.categoria,
           modo_color: inferred.modo_color,
@@ -952,6 +1016,8 @@ export default function CotizadorBajadasV2() {
         ? await cotizarStickersCorteRecto(payload)
         : isImanes
         ? await cotizarImanesCorteRecto(payload)
+        : isStickersCirculares
+        ? await cotizarStickersCirculares(payload)
         : await cotizarBajadaV2(payload);
       setResult(response);
       setLastPayload(payload);
@@ -968,6 +1034,8 @@ export default function CotizadorBajadasV2() {
         setError("Caras no soportadas para este producto.");
       } else if (err.code === "tipo_sobre_no_soportado") {
         setError("Tipo de sobre no soportado.");
+      } else if (err.code === "material_no_soportado") {
+        setError("Material no soportado para Stickers Circulares.");
       } else if (err.code === "combinacion_no_encontrada") {
         setError("La combinación seleccionada no existe en la tabla de Bajadas v2. Revisá formato, papel, gramaje y rango.");
       } else if (err.code === "urgencia_invalida") {
@@ -1228,7 +1296,7 @@ export default function CotizadorBajadasV2() {
         <div className="card-head"><h3>1. Configura tu impresión</h3><span>Enter = calcular</span></div>
         <div className="form-grid compact-grid">
           <label><span>Categoría</span><select data-testid="categoria-select" value={form.categoria_ui} onChange={updateField("categoria_ui")}>{CATEGORIAS.map((v) => <option key={v} value={v}>{v}</option>)}</select></label>
-          {!isAutoadhesivas && !isTarjetas && !isPostales && !isFolletos && !isCarpetas && !isSobres && !isStickers && !isImanes ? (
+          {!isAutoadhesivas && !isTarjetas && !isPostales && !isFolletos && !isCarpetas && !isSobres && !isStickers && !isImanes && !isStickersCirculares ? (
             <>
               <label><span>Impresión</span><div className="caras-row">{CARAS.map((cara) => <button key={cara} data-testid={`print-option-${cara.replace("/", "-")}`} type="button" className={form.caras === cara ? "pill active" : "pill"} onClick={() => setForm((prev) => ({ ...prev, caras: cara }))}>{cara}</button>)}</div></label>
               <label><span>Categoría (automática)</span><input value={inferred.categoria} readOnly /></label>
@@ -1308,15 +1376,24 @@ export default function CotizadorBajadasV2() {
               <label><span>Papel</span><input value="300g Ilustracion" readOnly /></label>
               <label><span>Gramaje</span><input value="300g" readOnly /></label>
             </>
+          ) : isStickersCirculares ? (
+            <>
+              <label><span>Producto</span><input value="Stickers Circulares" readOnly /></label>
+              <label><span>Material</span><select value={form.material_stickers_circulares} onChange={updateField("material_stickers_circulares")}>{STICKERS_CIRCULARES_MATERIALES.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}</select></label>
+              <label><span>Formato / diámetro</span><select data-testid="formato-select" value={form.formato} onChange={updateField("formato")}>{STICKERS_CIRCULARES_FORMATOS.map((v) => <option key={v} value={v}>{v}</option>)}</select></label>
+              <label><span>Terminación</span><select value={form.terminacion_stickers_circulares} onChange={updateField("terminacion_stickers_circulares")}>{STICKERS_CIRCULARES_TERMINACIONES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}</select></label>
+              <label><span>Impresión</span><input value="4/0" readOnly /></label>
+              <label><span>Papel base</span><input value={form.material_stickers_circulares === "fluo_kraft_marron" ? "Papel flúo / Kraft marrón" : "Papel obra/ilustración 90g"} readOnly /></label>
+            </>
           ) : (
             <></>
           )}
           <label><span>Cantidad</span><input type="number" min={1} step={1} placeholder={isMatrixProduct ? "100, 200, 300, 500, 1000" : "Ejemplo: 30"} value={form.cantidad_unidades} onChange={updateField("cantidad_unidades")} /><small className="range-hint">{isMatrixProduct ? `Cantidad de matriz: ${cantidadUnidades || "-"}` : `Rango aplicado: ${derivedRange ?? "Sin rango disponible"}`}</small></label>
           <label><span>Urgencia</span><select value={form.urgencia} onChange={updateField("urgencia")}>{URGENCIAS.map((v) => <option key={v} value={v}>{v}</option>)}</select></label>
-          {!isTarjetas && !isPostales && !isFolletos && !isCarpetas && !isSobres && !isStickers && !isImanes ? <label><span>Adicional</span><select value={form.adicional_laminado} onChange={updateField("adicional_laminado")}>{ADICIONALES.map((a) => <option key={a.value} value={a.value}>{a.label}</option>)}</select></label> : null}
+          {!isTarjetas && !isPostales && !isFolletos && !isCarpetas && !isSobres && !isStickers && !isImanes && !isStickersCirculares ? <label><span>Adicional</span><select value={form.adicional_laminado} onChange={updateField("adicional_laminado")}>{ADICIONALES.map((a) => <option key={a.value} value={a.value}>{a.label}</option>)}</select></label> : null}
         </div>
         {isAutoadhesivas ? <div className="warning-box compact-note">Tinta blanca y laca UV no están incluidas en esta etapa.</div> : null}
-        {isTarjetas || isPostales || isFolletos || isStickers || isImanes ? <div className="info-box compact-note">Este producto usa precio total por paquete/cantidad según PDF vigente.</div> : <div className="info-box compact-note">Laca / laminado se suma antes de urgencia.</div>}
+        {isTarjetas || isPostales || isFolletos || isStickers || isImanes || isStickersCirculares ? <div className="info-box compact-note">Este producto usa precio total por paquete/cantidad según PDF vigente.</div> : <div className="info-box compact-note">Laca / laminado se suma antes de urgencia.</div>}
         {error ? <div className="error-box">{error}</div> : null}
         {copyStatus ? <div className="info-box" data-testid="copy-status">{copyStatus}</div> : null}
         <div className="actions-row compact-actions"><button type="submit" className="calculate-btn" disabled={loading}>{loading ? "Calculando..." : "Calcular"}</button><button type="button" className="secondary-btn compact-clear-btn" data-testid="clear-button" onClick={handleClear}>Limpiar</button></div>

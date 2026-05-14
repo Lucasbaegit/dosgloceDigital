@@ -79,6 +79,9 @@ class ApiHandler(BaseHTTPRequestHandler):
         if path == "/imanes-corte-recto/health":
             self._send_json(200, self.service.imanes_corte_recto_engine.health())
             return
+        if path == "/stickers-circulares/health":
+            self._send_json(200, self.service.stickers_circulares_engine.health())
+            return
         if path == "/bajadas-v2/config":
             status, payload = self.service.get_config()
             self._send_json(status, payload)
@@ -143,6 +146,7 @@ class ApiHandler(BaseHTTPRequestHandler):
             "/sobres/cotizar",
             "/stickers-corte-recto/cotizar",
             "/imanes-corte-recto/cotizar",
+            "/stickers-circulares/cotizar",
             "/bajadas-v2/config/update",
             "/bajadas-v2/config/restore",
             "/bajadas-v2/config/validate",
@@ -214,6 +218,8 @@ class ApiHandler(BaseHTTPRequestHandler):
             status, response = self.service.cotizar_stickers_corte_recto(payload)
         elif path == "/imanes-corte-recto/cotizar":
             status, response = self.service.cotizar_imanes_corte_recto(payload)
+        elif path == "/stickers-circulares/cotizar":
+            status, response = self.service.cotizar_stickers_circulares(payload)
         elif path == "/bajadas-v2/config/update":
             status, response = self.service.update_config(payload)
         elif path == "/bajadas-v2/config/validate":

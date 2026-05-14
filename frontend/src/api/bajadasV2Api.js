@@ -134,6 +134,22 @@ export async function cotizarImanesCorteRecto(payload) {
   return body;
 }
 
+export async function cotizarStickersCirculares(payload) {
+  const response = await fetch(`${API_BASE}/stickers-circulares/cotizar`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const error = new Error(body?.detail || "Error desconocido");
+    error.status = response.status;
+    error.code = body?.error || "api_error";
+    throw error;
+  }
+  return body;
+}
+
 export async function fetchBajadasMetrics() {
   const response = await fetch(`${API_BASE}/bajadas-v2/metrics`);
   if (!response.ok) {

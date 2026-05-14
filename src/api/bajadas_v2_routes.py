@@ -46,6 +46,10 @@ from imanes_corte_recto import ImanesCorteRectoPricingEngine, load_imanes_corte_
 from imanes_corte_recto.exceptions import PriceNotFoundError as ImanesCorteRectoPriceNotFoundError
 from imanes_corte_recto.exceptions import QuoteInputError as ImanesCorteRectoQuoteInputError
 from imanes_corte_recto.types import ImanesCorteRectoQuoteInput
+from stickers_circulares import StickersCircularesPricingEngine, load_stickers_circulares_bundle
+from stickers_circulares.exceptions import PriceNotFoundError as StickersCircularesPriceNotFoundError
+from stickers_circulares.exceptions import QuoteInputError as StickersCircularesQuoteInputError
+from stickers_circulares.types import StickersCircularesQuoteInput
 
 from .schemas import (
     ApiValidationError,
@@ -53,6 +57,7 @@ from .schemas import (
     FolletosQuoteRequestSchema,
     ImanesCorteRectoQuoteRequestSchema,
     QuoteRequestSchema,
+    StickersCircularesQuoteRequestSchema,
     SobresQuoteRequestSchema,
     StickersCorteRectoQuoteRequestSchema,
     Tarjetas9x5QuoteRequestSchema,
@@ -73,6 +78,10 @@ class BajadasV2ApiService:
         self.sobres_engine = SobresPricingEngine(load_sobres_bundle(project_root))
         self.stickers_corte_recto_engine = StickersCorteRectoPricingEngine(load_stickers_corte_recto_bundle(project_root))
         self.imanes_corte_recto_engine = ImanesCorteRectoPricingEngine(load_imanes_corte_recto_bundle(project_root))
+        self.stickers_circulares_engine = StickersCircularesPricingEngine(
+            load_stickers_circulares_bundle(project_root),
+            project_root=project_root,
+        )
         self.usar_adicionales_laminado_v1 = False
         self.config_path = project_root / "data" / "bajadas_v2" / "bajadas_v2_config_final.json"
         self.config_editable_path = project_root / "data" / "bajadas_v2" / "bajadas_v2_config_editable.json"
@@ -365,6 +374,40 @@ class BajadasV2ApiService:
                 return 400, {"error": "terminacion_no_soportada", "detail": detail}
             return 400, {"error": "validation_error", "detail": detail}
         except ImanesCorteRectoPriceNotFoundError as exc:
+            detail = str(exc)
+            if detail == "cantidad_fuera_de_matriz":
+                return 404, {"error": "cantidad_fuera_de_matriz", "detail": detail}
+            return 404, {"error": "combinacion_no_encontrada", "detail": detail}
+        except Exception as exc:  # pragma: no cover
+            return 500, {"error": "internal_error", "detail": str(exc)}
+
+    def cotizar_stickers_circulares(self, payload: dict[str, Any]) -> tuple[int, dict[str, Any]]:
+        try:
+            req = StickersCircularesQuoteRequestSchema.from_payload(payload)
+            quote = StickersCircularesQuoteInput(
+                categoria=req.categoria,
+                producto=req.producto,
+                material=req.material,
+                formato=req.formato,
+                terminacion=req.terminacion,
+                cantidad_unidades=req.cantidad_unidades,
+                urgencia=req.urgencia,
+                modo_precio=req.modo_precio,
+                variables_override=req.variables_override,
+            )
+            return 200, self.stickers_circulares_engine.quote_as_dict(quote)
+        except ApiValidationError as exc:
+            return 400, {"error": "validation_error", "detail": str(exc)}
+        except StickersCircularesQuoteInputError as exc:
+            detail = str(exc)
+            if "material_no_soportado" in detail:
+                return 400, {"error": "material_no_soportado", "detail": detail}
+            if "formato_no_soportado" in detail:
+                return 400, {"error": "formato_no_soportado", "detail": detail}
+            if "terminacion_no_soportada" in detail:
+                return 400, {"error": "terminacion_no_soportada", "detail": detail}
+            return 400, {"error": "validation_error", "detail": detail}
+        except StickersCircularesPriceNotFoundError as exc:
             detail = str(exc)
             if detail == "cantidad_fuera_de_matriz":
                 return 404, {"error": "cantidad_fuera_de_matriz", "detail": detail}

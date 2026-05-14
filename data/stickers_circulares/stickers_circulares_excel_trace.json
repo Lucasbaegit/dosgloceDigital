@@ -1,0 +1,69 @@
+{
+  "producto": "Stickers Circulares",
+  "fuente_pdf": "lista-low.pdf hoja 8",
+  "convencion_precio": "precio_total_por_paquete",
+  "tabla_detectada": {
+    "materiales": [
+      "obra_ilustracion_90g",
+      "fluo_kraft_marron"
+    ],
+    "terminaciones": [
+      "sin_laca_uv",
+      "con_laca_uv"
+    ],
+    "formatos_small": [
+      "1cm",
+      "2cm",
+      "3cm",
+      "4cm",
+      "5cm",
+      "6cm",
+      "7cm"
+    ],
+    "formatos_large": [
+      "8cm",
+      "9cm",
+      "10cm",
+      "11cm",
+      "12-15cm",
+      "16-17cm",
+      "18-20cm"
+    ],
+    "cantidades": [
+      100,
+      200,
+      300,
+      500,
+      1000
+    ]
+  },
+  "excel_logica": {
+    "hoja": "circulares",
+    "rango_principal": "C8:K12 / C16:K20 / P23:Y37",
+    "formulas_ejemplo": [
+      "C8 =(P23+Y33)*C25",
+      "C16 =C8*S23",
+      "C25..K29 = pliegos por di?metro y cantidad"
+    ],
+    "dependencias": [
+      "Bajadas!E4:E11",
+      "Bajadas!F4:F11",
+      "Bajadas!AH48:AH55",
+      "Laminado!C7:C11",
+      "troquelados!W44:AB50",
+      "PAPEL US$"
+    ],
+    "variables_detectadas": [
+      "click_color",
+      "click_fyd",
+      "papel_autoadhesivo",
+      "troquelado_circular",
+      "laca_uv",
+      "coeficiente_tamano",
+      "coeficiente_cantidad",
+      "dolar"
+    ]
+  },
+  "decision": "MATRIZ_PDF_CON_VARIABLES_DETECTADAS",
+  "motivo": "Los valores recalculables/cach? de Excel no reproducen la magnitud del PDF vigente con tolerancia aceptable."
+}
