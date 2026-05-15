@@ -28,6 +28,8 @@ class QuoteRequestSchema:
     terminacion: str | None
     urgencia: str
     adicional_laminado: str | None
+    adicional_troquelado: bool | None
+    complejidad_troquelado: str | None
 
     @classmethod
     def from_payload(cls, payload: dict[str, Any]) -> "QuoteRequestSchema":
@@ -70,6 +72,16 @@ class QuoteRequestSchema:
                 if payload.get("adicional_laminado") in (None, "")
                 else str(payload.get("adicional_laminado")).strip().lower()
             ),
+            adicional_troquelado=(
+                None
+                if "adicional_troquelado" not in payload
+                else cls._coerce_bool(payload.get("adicional_troquelado"), "adicional_troquelado")
+            ),
+            complejidad_troquelado=(
+                None
+                if payload.get("complejidad_troquelado") in (None, "")
+                else str(payload.get("complejidad_troquelado")).strip().lower()
+            ),
         )
 
     def to_quote_input(self) -> QuoteInput:
@@ -98,6 +110,18 @@ class QuoteRequestSchema:
         if parsed < 1:
             raise ApiValidationError("cantidad_unidades debe ser mayor o igual a 1.")
         return parsed
+
+    @staticmethod
+    def _coerce_bool(value: Any, field: str) -> bool:
+        if isinstance(value, bool):
+            return value
+        if isinstance(value, str):
+            normalized = value.strip().lower()
+            if normalized in {"true", "1", "si", "sí", "yes"}:
+                return True
+            if normalized in {"false", "0", "no"}:
+                return False
+        raise ApiValidationError(f"{field} debe ser booleano.")
 
 
 @dataclass(frozen=True)
@@ -395,4 +419,117 @@ class StickersCircularesQuoteRequestSchema:
             variables_override=(
                 payload.get("variables_override") if isinstance(payload.get("variables_override"), dict) else None
             ),
+        )
+
+
+@dataclass(frozen=True)
+class TroqueladoDigitalQuoteRequestSchema:
+    categoria: str
+    producto: str
+    familia_tamano: str
+    cantidad_unidades: int
+    urgencia: str
+
+    @classmethod
+    def from_payload(cls, payload: dict[str, Any]) -> "TroqueladoDigitalQuoteRequestSchema":
+        required = ["categoria", "producto", "familia_tamano", "cantidad_unidades", "urgencia"]
+        missing = [k for k in required if k not in payload or payload[k] in (None, "")]
+        if missing:
+            raise ApiValidationError(f"Campos faltantes: {', '.join(missing)}")
+        try:
+            qty = int(payload["cantidad_unidades"])
+        except (TypeError, ValueError) as exc:
+            raise ApiValidationError("cantidad_unidades debe ser entero.") from exc
+        return cls(
+            categoria=str(payload["categoria"]).strip(),
+            producto=str(payload["producto"]).strip(),
+            familia_tamano=str(payload["familia_tamano"]).strip(),
+            cantidad_unidades=qty,
+            urgencia=str(payload["urgencia"]).strip().lower(),
+        )
+
+
+@dataclass(frozen=True)
+class TarjetasTroqueladasCircularesQuoteRequestSchema:
+    categoria: str
+    producto: str
+    formato: str
+    caras: str
+    cantidad_unidades: int
+    urgencia: str
+
+    @classmethod
+    def from_payload(cls, payload: dict[str, Any]) -> "TarjetasTroqueladasCircularesQuoteRequestSchema":
+        required = ["categoria", "producto", "formato", "caras", "cantidad_unidades", "urgencia"]
+        missing = [k for k in required if k not in payload or payload[k] in (None, "")]
+        if missing:
+            raise ApiValidationError(f"Campos faltantes: {', '.join(missing)}")
+        try:
+            qty = int(payload["cantidad_unidades"])
+        except (TypeError, ValueError) as exc:
+            raise ApiValidationError("cantidad_unidades debe ser entero.") from exc
+        return cls(
+            categoria=str(payload["categoria"]).strip(),
+            producto=str(payload["producto"]).strip(),
+            formato=str(payload["formato"]).strip(),
+            caras=str(payload["caras"]).strip(),
+            cantidad_unidades=qty,
+            urgencia=str(payload["urgencia"]).strip().lower(),
+        )
+
+
+@dataclass(frozen=True)
+class PlanchaImanImpresoQuoteRequestSchema:
+    categoria: str
+    producto: str
+    variante: str
+    cantidad_unidades: int
+    urgencia: str
+
+    @classmethod
+    def from_payload(cls, payload: dict[str, Any]) -> "PlanchaImanImpresoQuoteRequestSchema":
+        required = ["categoria", "producto", "variante", "cantidad_unidades", "urgencia"]
+        missing = [k for k in required if k not in payload or payload[k] in (None, "")]
+        if missing:
+            raise ApiValidationError(f"Campos faltantes: {', '.join(missing)}")
+        try:
+            qty = int(payload["cantidad_unidades"])
+        except (TypeError, ValueError) as exc:
+            raise ApiValidationError("cantidad_unidades debe ser entero.") from exc
+        return cls(
+            categoria=str(payload["categoria"]).strip(),
+            producto=str(payload["producto"]).strip(),
+            variante=str(payload["variante"]).strip(),
+            cantidad_unidades=qty,
+            urgencia=str(payload["urgencia"]).strip().lower(),
+        )
+
+
+@dataclass(frozen=True)
+class AgendasCuadernosQuoteRequestSchema:
+    categoria: str
+    producto: str
+    formato: str
+    paginas: int
+    cantidad_unidades: int
+    urgencia: str
+
+    @classmethod
+    def from_payload(cls, payload: dict[str, Any]) -> "AgendasCuadernosQuoteRequestSchema":
+        required = ["categoria", "producto", "formato", "paginas", "cantidad_unidades", "urgencia"]
+        missing = [k for k in required if k not in payload or payload[k] in (None, "")]
+        if missing:
+            raise ApiValidationError(f"Campos faltantes: {', '.join(missing)}")
+        try:
+            paginas = int(payload["paginas"])
+            qty = int(payload["cantidad_unidades"])
+        except (TypeError, ValueError) as exc:
+            raise ApiValidationError("paginas y cantidad_unidades deben ser enteros.") from exc
+        return cls(
+            categoria=str(payload["categoria"]).strip(),
+            producto=str(payload["producto"]).strip(),
+            formato=str(payload["formato"]).strip(),
+            paginas=paginas,
+            cantidad_unidades=qty,
+            urgencia=str(payload["urgencia"]).strip().lower(),
         )

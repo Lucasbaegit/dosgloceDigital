@@ -248,6 +248,111 @@ class TestBajadasV2Api(unittest.TestCase):
         self.assertEqual(body["adicional_laminado"], "laminado_mate")
         self.assertEqual(body["regla_adicional_aplicada"], "ADICIONAL_LAMINADO_MATE_A3PLUS")
 
+    def test_bajada_sin_troquelado_no_cambia(self):
+        payload = {
+            "categoria": "Bajadas Fullcolor",
+            "modo_color": "fullcolor",
+            "formato": "A3+",
+            "tipo_papel": "liviano",
+            "material": "Ilustracion",
+            "gramaje": "150g",
+            "cantidad_unidades": 100,
+            "cantidad_rango": "51 a 100",
+            "caras": "4/0",
+            "urgencia": "normal",
+            "adicional_laminado": "sin_adicional",
+        }
+        status_base, body_base = self._post_json("/bajadas-v2/cotizar", payload)
+        self.assertEqual(status_base, 200)
+        payload_troq_off = dict(payload)
+        payload_troq_off["adicional_troquelado"] = False
+        status_off, body_off = self._post_json("/bajadas-v2/cotizar", payload_troq_off)
+        self.assertEqual(status_off, 200)
+        self.assertAlmostEqual(body_base["total_sin_iva"], body_off["total_sin_iva"], places=6)
+        self.assertFalse(body_off.get("adicional_troquelado", False))
+
+    def test_bajada_con_troquelado_simple_suma_adicional(self):
+        payload = {
+            "categoria": "Bajadas Fullcolor",
+            "modo_color": "fullcolor",
+            "formato": "A3+",
+            "tipo_papel": "liviano",
+            "material": "Ilustracion",
+            "gramaje": "150g",
+            "cantidad_unidades": 100,
+            "cantidad_rango": "51 a 100",
+            "caras": "4/0",
+            "urgencia": "normal",
+            "adicional_laminado": "sin_adicional",
+            "adicional_troquelado": True,
+            "complejidad_troquelado": "simple",
+        }
+        status, body = self._post_json("/bajadas-v2/cotizar", payload)
+        self.assertEqual(status, 200)
+        self.assertTrue(body["adicional_troquelado"])
+        self.assertEqual(body["complejidad_troquelado"], "simple")
+        self.assertAlmostEqual(body["adicional_troquelado_unitario_sin_iva"], 266.0, places=6)
+        self.assertAlmostEqual(body["total_adicional_troquelado_sin_iva"], 26600.0, places=6)
+
+    def test_bajada_kraft_con_troquelado_suma_adicional(self):
+        payload = {
+            "categoria": "Bajadas Kraft",
+            "modo_color": "fullcolor",
+            "formato": "A3",
+            "tipo_papel": "kraft",
+            "material": "Kraft",
+            "gramaje": "80g",
+            "cantidad_unidades": 1,
+            "cantidad_rango": "1",
+            "caras": "4/0",
+            "urgencia": "normal",
+            "adicional_laminado": "sin_adicional",
+            "adicional_troquelado": True,
+            "complejidad_troquelado": "simple",
+        }
+        status, body = self._post_json("/bajadas-v2/cotizar", payload)
+        self.assertEqual(status, 200)
+        self.assertAlmostEqual(body["precio_unitario_sin_iva"], 782.0, places=6)
+        self.assertAlmostEqual(body["adicional_troquelado_unitario_sin_iva"], 780.0, places=6)
+        self.assertAlmostEqual(body["total_sin_iva"], 1562.0, places=6)
+
+    def test_troquelado_complejidad_requerida(self):
+        payload = {
+            "categoria": "Bajadas Fullcolor",
+            "modo_color": "fullcolor",
+            "formato": "A3+",
+            "tipo_papel": "liviano",
+            "material": "Ilustracion",
+            "gramaje": "150g",
+            "cantidad_unidades": 100,
+            "cantidad_rango": "51 a 100",
+            "caras": "4/0",
+            "urgencia": "normal",
+            "adicional_troquelado": True,
+        }
+        status, body = self._post_json("/bajadas-v2/cotizar", payload)
+        self.assertEqual(status, 400)
+        self.assertEqual(body["error"], "complejidad_troquelado_requerida")
+
+    def test_troquelado_complejidad_invalida(self):
+        payload = {
+            "categoria": "Bajadas Fullcolor",
+            "modo_color": "fullcolor",
+            "formato": "A3+",
+            "tipo_papel": "liviano",
+            "material": "Ilustracion",
+            "gramaje": "150g",
+            "cantidad_unidades": 100,
+            "cantidad_rango": "51 a 100",
+            "caras": "4/0",
+            "urgencia": "normal",
+            "adicional_troquelado": True,
+            "complejidad_troquelado": "mega",
+        }
+        status, body = self._post_json("/bajadas-v2/cotizar", payload)
+        self.assertEqual(status, 400)
+        self.assertEqual(body["error"], "complejidad_troquelado_no_soportada")
+
     def test_post_cotizar_caso_precio_fijo_csv(self):
         payload = {
             "categoria": "Bajadas Blanco y Negro",

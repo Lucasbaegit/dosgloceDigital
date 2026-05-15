@@ -25,6 +25,15 @@ test("UI muestra tabs nuevas y controles base", async ({ page }) => {
   await expect(page.getByTestId("result-panel")).toBeVisible();
 });
 
+test("troquelado digital se usa como adicional en Bajadas y no como categoría principal", async ({ page }) => {
+  await page.goto("/", { waitUntil: "networkidle" });
+  await expect(page.getByTestId("categoria-select").locator("option[value='Troquelado Digital']")).toHaveCount(0);
+  await page.getByTestId("categoria-select").selectOption("Bajadas Fullcolor/ByN");
+  await expect(page.getByLabel("Troquelado Digital")).toBeVisible();
+  await page.getByLabel("Troquelado Digital").selectOption("true");
+  await expect(page.getByLabel("Complejidad troquelado")).toBeVisible();
+});
+
 test("modo Autoadhesivas guiado: A3+ y 4/0 fijos, tipo papel/especial", async ({ page }) => {
   await page.goto("/", { waitUntil: "networkidle" });
   await page.getByTestId("categoria-select").selectOption("Bajadas Autoadhesivas");

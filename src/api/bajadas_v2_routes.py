@@ -50,6 +50,22 @@ from stickers_circulares import StickersCircularesPricingEngine, load_stickers_c
 from stickers_circulares.exceptions import PriceNotFoundError as StickersCircularesPriceNotFoundError
 from stickers_circulares.exceptions import QuoteInputError as StickersCircularesQuoteInputError
 from stickers_circulares.types import StickersCircularesQuoteInput
+from troquelado_digital import TroqueladoDigitalPricingEngine, load_troquelado_digital_bundle
+from troquelado_digital.exceptions import PriceNotFoundError as TroqueladoDigitalPriceNotFoundError
+from troquelado_digital.exceptions import QuoteInputError as TroqueladoDigitalQuoteInputError
+from troquelado_digital.types import TroqueladoDigitalQuoteInput
+from tarjetas_troqueladas_circulares import TarjetasTroqueladasCircularesPricingEngine, load_tarjetas_troqueladas_circulares_bundle
+from tarjetas_troqueladas_circulares.exceptions import PriceNotFoundError as TarjetasTroqCircPriceNotFoundError
+from tarjetas_troqueladas_circulares.exceptions import QuoteInputError as TarjetasTroqCircQuoteInputError
+from tarjetas_troqueladas_circulares.types import TarjetasTroqueladasCircularesQuoteInput
+from plancha_iman_impreso import PlanchaImanImpresoPricingEngine, load_plancha_iman_impreso_bundle
+from plancha_iman_impreso.exceptions import PriceNotFoundError as PlanchaImanPriceNotFoundError
+from plancha_iman_impreso.exceptions import QuoteInputError as PlanchaImanQuoteInputError
+from plancha_iman_impreso.types import PlanchaImanImpresoQuoteInput
+from agendas_cuadernos import AgendasCuadernosPricingEngine, load_agendas_cuadernos_bundle
+from agendas_cuadernos.exceptions import PriceNotFoundError as AgendasCuadernosPriceNotFoundError
+from agendas_cuadernos.exceptions import QuoteInputError as AgendasCuadernosQuoteInputError
+from agendas_cuadernos.types import AgendasCuadernosQuoteInput
 
 from .schemas import (
     ApiValidationError,
@@ -58,6 +74,10 @@ from .schemas import (
     ImanesCorteRectoQuoteRequestSchema,
     QuoteRequestSchema,
     StickersCircularesQuoteRequestSchema,
+    TroqueladoDigitalQuoteRequestSchema,
+    TarjetasTroqueladasCircularesQuoteRequestSchema,
+    PlanchaImanImpresoQuoteRequestSchema,
+    AgendasCuadernosQuoteRequestSchema,
     SobresQuoteRequestSchema,
     StickersCorteRectoQuoteRequestSchema,
     Tarjetas9x5QuoteRequestSchema,
@@ -82,6 +102,12 @@ class BajadasV2ApiService:
             load_stickers_circulares_bundle(project_root),
             project_root=project_root,
         )
+        self.troquelado_digital_engine = TroqueladoDigitalPricingEngine(load_troquelado_digital_bundle(project_root))
+        self.tarjetas_troqueladas_circulares_engine = TarjetasTroqueladasCircularesPricingEngine(
+            load_tarjetas_troqueladas_circulares_bundle(project_root)
+        )
+        self.plancha_iman_impreso_engine = PlanchaImanImpresoPricingEngine(load_plancha_iman_impreso_bundle(project_root))
+        self.agendas_cuadernos_engine = AgendasCuadernosPricingEngine(load_agendas_cuadernos_bundle(project_root))
         self.usar_adicionales_laminado_v1 = False
         self.config_path = project_root / "data" / "bajadas_v2" / "bajadas_v2_config_final.json"
         self.config_editable_path = project_root / "data" / "bajadas_v2" / "bajadas_v2_config_editable.json"
@@ -143,9 +169,13 @@ class BajadasV2ApiService:
             else:
                 result = self.engine.quote_as_dict(req.to_quote_input())
             result = self._apply_laminado_adicional_opt_in(result, req)
+            result = self._apply_troquelado_adicional_opt_in(result, req)
             return 200, result
         except ApiValidationError as exc:
-            return 400, {"error": "validation_error", "detail": str(exc)}
+            detail = str(exc)
+            if detail in {"complejidad_troquelado_requerida", "complejidad_troquelado_no_soportada", "cantidad_fuera_de_matriz"}:
+                return 400, {"error": detail, "detail": detail}
+            return 400, {"error": "validation_error", "detail": detail}
         except QuoteInputError as exc:
             return 400, {"error": "urgencia_invalida", "detail": str(exc)}
         except PriceNotFoundError as exc:
@@ -156,6 +186,16 @@ class BajadasV2ApiService:
             return 404, {"error": "combinacion_no_encontrada", "detail": str(exc)}
         except LaminadoQuoteInputError as exc:
             return 400, {"error": "validation_error", "detail": str(exc)}
+        except TroqueladoDigitalQuoteInputError as exc:
+            detail = str(exc)
+            if detail in {"complejidad_troquelado_requerida", "complejidad_troquelado_no_soportada"}:
+                return 400, {"error": detail, "detail": detail}
+            return 400, {"error": "validation_error", "detail": detail}
+        except TroqueladoDigitalPriceNotFoundError as exc:
+            detail = str(exc)
+            if detail == "cantidad_fuera_de_matriz":
+                return 404, {"error": "cantidad_fuera_de_matriz", "detail": detail}
+            return 404, {"error": "combinacion_no_encontrada", "detail": detail}
         except Exception as exc:  # pragma: no cover
             return 500, {"error": "internal_error", "detail": str(exc)}
 
@@ -415,6 +455,96 @@ class BajadasV2ApiService:
         except Exception as exc:  # pragma: no cover
             return 500, {"error": "internal_error", "detail": str(exc)}
 
+    def cotizar_troquelado_digital(self, payload: dict[str, Any]) -> tuple[int, dict[str, Any]]:
+        try:
+            req = TroqueladoDigitalQuoteRequestSchema.from_payload(payload)
+            quote = TroqueladoDigitalQuoteInput(
+                categoria=req.categoria,
+                producto=req.producto,
+                familia_tamano=req.familia_tamano,
+                cantidad_unidades=req.cantidad_unidades,
+                urgencia=req.urgencia,
+            )
+            return 200, self.troquelado_digital_engine.quote_as_dict(quote)
+        except ApiValidationError as exc:
+            return 400, {"error": "validation_error", "detail": str(exc)}
+        except TroqueladoDigitalQuoteInputError as exc:
+            return 400, {"error": "validation_error", "detail": str(exc)}
+        except TroqueladoDigitalPriceNotFoundError as exc:
+            detail = str(exc)
+            code = "cantidad_fuera_de_matriz" if detail == "cantidad_fuera_de_matriz" else "combinacion_no_encontrada"
+            return 404, {"error": code, "detail": detail}
+        except Exception as exc:  # pragma: no cover
+            return 500, {"error": "internal_error", "detail": str(exc)}
+
+    def cotizar_tarjetas_troqueladas_circulares(self, payload: dict[str, Any]) -> tuple[int, dict[str, Any]]:
+        try:
+            req = TarjetasTroqueladasCircularesQuoteRequestSchema.from_payload(payload)
+            quote = TarjetasTroqueladasCircularesQuoteInput(
+                categoria=req.categoria,
+                producto=req.producto,
+                formato=req.formato,
+                caras=req.caras,
+                cantidad_unidades=req.cantidad_unidades,
+                urgencia=req.urgencia,
+            )
+            return 200, self.tarjetas_troqueladas_circulares_engine.quote_as_dict(quote)
+        except ApiValidationError as exc:
+            return 400, {"error": "validation_error", "detail": str(exc)}
+        except TarjetasTroqCircQuoteInputError as exc:
+            return 400, {"error": "validation_error", "detail": str(exc)}
+        except TarjetasTroqCircPriceNotFoundError as exc:
+            detail = str(exc)
+            code = "cantidad_fuera_de_matriz" if detail == "cantidad_fuera_de_matriz" else "combinacion_no_encontrada"
+            return 404, {"error": code, "detail": detail}
+        except Exception as exc:  # pragma: no cover
+            return 500, {"error": "internal_error", "detail": str(exc)}
+
+    def cotizar_plancha_iman_impreso(self, payload: dict[str, Any]) -> tuple[int, dict[str, Any]]:
+        try:
+            req = PlanchaImanImpresoQuoteRequestSchema.from_payload(payload)
+            quote = PlanchaImanImpresoQuoteInput(
+                categoria=req.categoria,
+                producto=req.producto,
+                variante=req.variante,
+                cantidad_unidades=req.cantidad_unidades,
+                urgencia=req.urgencia,
+            )
+            return 200, self.plancha_iman_impreso_engine.quote_as_dict(quote)
+        except ApiValidationError as exc:
+            return 400, {"error": "validation_error", "detail": str(exc)}
+        except PlanchaImanQuoteInputError as exc:
+            return 400, {"error": "validation_error", "detail": str(exc)}
+        except PlanchaImanPriceNotFoundError as exc:
+            detail = str(exc)
+            code = "cantidad_fuera_de_matriz" if detail == "cantidad_fuera_de_matriz" else "combinacion_no_encontrada"
+            return 404, {"error": code, "detail": detail}
+        except Exception as exc:  # pragma: no cover
+            return 500, {"error": "internal_error", "detail": str(exc)}
+
+    def cotizar_agendas_cuadernos(self, payload: dict[str, Any]) -> tuple[int, dict[str, Any]]:
+        try:
+            req = AgendasCuadernosQuoteRequestSchema.from_payload(payload)
+            quote = AgendasCuadernosQuoteInput(
+                categoria=req.categoria,
+                producto=req.producto,
+                formato=req.formato,
+                paginas=req.paginas,
+                cantidad_unidades=req.cantidad_unidades,
+                urgencia=req.urgencia,
+            )
+            return 200, self.agendas_cuadernos_engine.quote_as_dict(quote)
+        except ApiValidationError as exc:
+            return 400, {"error": "validation_error", "detail": str(exc)}
+        except AgendasCuadernosQuoteInputError as exc:
+            return 400, {"error": "validation_error", "detail": str(exc)}
+        except AgendasCuadernosPriceNotFoundError as exc:
+            detail = str(exc)
+            code = "cantidad_minima_no_alcanzada" if detail == "cantidad_minima_no_alcanzada" else "combinacion_no_encontrada"
+            return 404, {"error": code, "detail": detail}
+        except Exception as exc:  # pragma: no cover
+            return 500, {"error": "internal_error", "detail": str(exc)}
+
     def _apply_laminado_adicional_opt_in(self, result: dict[str, Any], req: QuoteRequestSchema) -> dict[str, Any]:
         adicional = (req.adicional_laminado or "sin_adicional").lower()
         valid = {"sin_adicional", "laca", "laminado_brillo", "laminado_mate"}
@@ -472,6 +602,80 @@ class BajadasV2ApiService:
             "fuente": laminado_out["fuente"],
             "nota": "Se suma antes de urgencia.",
             "no_combinable": True,
+        }
+        return result
+
+    def _apply_troquelado_adicional_opt_in(self, result: dict[str, Any], req: QuoteRequestSchema) -> dict[str, Any]:
+        if req.adicional_troquelado is None:
+            result["adicional_troquelado"] = False
+            return result
+        if req.adicional_troquelado is False:
+            result["adicional_troquelado"] = False
+            return result
+
+        complejidad = (req.complejidad_troquelado or "").strip().lower()
+        if not complejidad:
+            raise ApiValidationError("complejidad_troquelado_requerida")
+
+        complejidad_map = {
+            "simple": "1x1_a_2x2",
+            "medio": "2x2_a_4x4",
+            "complejo": "5x5_a_9x9",
+            "muy_complejo": "10x10_a_14x14",
+            "ultra_complejo": "mas_de_15x15",
+        }
+        familia_tamano = complejidad_map.get(complejidad)
+        if not familia_tamano:
+            raise ApiValidationError("complejidad_troquelado_no_soportada")
+
+        qty = int(result.get("cantidad_unidades", req.cantidad_unidades or 1))
+        if qty < 1:
+            raise ApiValidationError("cantidad_fuera_de_matriz")
+
+        troquelado_out = self.troquelado_digital_engine.quote_as_dict(
+            TroqueladoDigitalQuoteInput(
+                categoria="Troquelado Digital",
+                producto="troquelado_digital",
+                familia_tamano=familia_tamano,
+                cantidad_unidades=qty,
+                urgencia="normal",
+            )
+        )
+
+        recargo = float(result.get("trazabilidad", {}).get("recargo_urgencia_aplicado", 0.0))
+        factor_urgencia = 1.0 + recargo
+
+        base_unit_for_total = float(
+            result.get("precio_unitario_con_adicional_sin_iva", result.get("precio_unitario_sin_iva", 0.0))
+        )
+        troquelado_unit = float(troquelado_out["precio_unitario_sin_iva"])
+        total_unit_con_adicionales = round(base_unit_for_total + troquelado_unit, 6)
+        total_sin_iva = round(total_unit_con_adicionales * qty, 6)
+        total_con_urgencia = round(total_sin_iva * factor_urgencia, 6)
+
+        result["adicional_troquelado"] = True
+        result["complejidad_troquelado"] = complejidad
+        result["adicional_troquelado_unitario_sin_iva"] = round(troquelado_unit, 6)
+        result["total_adicional_troquelado_sin_iva"] = round(troquelado_unit * qty, 6)
+        result["regla_troquelado_aplicada"] = troquelado_out["regla_aplicada"]
+        result["fuente_troquelado"] = troquelado_out["fuente"]
+        result["precio_unitario_con_adicionales_sin_iva"] = total_unit_con_adicionales
+        result["total_sin_iva"] = total_sin_iva
+        result["total_con_urgencia"] = total_con_urgencia
+
+        trace = result.setdefault("trazabilidad", {})
+        trace["adicional_troquelado"] = {
+            "seleccion": True,
+            "complejidad_aplicada": complejidad,
+            "rango_aplicado": troquelado_out.get("cantidad_rango_aplicado"),
+            "precio_unitario_troquelado": round(troquelado_unit, 6),
+            "cantidad_unidades": qty,
+            "subtotal_troquelado": round(troquelado_unit * qty, 6),
+            "total_bajada_sin_troquelado": round(base_unit_for_total * qty, 6),
+            "total_final_con_troquelado": total_sin_iva,
+            "fuente": "PDF Troqueles digitales / página 11",
+            "nota": "No incluye costo de impresión; se suma como adicional.",
+            "regla_aplicada": troquelado_out["regla_aplicada"],
         }
         return result
 

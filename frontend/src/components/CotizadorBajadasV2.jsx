@@ -3,6 +3,9 @@ import {
   approveBajadasConfigCandidate,
   cotizarBajadaV2,
   cotizarFolletos,
+  cotizarTarjetasTroqueladasCirculares,
+  cotizarPlanchaImanImpreso,
+  cotizarAgendasCuadernos,
   cotizarImanesCorteRecto,
   cotizarStickersCirculares,
   cotizarCarpetas,
@@ -48,6 +51,9 @@ const CATEGORIAS = [
   "Stickers Corte Recto",
   "Imanes Corte Recto",
   "Stickers Circulares",
+  "Tarjetas Troqueladas Circulares",
+  "Plancha de Imán Impreso",
+  "Agendas / Cuadernos",
 ];
 const AUTOADH_COLUMNAS = ["papel", "especial"];
 const AUTOADH_FORMATOS = ["A3+", "XA3"];
@@ -131,6 +137,24 @@ const STICKERS_CIRCULARES_FORMATOS = [
 ];
 const STICKERS_CIRCULARES_TERMINACIONES = STICKERS_TERMINACIONES;
 const STICKERS_CIRCULARES_CANTIDADES = ["100", "200", "300", "500", "1000"];
+const TROQUELADO_COMPLEJIDADES = [
+  { value: "simple", label: "Simple" },
+  { value: "medio", label: "Medio" },
+  { value: "complejo", label: "Complejo" },
+  { value: "muy_complejo", label: "Muy complejo" },
+  { value: "ultra_complejo", label: "Ultra complejo" },
+];
+const TARJETAS_TROQ_CIRC_FORMATOS = ["1cm", "2cm", "3cm", "4cm", "5cm", "6cm", "7cm", "8cm", "9cm"];
+const TARJETAS_TROQ_CIRC_CANTIDADES = ["100", "200", "300", "500", "1000"];
+const PLANCHA_IMAN_VARIANTES = [{ value: "papel_300g_ilustracion", label: "Papel 300g Ilustración (30x46, 4/0)" }];
+const PLANCHA_IMAN_CANTIDADES_SUGERIDAS = ["1", "2", "25", "50", "100", "300", "500"];
+const AGENDAS_PRODUCTOS = [
+  { value: "cuaderno_escolar_abrochado", label: "Cuaderno Escolar (abrochado)" },
+  { value: "cuaderno_universitario_ringwire", label: "Cuaderno Universitario (ring wire)" },
+  { value: "agenda_2026", label: "Agenda 2026" },
+];
+const AGENDAS_FORMATOS = ["A5", "A4"];
+const AGENDAS_PAGINAS = ["24", "48", "72", "100", "160"];
 const ADICIONALES = [
   { label: "Sin adicional", value: "sin_adicional" },
   { label: "Laca UV", value: "laca" },
@@ -158,6 +182,13 @@ const INITIAL_FORM = {
   terminacion_imanes: "sin_laca_uv",
   material_stickers_circulares: "obra_ilustracion_90g",
   terminacion_stickers_circulares: "sin_laca_uv",
+  adicional_troquelado: false,
+  complejidad_troquelado: "simple",
+  caras_tarjetas_troq_circ: "4/4",
+  variante_plancha_iman: "papel_300g_ilustracion",
+  producto_agendas: "cuaderno_escolar_abrochado",
+  formato_agendas: "A5",
+  paginas_agendas: "24",
 };
 
 function inferFromCaras(caras) {
@@ -214,6 +245,15 @@ function inferQuoteContext(form) {
   }
   if (form.categoria_ui === "Stickers Circulares") {
     return { categoria: "Stickers Circulares", modo_color: "fullcolor", formato: form.formato, caras: "4/0" };
+  }
+  if (form.categoria_ui === "Tarjetas Troqueladas Circulares") {
+    return { categoria: "Tarjetas Troqueladas Circulares", modo_color: "fullcolor", formato: form.formato, caras: form.caras_tarjetas_troq_circ || "4/4" };
+  }
+  if (form.categoria_ui === "Plancha de Imán Impreso") {
+    return { categoria: "Plancha de Imán Impreso", modo_color: "fullcolor", formato: "30x46", caras: "4/0" };
+  }
+  if (form.categoria_ui === "Agendas / Cuadernos") {
+    return { categoria: "Agendas / Cuadernos", modo_color: "fullcolor", formato: form.formato_agendas || "A5", caras: "N/A" };
   }
   const byCaras = inferFromCaras(form.caras);
   return {
@@ -318,12 +358,18 @@ export default function CotizadorBajadasV2() {
   const isStickers = inferred.categoria === "Stickers Corte Recto";
   const isImanes = inferred.categoria === "Imanes Corte Recto";
   const isStickersCirculares = inferred.categoria === "Stickers Circulares";
-  const isMatrixProduct = isTarjetas || isPostales || isFolletos || isSobres || isStickers || isImanes || isStickersCirculares;
+  const isTarjetasTroqCirc = inferred.categoria === "Tarjetas Troqueladas Circulares";
+  const isPlanchaIman = inferred.categoria === "Plancha de Imán Impreso";
+  const isAgendasCuadernos = inferred.categoria === "Agendas / Cuadernos";
+  const isNoRangeProduct = isPlanchaIman || isAgendasCuadernos;
+  const isBajadasFlow = inferred.categoria.startsWith("Bajadas");
+  const isMatrixProduct =
+    isTarjetas || isPostales || isFolletos || isSobres || isStickers || isImanes || isStickersCirculares || isTarjetasTroqCirc;
   const formatoDataSource = useMemo(() => {
-    if (isKraft || isTarjetas || isPostales || isFolletos || isCarpetas || isSobres || isStickers || isImanes || isStickersCirculares) return form.formato;
+    if (isKraft || isTarjetas || isPostales || isFolletos || isCarpetas || isSobres || isStickers || isImanes || isStickersCirculares || isTarjetasTroqCirc || isPlanchaIman || isAgendasCuadernos) return form.formato;
     if (form.formato === "XA3") return "A3+";
     return form.formato;
-  }, [form.formato, isKraft, isTarjetas, isPostales, isFolletos, isCarpetas, isSobres, isStickers, isImanes, isStickersCirculares]);
+  }, [form.formato, isKraft, isTarjetas, isPostales, isFolletos, isCarpetas, isSobres, isStickers, isImanes, isStickersCirculares, isTarjetasTroqCirc, isPlanchaIman, isAgendasCuadernos]);
 
   const validRows = useMemo(
     () =>
@@ -343,12 +389,15 @@ export default function CotizadorBajadasV2() {
     if (isStickers) return STICKERS_FORMATOS;
     if (isImanes) return IMANES_FORMATOS;
     if (isStickersCirculares) return STICKERS_CIRCULARES_FORMATOS;
+    if (isTarjetasTroqCirc) return TARJETAS_TROQ_CIRC_FORMATOS;
+    if (isPlanchaIman) return ["30x46"];
+    if (isAgendasCuadernos) return AGENDAS_FORMATOS;
     if (isAutoadhesivas) return AUTOADH_FORMATOS;
     if (formatoOptions.includes("A3+") && !formatoOptions.includes("XA3")) {
       return uniqueSorted([...formatoOptions, "XA3"]);
     }
     return formatoOptions;
-  }, [isAutoadhesivas, isKraft, isTarjetas, isPostales, isFolletos, isCarpetas, isSobres, isStickers, isImanes, isStickersCirculares, formatoOptions]);
+  }, [isAutoadhesivas, isKraft, isTarjetas, isPostales, isFolletos, isCarpetas, isSobres, isStickers, isImanes, isStickersCirculares, isTarjetasTroqCirc, isPlanchaIman, isAgendasCuadernos, formatoOptions]);
   const tipoPapelOptions = useMemo(
     () => uniqueSorted(validRows.filter((r) => r.formato === formatoDataSource).map((r) => r.tipo_papel)),
     [validRows, formatoDataSource]
@@ -376,6 +425,9 @@ export default function CotizadorBajadasV2() {
     if (isStickers) return STICKERS_CANTIDADES;
     if (isImanes) return IMANES_CANTIDADES;
     if (isStickersCirculares) return STICKERS_CIRCULARES_CANTIDADES;
+    if (isTarjetasTroqCirc) return TARJETAS_TROQ_CIRC_CANTIDADES;
+    if (isPlanchaIman) return PLANCHA_IMAN_CANTIDADES_SUGERIDAS;
+    if (isAgendasCuadernos) return ["2", "5", "10", "20"];
     if (isAutoadhesivas) return AUTOADH_RANGOS;
     return uniqueSorted(
       validRows
@@ -388,7 +440,7 @@ export default function CotizadorBajadasV2() {
         )
         .map((r) => r.cantidad_rango)
     );
-  }, [isKraft, isTarjetas, isPostales, isFolletos, isCarpetas, isSobres, isStickers, isImanes, isStickersCirculares, isAutoadhesivas, validRows, formatoDataSource, form.tipo_papel, form.material, form.gramaje]);
+  }, [isKraft, isTarjetas, isPostales, isFolletos, isCarpetas, isSobres, isStickers, isImanes, isStickersCirculares, isTarjetasTroqCirc, isPlanchaIman, isAgendasCuadernos, isAutoadhesivas, validRows, formatoDataSource, form.tipo_papel, form.material, form.gramaje]);
   const cantidadUnidades = useMemo(() => Number(form.cantidad_unidades), [form.cantidad_unidades]);
   const derivedRange = useMemo(() => deriveRangeFromQuantity(cantidadUnidades, cantidadOptions), [cantidadUnidades, cantidadOptions]);
 
@@ -666,6 +718,46 @@ export default function CotizadorBajadasV2() {
         next.adicional_laminado = "sin_adicional";
         return next;
       }
+      if (next.categoria_ui === "Tarjetas Troqueladas Circulares") {
+        if (!TARJETAS_TROQ_CIRC_FORMATOS.includes(next.formato)) next.formato = TARJETAS_TROQ_CIRC_FORMATOS[0];
+        if (!["4/0", "4/4"].includes(next.caras_tarjetas_troq_circ)) next.caras_tarjetas_troq_circ = "4/4";
+        next.caras = next.caras_tarjetas_troq_circ;
+        next.tipo_papel = "300g Ilustracion";
+        next.material = "300g Ilustracion";
+        next.gramaje = "300g";
+        if (!TARJETAS_TROQ_CIRC_CANTIDADES.includes(String(next.cantidad_unidades))) next.cantidad_unidades = "100";
+        next.adicional_laminado = "sin_adicional";
+        return next;
+      }
+      if (next.categoria_ui === "Plancha de Imán Impreso") {
+        next.formato = "30x46";
+        next.caras = "4/0";
+        next.tipo_papel = "300g Ilustracion";
+        next.material = "Imán 0.3mm";
+        next.gramaje = "N/A";
+        if (!PLANCHA_IMAN_VARIANTES.some((v) => v.value === next.variante_plancha_iman)) next.variante_plancha_iman = PLANCHA_IMAN_VARIANTES[0].value;
+        if (!PLANCHA_IMAN_CANTIDADES_SUGERIDAS.includes(String(next.cantidad_unidades))) next.cantidad_unidades = "1";
+        next.adicional_laminado = "sin_adicional";
+        return next;
+      }
+      if (next.categoria_ui === "Agendas / Cuadernos") {
+        if (!AGENDAS_PRODUCTOS.some((v) => v.value === next.producto_agendas)) next.producto_agendas = AGENDAS_PRODUCTOS[0].value;
+        if (!AGENDAS_FORMATOS.includes(next.formato_agendas)) next.formato_agendas = "A5";
+        if (!AGENDAS_PAGINAS.includes(String(next.paginas_agendas))) next.paginas_agendas = "24";
+        next.formato = next.formato_agendas;
+        next.caras = "N/A";
+        next.tipo_papel = "300g tapas";
+        next.material = "Promocional";
+        next.gramaje = "N/A";
+        if (Number(next.cantidad_unidades) < 2) next.cantidad_unidades = "2";
+        next.adicional_laminado = "sin_adicional";
+        next.adicional_troquelado = false;
+        return next;
+      }
+      if (!next.categoria_ui.startsWith("Bajadas")) {
+        next.adicional_laminado = "sin_adicional";
+        next.adicional_troquelado = false;
+      }
       if (!effectiveFormatoOptions.includes(next.formato)) next.formato = effectiveFormatoOptions[0] || "";
       return next;
     });
@@ -683,7 +775,10 @@ export default function CotizadorBajadasV2() {
         next.categoria_ui === "Sobres" ||
         next.categoria_ui === "Stickers Corte Recto" ||
         next.categoria_ui === "Imanes Corte Recto" ||
-        next.categoria_ui === "Stickers Circulares"
+        next.categoria_ui === "Stickers Circulares" ||
+        next.categoria_ui === "Tarjetas Troqueladas Circulares" ||
+        next.categoria_ui === "Plancha de Imán Impreso" ||
+        next.categoria_ui === "Agendas / Cuadernos"
       ) {
         return next;
       }
@@ -733,9 +828,15 @@ export default function CotizadorBajadasV2() {
       ? ["formato", "tipo_papel", "material", "gramaje", "terminacion_imanes", "urgencia"]
       : isStickersCirculares
       ? ["formato", "material_stickers_circulares", "terminacion_stickers_circulares", "urgencia"]
+      : isTarjetasTroqCirc
+      ? ["formato", "caras_tarjetas_troq_circ", "urgencia"]
+      : isPlanchaIman
+      ? ["variante_plancha_iman", "urgencia"]
+      : isAgendasCuadernos
+      ? ["producto_agendas", "formato_agendas", "paginas_agendas", "urgencia"]
       : ["formato", "tipo_papel", "material", "gramaje", "caras", "urgencia"];
     return required.filter((field) => !String(form[field] ?? "").trim());
-  }, [form, isAutoadhesivas, isTarjetas, isPostales, isFolletos, isCarpetas, isSobres, isStickers, isImanes, isStickersCirculares]);
+  }, [form, isAutoadhesivas, isTarjetas, isPostales, isFolletos, isCarpetas, isSobres, isStickers, isImanes, isStickersCirculares, isTarjetasTroqCirc, isPlanchaIman, isAgendasCuadernos]);
 
   const updateField = (field) => (event) => {
     setCopyStatus("");
@@ -797,17 +898,27 @@ export default function CotizadorBajadasV2() {
         prev.categoria_ui === "Sobres" ||
         prev.categoria_ui === "Stickers Corte Recto" ||
         prev.categoria_ui === "Imanes Corte Recto" ||
-        prev.categoria_ui === "Stickers Circulares"
+        prev.categoria_ui === "Stickers Circulares" ||
+        prev.categoria_ui === "Tarjetas Troqueladas Circulares"
           ? "100"
+          : prev.categoria_ui === "Agendas / Cuadernos"
+          ? "2"
           : "1",
       urgencia: "normal",
       adicional_laminado: "sin_adicional",
+      adicional_troquelado: false,
+      complejidad_troquelado: "simple",
       terminacion_tarjetas: "sin_laminar",
       terminacion_carpetas: "sin_laminar",
       terminacion_stickers: "sin_laca_uv",
       terminacion_imanes: "sin_laca_uv",
       material_stickers_circulares: STICKERS_CIRCULARES_MATERIALES[0].value,
       terminacion_stickers_circulares: "sin_laca_uv",
+      caras_tarjetas_troq_circ: "4/4",
+      variante_plancha_iman: PLANCHA_IMAN_VARIANTES[0].value,
+      producto_agendas: AGENDAS_PRODUCTOS[0].value,
+      formato_agendas: "A5",
+      paginas_agendas: "24",
       solapa_impresa: false,
       tipo_sobre: SOBRES_TIPOS[0].value,
       papel_folleto: "150g Ilustracion",
@@ -831,6 +942,9 @@ export default function CotizadorBajadasV2() {
       `${isMatrixProduct ? "Cantidad de matriz" : "Rango aplicado"}: ${isMatrixProduct ? String(result.cantidad_unidades ?? form.cantidad_unidades ?? "-") : (result.cantidad_rango_aplicado ?? derivedRange ?? "-")}`,
       `Adicional: ${result.adicional_laminado ?? form.adicional_laminado ?? "sin_adicional"}`,
       `Adicional unitario: ${formatMoney(result.adicional_unitario_sin_iva ?? 0)}`,
+      `Troquelado adicional: ${result.adicional_troquelado ? "sí" : "no"}`,
+      `Complejidad troquelado: ${result.complejidad_troquelado ?? "-"}`,
+      `Troquelado unitario: ${formatMoney(result.adicional_troquelado_unitario_sin_iva ?? 0)}`,
       `Precio unitario con adicional: ${formatMoney(result.precio_unitario_con_adicional_sin_iva ?? result.precio_unitario_sin_iva ?? result.precio_sin_iva)}`,
       `Total sin IVA: ${formatMoney(result.total_sin_iva ?? result.precio_sin_iva)}`,
       `Total con urgencia: ${formatMoney(result.total_con_urgencia ?? result.precio_con_recargo_urgencia)}`,
@@ -857,7 +971,7 @@ export default function CotizadorBajadasV2() {
       setError("Cantidad inválida. Ingresá un entero mayor o igual a 1.");
       return;
     }
-    if (!isMatrixProduct && !derivedRange) {
+    if (!isMatrixProduct && !isNoRangeProduct && !derivedRange) {
       setError("La cantidad ingresada no entra en ningún rango disponible para esta combinación.");
       return;
     }
@@ -891,6 +1005,22 @@ export default function CotizadorBajadasV2() {
     }
     if (isStickersCirculares && !STICKERS_CIRCULARES_CANTIDADES.includes(String(cantidadUnidades))) {
       setError("Stickers Circulares solo permite cantidades: 100, 200, 300, 500 o 1000.");
+      return;
+    }
+    if (isTarjetasTroqCirc && !TARJETAS_TROQ_CIRC_CANTIDADES.includes(String(cantidadUnidades))) {
+      setError("Tarjetas Troqueladas Circulares solo permite cantidades: 100, 200, 300, 500 o 1000.");
+      return;
+    }
+    if (isPlanchaIman && (cantidadUnidades < 1 || cantidadUnidades > 500)) {
+      setError("Plancha de Imán Impreso permite cantidades de 1 a 500.");
+      return;
+    }
+    if (isAgendasCuadernos && cantidadUnidades < 2) {
+      setError("Agendas / Cuadernos requiere mínimo 2 unidades.");
+      return;
+    }
+    if (isBajadasFlow && form.adicional_troquelado && !form.complejidad_troquelado) {
+      setError("Debés elegir complejidad de troquelado.");
       return;
     }
 
@@ -984,6 +1114,32 @@ export default function CotizadorBajadasV2() {
           cantidad_unidades: cantidadUnidades,
           urgencia: form.urgencia,
         }
+      : isTarjetasTroqCirc
+      ? {
+          categoria: "Tarjetas Troqueladas Circulares",
+          producto: "tarjeta_troquelada_circular",
+          formato: form.formato,
+          caras: form.caras_tarjetas_troq_circ,
+          cantidad_unidades: cantidadUnidades,
+          urgencia: form.urgencia,
+        }
+      : isPlanchaIman
+      ? {
+          categoria: "Plancha de Imán Impreso",
+          producto: "plancha_iman_impreso",
+          variante: form.variante_plancha_iman,
+          cantidad_unidades: cantidadUnidades,
+          urgencia: form.urgencia,
+        }
+      : isAgendasCuadernos
+      ? {
+          categoria: "Agendas / Cuadernos",
+          producto: form.producto_agendas,
+          formato: form.formato_agendas,
+          paginas: Number(form.paginas_agendas),
+          cantidad_unidades: cantidadUnidades,
+          urgencia: form.urgencia,
+        }
       : {
           categoria: inferred.categoria,
           modo_color: inferred.modo_color,
@@ -996,6 +1152,8 @@ export default function CotizadorBajadasV2() {
           caras: inferred.caras,
           urgencia: form.urgencia,
           adicional_laminado: form.adicional_laminado || "sin_adicional",
+          adicional_troquelado: Boolean(form.adicional_troquelado),
+          complejidad_troquelado: form.adicional_troquelado ? form.complejidad_troquelado : undefined,
           tipo_producto: isAutoadhesivas ? "autoadhesiva" : undefined,
           columna_precio: isAutoadhesivas ? form.columna_precio : undefined,
         };
@@ -1018,12 +1176,20 @@ export default function CotizadorBajadasV2() {
         ? await cotizarImanesCorteRecto(payload)
         : isStickersCirculares
         ? await cotizarStickersCirculares(payload)
+        : isTarjetasTroqCirc
+        ? await cotizarTarjetasTroqueladasCirculares(payload)
+        : isPlanchaIman
+        ? await cotizarPlanchaImanImpreso(payload)
+        : isAgendasCuadernos
+        ? await cotizarAgendasCuadernos(payload)
         : await cotizarBajadaV2(payload);
       setResult(response);
       setLastPayload(payload);
     } catch (err) {
       if (err.code === "cantidad_fuera_de_matriz") {
         setError("Cantidad fuera de matriz para este producto.");
+      } else if (err.code === "cantidad_minima_no_alcanzada") {
+        setError("Cantidad mínima no alcanzada para este producto.");
       } else if (err.code === "terminacion_no_soportada") {
         setError("Terminación no soportada.");
       } else if (err.code === "formato_no_soportado") {
@@ -1036,6 +1202,10 @@ export default function CotizadorBajadasV2() {
         setError("Tipo de sobre no soportado.");
       } else if (err.code === "material_no_soportado") {
         setError("Material no soportado para Stickers Circulares.");
+      } else if (err.code === "complejidad_troquelado_requerida") {
+        setError("Debés elegir complejidad de troquelado.");
+      } else if (err.code === "complejidad_troquelado_no_soportada") {
+        setError("Complejidad de troquelado no soportada.");
       } else if (err.code === "combinacion_no_encontrada") {
         setError("La combinación seleccionada no existe en la tabla de Bajadas v2. Revisá formato, papel, gramaje y rango.");
       } else if (err.code === "urgencia_invalida") {
@@ -1069,6 +1239,7 @@ export default function CotizadorBajadasV2() {
           <details open><summary>Rango aplicado</summary><ul><li>{result.cantidad_rango_aplicado}</li></ul></details>
           <details open><summary>Precio unitario</summary><ul><li>Sin IVA: {formatMoney(result.precio_unitario_sin_iva)}</li><li>Con urgencia: {formatMoney(result.precio_unitario_con_urgencia)}</li></ul></details>
           <details open><summary>Adicional laminado/laca</summary><ul><li>selección: {result.adicional_laminado ?? "sin_adicional"}</li><li>adicional_unitario_sin_iva: {formatMoney(result.adicional_unitario_sin_iva ?? 0)}</li><li>regla_adicional_aplicada: {result.regla_adicional_aplicada ?? "-"}</li><li>fuente_adicional: {result.fuente_adicional ?? "-"}</li><li>rango_aplicado: {result.trazabilidad?.adicional_laminado?.rango_aplicado ?? "-"}</li><li>nota: Laca / laminado se suma antes de urgencia.</li><li>no_combinable: true</li></ul></details>
+          <details open><summary>Adicional Troquelado Digital</summary><ul><li>selección: {result.adicional_troquelado ? "sí" : "no"}</li><li>complejidad: {result.complejidad_troquelado ?? "-"}</li><li>precio_unitario_troquelado: {formatMoney(result.adicional_troquelado_unitario_sin_iva ?? 0)}</li><li>subtotal_troquelado: {formatMoney(result.total_adicional_troquelado_sin_iva ?? 0)}</li><li>rango_aplicado: {result.trazabilidad?.adicional_troquelado?.rango_aplicado ?? "-"}</li><li>regla_aplicada: {result.regla_troquelado_aplicada ?? "-"}</li><li>fuente: {result.fuente_troquelado ?? "-"}</li><li>nota: No incluye costo de impresión; se suma como adicional.</li></ul></details>
           <details open><summary>Total</summary><ul><li>Sin IVA: {formatMoney(result.total_sin_iva)}</li><li>Con urgencia: {formatMoney(result.total_con_urgencia)}</li></ul></details>
           <details open data-testid="price-tree-rule-section"><summary>Regla</summary><ul><li>regla_aplicada: {result.regla_aplicada}</li><li>fuente: {result.fuente}</li><li>base_formato: {result.trazabilidad?.base_formato ?? "-"}</li><li>factor_aplicado: {result.trazabilidad?.factor_aplicado ?? "-"}</li><li>regla_especial: {result.trazabilidad?.regla_especial ?? "-"}</li><li>correccion_logica: {result.trazabilidad?.correccion_logica ?? "-"}</li></ul></details>
           <details open><summary>Origen</summary><ul><li>origen_excel: {result.trazabilidad?.origen_excel ?? "-"}</li><li>precio_objetivo_csv: {result.trazabilidad?.precio_objetivo_csv ?? result.trazabilidad?.precio_objetivo_pdf ?? "-"}</li><li>precio_unitario_csv: {result.trazabilidad?.precio_unitario_csv ?? "-"}</li><li>modelo_tecnico_referencia: {result.trazabilidad?.modelo_tecnico_referencia ?? "-"}</li><li>precio_b3_referencia: {result.trazabilidad?.precio_b3_referencia ?? "-"}</li><li>an40_estado: {result.trazabilidad?.an40_estado ?? "-"}</li></ul></details>
@@ -1296,7 +1467,7 @@ export default function CotizadorBajadasV2() {
         <div className="card-head"><h3>1. Configura tu impresión</h3><span>Enter = calcular</span></div>
         <div className="form-grid compact-grid">
           <label><span>Categoría</span><select data-testid="categoria-select" value={form.categoria_ui} onChange={updateField("categoria_ui")}>{CATEGORIAS.map((v) => <option key={v} value={v}>{v}</option>)}</select></label>
-          {!isAutoadhesivas && !isTarjetas && !isPostales && !isFolletos && !isCarpetas && !isSobres && !isStickers && !isImanes && !isStickersCirculares ? (
+          {!isAutoadhesivas && !isTarjetas && !isPostales && !isFolletos && !isCarpetas && !isSobres && !isStickers && !isImanes && !isStickersCirculares && !isTarjetasTroqCirc && !isPlanchaIman && !isAgendasCuadernos ? (
             <>
               <label><span>Impresión</span><div className="caras-row">{CARAS.map((cara) => <button key={cara} data-testid={`print-option-${cara.replace("/", "-")}`} type="button" className={form.caras === cara ? "pill active" : "pill"} onClick={() => setForm((prev) => ({ ...prev, caras: cara }))}>{cara}</button>)}</div></label>
               <label><span>Categoría (automática)</span><input value={inferred.categoria} readOnly /></label>
@@ -1385,15 +1556,55 @@ export default function CotizadorBajadasV2() {
               <label><span>Impresión</span><input value="4/0" readOnly /></label>
               <label><span>Papel base</span><input value={form.material_stickers_circulares === "fluo_kraft_marron" ? "Papel flúo / Kraft marrón" : "Papel obra/ilustración 90g"} readOnly /></label>
             </>
+          ) : isTarjetasTroqCirc ? (
+            <>
+              <label><span>Producto</span><input value="Tarjetas Troqueladas Circulares" readOnly /></label>
+              <label><span>Formato</span><select data-testid="formato-select" value={form.formato} onChange={updateField("formato")}>{TARJETAS_TROQ_CIRC_FORMATOS.map((v) => <option key={v} value={v}>{v}</option>)}</select></label>
+              <label><span>Impresión</span><div className="caras-row">{["4/0", "4/4"].map((cara) => <button key={cara} type="button" className={form.caras_tarjetas_troq_circ === cara ? "pill active" : "pill"} onClick={() => setForm((prev) => ({ ...prev, caras_tarjetas_troq_circ: cara }))}>{cara}</button>)}</div></label>
+              <label><span>Papel</span><input value="300g Ilustración" readOnly /></label>
+            </>
+          ) : isPlanchaIman ? (
+            <>
+              <label><span>Producto</span><input value="Plancha de Imán Impreso" readOnly /></label>
+              <label><span>Variante</span><select value={form.variante_plancha_iman} onChange={updateField("variante_plancha_iman")}>{PLANCHA_IMAN_VARIANTES.map((v) => <option key={v.value} value={v.value}>{v.label}</option>)}</select></label>
+              <label><span>Impresión</span><input value="4/0" readOnly /></label>
+              <label><span>Área imprimible</span><input value="30x46 cm" readOnly /></label>
+            </>
+          ) : isAgendasCuadernos ? (
+            <>
+              <label><span>Producto</span><select value={form.producto_agendas} onChange={updateField("producto_agendas")}>{AGENDAS_PRODUCTOS.map((v) => <option key={v.value} value={v.value}>{v.label}</option>)}</select></label>
+              <label><span>Formato</span><select value={form.formato_agendas} onChange={updateField("formato_agendas")}>{AGENDAS_FORMATOS.map((v) => <option key={v} value={v}>{v}</option>)}</select></label>
+              <label><span>Páginas</span><select value={form.paginas_agendas} onChange={updateField("paginas_agendas")}>{AGENDAS_PAGINAS.map((v) => <option key={v} value={v}>{v}</option>)}</select></label>
+              <label><span>Observación</span><input value="Precio promocional desde 2 unidades" readOnly /></label>
+            </>
           ) : (
             <></>
           )}
-          <label><span>Cantidad</span><input type="number" min={1} step={1} placeholder={isMatrixProduct ? "100, 200, 300, 500, 1000" : "Ejemplo: 30"} value={form.cantidad_unidades} onChange={updateField("cantidad_unidades")} /><small className="range-hint">{isMatrixProduct ? `Cantidad de matriz: ${cantidadUnidades || "-"}` : `Rango aplicado: ${derivedRange ?? "Sin rango disponible"}`}</small></label>
+          <label><span>Cantidad</span><input type="number" min={1} step={1} placeholder={isMatrixProduct ? "100, 200, 300, 500, 1000" : "Ejemplo: 30"} value={form.cantidad_unidades} onChange={updateField("cantidad_unidades")} /><small className="range-hint">{isMatrixProduct ? `Cantidad de matriz: ${cantidadUnidades || "-"}` : isNoRangeProduct ? `Cantidad ingresada: ${cantidadUnidades || "-"}` : `Rango aplicado: ${derivedRange ?? "Sin rango disponible"}`}</small></label>
           <label><span>Urgencia</span><select value={form.urgencia} onChange={updateField("urgencia")}>{URGENCIAS.map((v) => <option key={v} value={v}>{v}</option>)}</select></label>
-          {!isTarjetas && !isPostales && !isFolletos && !isCarpetas && !isSobres && !isStickers && !isImanes && !isStickersCirculares ? <label><span>Adicional</span><select value={form.adicional_laminado} onChange={updateField("adicional_laminado")}>{ADICIONALES.map((a) => <option key={a.value} value={a.value}>{a.label}</option>)}</select></label> : null}
+          {isBajadasFlow ? <label><span>Adicional</span><select value={form.adicional_laminado} onChange={updateField("adicional_laminado")}>{ADICIONALES.map((a) => <option key={a.value} value={a.value}>{a.label}</option>)}</select></label> : null}
+          {isBajadasFlow ? (
+            <label>
+              <span>Troquelado Digital</span>
+              <select value={String(Boolean(form.adicional_troquelado))} onChange={(event) => setForm((prev) => ({ ...prev, adicional_troquelado: event.target.value === "true" }))}>
+                <option value="false">No</option>
+                <option value="true">Sí</option>
+              </select>
+            </label>
+          ) : null}
+          {isBajadasFlow && form.adicional_troquelado ? (
+            <label>
+              <span>Complejidad troquelado</span>
+              <select value={form.complejidad_troquelado} onChange={updateField("complejidad_troquelado")}>
+                {TROQUELADO_COMPLEJIDADES.map((item) => (
+                  <option key={item.value} value={item.value}>{item.label}</option>
+                ))}
+              </select>
+            </label>
+          ) : null}
         </div>
         {isAutoadhesivas ? <div className="warning-box compact-note">Tinta blanca y laca UV no están incluidas en esta etapa.</div> : null}
-        {isTarjetas || isPostales || isFolletos || isStickers || isImanes || isStickersCirculares ? <div className="info-box compact-note">Este producto usa precio total por paquete/cantidad según PDF vigente.</div> : <div className="info-box compact-note">Laca / laminado se suma antes de urgencia.</div>}
+        {isTarjetas || isPostales || isFolletos || isStickers || isImanes || isStickersCirculares || isTarjetasTroqCirc ? <div className="info-box compact-note">Este producto usa precio total por paquete/cantidad según PDF vigente.</div> : <div className="info-box compact-note">Laca / laminado se suma antes de urgencia. Troquelado digital también se suma como adicional y no incluye costo de impresión.</div>}
         {error ? <div className="error-box">{error}</div> : null}
         {copyStatus ? <div className="info-box" data-testid="copy-status">{copyStatus}</div> : null}
         <div className="actions-row compact-actions"><button type="submit" className="calculate-btn" disabled={loading}>{loading ? "Calculando..." : "Calcular"}</button><button type="button" className="secondary-btn compact-clear-btn" data-testid="clear-button" onClick={handleClear}>Limpiar</button></div>
@@ -1413,6 +1624,8 @@ export default function CotizadorBajadasV2() {
               <div><strong>Precio base unitario</strong><span>{formatMoney(result.precio_unitario_base_sin_iva ?? result.precio_unitario_sin_iva ?? result.precio_sin_iva)}</span></div>
               <div><strong>Adicional seleccionado</strong><span>{result.adicional_laminado ?? "sin_adicional"}</span></div>
               <div><strong>Adicional unitario sin IVA</strong><span>{formatMoney(result.adicional_unitario_sin_iva ?? 0)}</span></div>
+              <div><strong>Troquelado adicional</strong><span>{result.adicional_troquelado ? `sí (${result.complejidad_troquelado ?? "-"})` : "no"}</span></div>
+              <div><strong>Troquelado unitario</strong><span>{formatMoney(result.adicional_troquelado_unitario_sin_iva ?? 0)}</span></div>
               <div><strong>Precio unitario con adicional</strong><span>{formatMoney(result.precio_unitario_con_adicional_sin_iva ?? result.precio_unitario_sin_iva ?? result.precio_sin_iva)}</span></div>
               <div><strong>Cantidad ingresada</strong><span>{result.cantidad_unidades ?? form.cantidad_unidades}</span></div>
               {isMatrixProduct ? (
