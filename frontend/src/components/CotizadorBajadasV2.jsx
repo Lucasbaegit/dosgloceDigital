@@ -170,6 +170,15 @@ const ADICIONALES = [
   { label: "Laminado brillo", value: "laminado_brillo" },
   { label: "Laminado mate", value: "laminado_mate" },
 ];
+const ADICIONALES_AUTOADHESIVAS = [
+  { label: "Sin adicional", value: "sin_adicional" },
+  { label: "Laca UV", value: "laca" },
+  { label: "Tinta blanca", value: "tinta_blanca" },
+];
+const ADICIONALES_LIVIANO = [
+  { label: "Sin adicional", value: "sin_adicional" },
+  { label: "Laca UV", value: "laca" },
+];
 const INITIAL_FORM = {
   categoria_ui: "Bajadas Fullcolor/ByN",
   formato: "A4",
@@ -190,6 +199,8 @@ const INITIAL_FORM = {
   gramaje_tarjetas: "300g",
   papel_folleto: "150g Ilustracion",
   modo_color_folleto: "fullcolor",
+  caras_adicional_troq_circ: "0",
+  adicional_laminado_troq_circ: "sin_adicional",
   terminacion_carpetas: "sin_laminar",
   solapa_impresa: false,
   tipo_sobre: "sobre_bolsa_a4_22_9x32_4",
@@ -380,6 +391,15 @@ export default function CotizadorBajadasV2() {
   const isBajadasFlow = inferred.categoria.startsWith("Bajadas");
   const isMatrixProduct =
     isTarjetas || isPostales || isFolletos || isSobres || isStickers || isImanes || isStickersCirculares || isTarjetasTroqCirc;
+  const isLivianoBajadaNoAutoadhesiva =
+    (inferred.categoria === "Bajadas Fullcolor" || inferred.categoria === "Bajadas Blanco y Negro") &&
+    String(form.tipo_papel || "").toLowerCase() === "liviano";
+  const adicionalesDisponibles = useMemo(() => {
+    if (!isBajadasFlow) return ADICIONALES;
+    if (isAutoadhesivas) return ADICIONALES_AUTOADHESIVAS;
+    if (isLivianoBajadaNoAutoadhesiva) return ADICIONALES_LIVIANO;
+    return ADICIONALES;
+  }, [isBajadasFlow, isAutoadhesivas, isLivianoBajadaNoAutoadhesiva]);
   const formatoDataSource = useMemo(() => {
     if (isKraft || isTarjetas || isPostales || isFolletos || isCarpetas || isSobres || isStickers || isImanes || isStickersCirculares || isTarjetasTroqCirc || isPlanchaIman || isAgendasCuadernos) return form.formato;
     if (form.formato === "XA3") return "A3+";
@@ -667,7 +687,7 @@ export default function CotizadorBajadasV2() {
         return next;
       }
       if (next.categoria_ui === "Folletos") {
-        if (!FOLLETOS_FORMATOS.includes(next.formato)) next.formato = FOLLETOS_FORMATOS[0];
+        next.formato = "10x15";
         if (!FOLLETOS_CANTIDADES.includes(String(next.cantidad_unidades))) next.cantidad_unidades = "100";
         if (!FOLLETOS_MODO_COLOR.includes(next.modo_color_folleto)) next.modo_color_folleto = "fullcolor";
         if (!FOLLETOS_PAPELES.find((p) => p.papel === next.papel_folleto)) next.papel_folleto = FOLLETOS_PAPELES[0].papel;
@@ -744,6 +764,8 @@ export default function CotizadorBajadasV2() {
         next.gramaje = "300g";
         if (!TARJETAS_TROQ_CIRC_CANTIDADES.includes(String(next.cantidad_unidades))) next.cantidad_unidades = "100";
         next.adicional_laminado = "sin_adicional";
+        if (!["sin_adicional", "laminado_brillo", "laminado_mate"].includes(next.adicional_laminado_troq_circ)) next.adicional_laminado_troq_circ = "sin_adicional";
+        if (!["0", "1", "2"].includes(String(next.caras_adicional_troq_circ))) next.caras_adicional_troq_circ = "0";
         return next;
       }
       if (next.categoria_ui === "Plancha de Imán Impreso") {
@@ -813,6 +835,16 @@ export default function CotizadorBajadasV2() {
   }, [tipoPapelOptions, materialOptions, gramajeOptions]);
 
   useEffect(() => {
+    setForm((prev) => {
+      const allowed = new Set(adicionalesDisponibles.map((a) => a.value));
+      if (!allowed.has(prev.adicional_laminado)) {
+        return { ...prev, adicional_laminado: "sin_adicional" };
+      }
+      return prev;
+    });
+  }, [adicionalesDisponibles]);
+
+  useEffect(() => {
     if (!isFolletos) return;
     setForm((prev) => {
       const next = { ...prev };
@@ -825,6 +857,19 @@ export default function CotizadorBajadasV2() {
       return next;
     });
   }, [isFolletos, form.papel_folleto, form.modo_color_folleto]);
+
+  useEffect(() => {
+    if (!isTarjetasTroqCirc) return;
+    setForm((prev) => {
+      if (prev.adicional_laminado_troq_circ === "sin_adicional" && prev.caras_adicional_troq_circ !== "0") {
+        return { ...prev, caras_adicional_troq_circ: "0" };
+      }
+      if (prev.adicional_laminado_troq_circ !== "sin_adicional" && prev.caras_adicional_troq_circ === "0") {
+        return { ...prev, caras_adicional_troq_circ: "1" };
+      }
+      return prev;
+    });
+  }, [isTarjetasTroqCirc, form.adicional_laminado_troq_circ]);
 
   const missingFields = useMemo(() => {
     const required = isAutoadhesivas
@@ -936,6 +981,8 @@ export default function CotizadorBajadasV2() {
       material_stickers_circulares: STICKERS_CIRCULARES_MATERIALES[0].value,
       terminacion_stickers_circulares: "sin_laca_uv",
       caras_tarjetas_troq_circ: "4/4",
+      adicional_laminado_troq_circ: "sin_adicional",
+      caras_adicional_troq_circ: "0",
       variante_plancha_iman: PLANCHA_IMAN_VARIANTES[0].value,
       producto_agendas: AGENDAS_PRODUCTOS[0].value,
       formato_agendas: "A5",
@@ -1138,6 +1185,8 @@ export default function CotizadorBajadasV2() {
           producto: "tarjeta_troquelada_circular",
           formato: form.formato,
           caras: form.caras_tarjetas_troq_circ,
+          adicional_laminado: form.adicional_laminado_troq_circ,
+          caras_adicional_laminado: Number(form.caras_adicional_troq_circ || 0),
           cantidad_unidades: cantidadUnidades,
           urgencia: form.urgencia,
         }
@@ -1176,8 +1225,8 @@ export default function CotizadorBajadasV2() {
               : 1,
           adicional_laminado_por_lado: (inferred.formato === "A3+" || inferred.formato === "XA3") ? (form.adicional_laminado_por_lado || "sin_adicional") : "sin_adicional",
           adicional_plastificado: (inferred.formato === "A3+" || inferred.formato === "XA3") ? Boolean(form.adicional_plastificado) : false,
-          adicional_tinta_blanca: isAutoadhesivas ? Boolean(form.adicional_tinta_blanca) : false,
-          adicional_laca_uv: isAutoadhesivas ? Boolean(form.adicional_laca_uv) : false,
+          adicional_tinta_blanca: false,
+          adicional_laca_uv: false,
           adicional_troquelado: Boolean(form.adicional_troquelado),
           complejidad_troquelado: form.adicional_troquelado ? form.complejidad_troquelado : undefined,
           tipo_producto: isAutoadhesivas ? "autoadhesiva" : undefined,
@@ -1232,6 +1281,8 @@ export default function CotizadorBajadasV2() {
         setError("OPP pendiente de datos confiables para Stickers Circulares.");
       } else if (err.code === "tinta_blanca_bloqueada_por_falta_de_datos") {
         setError("Tinta blanca bloqueada por falta de datos confiables.");
+      } else if (err.code === "adicional_no_soportado_para_liviano") {
+        setError("Para papel liviano solo se permite Sin adicional o Laca UV.");
       } else if (err.code === "adicionales_hoja4_solo_a3plus_xa3") {
         setError("Laminado por lado y plastificado solo aplican a A3+ o XA3.");
       } else if (err.code === "complejidad_troquelado_requerida") {
@@ -1597,6 +1648,22 @@ export default function CotizadorBajadasV2() {
               <label><span>Formato</span><select data-testid="formato-select" value={form.formato} onChange={updateField("formato")}>{TARJETAS_TROQ_CIRC_FORMATOS.map((v) => <option key={v} value={v}>{v}</option>)}</select></label>
               <label><span>Impresión</span><div className="caras-row">{["4/0", "4/4"].map((cara) => <button key={cara} type="button" className={form.caras_tarjetas_troq_circ === cara ? "pill active" : "pill"} onClick={() => setForm((prev) => ({ ...prev, caras_tarjetas_troq_circ: cara }))}>{cara}</button>)}</div></label>
               <label><span>Papel</span><input value="300g Ilustración" readOnly /></label>
+              <label>
+                <span>Laminado</span>
+                <select value={form.adicional_laminado_troq_circ} onChange={updateField("adicional_laminado_troq_circ")}>
+                  <option value="sin_adicional">Sin laminado</option>
+                  <option value="laminado_brillo">Laminado brillo</option>
+                  <option value="laminado_mate">Laminado mate</option>
+                </select>
+              </label>
+              <label>
+                <span>Caras laminado</span>
+                <select value={form.caras_adicional_troq_circ} onChange={updateField("caras_adicional_troq_circ")} disabled={form.adicional_laminado_troq_circ === "sin_adicional"}>
+                  <option value="0">Sin laminado</option>
+                  <option value="1">1 cara (+10%)</option>
+                  <option value="2">2 caras (+20%)</option>
+                </select>
+              </label>
             </>
           ) : isPlanchaIman ? (
             <>
@@ -1617,8 +1684,8 @@ export default function CotizadorBajadasV2() {
           )}
           <label><span>Cantidad</span><input type="number" min={1} step={1} placeholder={isMatrixProduct ? "100, 200, 300, 500, 1000" : "Ejemplo: 30"} value={form.cantidad_unidades} onChange={updateField("cantidad_unidades")} /><small className="range-hint">{isMatrixProduct ? `Cantidad de matriz: ${cantidadUnidades || "-"}` : isNoRangeProduct ? `Cantidad ingresada: ${cantidadUnidades || "-"}` : `Rango aplicado: ${derivedRange ?? "Sin rango disponible"}`}</small></label>
           <label><span>Urgencia</span><select value={form.urgencia} onChange={updateField("urgencia")}>{URGENCIAS.map((v) => <option key={v} value={v}>{v}</option>)}</select></label>
-          {isBajadasFlow ? <label><span>Adicional</span><select value={form.adicional_laminado} onChange={updateField("adicional_laminado")}>{ADICIONALES.map((a) => <option key={a.value} value={a.value}>{a.label}</option>)}</select></label> : null}
-          {isBajadasFlow && !isAutoadhesivas && ["laca", "laminado_brillo", "laminado_mate"].includes(form.adicional_laminado) ? (
+          {isBajadasFlow ? <label><span>Adicional</span><select value={form.adicional_laminado} onChange={updateField("adicional_laminado")}>{adicionalesDisponibles.map((a) => <option key={a.value} value={a.value}>{a.label}</option>)}</select></label> : null}
+          {isBajadasFlow && !isAutoadhesivas && !isLivianoBajadaNoAutoadhesiva && ["laca", "laminado_brillo", "laminado_mate"].includes(form.adicional_laminado) ? (
             <label>
               <span>Aplicar adicional a</span>
               <select value={form.caras_adicional_laminado} onChange={updateField("caras_adicional_laminado")}>
@@ -1627,28 +1694,10 @@ export default function CotizadorBajadasV2() {
               </select>
             </label>
           ) : null}
-          {isAutoadhesivas ? (
-            <>
-              <label>
-                <span>Laca UV (autoadhesiva)</span>
-                <select value={String(Boolean(form.adicional_laca_uv))} onChange={(event) => setForm((prev) => ({ ...prev, adicional_laca_uv: event.target.value === "true" }))}>
-                  <option value="false">No</option>
-                  <option value="true">Sí</option>
-                </select>
-              </label>
-              <label>
-                <span>Tinta blanca</span>
-                <select value={String(Boolean(form.adicional_tinta_blanca))} onChange={(event) => setForm((prev) => ({ ...prev, adicional_tinta_blanca: event.target.value === "true" }))}>
-                  <option value="false">No</option>
-                  <option value="true">Sí</option>
-                </select>
-              </label>
-            </>
-          ) : null}
-          {isBajadasFlow && (form.formato === "A3+" || form.formato === "XA3") ? (
+          {isBajadasFlow && !isLivianoBajadaNoAutoadhesiva && (form.formato === "A3+" || form.formato === "XA3") ? (
             <label><span>Laminado por lado</span><select value={form.adicional_laminado_por_lado} onChange={updateField("adicional_laminado_por_lado")}>{ADICIONALES_POR_LADO.map((a) => <option key={a.value} value={a.value}>{a.label}</option>)}</select></label>
           ) : null}
-          {isBajadasFlow && (form.formato === "A3+" || form.formato === "XA3") ? (
+          {isBajadasFlow && !isLivianoBajadaNoAutoadhesiva && (form.formato === "A3+" || form.formato === "XA3") ? (
             <label>
               <span>Plastificado (A3)</span>
               <select value={String(Boolean(form.adicional_plastificado))} onChange={(event) => setForm((prev) => ({ ...prev, adicional_plastificado: event.target.value === "true" }))}>
@@ -1677,7 +1726,7 @@ export default function CotizadorBajadasV2() {
             </label>
           ) : null}
         </div>
-        {isAutoadhesivas ? <div className="warning-box compact-note">Laca UV está disponible para autoadhesivas. Tinta blanca queda bloqueada hasta contar con datos confiables.</div> : null}
+        {isAutoadhesivas ? <div className="warning-box compact-note">Laca UV se selecciona desde Adicional. Tinta blanca está sujeta a disponibilidad de datos.</div> : null}
         {isTarjetas || isPostales || isFolletos || isStickers || isImanes || isStickersCirculares || isTarjetasTroqCirc ? <div className="info-box compact-note">Este producto usa precio total por paquete/cantidad según PDF vigente.</div> : <div className="info-box compact-note">Laca / laminado se suma antes de urgencia. Troquelado digital también se suma como adicional y no incluye costo de impresión.</div>}
         {error ? <div className="error-box">{error}</div> : null}
         {copyStatus ? <div className="info-box" data-testid="copy-status">{copyStatus}</div> : null}

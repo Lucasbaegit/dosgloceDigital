@@ -42,7 +42,7 @@ test("modo Autoadhesivas guiado: A3+ y 4/0 fijos, tipo papel/especial", async ({
   await expect(page.getByLabel("Impresión")).toHaveValue("4/0");
   await expect(page.getByLabel("Modo color")).toHaveValue("fullcolor");
   await expect(page.getByLabel("Tipo")).toBeVisible();
-  await expect(page.getByText("Laca UV está disponible para autoadhesivas. Tinta blanca queda bloqueada hasta contar con datos confiables.")).toBeVisible();
+  await expect(page.getByText("Laca UV se selecciona desde Adicional. Tinta blanca está sujeta a disponibilidad de datos.")).toBeVisible();
   await expect(page.getByRole("button", { name: "1/0" })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "1/1" })).toHaveCount(0);
 });
@@ -211,7 +211,7 @@ test("botón Limpiar y Copiar resultado", async ({ page }) => {
   await page.getByLabel("Material").selectOption("Ilustracion");
   await page.getByLabel("Gramaje").selectOption("150g");
   await page.getByLabel("Cantidad").fill("30");
-  await page.getByLabel("Adicional").first().selectOption("laminado_brillo");
+  await page.getByLabel("Adicional").first().selectOption("laca");
 
   await page.route("http://127.0.0.1:8000/bajadas-v2/cotizar", async (route) => {
     await route.fulfill({
@@ -247,12 +247,12 @@ test("botón Limpiar y Copiar resultado", async ({ page }) => {
   await expect(page.getByLabel("Adicional").first()).toHaveValue("sin_adicional");
 });
 
-test("autoadhesivas especial + laminado mate calcula y muestra regla adicional", async ({ page }) => {
+test("autoadhesivas especial + laca UV calcula y muestra regla adicional", async ({ page }) => {
   await page.goto("/", { waitUntil: "networkidle" });
   await page.getByTestId("categoria-select").selectOption("Bajadas Autoadhesivas");
   await page.getByTestId("autoadh-tipo-select").selectOption("especial");
   await page.getByLabel("Cantidad").fill("30");
-  await page.getByLabel("Adicional").first().selectOption("laminado_mate");
+  await page.getByLabel("Adicional").first().selectOption("laca");
 
   await page.route("http://127.0.0.1:8000/bajadas-v2/cotizar", async (route) => {
     await route.fulfill({
@@ -262,11 +262,11 @@ test("autoadhesivas especial + laminado mate calcula y muestra regla adicional",
         precio_unitario_sin_iva: 1389,
         precio_unitario_con_urgencia: 1389,
         precio_unitario_base_sin_iva: 1389,
-        precio_unitario_con_adicional_sin_iva: 1564.451858,
-        adicional_laminado: "laminado_mate",
-        adicional_unitario_sin_iva: 175.451858,
-        regla_adicional_aplicada: "ADICIONAL_LAMINADO_MATE_A3PLUS",
-        fuente_adicional: "excel_laminado_readonly_a3plus",
+        precio_unitario_con_adicional_sin_iva: 1495,
+        adicional_laminado: "laca",
+        adicional_unitario_sin_iva: 106,
+        regla_adicional_aplicada: "ADICIONAL_LACA_UV_A3PLUS",
+        fuente_adicional: "matriz_laca_uv_bajadas",
         cantidad_unidades: 30,
         cantidad_rango_aplicado: "26 a 50",
         total_sin_iva: 46933.55574,
@@ -282,7 +282,7 @@ test("autoadhesivas especial + laminado mate calcula y muestra regla adicional",
 
   await page.getByRole("button", { name: "Calcular" }).click();
   await expect(page.getByText("Regla adicional aplicada")).toBeVisible();
-  await expect(page.getByText("ADICIONAL_LAMINADO_MATE_A3PLUS")).toBeVisible();
+  await expect(page.getByText("ADICIONAL_LACA_UV_A3PLUS")).toBeVisible();
 });
 
 test("XA3 visible en Fullcolor, ByN y Autoadhesivas", async ({ page }) => {

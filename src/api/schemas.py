@@ -501,6 +501,8 @@ class TarjetasTroqueladasCircularesQuoteRequestSchema:
     caras: str
     cantidad_unidades: int
     urgencia: str
+    adicional_laminado: str | None
+    caras_adicional_laminado: int | None
 
     @classmethod
     def from_payload(cls, payload: dict[str, Any]) -> "TarjetasTroqueladasCircularesQuoteRequestSchema":
@@ -512,6 +514,12 @@ class TarjetasTroqueladasCircularesQuoteRequestSchema:
             qty = int(payload["cantidad_unidades"])
         except (TypeError, ValueError) as exc:
             raise ApiValidationError("cantidad_unidades debe ser entero.") from exc
+        caras_adic: int | None = None
+        if payload.get("caras_adicional_laminado") not in (None, ""):
+            try:
+                caras_adic = int(payload.get("caras_adicional_laminado"))
+            except (TypeError, ValueError) as exc:
+                raise ApiValidationError("caras_adicional_laminado debe ser entero.") from exc
         return cls(
             categoria=str(payload["categoria"]).strip(),
             producto=str(payload["producto"]).strip(),
@@ -519,6 +527,10 @@ class TarjetasTroqueladasCircularesQuoteRequestSchema:
             caras=str(payload["caras"]).strip(),
             cantidad_unidades=qty,
             urgencia=str(payload["urgencia"]).strip().lower(),
+            adicional_laminado=(
+                None if payload.get("adicional_laminado") in (None, "") else str(payload.get("adicional_laminado")).strip().lower()
+            ),
+            caras_adicional_laminado=caras_adic,
         )
 
 

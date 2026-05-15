@@ -248,7 +248,7 @@ class TestBajadasV2Api(unittest.TestCase):
         }
         status, body = self._post_json("/bajadas-v2/cotizar", payload)
         self.assertEqual(status, 400)
-        self.assertEqual(body["error"], "validation_error")
+        self.assertEqual(body["error"], "adicional_no_soportado_para_liviano")
 
     def test_cotizar_con_brillo_suma_antes_de_urgencia(self):
         payload = {
@@ -265,9 +265,8 @@ class TestBajadasV2Api(unittest.TestCase):
             "adicional_laminado": "laminado_brillo",
         }
         status, body = self._post_json("/bajadas-v2/cotizar", payload)
-        self.assertEqual(status, 200)
-        self.assertEqual(body["adicional_laminado"], "laminado_brillo")
-        self.assertEqual(body["regla_adicional_aplicada"], "ADICIONAL_LAMINADO_BRILLO_A3PLUS")
+        self.assertEqual(status, 400)
+        self.assertEqual(body["error"], "adicional_no_soportado_para_liviano")
 
     def test_cotizar_con_mate_suma_antes_de_urgencia(self):
         payload = {
@@ -284,9 +283,8 @@ class TestBajadasV2Api(unittest.TestCase):
             "adicional_laminado": "laminado_mate",
         }
         status, body = self._post_json("/bajadas-v2/cotizar", payload)
-        self.assertEqual(status, 200)
-        self.assertEqual(body["adicional_laminado"], "laminado_mate")
-        self.assertEqual(body["regla_adicional_aplicada"], "ADICIONAL_LAMINADO_MATE_A3PLUS")
+        self.assertEqual(status, 400)
+        self.assertEqual(body["error"], "adicional_no_soportado_para_liviano")
 
     def test_bajada_sin_troquelado_no_cambia(self):
         payload = {
@@ -1291,6 +1289,24 @@ class TestBajadasV2Api(unittest.TestCase):
         self.assertEqual(body["caras_adicional_laminado"], 2)
         self.assertAlmostEqual(body["adicional_unitario_sin_iva"], 212.0, places=6)
         self.assertAlmostEqual(body["total_adicional_sin_iva"], 11236.0, places=6)
+
+    def test_bajadas_liviano_rechaza_laminado_brillo(self):
+        payload = {
+            "categoria": "Bajadas Fullcolor",
+            "modo_color": "fullcolor",
+            "formato": "A3+",
+            "tipo_papel": "liviano",
+            "material": "Ilustracion",
+            "gramaje": "150g",
+            "cantidad_unidades": 53,
+            "cantidad_rango": "51 a 100",
+            "caras": "4/0",
+            "urgencia": "normal",
+            "adicional_laminado": "laminado_brillo",
+        }
+        status, body = self._post_json("/bajadas-v2/cotizar", payload)
+        self.assertEqual(status, 400)
+        self.assertEqual(body["error"], "adicional_no_soportado_para_liviano")
 
 
 if __name__ == "__main__":

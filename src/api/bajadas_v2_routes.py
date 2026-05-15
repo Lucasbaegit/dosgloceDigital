@@ -182,7 +182,7 @@ class BajadasV2ApiService:
             return 200, result
         except ApiValidationError as exc:
             detail = str(exc)
-            if detail in {"complejidad_troquelado_requerida", "complejidad_troquelado_no_soportada", "cantidad_fuera_de_matriz"}:
+            if detail in {"complejidad_troquelado_requerida", "complejidad_troquelado_no_soportada", "cantidad_fuera_de_matriz", "tinta_blanca_bloqueada_por_falta_de_datos", "adicional_no_soportado_para_liviano"}:
                 return 400, {"error": detail, "detail": detail}
             return 400, {"error": "validation_error", "detail": detail}
         except QuoteInputError as exc:
@@ -504,12 +504,17 @@ class BajadasV2ApiService:
                 caras=req.caras,
                 cantidad_unidades=req.cantidad_unidades,
                 urgencia=req.urgencia,
+                adicional_laminado=req.adicional_laminado or "sin_adicional",
+                caras_adicional_laminado=int(req.caras_adicional_laminado or 0),
             )
             return 200, self.tarjetas_troqueladas_circulares_engine.quote_as_dict(quote)
         except ApiValidationError as exc:
             return 400, {"error": "validation_error", "detail": str(exc)}
         except TarjetasTroqCircQuoteInputError as exc:
-            return 400, {"error": "validation_error", "detail": str(exc)}
+            detail = str(exc)
+            if detail in {"laminado_no_soportado", "caras_laminado_no_soportadas"}:
+                return 400, {"error": detail, "detail": detail}
+            return 400, {"error": "validation_error", "detail": detail}
         except TarjetasTroqCircPriceNotFoundError as exc:
             detail = str(exc)
             code = "cantidad_fuera_de_matriz" if detail == "cantidad_fuera_de_matriz" else "combinacion_no_encontrada"
@@ -569,9 +574,14 @@ class BajadasV2ApiService:
         adicional_effective: str | None = None,
     ) -> dict[str, Any]:
         adicional = (adicional_effective if adicional_effective is not None else req.adicional_laminado or "sin_adicional").lower()
-        valid = {"sin_adicional", "laca", "laminado_brillo", "laminado_mate"}
+        valid = {"sin_adicional", "laca", "laminado_brillo", "laminado_mate", "tinta_blanca"}
         if adicional not in valid:
             raise ApiValidationError("adicional_laminado inválido. Valores permitidos: sin_adicional, laca, laminado_brillo, laminado_mate.")
+        if adicional == "tinta_blanca":
+            raise ApiValidationError("tinta_blanca_bloqueada_por_falta_de_datos")
+        if req.categoria in {"Bajadas Fullcolor", "Bajadas Blanco y Negro"} and str(req.tipo_papel).strip().lower() == "liviano":
+            if adicional in {"laminado_brillo", "laminado_mate"}:
+                raise ApiValidationError("adicional_no_soportado_para_liviano")
 
         # Opt-in behavior: if field is omitted, keep previous behavior unchanged.
         if req.adicional_laminado is None and adicional_effective is None:
@@ -651,6 +661,10 @@ class BajadasV2ApiService:
 
     def _apply_hoja4_adicionales_opt_in(self, result: dict[str, Any], req: QuoteRequestSchema) -> dict[str, Any]:
         if req.categoria not in {"Bajadas Fullcolor", "Bajadas Blanco y Negro", "Bajadas Autoadhesivas", "Bajadas Kraft"}:
+            return result
+        if req.categoria in {"Bajadas Fullcolor", "Bajadas Blanco y Negro"} and str(req.tipo_papel).strip().lower() == "liviano":
+            if (req.adicional_laminado_por_lado or "sin_adicional").lower() != "sin_adicional" or bool(req.adicional_plastificado):
+                raise ApiValidationError("adicional_no_soportado_para_liviano")
             return result
 
         formato = str(req.formato or "").upper()
