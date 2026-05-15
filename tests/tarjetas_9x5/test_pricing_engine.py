@@ -1,4 +1,4 @@
-import sys
+﻿import sys
 import unittest
 from pathlib import Path
 
@@ -15,24 +15,28 @@ class TestTarjetas9x5PricingEngine(unittest.TestCase):
     def setUpClass(cls):
         cls.engine = Tarjetas9x5PricingEngine(load_tarjetas_9x5_bundle(ROOT))
 
-    def _quote(self, cantidad, terminacion, caras, urgencia="normal"):
+    def _quote(self, cantidad, terminacion, caras, urgencia="normal", gramaje="300g", extras=None):
         return self.engine.quote(
             Tarjetas9x5QuoteInput(
                 categoria="Tarjetas Personales",
                 producto="9x5",
                 formato="9x5",
-                papel="300g Ilustración",
-                gramaje="300g",
+                papel=f"{gramaje} Ilustracion",
+                gramaje=gramaje,
                 terminacion=terminacion,
                 caras=caras,
                 cantidad_unidades=cantidad,
                 urgencia=urgencia,
+                terminaciones_extra=extras,
             )
         )
 
     def test_100_sin_laminar_4_0(self):
         result = self._quote(100, "sin_laminar", "4/0")
         self.assertAlmostEqual(result.total_sin_iva, 5139, places=6)
+        self.assertEqual(result.trazabilidad.get("modo_precio"), "pdf_fijo")
+        self.assertEqual(result.trazabilidad.get("futuro_modo_precio"), "formula_editable_calibrada")
+        self.assertEqual(result.trazabilidad.get("modo_calculo"), "matriz_pdf_con_variables_detectadas")
 
     def test_100_laminado_mate_4_4(self):
         result = self._quote(100, "laminado_mate", "4/4")
@@ -65,6 +69,16 @@ class TestTarjetas9x5PricingEngine(unittest.TestCase):
     def test_terminacion_invalida(self):
         with self.assertRaises(QuoteInputError):
             self._quote(100, "barniz", "4/0")
+
+    def test_350g_suma_10_por_ciento(self):
+        base = self._quote(100, "sin_laminar", "4/0", gramaje="300g")
+        plus = self._quote(100, "sin_laminar", "4/0", gramaje="350g")
+        self.assertAlmostEqual(plus.total_sin_iva, round(base.total_sin_iva * 1.10, 6), places=6)
+        self.assertEqual(plus.trazabilidad.get("gramaje_trazabilidad", {}).get("recargo_350g_pct"), 0.10)
+
+    def test_terminaciones_extra_bloqueadas(self):
+        with self.assertRaises(QuoteInputError):
+            self._quote(100, "sin_laminar", "4/0", extras={"puntas_redondeadas": True, "agujerado": False})
 
 
 if __name__ == "__main__":

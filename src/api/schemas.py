@@ -28,6 +28,8 @@ class QuoteRequestSchema:
     terminacion: str | None
     urgencia: str
     adicional_laminado: str | None
+    adicional_laminado_por_lado: str | None
+    adicional_plastificado: bool | None
     adicional_troquelado: bool | None
     complejidad_troquelado: str | None
 
@@ -71,6 +73,16 @@ class QuoteRequestSchema:
                 None
                 if payload.get("adicional_laminado") in (None, "")
                 else str(payload.get("adicional_laminado")).strip().lower()
+            ),
+            adicional_laminado_por_lado=(
+                None
+                if payload.get("adicional_laminado_por_lado") in (None, "")
+                else str(payload.get("adicional_laminado_por_lado")).strip().lower()
+            ),
+            adicional_plastificado=(
+                None
+                if "adicional_plastificado" not in payload
+                else cls._coerce_bool(payload.get("adicional_plastificado"), "adicional_plastificado")
             ),
             adicional_troquelado=(
                 None
@@ -135,6 +147,7 @@ class Tarjetas9x5QuoteRequestSchema:
     caras: str
     cantidad_unidades: int
     urgencia: str
+    terminaciones_extra: dict[str, bool] | None
 
     @classmethod
     def from_payload(cls, payload: dict[str, Any]) -> "Tarjetas9x5QuoteRequestSchema":
@@ -168,6 +181,7 @@ class Tarjetas9x5QuoteRequestSchema:
             caras=str(payload["caras"]).strip(),
             cantidad_unidades=qty,
             urgencia=str(payload["urgencia"]).strip().lower(),
+            terminaciones_extra=(payload.get("terminaciones_extra") if isinstance(payload.get("terminaciones_extra"), dict) else None),
         )
 
 
@@ -182,6 +196,7 @@ class TarjetasPostalesQuoteRequestSchema:
     caras: str
     cantidad_unidades: int
     urgencia: str
+    terminaciones_extra: dict[str, bool] | None
 
     @classmethod
     def from_payload(cls, payload: dict[str, Any]) -> "TarjetasPostalesQuoteRequestSchema":
@@ -203,6 +218,7 @@ class TarjetasPostalesQuoteRequestSchema:
             caras=str(payload["caras"]).strip(),
             cantidad_unidades=qty,
             urgencia=str(payload["urgencia"]).strip().lower(),
+            terminaciones_extra=(payload.get("terminaciones_extra") if isinstance(payload.get("terminaciones_extra"), dict) else None),
         )
 
 

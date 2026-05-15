@@ -36,8 +36,21 @@ class StickersCircularesPricingEngine:
         self._variables_bundle = load_pricing_variables_bundle(project_root) if project_root is not None else None
 
     def quote(self, request: StickersCircularesQuoteInput) -> StickersCircularesQuoteResult:
-        self._validate(request)
-        row = self._index.get((request.material, request.cantidad_unidades, request.formato, request.terminacion))
+        normalized_material = self._normalize_material(request.material)
+        normalized_terminacion = self._normalize_terminacion(request.terminacion)
+        normalized_request = StickersCircularesQuoteInput(
+            categoria=request.categoria,
+            producto=request.producto,
+            material=normalized_material,
+            formato=request.formato,
+            terminacion=normalized_terminacion,
+            cantidad_unidades=request.cantidad_unidades,
+            urgencia=request.urgencia,
+            modo_precio=request.modo_precio,
+            variables_override=request.variables_override,
+        )
+        self._validate(normalized_request)
+        row = self._index.get((normalized_request.material, normalized_request.cantidad_unidades, normalized_request.formato, normalized_request.terminacion))
         if row is None:
             raise PriceNotFoundError("combinacion_no_encontrada")
 
@@ -46,7 +59,7 @@ class StickersCircularesPricingEngine:
         if modo_precio not in {"formula_editable_calibrada", "pdf_fijo"}:
             raise QuoteInputError("modo_precio_invalido")
 
-        formula_breakdown = self._compute_formula_breakdown(request, request.variables_override or {})
+        formula_breakdown = self._compute_formula_breakdown(normalized_request, normalized_request.variables_override or {})
         total_base = formula_breakdown["total_base_excel"]
         if total_base <= 0:
             raise QuoteInputError("formula_base_invalida")
@@ -82,8 +95,10 @@ class StickersCircularesPricingEngine:
             ],
             variables_usadas={
                 "material": request.material,
-                "formato": request.formato,
+                "material_normalizado": normalized_material,
+                "formato": normalized_request.formato,
                 "terminacion": request.terminacion,
+                "terminacion_normalizada": normalized_terminacion,
                 "cantidad_unidades": request.cantidad_unidades,
                 "modo_precio": modo_precio,
                 "variables_override": request.variables_override or {},
@@ -104,6 +119,7 @@ class StickersCircularesPricingEngine:
                     "material": formula_breakdown["material_base"],
                     "click": formula_breakdown["click_total"],
                     "laca": formula_breakdown["laca_factor"],
+                    "recargo_laca_uv_brillo_pct": formula_breakdown["recargo_laca_uv_brillo_pct"],
                     "corte": formula_breakdown["corte_factor"],
                     "coeficientes": {
                         "tamano": formula_breakdown["coeficiente_tamano"],
@@ -155,6 +171,8 @@ class StickersCircularesPricingEngine:
             raise QuoteInputError("categoria invalida")
         if request.producto != "sticker_circular":
             raise QuoteInputError("producto invalido")
+        if request.material == "opp":
+            raise QuoteInputError("material_opp_pendiente_datos")
         if request.material not in self._materials:
             raise QuoteInputError("material_no_soportado")
         if request.formato not in self._formatos:
@@ -176,7 +194,7 @@ class StickersCircularesPricingEngine:
 
         material_base = float(material_map[request.material])
         click_color_base = float(cfg.get("click_color_base", 0.0))
-        laca_uv_factor = float(cfg.get("laca_uv_factor", 1.0))
+        laca_uv_factor = float(cfg.get("laca_uv_factor", 1.15))
         corte_circular_factor = float(cfg.get("corte_circular_factor", 1.0))
         multiplicador_comercial = float(cfg.get("multiplicador_comercial", 1.0))
         coeficiente_tamano = float(coef_tamano_map[request.formato])
@@ -192,7 +210,7 @@ class StickersCircularesPricingEngine:
             multiplicador_comercial = float(overrides["multiplicador_comercial"])
 
         click_total = click_color_base * coeficiente_tamano
-        laca_factor = laca_uv_factor if request.terminacion == "con_laca_uv" else 1.0
+        laca_factor = laca_uv_factor if request.terminacion in {"con_laca_uv", "con_laca_uv_brillo"} else 1.0
         subtotal = (material_base + click_total) * laca_factor * corte_circular_factor * coeficiente_cantidad
         total_base = subtotal * multiplicador_comercial
 
@@ -204,5 +222,25 @@ class StickersCircularesPricingEngine:
             "coeficiente_tamano": coeficiente_tamano,
             "coeficiente_cantidad": coeficiente_cantidad,
             "multiplicador_comercial": multiplicador_comercial,
+            "recargo_laca_uv_brillo_pct": round((laca_factor - 1.0) * 100.0, 6),
             "total_base_excel": total_base,
         }
+
+    @staticmethod
+    def _normalize_material(material: str) -> str:
+        normalized = str(material).strip().lower()
+        mapping = {
+            "fluo": "fluo_kraft_marron",
+            "kraft_marron": "fluo_kraft_marron",
+            "fluo_kraft_marron": "fluo_kraft_marron",
+            "obra_ilustracion_90g": "obra_ilustracion_90g",
+            "opp": "opp",
+        }
+        return mapping.get(normalized, material)
+
+    @staticmethod
+    def _normalize_terminacion(terminacion: str) -> str:
+        normalized = str(terminacion).strip().lower()
+        if normalized == "con_laca_uv_brillo":
+            return "con_laca_uv"
+        return normalized

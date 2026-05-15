@@ -76,6 +76,22 @@ class TestStickersCircularesApi(unittest.TestCase):
         self.assertEqual(status, 200)
         self.assertAlmostEqual(payload["total_sin_iva"], 481291, places=6)
 
+    def test_laca_uv_brillo_alias(self):
+        status, payload = self._post(
+            "/stickers-circulares/cotizar",
+            {
+                "categoria": "Stickers Circulares",
+                "producto": "sticker_circular",
+                "material": "obra_ilustracion_90g",
+                "formato": "10cm",
+                "terminacion": "con_laca_uv_brillo",
+                "cantidad_unidades": 1000,
+                "urgencia": "normal",
+            },
+        )
+        self.assertEqual(status, 200)
+        self.assertAlmostEqual(payload["total_sin_iva"], 85980, places=6)
+
     def test_invalid_qty(self):
         status, payload = self._post(
             "/stickers-circulares/cotizar",
@@ -91,6 +107,22 @@ class TestStickersCircularesApi(unittest.TestCase):
         )
         self.assertEqual(status, 404)
         self.assertEqual(payload.get("error"), "cantidad_fuera_de_matriz")
+
+    def test_opp_pendiente_datos(self):
+        status, payload = self._post(
+            "/stickers-circulares/cotizar",
+            {
+                "categoria": "Stickers Circulares",
+                "producto": "sticker_circular",
+                "material": "opp",
+                "formato": "10cm",
+                "terminacion": "sin_laca_uv",
+                "cantidad_unidades": 100,
+                "urgencia": "normal",
+            },
+        )
+        self.assertEqual(status, 400)
+        self.assertEqual(payload.get("error"), "material_opp_pendiente_datos")
 
     def test_pdf_fijo_mode_explicit(self):
         status, payload = self._post(

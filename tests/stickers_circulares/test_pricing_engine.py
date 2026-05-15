@@ -53,6 +53,15 @@ class StickersCircularesPricingEngineTests(unittest.TestCase):
         result = self.quote(material="fluo_kraft_marron", formato="18-20cm", terminacion="con_laca_uv", cantidad_unidades=1000)
         self.assertEqual(result.total_sin_iva, 481291)
 
+    def test_alias_laca_uv_brillo_mantiene_precio_pdf(self):
+        result = self.quote(material="obra_ilustracion_90g", formato="10cm", terminacion="con_laca_uv_brillo", cantidad_unidades=1000)
+        self.assertEqual(result.total_sin_iva, 85980)
+        self.assertIn("arbol_calculo", result.trazabilidad)
+
+    def test_material_opp_pendiente_datos(self):
+        with self.assertRaises(QuoteInputError):
+            self.quote(material="opp", formato="10cm", terminacion="sin_laca_uv", cantidad_unidades=100)
+
     def test_invalid_qty(self):
         with self.assertRaises(PriceNotFoundError):
             self.quote(cantidad_unidades=750)

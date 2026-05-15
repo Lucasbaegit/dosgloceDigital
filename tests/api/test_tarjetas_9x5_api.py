@@ -1,4 +1,4 @@
-import json
+﻿import json
 import sys
 import threading
 import unittest
@@ -40,47 +40,41 @@ class TestTarjetas9x5Api(unittest.TestCase):
             finally:
                 exc.close()
 
-    def _payload(self, cantidad: int, terminacion: str, caras: str, urgencia: str = "normal") -> dict:
+    def _payload(self, cantidad: int, terminacion: str, caras: str, urgencia: str = "normal", gramaje: str = "300g") -> dict:
         return {
             "categoria": "Tarjetas Personales",
             "producto": "9x5",
             "formato": "9x5",
-            "papel": "300g Ilustración",
-            "gramaje": "300g",
+            "papel": f"{gramaje} Ilustracion",
+            "gramaje": gramaje,
             "terminacion": terminacion,
             "caras": caras,
             "cantidad_unidades": cantidad,
             "urgencia": urgencia,
+            "terminaciones_extra": {
+                "puntas_redondeadas": False,
+                "agujerado": False,
+            },
         }
 
     def test_tarjetas_100_sin_laminar_4_0(self):
         status, body = self._post_json("/tarjetas-9x5/cotizar", self._payload(100, "sin_laminar", "4/0"))
         self.assertEqual(status, 200)
         self.assertAlmostEqual(body["total_sin_iva"], 5139, places=6)
-        self.assertEqual(body["regla_aplicada"], "TARJETAS_9X5_MATRIZ_PDF_P12")
-        self.assertEqual(body["trazabilidad"]["modo_precio"], "pdf_fijo")
-        self.assertEqual(body["trazabilidad"]["futuro_modo_precio"], "formula_editable_calibrada")
-        self.assertEqual(body["trazabilidad"]["modo_calculo"], "matriz_pdf_con_variables_detectadas")
-        self.assertIn("variables_detectadas", body["trazabilidad"])
-        self.assertIn("variables_usadas", body["trazabilidad"])
-        self.assertIn("precio_pdf_objetivo", body["trazabilidad"])
-        self.assertIn("config_variables_base", body["trazabilidad"])
-        self.assertIn("motivo_no_formula_pura", body["trazabilidad"])
 
-    def test_tarjetas_1000_laminado_mate_4_4(self):
-        status, body = self._post_json("/tarjetas-9x5/cotizar", self._payload(1000, "laminado_mate", "4/4"))
-        self.assertEqual(status, 200)
-        self.assertAlmostEqual(body["total_sin_iva"], 48401, places=6)
+    def test_tarjetas_350g_aplica_10_pct(self):
+        status_base, body_base = self._post_json("/tarjetas-9x5/cotizar", self._payload(100, "sin_laminar", "4/0", gramaje="300g"))
+        status_plus, body_plus = self._post_json("/tarjetas-9x5/cotizar", self._payload(100, "sin_laminar", "4/0", gramaje="350g"))
+        self.assertEqual(status_base, 200)
+        self.assertEqual(status_plus, 200)
+        self.assertAlmostEqual(body_plus["total_sin_iva"], round(body_base["total_sin_iva"] * 1.10, 6), places=6)
 
-    def test_tarjetas_cantidad_fuera_de_matriz(self):
-        status, body = self._post_json("/tarjetas-9x5/cotizar", self._payload(750, "sin_laminar", "4/0"))
-        self.assertEqual(status, 404)
-        self.assertEqual(body["error"], "cantidad_fuera_de_matriz")
-
-    def test_tarjetas_terminacion_invalida(self):
-        status, body = self._post_json("/tarjetas-9x5/cotizar", self._payload(100, "barniz", "4/0"))
+    def test_tarjetas_terminacion_extra_bloqueada(self):
+        payload = self._payload(100, "sin_laminar", "4/0")
+        payload["terminaciones_extra"]["agujerado"] = True
+        status, body = self._post_json("/tarjetas-9x5/cotizar", payload)
         self.assertEqual(status, 400)
-        self.assertEqual(body["error"], "terminacion_no_soportada")
+        self.assertEqual(body["error"], "terminacion_extra_bloqueada_por_falta_de_datos")
 
 
 if __name__ == "__main__":

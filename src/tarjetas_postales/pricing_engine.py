@@ -16,6 +16,8 @@ class TarjetasPostalesPricingEngine:
     VALID_CARAS = {"4/0", "4/4"}
     VALID_URGENCIA = {"normal", "express", "super_express", "ya_24hs"}
     RECARGOS_URGENCIA = {"normal": 0.0, "express": 0.15, "super_express": 0.30, "ya_24hs": 0.50}
+    RECARGO_350G = 0.10
+    TERMINACIONES_EXTRA_SIN_DATOS = ("puntas_redondeadas", "agujerado")
 
     def __init__(self, bundle: TarjetasPostalesBundle):
         self._index: dict[tuple[int, str, str], dict[str, Any]] = {}
@@ -27,11 +29,18 @@ class TarjetasPostalesPricingEngine:
         row = self._index.get((request.cantidad_unidades, request.terminacion, request.caras))
         if row is None:
             raise PriceNotFoundError("combinacion_no_encontrada")
-        total = float(row["precio_total_sin_iva"])
+
+        total_base_300g = float(row["precio_total_sin_iva"])
+        total = (
+            round(total_base_300g * (1.0 + self.RECARGO_350G), 6)
+            if request.gramaje == "350g"
+            else total_base_300g
+        )
         recargo = self.RECARGOS_URGENCIA[request.urgencia]
         total_u = round(total * (1 + recargo), 6)
         unit = round(total / request.cantidad_unidades, 6)
         unit_u = round(total_u / request.cantidad_unidades, 6)
+
         trace = build_pdf_matrix_trace(
             rama="tarjetas_postales",
             fuente_precio_final="PDF página 12 - Tarjetas Postales",
@@ -61,8 +70,19 @@ class TarjetasPostalesPricingEngine:
                 "convencion_precio": "precio_total_por_paquete",
                 "terminacion": request.terminacion,
                 "caras": request.caras,
+                "gramaje_base": "300g",
+                "gramaje_solicitado": request.gramaje,
+                "recargo_350g_pct": self.RECARGO_350G if request.gramaje == "350g" else 0.0,
+                "precio_base_300g": total_base_300g,
+                "precio_calculado_gramaje": total,
+                "terminaciones_extra": {
+                    "estado": "bloqueadas_por_falta_de_datos",
+                    "terminaciones_solicitadas": request.terminaciones_extra or {},
+                    "codigo_bloqueo": "terminacion_extra_bloqueada_por_falta_de_datos",
+                },
             },
         )
+
         return TarjetasPostalesQuoteResult(
             precio_unitario_sin_iva=unit,
             precio_unitario_con_urgencia=unit_u,
@@ -90,9 +110,9 @@ class TarjetasPostalesPricingEngine:
             raise QuoteInputError("producto inválido")
         if request.formato != "postal":
             raise QuoteInputError("formato inválido")
-        if request.papel not in {"300g Ilustración", "300g Ilustracion"}:
+        if request.papel not in {"300g Ilustración", "300g Ilustracion", "350g Ilustración", "350g Ilustracion"}:
             raise QuoteInputError("papel inválido")
-        if request.gramaje != "300g":
+        if request.gramaje not in {"300g", "350g"}:
             raise QuoteInputError("gramaje inválido")
         if request.cantidad_unidades not in self.VALID_CANTIDADES:
             raise PriceNotFoundError("cantidad_fuera_de_matriz")
@@ -102,3 +122,7 @@ class TarjetasPostalesPricingEngine:
             raise QuoteInputError("caras_no_soportadas")
         if request.urgencia not in self.VALID_URGENCIA:
             raise QuoteInputError("urgencia_invalida")
+        if request.terminaciones_extra and any(
+            bool(request.terminaciones_extra.get(key)) for key in self.TERMINACIONES_EXTRA_SIN_DATOS
+        ):
+            raise QuoteInputError("terminacion_extra_bloqueada_por_falta_de_datos")

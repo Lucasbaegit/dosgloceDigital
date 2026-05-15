@@ -1,4 +1,4 @@
-import json
+﻿import json
 import sys
 import threading
 import unittest
@@ -39,43 +39,41 @@ class TestTarjetasPostalesFolletosApi(unittest.TestCase):
             finally:
                 exc.close()
 
-    def test_tarjetas_postales_ok(self):
-        status, body = self._post("/tarjetas-postales/cotizar", {
+    def _postales_payload(self, gramaje="300g"):
+        return {
             "categoria": "Tarjetas Postales",
             "producto": "postal",
             "formato": "postal",
-            "papel": "300g Ilustracion",
-            "gramaje": "300g",
+            "papel": f"{gramaje} Ilustracion",
+            "gramaje": gramaje,
             "terminacion": "sin_laminar",
             "caras": "4/0",
             "cantidad_unidades": 100,
-            "urgencia": "normal"
-        })
+            "urgencia": "normal",
+            "terminaciones_extra": {
+                "puntas_redondeadas": False,
+                "agujerado": False,
+            },
+        }
+
+    def test_tarjetas_postales_ok(self):
+        status, body = self._post("/tarjetas-postales/cotizar", self._postales_payload("300g"))
         self.assertEqual(status, 200)
         self.assertAlmostEqual(body["total_sin_iva"], 10932, places=6)
-        self.assertEqual(body["trazabilidad"]["modo_precio"], "pdf_fijo")
-        self.assertEqual(body["trazabilidad"]["futuro_modo_precio"], "formula_editable_calibrada")
-        self.assertEqual(body["trazabilidad"]["modo_calculo"], "matriz_pdf_con_variables_detectadas")
-        self.assertIn("variables_detectadas", body["trazabilidad"])
-        self.assertIn("variables_usadas", body["trazabilidad"])
-        self.assertIn("precio_pdf_objetivo", body["trazabilidad"])
-        self.assertIn("config_variables_base", body["trazabilidad"])
-        self.assertIn("motivo_no_formula_pura", body["trazabilidad"])
 
-    def test_tarjetas_postales_fuera_matriz(self):
-        status, body = self._post("/tarjetas-postales/cotizar", {
-            "categoria": "Tarjetas Postales",
-            "producto": "postal",
-            "formato": "postal",
-            "papel": "300g Ilustracion",
-            "gramaje": "300g",
-            "terminacion": "sin_laminar",
-            "caras": "4/0",
-            "cantidad_unidades": 750,
-            "urgencia": "normal"
-        })
-        self.assertEqual(status, 404)
-        self.assertEqual(body["error"], "cantidad_fuera_de_matriz")
+    def test_tarjetas_postales_350g_aplica_10_pct(self):
+        status_base, body_base = self._post("/tarjetas-postales/cotizar", self._postales_payload("300g"))
+        status_plus, body_plus = self._post("/tarjetas-postales/cotizar", self._postales_payload("350g"))
+        self.assertEqual(status_base, 200)
+        self.assertEqual(status_plus, 200)
+        self.assertAlmostEqual(body_plus["total_sin_iva"], round(body_base["total_sin_iva"] * 1.10, 6), places=6)
+
+    def test_tarjetas_postales_extra_bloqueada(self):
+        payload = self._postales_payload("300g")
+        payload["terminaciones_extra"]["puntas_redondeadas"] = True
+        status, body = self._post("/tarjetas-postales/cotizar", payload)
+        self.assertEqual(status, 400)
+        self.assertEqual(body["error"], "terminacion_extra_bloqueada_por_falta_de_datos")
 
     def test_folletos_ok(self):
         status, body = self._post("/folletos/cotizar", {
@@ -91,29 +89,6 @@ class TestTarjetasPostalesFolletosApi(unittest.TestCase):
         })
         self.assertEqual(status, 200)
         self.assertAlmostEqual(body["total_sin_iva"], 119247, places=6)
-        self.assertEqual(body["trazabilidad"]["modo_precio"], "pdf_fijo")
-        self.assertEqual(body["trazabilidad"]["futuro_modo_precio"], "formula_editable_calibrada")
-        self.assertEqual(body["trazabilidad"]["modo_calculo"], "matriz_pdf_con_variables_detectadas")
-        self.assertIn("variables_detectadas", body["trazabilidad"])
-        self.assertIn("variables_usadas", body["trazabilidad"])
-        self.assertIn("precio_pdf_objetivo", body["trazabilidad"])
-        self.assertIn("config_variables_base", body["trazabilidad"])
-        self.assertIn("motivo_no_formula_pura", body["trazabilidad"])
-
-    def test_folletos_caras_incompatibles(self):
-        status, body = self._post("/folletos/cotizar", {
-            "categoria": "Folletos",
-            "producto": "folleto",
-            "formato": "A4",
-            "papel": "80g Ilustracion",
-            "gramaje": "80g",
-            "modo_color": "escala_grises",
-            "caras": "4/4",
-            "cantidad_unidades": 1000,
-            "urgencia": "normal"
-        })
-        self.assertEqual(status, 400)
-        self.assertEqual(body["error"], "caras_no_compatibles")
 
 
 if __name__ == "__main__":

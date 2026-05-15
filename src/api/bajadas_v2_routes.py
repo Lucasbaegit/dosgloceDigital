@@ -169,6 +169,7 @@ class BajadasV2ApiService:
             else:
                 result = self.engine.quote_as_dict(req.to_quote_input())
             result = self._apply_laminado_adicional_opt_in(result, req)
+            result = self._apply_hoja4_adicionales_opt_in(result, req)
             result = self._apply_troquelado_adicional_opt_in(result, req)
             return 200, result
         except ApiValidationError as exc:
@@ -212,6 +213,7 @@ class BajadasV2ApiService:
                 caras=req.caras,
                 cantidad_unidades=req.cantidad_unidades,
                 urgencia=req.urgencia,
+                terminaciones_extra=req.terminaciones_extra,
             )
             return 200, self.tarjetas_9x5_engine.quote_as_dict(quote)
         except ApiValidationError as exc:
@@ -222,6 +224,8 @@ class BajadasV2ApiService:
                 return 400, {"error": "terminacion_no_soportada", "detail": detail}
             if "caras_no_soportadas" in detail:
                 return 400, {"error": "caras_no_soportadas", "detail": detail}
+            if "terminacion_extra_bloqueada_por_falta_de_datos" in detail:
+                return 400, {"error": "terminacion_extra_bloqueada_por_falta_de_datos", "detail": detail}
             if "urgencia_invalida" in detail:
                 return 400, {"error": "urgencia_invalida", "detail": detail}
             return 400, {"error": "validation_error", "detail": detail}
@@ -246,6 +250,7 @@ class BajadasV2ApiService:
                 caras=req.caras,
                 cantidad_unidades=req.cantidad_unidades,
                 urgencia=req.urgencia,
+                terminaciones_extra=req.terminaciones_extra,
             )
             return 200, self.tarjetas_postales_engine.quote_as_dict(quote)
         except ApiValidationError as exc:
@@ -254,6 +259,8 @@ class BajadasV2ApiService:
             detail = str(exc)
             if "terminacion_no_soportada" in detail:
                 return 400, {"error": "terminacion_no_soportada", "detail": detail}
+            if "terminacion_extra_bloqueada_por_falta_de_datos" in detail:
+                return 400, {"error": "terminacion_extra_bloqueada_por_falta_de_datos", "detail": detail}
             return 400, {"error": "validation_error", "detail": detail}
         except TarjetasPostalesPriceNotFoundError as exc:
             detail = str(exc)
@@ -440,6 +447,8 @@ class BajadasV2ApiService:
             return 400, {"error": "validation_error", "detail": str(exc)}
         except StickersCircularesQuoteInputError as exc:
             detail = str(exc)
+            if "material_opp_pendiente_datos" in detail:
+                return 400, {"error": "material_opp_pendiente_datos", "detail": detail}
             if "material_no_soportado" in detail:
                 return 400, {"error": "material_no_soportado", "detail": detail}
             if "formato_no_soportado" in detail:
@@ -557,14 +566,27 @@ class BajadasV2ApiService:
             return result
 
         qty = int(result.get("cantidad_unidades", req.cantidad_unidades or 1))
-        laminado_out = self.laminado_engine.quote_as_dict(
-            LaminadoQuoteInput(
-                adicional=adicional,
-                formato="A3+",
-                cantidad_unidades=qty,
-                urgencia=req.urgencia,
+        if adicional == "laca":
+            adicional_unit = self._resolve_laca_uv_unit_by_qty(qty)
+            recargo_loca = float(result.get("trazabilidad", {}).get("recargo_urgencia_aplicado", 0.0))
+            laminado_out = {
+                "adicional_unitario_sin_iva": adicional_unit,
+                "adicional_unitario_con_urgencia": adicional_unit * (1.0 + recargo_loca),
+                "total_adicional_sin_iva": adicional_unit * qty,
+                "total_adicional_con_urgencia": (adicional_unit * qty) * (1.0 + recargo_loca),
+                "rango_aplicado": self._resolve_laca_uv_label_by_qty(qty),
+                "regla_aplicada": "ADICIONAL_LACA_UV_A3PLUS",
+                "fuente": "matriz_laca_uv_bajadas",
+            }
+        else:
+            laminado_out = self.laminado_engine.quote_as_dict(
+                LaminadoQuoteInput(
+                    adicional=adicional,
+                    formato="A3+",
+                    cantidad_unidades=qty,
+                    urgencia=req.urgencia,
+                )
             )
-        )
 
         base_unit = float(result["precio_unitario_sin_iva"])
         recargo = float(result.get("trazabilidad", {}).get("recargo_urgencia_aplicado", 0.0))
@@ -604,6 +626,117 @@ class BajadasV2ApiService:
             "no_combinable": True,
         }
         return result
+
+    def _apply_hoja4_adicionales_opt_in(self, result: dict[str, Any], req: QuoteRequestSchema) -> dict[str, Any]:
+        if req.categoria not in {"Bajadas Fullcolor", "Bajadas Blanco y Negro", "Bajadas Autoadhesivas", "Bajadas Kraft"}:
+            return result
+
+        formato = str(req.formato or "").upper()
+        is_a3_family = formato in {"A3+", "XA3"}
+        por_lado = (req.adicional_laminado_por_lado or "sin_adicional").lower()
+        plastificado = bool(req.adicional_plastificado) if req.adicional_plastificado is not None else False
+        if por_lado == "sin_adicional" and not plastificado:
+            return result
+        if not is_a3_family:
+            raise ApiValidationError("adicionales_hoja4_solo_a3plus_xa3")
+
+        qty = int(result.get("cantidad_unidades", req.cantidad_unidades or 1))
+        extra_unit = 0.0
+        detalle: dict[str, Any] = {}
+
+        por_lado_matrix = {
+            "laminado_brillo_por_lado": {"1": 163.5152453, "2 a 25": 151.2516019, "26 a 50": 151.2516019, "51 a 100": 138.9879585, "101 a 300": 126.7243151, "301 a 500": 126.7243151, "501 a 1000": 118.5485529},
+            "laminado_mate_por_lado": {"1": 189.6776846, "2 a 25": 175.4518583, "26 a 50": 175.4518583, "51 a 100": 161.2260319, "101 a 300": 147.0002056, "301 a 500": 147.0002056, "501 a 1000": 137.5163213},
+            "laminado_soft_touch_por_lado": {"1": 8.6, "2 a 25": 6.6, "26 a 50": 6.6, "51 a 100": 6.0, "101 a 300": 5.7, "301 a 500": 5.7, "501 a 1000": 5.2},
+        }
+        plastificado_unit = 25.0
+        range_label = self._resolve_laca_uv_label_by_qty(qty)
+
+        if por_lado != "sin_adicional":
+            if por_lado not in por_lado_matrix:
+                raise ApiValidationError("adicional_laminado_por_lado_invalido")
+            unit_pl = float(por_lado_matrix[por_lado][range_label])
+            extra_unit += unit_pl
+            detalle["laminado_por_lado"] = {
+                "seleccion": por_lado,
+                "rango_aplicado": range_label,
+                "unitario": round(unit_pl, 6),
+                "fuente": "Excel Laminado!F/G/K fila 7-11 (hoja 4)",
+            }
+
+        if plastificado:
+            extra_unit += plastificado_unit
+            detalle["plastificado"] = {
+                "seleccion": True,
+                "medida_excel": "A3",
+                "mapeo_formato": formato,
+                "unitario": plastificado_unit,
+                "fuente": "Excel Laminado!G17 (hoja 4)",
+            }
+
+        if extra_unit <= 0:
+            return result
+
+        recargo = float(result.get("trazabilidad", {}).get("recargo_urgencia_aplicado", 0.0))
+        factor_urgencia = 1.0 + recargo
+        qty = int(result.get("cantidad_unidades", req.cantidad_unidades or 1))
+        base_unit = float(result.get("precio_unitario_con_adicional_sin_iva", result.get("precio_unitario_sin_iva", 0.0)))
+        new_unit = round(base_unit + extra_unit, 6)
+        total_sin = round(new_unit * qty, 6)
+        total_con = round(total_sin * factor_urgencia, 6)
+
+        result["adicional_laminado_por_lado"] = por_lado
+        result["adicional_plastificado"] = plastificado
+        result["adicional_hoja4_unitario_sin_iva"] = round(extra_unit, 6)
+        result["total_adicional_hoja4_sin_iva"] = round(extra_unit * qty, 6)
+        result["precio_unitario_con_adicional_sin_iva"] = new_unit
+        result["total_sin_iva"] = total_sin
+        result["total_con_urgencia"] = total_con
+
+        trace = result.setdefault("trazabilidad", {})
+        trace["adicionales_hoja4"] = {
+            "formato": formato,
+            "aplica_a3plus_xa3": True,
+            "oficio_habilitado": False,
+            "detalle": detalle,
+            "unitario_total_hoja4": round(extra_unit, 6),
+            "cantidad": qty,
+            "subtotal": round(extra_unit * qty, 6),
+            "nota": "Adicionales hoja 4 sumados antes de urgencia.",
+        }
+        return result
+
+    @staticmethod
+    def _resolve_laca_uv_label_by_qty(qty: int) -> str:
+        if qty == 1:
+            return "1"
+        if 2 <= qty <= 25:
+            return "2 a 25"
+        if 26 <= qty <= 50:
+            return "26 a 50"
+        if 51 <= qty <= 100:
+            return "51 a 100"
+        if 101 <= qty <= 300:
+            return "101 a 300"
+        if 301 <= qty <= 500:
+            return "301 a 500"
+        if 501 <= qty <= 1000:
+            return "501 a 1000"
+        return "501 a 1000"
+
+    @staticmethod
+    def _resolve_laca_uv_unit_by_qty(qty: int) -> float:
+        label = BajadasV2ApiService._resolve_laca_uv_label_by_qty(qty)
+        matrix = {
+            "1": 136.0,
+            "2 a 25": 126.0,
+            "26 a 50": 116.0,
+            "51 a 100": 106.0,
+            "101 a 300": 99.0,
+            "301 a 500": 92.0,
+            "501 a 1000": 85.0,
+        }
+        return float(matrix[label])
 
     def _apply_troquelado_adicional_opt_in(self, result: dict[str, Any], req: QuoteRequestSchema) -> dict[str, Any]:
         if req.adicional_troquelado is None:

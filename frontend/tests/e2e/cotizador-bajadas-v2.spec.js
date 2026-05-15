@@ -116,7 +116,7 @@ test("cotizacion muestra rango aplicado y total destacado", async ({ page }) => 
   await page.getByLabel("Material").selectOption("Ilustracion");
   await page.getByLabel("Gramaje").selectOption("150g");
   await page.getByLabel("Cantidad").fill("30");
-  await page.getByLabel("Adicional").selectOption("laca");
+  await page.getByLabel("Adicional").first().selectOption("laca");
   await expect(page.getByText("Rango aplicado: 26 a 50")).toBeVisible();
 
   await page.route("http://127.0.0.1:8000/bajadas-v2/cotizar", async (route) => {
@@ -159,7 +159,7 @@ test("tab Árbol del precio muestra composición del último cálculo", async ({
   await page.getByLabel("Material").selectOption("Ilustracion");
   await page.getByLabel("Gramaje").selectOption("150g");
   await page.getByLabel("Cantidad").fill("30");
-  await page.getByLabel("Adicional").selectOption("laca");
+  await page.getByLabel("Adicional").first().selectOption("laca");
 
   await page.route("http://127.0.0.1:8000/bajadas-v2/cotizar", async (route) => {
     await route.fulfill({
@@ -211,7 +211,7 @@ test("botón Limpiar y Copiar resultado", async ({ page }) => {
   await page.getByLabel("Material").selectOption("Ilustracion");
   await page.getByLabel("Gramaje").selectOption("150g");
   await page.getByLabel("Cantidad").fill("30");
-  await page.getByLabel("Adicional").selectOption("laminado_brillo");
+  await page.getByLabel("Adicional").first().selectOption("laminado_brillo");
 
   await page.route("http://127.0.0.1:8000/bajadas-v2/cotizar", async (route) => {
     await route.fulfill({
@@ -244,7 +244,7 @@ test("botón Limpiar y Copiar resultado", async ({ page }) => {
   await expect(page.getByTestId("copy-status")).toContainText(/Resultado copiado\.|No se pudo copiar automáticamente\./);
   await page.getByTestId("clear-button").click();
   await expect(page.getByLabel("Cantidad")).toHaveValue("1");
-  await expect(page.getByLabel("Adicional")).toHaveValue("sin_adicional");
+  await expect(page.getByLabel("Adicional").first()).toHaveValue("sin_adicional");
 });
 
 test("autoadhesivas especial + laminado mate calcula y muestra regla adicional", async ({ page }) => {
@@ -252,7 +252,7 @@ test("autoadhesivas especial + laminado mate calcula y muestra regla adicional",
   await page.getByTestId("categoria-select").selectOption("Bajadas Autoadhesivas");
   await page.getByTestId("autoadh-tipo-select").selectOption("especial");
   await page.getByLabel("Cantidad").fill("30");
-  await page.getByLabel("Adicional").selectOption("laminado_mate");
+  await page.getByLabel("Adicional").first().selectOption("laminado_mate");
 
   await page.route("http://127.0.0.1:8000/bajadas-v2/cotizar", async (route) => {
     await route.fulfill({
@@ -390,9 +390,9 @@ test("stickers circulares calcula totales de matriz PDF", async ({ page }) => {
   await page.getByRole("button", { name: "Calcular" }).click();
   await expect(page.getByTestId("result-panel")).toContainText("2.313");
 
-  await page.getByLabel("Material").selectOption("fluo_kraft_marron");
+  await page.getByLabel("Material").selectOption("fluo");
   await page.getByLabel("Formato / diámetro").selectOption("18-20cm");
-  await page.getByLabel("Terminación").selectOption("con_laca_uv");
+  await page.getByLabel("Terminación").selectOption("con_laca_uv_brillo");
   await page.getByLabel("Cantidad").fill("1000");
   await page.getByRole("button", { name: "Calcular" }).click();
   await expect(page.getByTestId("result-panel")).toContainText("481.291");

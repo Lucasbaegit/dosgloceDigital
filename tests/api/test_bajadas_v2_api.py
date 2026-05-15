@@ -210,6 +210,45 @@ class TestBajadasV2Api(unittest.TestCase):
         rec = float(body["trazabilidad"]["recargo_urgencia_aplicado"])
         self.assertAlmostEqual(body["total_con_urgencia"], body["total_sin_iva"] * (1 + rec), places=6)
 
+    def test_laca_uv_escala_exacta_53_unidades(self):
+        payload = {
+            "categoria": "Bajadas Fullcolor",
+            "modo_color": "fullcolor",
+            "formato": "A3+",
+            "tipo_papel": "liviano",
+            "material": "Ilustracion",
+            "gramaje": "150g",
+            "cantidad_unidades": 53,
+            "cantidad_rango": "51 a 100",
+            "caras": "4/0",
+            "urgencia": "normal",
+            "adicional_laminado": "laca",
+        }
+        status, body = self._post_json("/bajadas-v2/cotizar", payload)
+        self.assertEqual(status, 200)
+        self.assertEqual(body["trazabilidad"]["adicional_laminado"]["rango_aplicado"], "51 a 100")
+        self.assertAlmostEqual(body["adicional_unitario_sin_iva"], 106.0, places=6)
+        self.assertAlmostEqual(body["total_adicional_sin_iva"], 5618.0, places=6)
+
+    def test_hoja4_laminado_y_plastificado_solo_a3_familia(self):
+        payload = {
+            "categoria": "Bajadas Fullcolor",
+            "modo_color": "fullcolor",
+            "formato": "A4",
+            "tipo_papel": "liviano",
+            "material": "Ilustracion",
+            "gramaje": "150g",
+            "cantidad_unidades": 53,
+            "cantidad_rango": "51 a 100",
+            "caras": "4/0",
+            "urgencia": "normal",
+            "adicional_laminado_por_lado": "laminado_brillo_por_lado",
+            "adicional_plastificado": True,
+        }
+        status, body = self._post_json("/bajadas-v2/cotizar", payload)
+        self.assertEqual(status, 400)
+        self.assertEqual(body["error"], "validation_error")
+
     def test_cotizar_con_brillo_suma_antes_de_urgencia(self):
         payload = {
             "categoria": "Bajadas Fullcolor",

@@ -64,8 +64,7 @@ const KRAFT_MATERIAL = "Kraft";
 const KRAFT_GRAMAJES = ["80g", "200g"];
 const KRAFT_RANGOS = ["1", "2 a 25", "26 a 50", "51 a 100", "101 a 300", "301 a 500"];
 const TARJETAS_FORMATOS = ["9x5"];
-const TARJETAS_PAPEL = "300g Ilustracion";
-const TARJETAS_GRAMAJE = "300g";
+const TARJETAS_GRAMAJES = ["300g", "350g"];
 const TARJETAS_CARAS = ["4/0", "4/4"];
 const TARJETAS_CANTIDADES = ["100", "200", "300", "500", "1000"];
 const TARJETAS_TERMINACIONES = [
@@ -75,8 +74,7 @@ const TARJETAS_TERMINACIONES = [
   { label: "Laminado mate", value: "laminado_mate" },
 ];
 const POSTALES_FORMATOS = ["postal"];
-const POSTALES_PAPEL = "300g Ilustracion";
-const POSTALES_GRAMAJE = "300g";
+const POSTALES_GRAMAJES = ["300g", "350g"];
 const POSTALES_CARAS = ["4/0", "4/4"];
 const POSTALES_CANTIDADES = ["100", "200", "300", "500", "1000"];
 const POSTALES_TERMINACIONES = TARJETAS_TERMINACIONES;
@@ -117,7 +115,9 @@ const IMANES_TERMINACIONES = STICKERS_TERMINACIONES;
 const IMANES_CANTIDADES = ["100", "200", "300", "500", "1000"];
 const STICKERS_CIRCULARES_MATERIALES = [
   { value: "obra_ilustracion_90g", label: "Papel obra/ilustración 90g" },
-  { value: "fluo_kraft_marron", label: "Papel flúo / Kraft marrón" },
+  { value: "fluo", label: "Papel flúo" },
+  { value: "kraft_marron", label: "Kraft marrón" },
+  { value: "opp", label: "OPP" },
 ];
 const STICKERS_CIRCULARES_FORMATOS = [
   "1cm",
@@ -135,7 +135,16 @@ const STICKERS_CIRCULARES_FORMATOS = [
   "16-17cm",
   "18-20cm",
 ];
-const STICKERS_CIRCULARES_TERMINACIONES = STICKERS_TERMINACIONES;
+const STICKERS_CIRCULARES_TERMINACIONES = [
+  { label: "Sin laca UV", value: "sin_laca_uv" },
+  { label: "Laca UV brillo (+15%)", value: "con_laca_uv_brillo" },
+];
+const ADICIONALES_POR_LADO = [
+  { label: "Sin adicional por lado", value: "sin_adicional" },
+  { label: "Laminado brillo por lado", value: "laminado_brillo_por_lado" },
+  { label: "Laminado mate por lado", value: "laminado_mate_por_lado" },
+  { label: "Laminado Soft Touch por lado", value: "laminado_soft_touch_por_lado" },
+];
 const STICKERS_CIRCULARES_CANTIDADES = ["100", "200", "300", "500", "1000"];
 const TROQUELADO_COMPLEJIDADES = [
   { value: "simple", label: "Simple" },
@@ -172,7 +181,10 @@ const INITIAL_FORM = {
   caras: "4/0",
   urgencia: "normal",
   adicional_laminado: "sin_adicional",
+  adicional_laminado_por_lado: "sin_adicional",
+  adicional_plastificado: false,
   terminacion_tarjetas: "sin_laminar",
+  gramaje_tarjetas: "300g",
   papel_folleto: "150g Ilustracion",
   modo_color_folleto: "fullcolor",
   terminacion_carpetas: "sin_laminar",
@@ -630,9 +642,10 @@ export default function CotizadorBajadasV2() {
       if (next.categoria_ui === "Tarjetas Personales 9x5") {
         next.formato = "9x5";
         if (!TARJETAS_CARAS.includes(next.caras)) next.caras = "4/0";
-        next.tipo_papel = TARJETAS_PAPEL;
-        next.material = TARJETAS_PAPEL;
-        next.gramaje = TARJETAS_GRAMAJE;
+        if (!TARJETAS_GRAMAJES.includes(next.gramaje_tarjetas)) next.gramaje_tarjetas = "300g";
+        next.tipo_papel = `${next.gramaje_tarjetas} Ilustracion`;
+        next.material = `${next.gramaje_tarjetas} Ilustracion`;
+        next.gramaje = next.gramaje_tarjetas;
         if (!TARJETAS_CANTIDADES.includes(String(next.cantidad_unidades))) next.cantidad_unidades = "100";
         if (!TARJETAS_TERMINACIONES.some((t) => t.value === next.terminacion_tarjetas)) next.terminacion_tarjetas = "sin_laminar";
         next.adicional_laminado = "sin_adicional";
@@ -641,9 +654,10 @@ export default function CotizadorBajadasV2() {
       if (next.categoria_ui === "Tarjetas Postales") {
         next.formato = "postal";
         if (!POSTALES_CARAS.includes(next.caras)) next.caras = "4/0";
-        next.tipo_papel = POSTALES_PAPEL;
-        next.material = POSTALES_PAPEL;
-        next.gramaje = POSTALES_GRAMAJE;
+        if (!POSTALES_GRAMAJES.includes(next.gramaje_tarjetas)) next.gramaje_tarjetas = "300g";
+        next.tipo_papel = `${next.gramaje_tarjetas} Ilustracion`;
+        next.material = `${next.gramaje_tarjetas} Ilustracion`;
+        next.gramaje = next.gramaje_tarjetas;
         if (!POSTALES_CANTIDADES.includes(String(next.cantidad_unidades))) next.cantidad_unidades = "100";
         if (!POSTALES_TERMINACIONES.some((t) => t.value === next.terminacion_tarjetas)) next.terminacion_tarjetas = "sin_laminar";
         next.adicional_laminado = "sin_adicional";
@@ -909,6 +923,7 @@ export default function CotizadorBajadasV2() {
       adicional_troquelado: false,
       complejidad_troquelado: "simple",
       terminacion_tarjetas: "sin_laminar",
+      gramaje_tarjetas: "300g",
       terminacion_carpetas: "sin_laminar",
       terminacion_stickers: "sin_laca_uv",
       terminacion_imanes: "sin_laca_uv",
@@ -1029,11 +1044,15 @@ export default function CotizadorBajadasV2() {
           categoria: "Tarjetas Personales",
           producto: "9x5",
           formato: "9x5",
-          papel: TARJETAS_PAPEL,
-          gramaje: TARJETAS_GRAMAJE,
+          papel: `${form.gramaje_tarjetas} Ilustracion`,
+          gramaje: form.gramaje_tarjetas,
           terminacion: form.terminacion_tarjetas,
           caras: inferred.caras,
           cantidad_unidades: cantidadUnidades,
+          terminaciones_extra: {
+            puntas_redondeadas: false,
+            agujerado: false,
+          },
           urgencia: form.urgencia,
         }
       : isPostales
@@ -1041,11 +1060,15 @@ export default function CotizadorBajadasV2() {
           categoria: "Tarjetas Postales",
           producto: "postal",
           formato: "postal",
-          papel: POSTALES_PAPEL,
-          gramaje: POSTALES_GRAMAJE,
+          papel: `${form.gramaje_tarjetas} Ilustracion`,
+          gramaje: form.gramaje_tarjetas,
           terminacion: form.terminacion_tarjetas,
           caras: inferred.caras,
           cantidad_unidades: cantidadUnidades,
+          terminaciones_extra: {
+            puntas_redondeadas: false,
+            agujerado: false,
+          },
           urgencia: form.urgencia,
         }
       : isFolletos
@@ -1152,6 +1175,8 @@ export default function CotizadorBajadasV2() {
           caras: inferred.caras,
           urgencia: form.urgencia,
           adicional_laminado: form.adicional_laminado || "sin_adicional",
+          adicional_laminado_por_lado: (inferred.formato === "A3+" || inferred.formato === "XA3") ? (form.adicional_laminado_por_lado || "sin_adicional") : "sin_adicional",
+          adicional_plastificado: (inferred.formato === "A3+" || inferred.formato === "XA3") ? Boolean(form.adicional_plastificado) : false,
           adicional_troquelado: Boolean(form.adicional_troquelado),
           complejidad_troquelado: form.adicional_troquelado ? form.complejidad_troquelado : undefined,
           tipo_producto: isAutoadhesivas ? "autoadhesiva" : undefined,
@@ -1202,6 +1227,10 @@ export default function CotizadorBajadasV2() {
         setError("Tipo de sobre no soportado.");
       } else if (err.code === "material_no_soportado") {
         setError("Material no soportado para Stickers Circulares.");
+      } else if (err.code === "material_opp_pendiente_datos") {
+        setError("OPP pendiente de datos confiables para Stickers Circulares.");
+      } else if (err.code === "adicionales_hoja4_solo_a3plus_xa3") {
+        setError("Laminado por lado y plastificado solo aplican a A3+ o XA3.");
       } else if (err.code === "complejidad_troquelado_requerida") {
         setError("Debés elegir complejidad de troquelado.");
       } else if (err.code === "complejidad_troquelado_no_soportada") {
@@ -1239,6 +1268,7 @@ export default function CotizadorBajadasV2() {
           <details open><summary>Rango aplicado</summary><ul><li>{result.cantidad_rango_aplicado}</li></ul></details>
           <details open><summary>Precio unitario</summary><ul><li>Sin IVA: {formatMoney(result.precio_unitario_sin_iva)}</li><li>Con urgencia: {formatMoney(result.precio_unitario_con_urgencia)}</li></ul></details>
           <details open><summary>Adicional laminado/laca</summary><ul><li>selección: {result.adicional_laminado ?? "sin_adicional"}</li><li>adicional_unitario_sin_iva: {formatMoney(result.adicional_unitario_sin_iva ?? 0)}</li><li>regla_adicional_aplicada: {result.regla_adicional_aplicada ?? "-"}</li><li>fuente_adicional: {result.fuente_adicional ?? "-"}</li><li>rango_aplicado: {result.trazabilidad?.adicional_laminado?.rango_aplicado ?? "-"}</li><li>nota: Laca / laminado se suma antes de urgencia.</li><li>no_combinable: true</li></ul></details>
+          <details open><summary>Adicionales hoja 4</summary><ul><li>laminado_por_lado: {result.adicional_laminado_por_lado ?? "sin_adicional"}</li><li>plastificado: {result.adicional_plastificado ? "sí" : "no"}</li><li>unitario_total_hoja4: {formatMoney(result.adicional_hoja4_unitario_sin_iva ?? 0)}</li><li>subtotal_hoja4: {formatMoney(result.total_adicional_hoja4_sin_iva ?? 0)}</li><li>fuente: {result.trazabilidad?.adicionales_hoja4?.detalle?.laminado_por_lado?.fuente ?? result.trazabilidad?.adicionales_hoja4?.detalle?.plastificado?.fuente ?? "-"}</li><li>nota: solo A3+ / XA3; Oficio no aplica.</li></ul></details>
           <details open><summary>Adicional Troquelado Digital</summary><ul><li>selección: {result.adicional_troquelado ? "sí" : "no"}</li><li>complejidad: {result.complejidad_troquelado ?? "-"}</li><li>precio_unitario_troquelado: {formatMoney(result.adicional_troquelado_unitario_sin_iva ?? 0)}</li><li>subtotal_troquelado: {formatMoney(result.total_adicional_troquelado_sin_iva ?? 0)}</li><li>rango_aplicado: {result.trazabilidad?.adicional_troquelado?.rango_aplicado ?? "-"}</li><li>regla_aplicada: {result.regla_troquelado_aplicada ?? "-"}</li><li>fuente: {result.fuente_troquelado ?? "-"}</li><li>nota: No incluye costo de impresión; se suma como adicional.</li></ul></details>
           <details open><summary>Total</summary><ul><li>Sin IVA: {formatMoney(result.total_sin_iva)}</li><li>Con urgencia: {formatMoney(result.total_con_urgencia)}</li></ul></details>
           <details open data-testid="price-tree-rule-section"><summary>Regla</summary><ul><li>regla_aplicada: {result.regla_aplicada}</li><li>fuente: {result.fuente}</li><li>base_formato: {result.trazabilidad?.base_formato ?? "-"}</li><li>factor_aplicado: {result.trazabilidad?.factor_aplicado ?? "-"}</li><li>regla_especial: {result.trazabilidad?.regla_especial ?? "-"}</li><li>correccion_logica: {result.trazabilidad?.correccion_logica ?? "-"}</li></ul></details>
@@ -1487,19 +1517,21 @@ export default function CotizadorBajadasV2() {
             <>
               <label><span>Producto</span><input value="Tarjetas Personales 9x5" readOnly /></label>
               <label><span>Medida / formato</span><select data-testid="formato-select" value={form.formato} onChange={updateField("formato")}>{TARJETAS_FORMATOS.map((v) => <option key={v} value={v}>{v}</option>)}</select></label>
-              <label><span>Papel</span><input value={TARJETAS_PAPEL} readOnly /></label>
-              <label><span>Gramaje</span><input value={TARJETAS_GRAMAJE} readOnly /></label>
+              <label><span>Papel</span><input value={`${form.gramaje_tarjetas} Ilustracion`} readOnly /></label>
+              <label><span>Gramaje</span><select value={form.gramaje_tarjetas} onChange={updateField("gramaje_tarjetas")}>{TARJETAS_GRAMAJES.map((v) => <option key={v} value={v}>{v}</option>)}</select></label>
               <label><span>Impresión</span><div className="caras-row">{TARJETAS_CARAS.map((cara) => <button key={cara} data-testid={`print-option-${cara.replace("/", "-")}`} type="button" className={form.caras === cara ? "pill active" : "pill"} onClick={() => setForm((prev) => ({ ...prev, caras: cara }))}>{cara}</button>)}</div></label>
               <label><span>Terminación</span><select value={form.terminacion_tarjetas} onChange={updateField("terminacion_tarjetas")}>{TARJETAS_TERMINACIONES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}</select></label>
+              <label><span>Nota</span><input value={form.gramaje_tarjetas === "350g" ? "350g: +10% sobre 300g" : "300g base PDF"} readOnly /></label>
             </>
           ) : isPostales ? (
             <>
               <label><span>Producto</span><input value="Tarjetas Postales" readOnly /></label>
               <label><span>Formato</span><select data-testid="formato-select" value={form.formato} onChange={updateField("formato")}>{POSTALES_FORMATOS.map((v) => <option key={v} value={v}>{v}</option>)}</select></label>
-              <label><span>Papel</span><input value={POSTALES_PAPEL} readOnly /></label>
-              <label><span>Gramaje</span><input value={POSTALES_GRAMAJE} readOnly /></label>
+              <label><span>Papel</span><input value={`${form.gramaje_tarjetas} Ilustracion`} readOnly /></label>
+              <label><span>Gramaje</span><select value={form.gramaje_tarjetas} onChange={updateField("gramaje_tarjetas")}>{POSTALES_GRAMAJES.map((v) => <option key={v} value={v}>{v}</option>)}</select></label>
               <label><span>Impresión</span><div className="caras-row">{POSTALES_CARAS.map((cara) => <button key={cara} data-testid={`print-option-${cara.replace("/", "-")}`} type="button" className={form.caras === cara ? "pill active" : "pill"} onClick={() => setForm((prev) => ({ ...prev, caras: cara }))}>{cara}</button>)}</div></label>
               <label><span>Terminación</span><select value={form.terminacion_tarjetas} onChange={updateField("terminacion_tarjetas")}>{POSTALES_TERMINACIONES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}</select></label>
+              <label><span>Nota</span><input value={form.gramaje_tarjetas === "350g" ? "350g: +10% sobre 300g" : "300g base PDF"} readOnly /></label>
             </>
           ) : isFolletos ? (
             <>
@@ -1554,7 +1586,7 @@ export default function CotizadorBajadasV2() {
               <label><span>Formato / diámetro</span><select data-testid="formato-select" value={form.formato} onChange={updateField("formato")}>{STICKERS_CIRCULARES_FORMATOS.map((v) => <option key={v} value={v}>{v}</option>)}</select></label>
               <label><span>Terminación</span><select value={form.terminacion_stickers_circulares} onChange={updateField("terminacion_stickers_circulares")}>{STICKERS_CIRCULARES_TERMINACIONES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}</select></label>
               <label><span>Impresión</span><input value="4/0" readOnly /></label>
-              <label><span>Papel base</span><input value={form.material_stickers_circulares === "fluo_kraft_marron" ? "Papel flúo / Kraft marrón" : "Papel obra/ilustración 90g"} readOnly /></label>
+              <label><span>Papel base</span><input value={STICKERS_CIRCULARES_MATERIALES.find((m) => m.value === form.material_stickers_circulares)?.label || "Papel obra/ilustración 90g"} readOnly /></label>
             </>
           ) : isTarjetasTroqCirc ? (
             <>
@@ -1583,6 +1615,18 @@ export default function CotizadorBajadasV2() {
           <label><span>Cantidad</span><input type="number" min={1} step={1} placeholder={isMatrixProduct ? "100, 200, 300, 500, 1000" : "Ejemplo: 30"} value={form.cantidad_unidades} onChange={updateField("cantidad_unidades")} /><small className="range-hint">{isMatrixProduct ? `Cantidad de matriz: ${cantidadUnidades || "-"}` : isNoRangeProduct ? `Cantidad ingresada: ${cantidadUnidades || "-"}` : `Rango aplicado: ${derivedRange ?? "Sin rango disponible"}`}</small></label>
           <label><span>Urgencia</span><select value={form.urgencia} onChange={updateField("urgencia")}>{URGENCIAS.map((v) => <option key={v} value={v}>{v}</option>)}</select></label>
           {isBajadasFlow ? <label><span>Adicional</span><select value={form.adicional_laminado} onChange={updateField("adicional_laminado")}>{ADICIONALES.map((a) => <option key={a.value} value={a.value}>{a.label}</option>)}</select></label> : null}
+          {isBajadasFlow && (form.formato === "A3+" || form.formato === "XA3") ? (
+            <label><span>Laminado por lado</span><select value={form.adicional_laminado_por_lado} onChange={updateField("adicional_laminado_por_lado")}>{ADICIONALES_POR_LADO.map((a) => <option key={a.value} value={a.value}>{a.label}</option>)}</select></label>
+          ) : null}
+          {isBajadasFlow && (form.formato === "A3+" || form.formato === "XA3") ? (
+            <label>
+              <span>Plastificado (A3)</span>
+              <select value={String(Boolean(form.adicional_plastificado))} onChange={(event) => setForm((prev) => ({ ...prev, adicional_plastificado: event.target.value === "true" }))}>
+                <option value="false">No</option>
+                <option value="true">Sí</option>
+              </select>
+            </label>
+          ) : null}
           {isBajadasFlow ? (
             <label>
               <span>Troquelado Digital</span>
@@ -1623,7 +1667,10 @@ export default function CotizadorBajadasV2() {
             <div className="detail-list">
               <div><strong>Precio base unitario</strong><span>{formatMoney(result.precio_unitario_base_sin_iva ?? result.precio_unitario_sin_iva ?? result.precio_sin_iva)}</span></div>
               <div><strong>Adicional seleccionado</strong><span>{result.adicional_laminado ?? "sin_adicional"}</span></div>
+              <div><strong>Laminado por lado</strong><span>{result.adicional_laminado_por_lado ?? "sin_adicional"}</span></div>
+              <div><strong>Plastificado</strong><span>{result.adicional_plastificado ? "sí" : "no"}</span></div>
               <div><strong>Adicional unitario sin IVA</strong><span>{formatMoney(result.adicional_unitario_sin_iva ?? 0)}</span></div>
+              <div><strong>Adicional hoja 4 unitario</strong><span>{formatMoney(result.adicional_hoja4_unitario_sin_iva ?? 0)}</span></div>
               <div><strong>Troquelado adicional</strong><span>{result.adicional_troquelado ? `sí (${result.complejidad_troquelado ?? "-"})` : "no"}</span></div>
               <div><strong>Troquelado unitario</strong><span>{formatMoney(result.adicional_troquelado_unitario_sin_iva ?? 0)}</span></div>
               <div><strong>Precio unitario con adicional</strong><span>{formatMoney(result.precio_unitario_con_adicional_sin_iva ?? result.precio_unitario_sin_iva ?? result.precio_sin_iva)}</span></div>
