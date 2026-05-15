@@ -42,7 +42,10 @@ test("modo Autoadhesivas guiado: A3+ y 4/0 fijos, tipo papel/especial", async ({
   await expect(page.getByLabel("Impresión")).toHaveValue("4/0");
   await expect(page.getByLabel("Modo color")).toHaveValue("fullcolor");
   await expect(page.getByLabel("Tipo")).toBeVisible();
-  await expect(page.getByText("Laca UV se selecciona desde Adicional. Tinta blanca está sujeta a disponibilidad de datos.")).toBeVisible();
+  await expect(page.getByTestId("autoadh-laca-uv-checkbox")).toBeVisible();
+  await expect(page.getByTestId("autoadh-tinta-blanca-checkbox")).toBeVisible();
+  await expect(page.getByLabel("Laminado por lado")).toHaveCount(0);
+  await expect(page.getByLabel("Plastificado (A3)")).toHaveCount(0);
   await expect(page.getByRole("button", { name: "1/0" })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "1/1" })).toHaveCount(0);
 });
@@ -95,9 +98,12 @@ test("autoadhesivas papel y especial envían payload válido", async ({ page }) 
     urgencia: "normal",
     tipo_producto: "autoadhesiva",
     columna_precio: "papel",
+    adicional_laca_uv: false,
+    adicional_tinta_blanca: false,
   });
 
   await page.getByTestId("autoadh-tipo-select").selectOption("especial");
+  await page.getByTestId("autoadh-laca-uv-checkbox").check();
   await page.getByLabel("Urgencia").selectOption("express");
   await page.getByRole("button", { name: "Calcular" }).click();
   expect(payloadSeen).toMatchObject({
@@ -106,6 +112,8 @@ test("autoadhesivas papel y especial envían payload válido", async ({ page }) 
     columna_precio: "especial",
     formato: "XA3",
     urgencia: "express",
+    adicional_laca_uv: true,
+    adicional_tinta_blanca: false,
   });
 });
 
@@ -252,7 +260,7 @@ test("autoadhesivas especial + laca UV calcula y muestra regla adicional", async
   await page.getByTestId("categoria-select").selectOption("Bajadas Autoadhesivas");
   await page.getByTestId("autoadh-tipo-select").selectOption("especial");
   await page.getByLabel("Cantidad").fill("30");
-  await page.getByLabel("Adicional").first().selectOption("laca");
+  await page.getByTestId("autoadh-laca-uv-checkbox").check();
 
   await page.route("http://127.0.0.1:8000/bajadas-v2/cotizar", async (route) => {
     await route.fulfill({
@@ -346,6 +354,19 @@ test("XA3 muestra trazabilidad de derivación 1.10", async ({ page }) => {
   await expect(page.getByText("base_formato: A3+")).toBeVisible();
   await expect(page.getByText("factor_aplicado: 1.1")).toBeVisible();
   await expect(page.getByText("regla_especial: FACTOR_XA3_1_10")).toBeVisible();
+});
+
+test("Folletos usa 10x15 como formato por defecto", async ({ page }) => {
+  await page.goto("/", { waitUntil: "networkidle" });
+  await page.getByTestId("categoria-select").selectOption("Folletos");
+  await expect(page.getByTestId("formato-select")).toHaveValue("10x15");
+});
+
+test("Bajadas Fullcolor/ByN vuelve con formato default A3+", async ({ page }) => {
+  await page.goto("/", { waitUntil: "networkidle" });
+  await page.getByTestId("categoria-select").selectOption("Folletos");
+  await page.getByTestId("categoria-select").selectOption("Bajadas Fullcolor/ByN");
+  await expect(page.getByTestId("formato-select")).toHaveValue("A3+");
 });
 
 test("stickers corte recto calcula totales de matriz PDF", async ({ page }) => {

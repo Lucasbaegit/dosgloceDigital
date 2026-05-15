@@ -154,11 +154,6 @@ class BajadasV2ApiService:
     def cotizar(self, payload: dict[str, Any]) -> tuple[int, dict[str, Any]]:
         try:
             req = QuoteRequestSchema.from_payload(payload)
-            if req.categoria == "Bajadas Autoadhesivas" and req.adicional_tinta_blanca:
-                return 400, {
-                    "error": "tinta_blanca_bloqueada_por_falta_de_datos",
-                    "detail": "tinta_blanca_bloqueada_por_falta_de_datos",
-                }
             if req.categoria == "Bajadas Autoadhesivas":
                 autoadh_request = AutoadhesivasQuoteInput(
                     categoria=req.categoria,
@@ -173,16 +168,16 @@ class BajadasV2ApiService:
                 result = self.autoadhesivas_engine.quote_as_dict(autoadh_request)
             else:
                 result = self.engine.quote_as_dict(req.to_quote_input())
-            adicional_effective = req.adicional_laminado
-            if req.categoria == "Bajadas Autoadhesivas" and req.adicional_laca_uv:
-                adicional_effective = "laca"
-            result = self._apply_laminado_adicional_opt_in(result, req, adicional_effective)
+            if req.categoria == "Bajadas Autoadhesivas":
+                result = self._apply_autoadhesivas_adicionales_opt_in(result, req)
+            else:
+                result = self._apply_laminado_adicional_opt_in(result, req, req.adicional_laminado)
             result = self._apply_hoja4_adicionales_opt_in(result, req)
             result = self._apply_troquelado_adicional_opt_in(result, req)
             return 200, result
         except ApiValidationError as exc:
             detail = str(exc)
-            if detail in {"complejidad_troquelado_requerida", "complejidad_troquelado_no_soportada", "cantidad_fuera_de_matriz", "tinta_blanca_bloqueada_por_falta_de_datos", "adicional_no_soportado_para_liviano"}:
+            if detail in {"complejidad_troquelado_requerida", "complejidad_troquelado_no_soportada", "cantidad_fuera_de_matriz", "tinta_blanca_bloqueada_por_falta_de_datos", "tinta_blanca_bloqueada_por_falta_de_valor_base_1_copia", "adicional_no_soportado_para_liviano", "adicional_no_soportado_para_autoadhesivas"}:
                 return 400, {"error": detail, "detail": detail}
             return 400, {"error": "validation_error", "detail": detail}
         except QuoteInputError as exc:
@@ -578,7 +573,45 @@ class BajadasV2ApiService:
         if adicional not in valid:
             raise ApiValidationError("adicional_laminado inválido. Valores permitidos: sin_adicional, laca, laminado_brillo, laminado_mate.")
         if adicional == "tinta_blanca":
-            raise ApiValidationError("tinta_blanca_bloqueada_por_falta_de_datos")
+            if req.categoria != "Bajadas Autoadhesivas":
+                raise ApiValidationError("tinta_blanca_bloqueada_por_falta_de_datos")
+            base_1 = self._resolve_tinta_blanca_base_1_copia()
+            if base_1 is None:
+                raise ApiValidationError("tinta_blanca_bloqueada_por_falta_de_valor_base_1_copia")
+            qty = int(result.get("cantidad_unidades", req.cantidad_unidades or 1))
+            recargo = float(result.get("trazabilidad", {}).get("recargo_urgencia_aplicado", 0.0))
+            factor_urgencia = 1.0 + recargo
+            base_unit = float(result["precio_unitario_sin_iva"])
+            adicional_unit = float(base_1)
+            total_adicional_sin_iva = adicional_unit * qty
+            total_adicional_con_urgencia = total_adicional_sin_iva * factor_urgencia
+            precio_unitario_con_adicional = round(base_unit + adicional_unit, 6)
+            total_sin_iva = round(precio_unitario_con_adicional * qty, 6)
+            total_con_urgencia = round(total_sin_iva * factor_urgencia, 6)
+
+            result["adicional_laminado"] = adicional
+            result["adicional_unitario_sin_iva"] = round(adicional_unit, 6)
+            result["adicional_unitario_con_urgencia"] = round(adicional_unit * factor_urgencia, 6)
+            result["total_adicional_sin_iva"] = round(total_adicional_sin_iva, 6)
+            result["total_adicional_con_urgencia"] = round(total_adicional_con_urgencia, 6)
+            result["caras_adicional_laminado"] = 1
+            result["precio_unitario_base_sin_iva"] = round(base_unit, 6)
+            result["precio_unitario_con_adicional_sin_iva"] = precio_unitario_con_adicional
+            result["regla_adicional_aplicada"] = "ADICIONAL_TINTA_BLANCA_PROPORCIONAL_1_COPIA"
+            result["fuente_adicional"] = "autoadhesivas_v1_config.adicional_tinta_blanca_base_1_copia"
+            result["total_sin_iva"] = total_sin_iva
+            result["total_con_urgencia"] = total_con_urgencia
+            trace = result.setdefault("trazabilidad", {})
+            trace["adicional_laminado"] = {
+                "seleccion": "tinta_blanca",
+                "valor_base_1_copia": round(base_1, 6),
+                "regla": "proporcional_por_cantidad_desde_1_copia",
+                "cantidad_unidades": qty,
+                "subtotal_adicional": round(total_adicional_sin_iva, 6),
+                "fuente": "autoadhesivas_v1_config.adicional_tinta_blanca_base_1_copia",
+                "nota": "Sin rastro confiable en Excel/PDF: se aplica proporcional desde valor base de 1 copia.",
+            }
+            return result
         if req.categoria in {"Bajadas Fullcolor", "Bajadas Blanco y Negro"} and str(req.tipo_papel).strip().lower() == "liviano":
             if adicional in {"laminado_brillo", "laminado_mate"}:
                 raise ApiValidationError("adicional_no_soportado_para_liviano")
@@ -659,8 +692,99 @@ class BajadasV2ApiService:
         }
         return result
 
+    def _apply_autoadhesivas_adicionales_opt_in(self, result: dict[str, Any], req: QuoteRequestSchema) -> dict[str, Any]:
+        adicional_legacy = (req.adicional_laminado or "sin_adicional").lower()
+        if adicional_legacy in {"laminado_brillo", "laminado_mate"}:
+            raise ApiValidationError("adicional_no_soportado_para_autoadhesivas")
+
+        wants_laca = bool(req.adicional_laca_uv) or adicional_legacy == "laca"
+        wants_tinta = bool(req.adicional_tinta_blanca) or adicional_legacy == "tinta_blanca"
+
+        if not wants_laca and not wants_tinta:
+            result["adicional_laminado"] = "sin_adicional"
+            result["caras_adicional_laminado"] = 1
+            return result
+
+        qty = int(result.get("cantidad_unidades", req.cantidad_unidades or 1))
+        recargo = float(result.get("trazabilidad", {}).get("recargo_urgencia_aplicado", 0.0))
+        factor_urgencia = 1.0 + recargo
+        base_unit = float(result["precio_unitario_sin_iva"])
+
+        laca_unit = 0.0
+        tinta_unit = 0.0
+        details: dict[str, Any] = {}
+
+        if wants_laca:
+            laca_unit = self._resolve_laca_uv_unit_by_qty(qty)
+            details["laca_uv"] = {
+                "rango_aplicado": self._resolve_laca_uv_label_by_qty(qty),
+                "adicional_unitario": round(laca_unit, 6),
+                "cantidad_unidades": qty,
+                "subtotal": round(laca_unit * qty, 6),
+                "fuente": "matriz_laca_uv_bajadas",
+            }
+
+        if wants_tinta:
+            base_1 = self._resolve_tinta_blanca_base_1_copia()
+            if base_1 is None:
+                raise ApiValidationError("tinta_blanca_bloqueada_por_falta_de_valor_base_1_copia")
+            tinta_unit = float(base_1)
+            details["tinta_blanca"] = {
+                "valor_base_1_copia": round(base_1, 6),
+                "regla": "proporcional_por_cantidad_desde_1_copia",
+                "cantidad_unidades": qty,
+                "subtotal": round(tinta_unit * qty, 6),
+                "fuente": "autoadhesivas_v1_config.adicional_tinta_blanca_base_1_copia",
+            }
+
+        adicional_unit = laca_unit + tinta_unit
+        total_adicional_sin_iva = adicional_unit * qty
+        total_adicional_con_urgencia = total_adicional_sin_iva * factor_urgencia
+        precio_unitario_con_adicional = round(base_unit + adicional_unit, 6)
+        total_sin_iva = round(precio_unitario_con_adicional * qty, 6)
+        total_con_urgencia = round(total_sin_iva * factor_urgencia, 6)
+
+        if wants_laca and wants_tinta:
+            adicional_out = "laca+tinta_blanca"
+            regla_out = "ADICIONALES_AUTOADHESIVAS_ACUMULABLES"
+        elif wants_laca:
+            adicional_out = "laca"
+            regla_out = "ADICIONAL_LACA_UV_A3PLUS"
+        else:
+            adicional_out = "tinta_blanca"
+            regla_out = "ADICIONAL_TINTA_BLANCA_PROPORCIONAL_1_COPIA"
+
+        result["adicional_laminado"] = adicional_out
+        result["adicional_unitario_sin_iva"] = round(adicional_unit, 6)
+        result["adicional_unitario_con_urgencia"] = round(adicional_unit * factor_urgencia, 6)
+        result["total_adicional_sin_iva"] = round(total_adicional_sin_iva, 6)
+        result["total_adicional_con_urgencia"] = round(total_adicional_con_urgencia, 6)
+        result["caras_adicional_laminado"] = 1
+        result["precio_unitario_base_sin_iva"] = round(base_unit, 6)
+        result["precio_unitario_con_adicional_sin_iva"] = precio_unitario_con_adicional
+        result["regla_adicional_aplicada"] = regla_out
+        result["fuente_adicional"] = "autoadhesivas_adicionales_acumulables"
+        result["total_sin_iva"] = total_sin_iva
+        result["total_con_urgencia"] = total_con_urgencia
+
+        trace = result.setdefault("trazabilidad", {})
+        trace["adicionales_autoadhesiva"] = details
+        trace["adicional_laminado"] = {
+            "seleccion": adicional_out,
+            "adicional_unitario": round(adicional_unit, 6),
+            "cantidad_unidades": qty,
+            "subtotal_adicional": round(total_adicional_sin_iva, 6),
+            "fuente": "autoadhesivas_adicionales_acumulables",
+            "nota": "Laca UV y Tinta blanca son acumulables en autoadhesivas.",
+        }
+        return result
+
     def _apply_hoja4_adicionales_opt_in(self, result: dict[str, Any], req: QuoteRequestSchema) -> dict[str, Any]:
         if req.categoria not in {"Bajadas Fullcolor", "Bajadas Blanco y Negro", "Bajadas Autoadhesivas", "Bajadas Kraft"}:
+            return result
+        if req.categoria == "Bajadas Autoadhesivas":
+            if (req.adicional_laminado_por_lado or "sin_adicional").lower() != "sin_adicional" or bool(req.adicional_plastificado):
+                raise ApiValidationError("adicional_no_soportado_para_autoadhesivas")
             return result
         if req.categoria in {"Bajadas Fullcolor", "Bajadas Blanco y Negro"} and str(req.tipo_papel).strip().lower() == "liviano":
             if (req.adicional_laminado_por_lado or "sin_adicional").lower() != "sin_adicional" or bool(req.adicional_plastificado):
@@ -741,6 +865,22 @@ class BajadasV2ApiService:
             "nota": "Adicionales hoja 4 sumados antes de urgencia.",
         }
         return result
+
+    def _resolve_tinta_blanca_base_1_copia(self) -> float | None:
+        cfg_path = self.project_root / "data" / "bajadas_autoadhesivas" / "autoadhesivas_v1_config.json"
+        if not cfg_path.exists():
+            return None
+        cfg = self._read_json(cfg_path)
+        raw = cfg.get("adicional_tinta_blanca_base_1_copia")
+        if raw in (None, ""):
+            return None
+        try:
+            numeric = float(raw)
+        except (TypeError, ValueError):
+            return None
+        if numeric <= 0:
+            return None
+        return numeric
 
     @staticmethod
     def _resolve_laca_uv_label_by_qty(qty: int) -> str:

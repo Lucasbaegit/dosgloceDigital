@@ -652,6 +652,12 @@ export default function CotizadorBajadasV2() {
         next.tipo_papel = next.columna_precio || "papel";
         next.material = next.columna_precio === "especial" ? "OPP blanco" : "Sticker";
         next.gramaje = next.columna_precio === "especial" ? "N/A" : "N/A";
+        next.adicional_laminado_por_lado = "sin_adicional";
+        next.adicional_plastificado = false;
+        next.caras_adicional_laminado = "1";
+        next.adicional_laminado = "sin_adicional";
+        next.adicional_laca_uv = false;
+        next.adicional_tinta_blanca = false;
         return next;
       }
       if (next.categoria_ui === "Bajadas Kraft") {
@@ -902,7 +908,16 @@ export default function CotizadorBajadasV2() {
 
   const updateField = (field) => (event) => {
     setCopyStatus("");
-    setForm((prev) => ({ ...prev, [field]: event.target.value }));
+    const value = event.target.value;
+    if (field === "categoria_ui" && value === "Bajadas Fullcolor/ByN") {
+      setForm((prev) => ({
+        ...prev,
+        categoria_ui: value,
+        formato: "A3+",
+      }));
+      return;
+    }
+    setForm((prev) => ({ ...prev, [field]: value }));
   };
 
   const updateCfgField = (field, value) => {
@@ -1223,10 +1238,16 @@ export default function CotizadorBajadasV2() {
             !isAutoadhesivas && ["laca", "laminado_brillo", "laminado_mate"].includes(form.adicional_laminado)
               ? Number(form.caras_adicional_laminado || 1)
               : 1,
-          adicional_laminado_por_lado: (inferred.formato === "A3+" || inferred.formato === "XA3") ? (form.adicional_laminado_por_lado || "sin_adicional") : "sin_adicional",
-          adicional_plastificado: (inferred.formato === "A3+" || inferred.formato === "XA3") ? Boolean(form.adicional_plastificado) : false,
-          adicional_tinta_blanca: false,
-          adicional_laca_uv: false,
+          adicional_laminado_por_lado:
+            !isAutoadhesivas && (inferred.formato === "A3+" || inferred.formato === "XA3")
+              ? (form.adicional_laminado_por_lado || "sin_adicional")
+              : "sin_adicional",
+          adicional_plastificado:
+            !isAutoadhesivas && (inferred.formato === "A3+" || inferred.formato === "XA3")
+              ? Boolean(form.adicional_plastificado)
+              : false,
+          adicional_tinta_blanca: isAutoadhesivas ? Boolean(form.adicional_tinta_blanca) : false,
+          adicional_laca_uv: isAutoadhesivas ? Boolean(form.adicional_laca_uv) : false,
           adicional_troquelado: Boolean(form.adicional_troquelado),
           complejidad_troquelado: form.adicional_troquelado ? form.complejidad_troquelado : undefined,
           tipo_producto: isAutoadhesivas ? "autoadhesiva" : undefined,
@@ -1281,8 +1302,12 @@ export default function CotizadorBajadasV2() {
         setError("OPP pendiente de datos confiables para Stickers Circulares.");
       } else if (err.code === "tinta_blanca_bloqueada_por_falta_de_datos") {
         setError("Tinta blanca bloqueada por falta de datos confiables.");
+      } else if (err.code === "tinta_blanca_bloqueada_por_falta_de_valor_base_1_copia") {
+        setError("Tinta blanca bloqueada: falta valor base de 1 copia para cálculo proporcional.");
       } else if (err.code === "adicional_no_soportado_para_liviano") {
         setError("Para papel liviano solo se permite Sin adicional o Laca UV.");
+      } else if (err.code === "adicional_no_soportado_para_autoadhesivas") {
+        setError("Autoadhesivas no admite laminado por lado ni plastificado.");
       } else if (err.code === "adicionales_hoja4_solo_a3plus_xa3") {
         setError("Laminado por lado y plastificado solo aplican a A3+ o XA3.");
       } else if (err.code === "complejidad_troquelado_requerida") {
@@ -1684,7 +1709,30 @@ export default function CotizadorBajadasV2() {
           )}
           <label><span>Cantidad</span><input type="number" min={1} step={1} placeholder={isMatrixProduct ? "100, 200, 300, 500, 1000" : "Ejemplo: 30"} value={form.cantidad_unidades} onChange={updateField("cantidad_unidades")} /><small className="range-hint">{isMatrixProduct ? `Cantidad de matriz: ${cantidadUnidades || "-"}` : isNoRangeProduct ? `Cantidad ingresada: ${cantidadUnidades || "-"}` : `Rango aplicado: ${derivedRange ?? "Sin rango disponible"}`}</small></label>
           <label><span>Urgencia</span><select value={form.urgencia} onChange={updateField("urgencia")}>{URGENCIAS.map((v) => <option key={v} value={v}>{v}</option>)}</select></label>
-          {isBajadasFlow ? <label><span>Adicional</span><select value={form.adicional_laminado} onChange={updateField("adicional_laminado")}>{adicionalesDisponibles.map((a) => <option key={a.value} value={a.value}>{a.label}</option>)}</select></label> : null}
+          {isBajadasFlow && !isAutoadhesivas ? <label><span>Adicional</span><select value={form.adicional_laminado} onChange={updateField("adicional_laminado")}>{adicionalesDisponibles.map((a) => <option key={a.value} value={a.value}>{a.label}</option>)}</select></label> : null}
+          {isAutoadhesivas ? (
+            <div className="checkbox-group">
+              <span>Adicionales</span>
+              <label className="inline-check">
+                <input
+                  type="checkbox"
+                  data-testid="autoadh-laca-uv-checkbox"
+                  checked={Boolean(form.adicional_laca_uv)}
+                  onChange={(event) => setForm((prev) => ({ ...prev, adicional_laca_uv: event.target.checked }))}
+                />
+                Laca UV
+              </label>
+              <label className="inline-check">
+                <input
+                  type="checkbox"
+                  data-testid="autoadh-tinta-blanca-checkbox"
+                  checked={Boolean(form.adicional_tinta_blanca)}
+                  onChange={(event) => setForm((prev) => ({ ...prev, adicional_tinta_blanca: event.target.checked }))}
+                />
+                Tinta blanca
+              </label>
+            </div>
+          ) : null}
           {isBajadasFlow && !isAutoadhesivas && !isLivianoBajadaNoAutoadhesiva && ["laca", "laminado_brillo", "laminado_mate"].includes(form.adicional_laminado) ? (
             <label>
               <span>Aplicar adicional a</span>
@@ -1694,10 +1742,10 @@ export default function CotizadorBajadasV2() {
               </select>
             </label>
           ) : null}
-          {isBajadasFlow && !isLivianoBajadaNoAutoadhesiva && (form.formato === "A3+" || form.formato === "XA3") ? (
+          {isBajadasFlow && !isAutoadhesivas && !isLivianoBajadaNoAutoadhesiva && (form.formato === "A3+" || form.formato === "XA3") ? (
             <label><span>Laminado por lado</span><select value={form.adicional_laminado_por_lado} onChange={updateField("adicional_laminado_por_lado")}>{ADICIONALES_POR_LADO.map((a) => <option key={a.value} value={a.value}>{a.label}</option>)}</select></label>
           ) : null}
-          {isBajadasFlow && !isLivianoBajadaNoAutoadhesiva && (form.formato === "A3+" || form.formato === "XA3") ? (
+          {isBajadasFlow && !isAutoadhesivas && !isLivianoBajadaNoAutoadhesiva && (form.formato === "A3+" || form.formato === "XA3") ? (
             <label>
               <span>Plastificado (A3)</span>
               <select value={String(Boolean(form.adicional_plastificado))} onChange={(event) => setForm((prev) => ({ ...prev, adicional_plastificado: event.target.value === "true" }))}>
@@ -1726,7 +1774,7 @@ export default function CotizadorBajadasV2() {
             </label>
           ) : null}
         </div>
-        {isAutoadhesivas ? <div className="warning-box compact-note">Laca UV se selecciona desde Adicional. Tinta blanca está sujeta a disponibilidad de datos.</div> : null}
+        {isAutoadhesivas ? <div className="warning-box compact-note">Laca UV y Tinta blanca son adicionales independientes. Tinta blanca está sujeta a disponibilidad de valor base.</div> : null}
         {isTarjetas || isPostales || isFolletos || isStickers || isImanes || isStickersCirculares || isTarjetasTroqCirc ? <div className="info-box compact-note">Este producto usa precio total por paquete/cantidad según PDF vigente.</div> : <div className="info-box compact-note">Laca / laminado se suma antes de urgencia. Troquelado digital también se suma como adicional y no incluye costo de impresión.</div>}
         {error ? <div className="error-box">{error}</div> : null}
         {copyStatus ? <div className="info-box" data-testid="copy-status">{copyStatus}</div> : null}

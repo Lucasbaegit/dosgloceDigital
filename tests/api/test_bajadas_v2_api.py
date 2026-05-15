@@ -1207,7 +1207,7 @@ class TestBajadasV2Api(unittest.TestCase):
         self.assertEqual(body["adicional_laminado"], "laca")
         self.assertEqual(body["regla_adicional_aplicada"], "ADICIONAL_LACA_UV_A3PLUS")
 
-    def test_autoadhesiva_especial_con_laminado_mate(self):
+    def test_autoadhesiva_especial_rechaza_laminado_mate(self):
         payload = {
             "categoria": "Bajadas Autoadhesivas",
             "modo_color": "fullcolor",
@@ -1224,9 +1224,8 @@ class TestBajadasV2Api(unittest.TestCase):
             "adicional_laminado": "laminado_mate",
         }
         status, body = self._post_json("/bajadas-v2/cotizar", payload)
-        self.assertEqual(status, 200)
-        self.assertEqual(body["adicional_laminado"], "laminado_mate")
-        self.assertEqual(body["regla_adicional_aplicada"], "ADICIONAL_LAMINADO_MATE_A3PLUS")
+        self.assertEqual(status, 400)
+        self.assertEqual(body["error"], "adicional_no_soportado_para_autoadhesivas")
 
     def test_autoadhesiva_rechaza_tinta_blanca_laca_uv(self):
         payload = {
@@ -1246,7 +1245,47 @@ class TestBajadasV2Api(unittest.TestCase):
         }
         status, body = self._post_json("/bajadas-v2/cotizar", payload)
         self.assertEqual(status, 400)
-        self.assertEqual(body["error"], "tinta_blanca_bloqueada_por_falta_de_datos")
+        self.assertEqual(body["error"], "tinta_blanca_bloqueada_por_falta_de_valor_base_1_copia")
+
+    def test_autoadhesiva_rechaza_laminado_por_lado(self):
+        payload = {
+            "categoria": "Bajadas Autoadhesivas",
+            "modo_color": "fullcolor",
+            "formato": "A3+",
+            "tipo_papel": "papel",
+            "material": "Sticker",
+            "gramaje": "N/A",
+            "cantidad_unidades": 30,
+            "cantidad_rango": "26 a 50",
+            "caras": "4/0",
+            "urgencia": "normal",
+            "tipo_producto": "autoadhesiva",
+            "columna_precio": "papel",
+            "adicional_laminado_por_lado": "laminado_brillo_por_lado",
+        }
+        status, body = self._post_json("/bajadas-v2/cotizar", payload)
+        self.assertEqual(status, 400)
+        self.assertEqual(body["error"], "adicional_no_soportado_para_autoadhesivas")
+
+    def test_autoadhesiva_rechaza_plastificado(self):
+        payload = {
+            "categoria": "Bajadas Autoadhesivas",
+            "modo_color": "fullcolor",
+            "formato": "A3+",
+            "tipo_papel": "papel",
+            "material": "Sticker",
+            "gramaje": "N/A",
+            "cantidad_unidades": 30,
+            "cantidad_rango": "26 a 50",
+            "caras": "4/0",
+            "urgencia": "normal",
+            "tipo_producto": "autoadhesiva",
+            "columna_precio": "papel",
+            "adicional_plastificado": True,
+        }
+        status, body = self._post_json("/bajadas-v2/cotizar", payload)
+        self.assertEqual(status, 400)
+        self.assertEqual(body["error"], "adicional_no_soportado_para_autoadhesivas")
 
     def test_autoadhesiva_con_adicional_laca_uv(self):
         payload = {
