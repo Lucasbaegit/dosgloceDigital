@@ -42,7 +42,7 @@ test("modo Autoadhesivas guiado: A3+ y 4/0 fijos, tipo papel/especial", async ({
   await expect(page.getByLabel("Impresión")).toHaveValue("4/0");
   await expect(page.getByLabel("Modo color")).toHaveValue("fullcolor");
   await expect(page.getByLabel("Tipo")).toBeVisible();
-  await expect(page.getByText("Tinta blanca y laca UV no están incluidas en esta etapa.")).toBeVisible();
+  await expect(page.getByText("Laca UV está disponible para autoadhesivas. Tinta blanca queda bloqueada hasta contar con datos confiables.")).toBeVisible();
   await expect(page.getByRole("button", { name: "1/0" })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "1/1" })).toHaveCount(0);
 });
@@ -241,7 +241,7 @@ test("botón Limpiar y Copiar resultado", async ({ page }) => {
 
   await page.getByRole("button", { name: "Calcular" }).click();
   await page.getByTestId("copy-result-button").click();
-  await expect(page.getByTestId("copy-status")).toContainText(/Resultado copiado\.|No se pudo copiar automáticamente\./);
+  await expect(page.getByTestId("copy-status")).toContainText(/Precio final copiado\.|No se pudo copiar automáticamente\./);
   await page.getByTestId("clear-button").click();
   await expect(page.getByLabel("Cantidad")).toHaveValue("1");
   await expect(page.getByLabel("Adicional").first()).toHaveValue("sin_adicional");

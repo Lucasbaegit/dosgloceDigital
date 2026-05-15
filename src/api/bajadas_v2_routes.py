@@ -154,6 +154,11 @@ class BajadasV2ApiService:
     def cotizar(self, payload: dict[str, Any]) -> tuple[int, dict[str, Any]]:
         try:
             req = QuoteRequestSchema.from_payload(payload)
+            if req.categoria == "Bajadas Autoadhesivas" and req.adicional_tinta_blanca:
+                return 400, {
+                    "error": "tinta_blanca_bloqueada_por_falta_de_datos",
+                    "detail": "tinta_blanca_bloqueada_por_falta_de_datos",
+                }
             if req.categoria == "Bajadas Autoadhesivas":
                 autoadh_request = AutoadhesivasQuoteInput(
                     categoria=req.categoria,
@@ -168,7 +173,10 @@ class BajadasV2ApiService:
                 result = self.autoadhesivas_engine.quote_as_dict(autoadh_request)
             else:
                 result = self.engine.quote_as_dict(req.to_quote_input())
-            result = self._apply_laminado_adicional_opt_in(result, req)
+            adicional_effective = req.adicional_laminado
+            if req.categoria == "Bajadas Autoadhesivas" and req.adicional_laca_uv:
+                adicional_effective = "laca"
+            result = self._apply_laminado_adicional_opt_in(result, req, adicional_effective)
             result = self._apply_hoja4_adicionales_opt_in(result, req)
             result = self._apply_troquelado_adicional_opt_in(result, req)
             return 200, result
@@ -554,26 +562,34 @@ class BajadasV2ApiService:
         except Exception as exc:  # pragma: no cover
             return 500, {"error": "internal_error", "detail": str(exc)}
 
-    def _apply_laminado_adicional_opt_in(self, result: dict[str, Any], req: QuoteRequestSchema) -> dict[str, Any]:
-        adicional = (req.adicional_laminado or "sin_adicional").lower()
+    def _apply_laminado_adicional_opt_in(
+        self,
+        result: dict[str, Any],
+        req: QuoteRequestSchema,
+        adicional_effective: str | None = None,
+    ) -> dict[str, Any]:
+        adicional = (adicional_effective if adicional_effective is not None else req.adicional_laminado or "sin_adicional").lower()
         valid = {"sin_adicional", "laca", "laminado_brillo", "laminado_mate"}
         if adicional not in valid:
             raise ApiValidationError("adicional_laminado inválido. Valores permitidos: sin_adicional, laca, laminado_brillo, laminado_mate.")
 
         # Opt-in behavior: if field is omitted, keep previous behavior unchanged.
-        if req.adicional_laminado is None:
+        if req.adicional_laminado is None and adicional_effective is None:
             result["adicional_laminado"] = "sin_adicional"
             return result
 
         qty = int(result.get("cantidad_unidades", req.cantidad_unidades or 1))
+        caras_multiplier = int(req.caras_adicional_laminado or 1)
+        if req.categoria == "Bajadas Autoadhesivas":
+            caras_multiplier = 1
         if adicional == "laca":
             adicional_unit = self._resolve_laca_uv_unit_by_qty(qty)
             recargo_loca = float(result.get("trazabilidad", {}).get("recargo_urgencia_aplicado", 0.0))
             laminado_out = {
                 "adicional_unitario_sin_iva": adicional_unit,
-                "adicional_unitario_con_urgencia": adicional_unit * (1.0 + recargo_loca),
-                "total_adicional_sin_iva": adicional_unit * qty,
-                "total_adicional_con_urgencia": (adicional_unit * qty) * (1.0 + recargo_loca),
+                "adicional_unitario_con_urgencia": (adicional_unit * caras_multiplier) * (1.0 + recargo_loca),
+                "total_adicional_sin_iva": (adicional_unit * qty) * caras_multiplier,
+                "total_adicional_con_urgencia": ((adicional_unit * qty) * caras_multiplier) * (1.0 + recargo_loca),
                 "rango_aplicado": self._resolve_laca_uv_label_by_qty(qty),
                 "regla_aplicada": "ADICIONAL_LACA_UV_A3PLUS",
                 "fuente": "matriz_laca_uv_bajadas",
@@ -591,7 +607,10 @@ class BajadasV2ApiService:
         base_unit = float(result["precio_unitario_sin_iva"])
         recargo = float(result.get("trazabilidad", {}).get("recargo_urgencia_aplicado", 0.0))
         factor_urgencia = 1.0 + recargo
-        adicional_unit = float(laminado_out["adicional_unitario_sin_iva"])
+        adicional_unit = float(laminado_out["adicional_unitario_sin_iva"]) * caras_multiplier
+        adicional_unit_con_urgencia = adicional_unit * factor_urgencia
+        total_adicional_sin_iva = adicional_unit * qty
+        total_adicional_con_urgencia = total_adicional_sin_iva * factor_urgencia
 
         precio_unitario_con_adicional = round(base_unit + adicional_unit, 6)
         total_sin_iva = round(precio_unitario_con_adicional * qty, 6)
@@ -599,9 +618,10 @@ class BajadasV2ApiService:
 
         result["adicional_laminado"] = adicional
         result["adicional_unitario_sin_iva"] = round(adicional_unit, 6)
-        result["adicional_unitario_con_urgencia"] = float(laminado_out["adicional_unitario_con_urgencia"])
-        result["total_adicional_sin_iva"] = float(laminado_out["total_adicional_sin_iva"])
-        result["total_adicional_con_urgencia"] = float(laminado_out["total_adicional_con_urgencia"])
+        result["adicional_unitario_con_urgencia"] = round(adicional_unit_con_urgencia, 6)
+        result["total_adicional_sin_iva"] = round(total_adicional_sin_iva, 6)
+        result["total_adicional_con_urgencia"] = round(total_adicional_con_urgencia, 6)
+        result["caras_adicional_laminado"] = caras_multiplier
         result["precio_unitario_base_sin_iva"] = round(base_unit, 6)
         result["precio_unitario_con_adicional_sin_iva"] = precio_unitario_con_adicional
         result["regla_adicional_aplicada"] = laminado_out["regla_aplicada"]
@@ -619,6 +639,8 @@ class BajadasV2ApiService:
             "hoja_origen": "Laminado",
             "formato_base": "A3+",
             "rango_aplicado": laminado_out["rango_aplicado"],
+            "caras_aplicadas": caras_multiplier,
+            "multiplicador_caras_adicional": caras_multiplier,
             "adicional_unitario": round(adicional_unit, 6),
             "regla_aplicada": laminado_out["regla_aplicada"],
             "fuente": laminado_out["fuente"],

@@ -181,8 +181,11 @@ const INITIAL_FORM = {
   caras: "4/0",
   urgencia: "normal",
   adicional_laminado: "sin_adicional",
+  caras_adicional_laminado: "1",
   adicional_laminado_por_lado: "sin_adicional",
   adicional_plastificado: false,
+  adicional_tinta_blanca: false,
+  adicional_laca_uv: false,
   terminacion_tarjetas: "sin_laminar",
   gramaje_tarjetas: "300g",
   papel_folleto: "150g Ilustracion",
@@ -920,6 +923,9 @@ export default function CotizadorBajadasV2() {
           : "1",
       urgencia: "normal",
       adicional_laminado: "sin_adicional",
+      caras_adicional_laminado: "1",
+      adicional_tinta_blanca: false,
+      adicional_laca_uv: false,
       adicional_troquelado: false,
       complejidad_troquelado: "simple",
       terminacion_tarjetas: "sin_laminar",
@@ -947,26 +953,15 @@ export default function CotizadorBajadasV2() {
   };
 
   const handleCopy = async () => {
-    if (!result) return;
-    const text = [
-      "Cotización Bajadas v2",
-      `Formato: ${form.formato}`,
-      `Impresión: ${form.caras}`,
-      `Papel: ${form.tipo_papel} / ${form.material} / ${form.gramaje}`,
-      `Cantidad: ${result.cantidad_unidades ?? form.cantidad_unidades}`,
-      `${isMatrixProduct ? "Cantidad de matriz" : "Rango aplicado"}: ${isMatrixProduct ? String(result.cantidad_unidades ?? form.cantidad_unidades ?? "-") : (result.cantidad_rango_aplicado ?? derivedRange ?? "-")}`,
-      `Adicional: ${result.adicional_laminado ?? form.adicional_laminado ?? "sin_adicional"}`,
-      `Adicional unitario: ${formatMoney(result.adicional_unitario_sin_iva ?? 0)}`,
-      `Troquelado adicional: ${result.adicional_troquelado ? "sí" : "no"}`,
-      `Complejidad troquelado: ${result.complejidad_troquelado ?? "-"}`,
-      `Troquelado unitario: ${formatMoney(result.adicional_troquelado_unitario_sin_iva ?? 0)}`,
-      `Precio unitario con adicional: ${formatMoney(result.precio_unitario_con_adicional_sin_iva ?? result.precio_unitario_sin_iva ?? result.precio_sin_iva)}`,
-      `Total sin IVA: ${formatMoney(result.total_sin_iva ?? result.precio_sin_iva)}`,
-      `Total con urgencia: ${formatMoney(result.total_con_urgencia ?? result.precio_con_recargo_urgencia)}`,
-    ].join("\n");
+    if (!result) {
+      setCopyStatus("Primero calculá una cotización.");
+      return;
+    }
+    const finalValue = Number(result.total_con_urgencia ?? result.total_sin_iva ?? 0);
+    const text = String(Math.round(finalValue));
     try {
       const copied = await copyToClipboard(text);
-      setCopyStatus(copied ? "Resultado copiado." : "No se pudo copiar automáticamente.");
+      setCopyStatus(copied ? "Precio final copiado." : "No se pudo copiar automáticamente.");
     } catch {
       setCopyStatus("No se pudo copiar automáticamente.");
     }
@@ -1175,8 +1170,14 @@ export default function CotizadorBajadasV2() {
           caras: inferred.caras,
           urgencia: form.urgencia,
           adicional_laminado: form.adicional_laminado || "sin_adicional",
+          caras_adicional_laminado:
+            !isAutoadhesivas && ["laca", "laminado_brillo", "laminado_mate"].includes(form.adicional_laminado)
+              ? Number(form.caras_adicional_laminado || 1)
+              : 1,
           adicional_laminado_por_lado: (inferred.formato === "A3+" || inferred.formato === "XA3") ? (form.adicional_laminado_por_lado || "sin_adicional") : "sin_adicional",
           adicional_plastificado: (inferred.formato === "A3+" || inferred.formato === "XA3") ? Boolean(form.adicional_plastificado) : false,
+          adicional_tinta_blanca: isAutoadhesivas ? Boolean(form.adicional_tinta_blanca) : false,
+          adicional_laca_uv: isAutoadhesivas ? Boolean(form.adicional_laca_uv) : false,
           adicional_troquelado: Boolean(form.adicional_troquelado),
           complejidad_troquelado: form.adicional_troquelado ? form.complejidad_troquelado : undefined,
           tipo_producto: isAutoadhesivas ? "autoadhesiva" : undefined,
@@ -1229,6 +1230,8 @@ export default function CotizadorBajadasV2() {
         setError("Material no soportado para Stickers Circulares.");
       } else if (err.code === "material_opp_pendiente_datos") {
         setError("OPP pendiente de datos confiables para Stickers Circulares.");
+      } else if (err.code === "tinta_blanca_bloqueada_por_falta_de_datos") {
+        setError("Tinta blanca bloqueada por falta de datos confiables.");
       } else if (err.code === "adicionales_hoja4_solo_a3plus_xa3") {
         setError("Laminado por lado y plastificado solo aplican a A3+ o XA3.");
       } else if (err.code === "complejidad_troquelado_requerida") {
@@ -1615,6 +1618,33 @@ export default function CotizadorBajadasV2() {
           <label><span>Cantidad</span><input type="number" min={1} step={1} placeholder={isMatrixProduct ? "100, 200, 300, 500, 1000" : "Ejemplo: 30"} value={form.cantidad_unidades} onChange={updateField("cantidad_unidades")} /><small className="range-hint">{isMatrixProduct ? `Cantidad de matriz: ${cantidadUnidades || "-"}` : isNoRangeProduct ? `Cantidad ingresada: ${cantidadUnidades || "-"}` : `Rango aplicado: ${derivedRange ?? "Sin rango disponible"}`}</small></label>
           <label><span>Urgencia</span><select value={form.urgencia} onChange={updateField("urgencia")}>{URGENCIAS.map((v) => <option key={v} value={v}>{v}</option>)}</select></label>
           {isBajadasFlow ? <label><span>Adicional</span><select value={form.adicional_laminado} onChange={updateField("adicional_laminado")}>{ADICIONALES.map((a) => <option key={a.value} value={a.value}>{a.label}</option>)}</select></label> : null}
+          {isBajadasFlow && !isAutoadhesivas && ["laca", "laminado_brillo", "laminado_mate"].includes(form.adicional_laminado) ? (
+            <label>
+              <span>Aplicar adicional a</span>
+              <select value={form.caras_adicional_laminado} onChange={updateField("caras_adicional_laminado")}>
+                <option value="1">1 cara</option>
+                <option value="2">2 caras</option>
+              </select>
+            </label>
+          ) : null}
+          {isAutoadhesivas ? (
+            <>
+              <label>
+                <span>Laca UV (autoadhesiva)</span>
+                <select value={String(Boolean(form.adicional_laca_uv))} onChange={(event) => setForm((prev) => ({ ...prev, adicional_laca_uv: event.target.value === "true" }))}>
+                  <option value="false">No</option>
+                  <option value="true">Sí</option>
+                </select>
+              </label>
+              <label>
+                <span>Tinta blanca</span>
+                <select value={String(Boolean(form.adicional_tinta_blanca))} onChange={(event) => setForm((prev) => ({ ...prev, adicional_tinta_blanca: event.target.value === "true" }))}>
+                  <option value="false">No</option>
+                  <option value="true">Sí</option>
+                </select>
+              </label>
+            </>
+          ) : null}
           {isBajadasFlow && (form.formato === "A3+" || form.formato === "XA3") ? (
             <label><span>Laminado por lado</span><select value={form.adicional_laminado_por_lado} onChange={updateField("adicional_laminado_por_lado")}>{ADICIONALES_POR_LADO.map((a) => <option key={a.value} value={a.value}>{a.label}</option>)}</select></label>
           ) : null}
@@ -1647,11 +1677,15 @@ export default function CotizadorBajadasV2() {
             </label>
           ) : null}
         </div>
-        {isAutoadhesivas ? <div className="warning-box compact-note">Tinta blanca y laca UV no están incluidas en esta etapa.</div> : null}
+        {isAutoadhesivas ? <div className="warning-box compact-note">Laca UV está disponible para autoadhesivas. Tinta blanca queda bloqueada hasta contar con datos confiables.</div> : null}
         {isTarjetas || isPostales || isFolletos || isStickers || isImanes || isStickersCirculares || isTarjetasTroqCirc ? <div className="info-box compact-note">Este producto usa precio total por paquete/cantidad según PDF vigente.</div> : <div className="info-box compact-note">Laca / laminado se suma antes de urgencia. Troquelado digital también se suma como adicional y no incluye costo de impresión.</div>}
         {error ? <div className="error-box">{error}</div> : null}
         {copyStatus ? <div className="info-box" data-testid="copy-status">{copyStatus}</div> : null}
-        <div className="actions-row compact-actions"><button type="submit" className="calculate-btn" disabled={loading}>{loading ? "Calculando..." : "Calcular"}</button><button type="button" className="secondary-btn compact-clear-btn" data-testid="clear-button" onClick={handleClear}>Limpiar</button></div>
+        <div className="actions-row compact-actions">
+          <button type="submit" className="calculate-btn compact-calculate-btn" disabled={loading}>{loading ? "Calculando..." : "Calcular"}</button>
+          <button type="button" className="secondary-btn" data-testid="copy-result-button" onClick={handleCopy} disabled={!result}>Copiar</button>
+          <button type="button" className="secondary-btn compact-clear-btn" data-testid="clear-button" onClick={handleClear}>Limpiar</button>
+        </div>
       </form>
 
       <section className="card result-card result-sticky" data-testid="result-panel">
@@ -1667,6 +1701,7 @@ export default function CotizadorBajadasV2() {
             <div className="detail-list">
               <div><strong>Precio base unitario</strong><span>{formatMoney(result.precio_unitario_base_sin_iva ?? result.precio_unitario_sin_iva ?? result.precio_sin_iva)}</span></div>
               <div><strong>Adicional seleccionado</strong><span>{result.adicional_laminado ?? "sin_adicional"}</span></div>
+              <div><strong>Caras adicional laminado/laca</strong><span>{result.caras_adicional_laminado ?? 1}</span></div>
               <div><strong>Laminado por lado</strong><span>{result.adicional_laminado_por_lado ?? "sin_adicional"}</span></div>
               <div><strong>Plastificado</strong><span>{result.adicional_plastificado ? "sí" : "no"}</span></div>
               <div><strong>Adicional unitario sin IVA</strong><span>{formatMoney(result.adicional_unitario_sin_iva ?? 0)}</span></div>
@@ -1686,7 +1721,6 @@ export default function CotizadorBajadasV2() {
               <div><strong>Fuente adicional</strong><span>{result.fuente_adicional ?? "-"}</span></div>
               <div><strong>Recargo aplicado</strong><span>{result.trazabilidad?.recargo_urgencia_aplicado ?? "-"}</span></div>
             </div>
-            <div className="copy-row"><button type="button" className="secondary-btn" data-testid="copy-result-button" onClick={handleCopy}>Copiar resultado</button></div>
           </>
         )}
       </section>

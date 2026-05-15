@@ -263,8 +263,9 @@ select:focus {
 .actions-row {
   margin-top: 16px;
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: auto auto auto;
   gap: 10px;
+  justify-content: start;
 }
 
 .calculate-btn,
@@ -452,6 +453,11 @@ select:focus {
 
 .compact-actions {
   margin-top: 12px;
+}
+
+.compact-calculate-btn {
+  font-size: 18px;
+  padding: 11px 16px;
 }
 
 .compact-clear-btn {

@@ -28,8 +28,11 @@ class QuoteRequestSchema:
     terminacion: str | None
     urgencia: str
     adicional_laminado: str | None
+    caras_adicional_laminado: int | None
     adicional_laminado_por_lado: str | None
     adicional_plastificado: bool | None
+    adicional_tinta_blanca: bool | None
+    adicional_laca_uv: bool | None
     adicional_troquelado: bool | None
     complejidad_troquelado: str | None
 
@@ -74,6 +77,11 @@ class QuoteRequestSchema:
                 if payload.get("adicional_laminado") in (None, "")
                 else str(payload.get("adicional_laminado")).strip().lower()
             ),
+            caras_adicional_laminado=(
+                None
+                if payload.get("caras_adicional_laminado") in (None, "")
+                else cls._coerce_adicional_caras(payload.get("caras_adicional_laminado"))
+            ),
             adicional_laminado_por_lado=(
                 None
                 if payload.get("adicional_laminado_por_lado") in (None, "")
@@ -83,6 +91,16 @@ class QuoteRequestSchema:
                 None
                 if "adicional_plastificado" not in payload
                 else cls._coerce_bool(payload.get("adicional_plastificado"), "adicional_plastificado")
+            ),
+            adicional_tinta_blanca=(
+                None
+                if "adicional_tinta_blanca" not in payload
+                else cls._coerce_bool(payload.get("adicional_tinta_blanca"), "adicional_tinta_blanca")
+            ),
+            adicional_laca_uv=(
+                None
+                if "adicional_laca_uv" not in payload
+                else cls._coerce_bool(payload.get("adicional_laca_uv"), "adicional_laca_uv")
             ),
             adicional_troquelado=(
                 None
@@ -134,6 +152,16 @@ class QuoteRequestSchema:
             if normalized in {"false", "0", "no"}:
                 return False
         raise ApiValidationError(f"{field} debe ser booleano.")
+
+    @staticmethod
+    def _coerce_adicional_caras(value: Any) -> int:
+        try:
+            parsed = int(value)
+        except (TypeError, ValueError) as exc:
+            raise ApiValidationError("caras_adicional_laminado debe ser 1 o 2.") from exc
+        if parsed not in {1, 2}:
+            raise ApiValidationError("caras_adicional_laminado debe ser 1 o 2.")
+        return parsed
 
 
 @dataclass(frozen=True)
