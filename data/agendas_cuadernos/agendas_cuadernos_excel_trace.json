@@ -1,0 +1,13 @@
+{
+  "fuente_pdf": "lista-low.pdf p?gina 17",
+  "fuente_excel_historica": "Productos (referencia hist?rica no alineada)",
+  "estado": "excel_historico_no_reproduce_pdf_promocional",
+  "variables_detectadas": [
+    "papel_300g_tapas",
+    "laminado_mate_brillo",
+    "encuadernacion",
+    "paginas_interiores",
+    "formato",
+    "cantidad_minima"
+  ]
+}

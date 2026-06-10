@@ -1,0 +1,17 @@
+﻿{
+  "producto": "Sobres",
+  "fuente_precio_final": "PDF página 14 - Papelería",
+  "fuente_logica_excel": {
+    "hoja": "Hoja3",
+    "rango": "F150:J163",
+    "hallazgo": "Tabla histórica por unidad con notas de cobertura de impresión"
+  },
+  "variables_detectadas": [
+    "papel_63g",
+    "click_color",
+    "tamano_sobre",
+    "coeficiente_cantidad",
+    "multiplicador_comercial"
+  ],
+  "decision": "usar_matriz_pdf_override"
+}

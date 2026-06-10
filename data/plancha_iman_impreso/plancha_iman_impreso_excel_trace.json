@@ -1,0 +1,12 @@
+{
+  "fuente_pdf": "lista-low.pdf p?gina 16",
+  "estado": "parcial",
+  "bloqueos": [
+    "tabla de papel autoadhesivo no legible con certeza en extracci?n de texto"
+  ],
+  "variables_detectadas": [
+    "base_iman",
+    "impresion_4_0",
+    "coeficiente_cantidad"
+  ]
+}

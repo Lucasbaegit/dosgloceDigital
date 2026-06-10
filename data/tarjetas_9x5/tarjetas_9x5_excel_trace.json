@@ -1,0 +1,25 @@
+{
+  "origen_excel_historico": {
+    "archivo": "original/Copia de DIGITAL sistema 2025.xlsx",
+    "hoja": "Productos",
+    "rango_relevante": "BA31:BI39",
+    "detalle": {
+      "tamano": "BA31=9x5",
+      "titulo": "BA32=PRECIO DE VENTA TARJETAS",
+      "cantidades": "A35:A39",
+      "sin_laminar_4_0": "BB35:BB39",
+      "sin_laminar_4_4": "BC35:BC39",
+      "laca_uv_4_0": "BD35:BD39",
+      "laca_uv_4_4": "BE35:BE39",
+      "laminado_brillo_4_0": "BF35:BF39",
+      "laminado_brillo_4_4": "BG35:BG39",
+      "laminado_mate_4_0": "BH35:BH39",
+      "laminado_mate_4_4": "BI35:BI39"
+    }
+  },
+  "conclusion": {
+    "comparativa_vs_pdf": "0_ok_40_desalineados",
+    "uso_operativo": "no_usar_como_fuente_final",
+    "uso_trazabilidad": "sí"
+  }
+}

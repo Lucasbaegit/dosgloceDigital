@@ -1,0 +1,12 @@
+{
+  "fuente_pdf": "lista-low.pdf p?gina 11",
+  "fuente_excel_historica": "circulares/troquelados (referencia de l?gica)",
+  "estado": "excel_no_reproduce_pdf_vigente",
+  "variables_detectadas": [
+    "click_color",
+    "papel_300g",
+    "troquel_circular",
+    "coeficiente_tamano",
+    "coeficiente_cantidad"
+  ]
+}

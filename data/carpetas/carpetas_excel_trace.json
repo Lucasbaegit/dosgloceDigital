@@ -1,0 +1,21 @@
+﻿{
+  "producto": "Carpetas",
+  "fuente_precio_final": "PDF página 14 - Papelería",
+  "fuente_logica_excel": {
+    "hoja": "Hoja3",
+    "rango": "B132:M143",
+    "hallazgo": "Tabla histórica con #REF! en fórmulas; no reproducible de forma confiable"
+  },
+  "variables_detectadas": [
+    "papel_300g_ilustracion",
+    "click_color",
+    "click_doble_cara",
+    "laca_uv",
+    "laminado_brillo",
+    "laminado_mate",
+    "solapa_impresa",
+    "coeficiente_cantidad",
+    "multiplicador_comercial"
+  ],
+  "decision": "usar_matriz_pdf_override"
+}

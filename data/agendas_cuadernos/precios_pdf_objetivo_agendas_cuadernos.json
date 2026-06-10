@@ -1,0 +1,92 @@
+[
+  {
+    "categoria": "Agendas / Cuadernos",
+    "producto": "cuaderno_escolar_abrochado",
+    "formato": "A5",
+    "paginas": 24,
+    "cantidad_minima": 2,
+    "precio_unitario_sin_iva": 950,
+    "fuente_objetivo": "pdf_pagina_17",
+    "activo": true
+  },
+  {
+    "categoria": "Agendas / Cuadernos",
+    "producto": "cuaderno_escolar_abrochado",
+    "formato": "A4",
+    "paginas": 24,
+    "cantidad_minima": 2,
+    "precio_unitario_sin_iva": 1800,
+    "fuente_objetivo": "pdf_pagina_17",
+    "activo": true
+  },
+  {
+    "categoria": "Agendas / Cuadernos",
+    "producto": "cuaderno_escolar_abrochado",
+    "formato": "A5",
+    "paginas": 48,
+    "cantidad_minima": 2,
+    "precio_unitario_sin_iva": 1350,
+    "fuente_objetivo": "pdf_pagina_17",
+    "activo": true
+  },
+  {
+    "categoria": "Agendas / Cuadernos",
+    "producto": "cuaderno_escolar_abrochado",
+    "formato": "A4",
+    "paginas": 48,
+    "cantidad_minima": 2,
+    "precio_unitario_sin_iva": 2650,
+    "fuente_objetivo": "pdf_pagina_17",
+    "activo": true
+  },
+  {
+    "categoria": "Agendas / Cuadernos",
+    "producto": "cuaderno_universitario_ringwire",
+    "formato": "A5",
+    "paginas": 100,
+    "cantidad_minima": 2,
+    "precio_unitario_sin_iva": 2300,
+    "fuente_objetivo": "pdf_pagina_17",
+    "activo": true
+  },
+  {
+    "categoria": "Agendas / Cuadernos",
+    "producto": "cuaderno_universitario_ringwire",
+    "formato": "A4",
+    "paginas": 100,
+    "cantidad_minima": 2,
+    "precio_unitario_sin_iva": 3400,
+    "fuente_objetivo": "pdf_pagina_17",
+    "activo": true
+  },
+  {
+    "categoria": "Agendas / Cuadernos",
+    "producto": "cuaderno_universitario_ringwire",
+    "formato": "A5",
+    "paginas": 160,
+    "cantidad_minima": 2,
+    "precio_unitario_sin_iva": 2900,
+    "fuente_objetivo": "pdf_pagina_17",
+    "activo": true
+  },
+  {
+    "categoria": "Agendas / Cuadernos",
+    "producto": "cuaderno_universitario_ringwire",
+    "formato": "A4",
+    "paginas": 160,
+    "cantidad_minima": 2,
+    "precio_unitario_sin_iva": 3900,
+    "fuente_objetivo": "pdf_pagina_17",
+    "activo": true
+  },
+  {
+    "categoria": "Agendas / Cuadernos",
+    "producto": "agenda_2026",
+    "formato": "A5",
+    "paginas": 72,
+    "cantidad_minima": 2,
+    "precio_unitario_sin_iva": 3000,
+    "fuente_objetivo": "pdf_pagina_17",
+    "activo": true
+  }
+]

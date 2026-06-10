@@ -1,0 +1,40 @@
+﻿{
+  "estado": "MEMBRETES_BLOQUEADO_POR_FALTA_DE_DATOS_CONFIABLES",
+  "fuente_pdf": "C:/Users/baezl/Desktop/proyectos/desgloceExcel/lista-low.pdf (pagina 14)",
+  "fuente_excel": "original/Copia de DIGITAL sistema 2025.xlsx (Hoja3 filas 148-160)",
+  "datos_visibles_pdf": {
+    "producto": "Membretes",
+    "formato": "A4",
+    "papel": "80g",
+    "cantidades": [100,200,300,500,1000],
+    "caras": ["1/0","4/0"],
+    "precios": null
+  },
+  "hallazgo_excel_historico": {
+    "hoja": "Hoja3",
+    "fila_encabezado": 151,
+    "campos": ["Cantidad", "precio 4/0", "precio 1/0"],
+    "filas_detectadas": [
+      {"cantidad": 100, "precio_4_0": 473.0, "precio_1_0": 275.0},
+      {"cantidad": 200, "precio_4_0": 814.0, "precio_1_0": 484.0},
+      {"cantidad": 300, "precio_4_0": 1221.0, "precio_1_0": 726.0},
+      {"cantidad": 500, "precio_4_0": 2035.0, "precio_1_0": 1210.0},
+      {"cantidad": 1000, "precio_4_0": 3630.0, "precio_1_0": 2200.0}
+    ]
+  },
+  "motivo_bloqueo": [
+    "Regla del proyecto: PDF es la fuente confiable de precio final publicado.",
+    "En la pagina 14 no se pueden extraer/importar precios de Membretes con confiabilidad (tabla sin valores legibles).",
+    "Los valores de Excel historico no pueden tomarse como precio final comercial sin validacion del PDF vigente."
+  ],
+  "dato_faltante_para_desbloquear": {
+    "tabla_confirmada_pdf": {
+      "cantidades": [100,200,300,500,1000],
+      "caras": ["1/0", "4/0"],
+      "formato": "A4",
+      "papel": "80g"
+    },
+    "confirmacion_convencion_precio": "si el precio es total por cantidad o unitario"
+  },
+  "accion_recomendada": "Solicitar imagen/PDF de mayor resolucion de pagina 14 o fuente oficial con la tabla numerica completa de Membretes."
+}

@@ -1,0 +1,11 @@
+{
+  "fuente_pdf": "lista-low.pdf p?gina 11",
+  "fuente_excel_historica": "troquelados!W44:AB50",
+  "estado": "formula_historica_no_reconstruida_1a1",
+  "variables_detectadas": [
+    "corte_cama_plana",
+    "complejidad_troquel",
+    "familia_tamano",
+    "coeficiente_cantidad"
+  ]
+}

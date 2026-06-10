@@ -1,0 +1,80 @@
+[
+  {
+    "categoria": "Plancha de Im?n Impreso",
+    "producto": "plancha_iman_impreso",
+    "variante": "papel_300g_ilustracion",
+    "formato": "30x46",
+    "caras": "4/0",
+    "cantidad_rango": "1",
+    "cantidad_min": 1,
+    "cantidad_max": 1,
+    "precio_unitario_sin_iva": 2953,
+    "fuente_objetivo": "pdf_pagina_16",
+    "activo": true
+  },
+  {
+    "categoria": "Plancha de Im?n Impreso",
+    "producto": "plancha_iman_impreso",
+    "variante": "papel_300g_ilustracion",
+    "formato": "30x46",
+    "caras": "4/0",
+    "cantidad_rango": "2 a 25",
+    "cantidad_min": 2,
+    "cantidad_max": 25,
+    "precio_unitario_sin_iva": 2442,
+    "fuente_objetivo": "pdf_pagina_16",
+    "activo": true
+  },
+  {
+    "categoria": "Plancha de Im?n Impreso",
+    "producto": "plancha_iman_impreso",
+    "variante": "papel_300g_ilustracion",
+    "formato": "30x46",
+    "caras": "4/0",
+    "cantidad_rango": "26 a 50",
+    "cantidad_min": 26,
+    "cantidad_max": 50,
+    "precio_unitario_sin_iva": 2314,
+    "fuente_objetivo": "pdf_pagina_16",
+    "activo": true
+  },
+  {
+    "categoria": "Plancha de Im?n Impreso",
+    "producto": "plancha_iman_impreso",
+    "variante": "papel_300g_ilustracion",
+    "formato": "30x46",
+    "caras": "4/0",
+    "cantidad_rango": "51 a 100",
+    "cantidad_min": 51,
+    "cantidad_max": 100,
+    "precio_unitario_sin_iva": 2186,
+    "fuente_objetivo": "pdf_pagina_16",
+    "activo": true
+  },
+  {
+    "categoria": "Plancha de Im?n Impreso",
+    "producto": "plancha_iman_impreso",
+    "variante": "papel_300g_ilustracion",
+    "formato": "30x46",
+    "caras": "4/0",
+    "cantidad_rango": "101 a 300",
+    "cantidad_min": 101,
+    "cantidad_max": 300,
+    "precio_unitario_sin_iva": 2059,
+    "fuente_objetivo": "pdf_pagina_16",
+    "activo": true
+  },
+  {
+    "categoria": "Plancha de Im?n Impreso",
+    "producto": "plancha_iman_impreso",
+    "variante": "papel_300g_ilustracion",
+    "formato": "30x46",
+    "caras": "4/0",
+    "cantidad_rango": "301 a 500",
+    "cantidad_min": 301,
+    "cantidad_max": 500,
+    "precio_unitario_sin_iva": 1931,
+    "fuente_objetivo": "pdf_pagina_16",
+    "activo": true
+  }
+]

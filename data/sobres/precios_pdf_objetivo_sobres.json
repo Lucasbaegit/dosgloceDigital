@@ -1,0 +1,26 @@
+﻿[
+  {"cantidad_unidades":100,"tipo_sobre":"sobre_bolsa_a4_22_9x32_4","caras":"4/0","precio_unitario":633},
+  {"cantidad_unidades":100,"tipo_sobre":"sobre_bolsa_27x37","caras":"4/0","precio_unitario":715},
+  {"cantidad_unidades":100,"tipo_sobre":"sobre_bolsa_25x35_3","caras":"4/0","precio_unitario":673},
+  {"cantidad_unidades":100,"tipo_sobre":"oficio_ingles_12x23_5","caras":"4/0","precio_unitario":440},
+
+  {"cantidad_unidades":200,"tipo_sobre":"sobre_bolsa_a4_22_9x32_4","caras":"4/0","precio_unitario":586},
+  {"cantidad_unidades":200,"tipo_sobre":"sobre_bolsa_27x37","caras":"4/0","precio_unitario":655},
+  {"cantidad_unidades":200,"tipo_sobre":"sobre_bolsa_25x35_3","caras":"4/0","precio_unitario":620},
+  {"cantidad_unidades":200,"tipo_sobre":"oficio_ingles_12x23_5","caras":"4/0","precio_unitario":422},
+
+  {"cantidad_unidades":300,"tipo_sobre":"sobre_bolsa_a4_22_9x32_4","caras":"4/0","precio_unitario":554},
+  {"cantidad_unidades":300,"tipo_sobre":"sobre_bolsa_27x37","caras":"4/0","precio_unitario":615},
+  {"cantidad_unidades":300,"tipo_sobre":"sobre_bolsa_25x35_3","caras":"4/0","precio_unitario":584},
+  {"cantidad_unidades":300,"tipo_sobre":"oficio_ingles_12x23_5","caras":"4/0","precio_unitario":410},
+
+  {"cantidad_unidades":500,"tipo_sobre":"sobre_bolsa_a4_22_9x32_4","caras":"4/0","precio_unitario":523},
+  {"cantidad_unidades":500,"tipo_sobre":"sobre_bolsa_27x37","caras":"4/0","precio_unitario":576},
+  {"cantidad_unidades":500,"tipo_sobre":"sobre_bolsa_25x35_3","caras":"4/0","precio_unitario":549},
+  {"cantidad_unidades":500,"tipo_sobre":"oficio_ingles_12x23_5","caras":"4/0","precio_unitario":397},
+
+  {"cantidad_unidades":1000,"tipo_sobre":"sobre_bolsa_a4_22_9x32_4","caras":"4/0","precio_unitario":491},
+  {"cantidad_unidades":1000,"tipo_sobre":"sobre_bolsa_27x37","caras":"4/0","precio_unitario":536},
+  {"cantidad_unidades":1000,"tipo_sobre":"sobre_bolsa_25x35_3","caras":"4/0","precio_unitario":513},
+  {"cantidad_unidades":1000,"tipo_sobre":"oficio_ingles_12x23_5","caras":"4/0","precio_unitario":385}
+]
