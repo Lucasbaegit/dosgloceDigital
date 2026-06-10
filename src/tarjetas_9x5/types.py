@@ -1,4 +1,4 @@
-"""Types for Tarjetas 9x5 pricing."""
+﻿"""Types for Tarjetas 9x5 pricing."""
 
 from __future__ import annotations
 
@@ -17,6 +17,7 @@ class Tarjetas9x5QuoteInput:
     caras: str
     cantidad_unidades: int
     urgencia: str
+    terminaciones_extra: dict[str, bool] | None = None
 
 
 @dataclass(frozen=True)

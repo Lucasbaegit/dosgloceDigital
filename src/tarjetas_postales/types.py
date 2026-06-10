@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Any
@@ -15,6 +15,7 @@ class TarjetasPostalesQuoteInput:
     caras: str
     cantidad_unidades: int
     urgencia: str
+    terminaciones_extra: dict[str, bool] | None = None
 
 
 @dataclass(frozen=True)
