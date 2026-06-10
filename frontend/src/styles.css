@@ -713,6 +713,16 @@ select:focus {
   font-weight: 700;
 }
 
+.principal-badge {
+  justify-self: start;
+  border-radius: 999px;
+  background: rgba(34, 197, 94, 0.14);
+  color: #c9f7d6;
+  padding: 3px 9px;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
 .principal-input-row {
   display: grid;
   grid-template-columns: minmax(140px, 1fr) auto;

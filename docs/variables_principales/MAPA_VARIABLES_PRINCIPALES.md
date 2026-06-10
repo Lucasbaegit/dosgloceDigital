@@ -1,6 +1,12 @@
 # Mapa de variables principales
 
-La pantalla **Variables principales** expone solamente valores comerciales numéricos que ya existen en archivos operativos. No permite editar matrices PDF, factores de ajuste PDF, coeficientes internos ni fórmulas.
+La pantalla **Variables principales** separa tres niveles:
+
+- **Variables madre editables**: costos base y parámetros comerciales controlados.
+- **Variables derivadas / valores calculados**: precios finales, urgencias, recargos y resultados por rango.
+- **Tablas fijas PDF**: matrices finales cerradas desde `lista-low.pdf`.
+
+No permite editar matrices PDF, factores de ajuste PDF, coeficientes internos ni precios finales.
 
 ## Variables editables
 
@@ -12,15 +18,19 @@ La pantalla **Variables principales** expone solamente valores comerciales numé
 | Multiplicador comercial general | `multiplicador_general` | `data/stickers_circulares/formula_editable_config.json` | `variables.multiplicador_comercial` | Cambia el precio base estimado y la traza de Stickers Circulares |
 | Tinta blanca Autoadhesivas (1 copia) | `adicional_tinta_blanca_base_1_copia` | `data/bajadas_autoadhesivas/autoadhesivas_v1_config.json` | `adicional_tinta_blanca_base_1_copia` | Cambia inmediatamente el subtotal de Tinta Blanca |
 
-## Variables esperadas todavía no expuestas
+## Papeles detectados no editables
 
-`click_bn`, papeles principales sin valor numérico operativo y multiplicadores por familia aparecen en la auditoría como no encontrados. Se excluyen de edición hasta que exista una fuente confiable y una ruta de persistencia única.
+Los papeles que aparecen en tablas PDF pero no tienen costo base confiable en USD se muestran como `detectado_sin_costo_base`. No son editables y no se activan manualmente.
 
-La UI muestra además un inventario agrupado de papeles detectados. Los que no poseen valor numérico confiable aparecen como **No editable**.
+Ejemplos: ilustración 150g, ilustración 300g, Kraft 80g, Kraft 200g, OPP blanco/clear, papel 63g sobres.
+
+## Variables derivadas y tablas fijas
+
+Los precios finales por rango, recargos de urgencia, matrices de productos y rangos comerciales son no editables. Se muestran como `derivado`, `tabla_fija_pdf` o `rango_fijo`.
 
 ## Rangos y exportación
 
-- `GET /variables-principales/rangos` muestra los rangos comerciales por familia, únicamente para control.
+- `GET /variables-principales/rangos` muestra los rangos comerciales por familia, únicamente para control, con `tipo: rango_fijo`.
 - `GET /export/precios/json` normaliza las matrices internas activas y productos bloqueados.
 - `GET /export/precios/pdf` genera una lista legible desde esa estructura, sin capturas de pantalla.
 - Membretes y terminaciones de tarjetas permanecen marcados como bloqueados.

@@ -215,11 +215,14 @@ test("tab Configuración carga y permite ver historial", async ({ page }) => {
 test("Variables principales expone solo valores seguros y permite guardar y recargar", async ({ page }) => {
   let tintaValue = 603;
   const variablesResponse = () => ({
-    tipo_cambio: [{ key: "tipo_cambio_usd", label: "Tipo de cambio USD", value: 1410, unit: "ARS/USD", min: 1, max: 100000, step: 1, description: "Referencia", editable: true, applies_today: false, impact: "Preparado" }],
-    clicks: [{ key: "click_color", label: "Click color", value: 3, unit: "ARS", min: 0.01, max: 100000, step: 0.01, description: "Click seguro", editable: true, applies_today: true, impact: "Traza circular" }],
-    papeles: [{ key: "obra_90g", label: "Papel obra/ilustración 90g", value: 14, unit: "ARS", min: 0.01, max: 1000000, step: 0.01, description: "Material seguro", editable: true, applies_today: true, impact: "Traza circular" }],
-    multiplicadores: [{ key: "multiplicador_general", label: "Multiplicador comercial general", value: 1, unit: "factor", min: 0.01, max: 100, step: 0.01, description: "Multiplicador seguro", editable: true, applies_today: true, impact: "Traza circular" }],
-    adicionales: [{ key: "adicional_tinta_blanca_base_1_copia", label: "Tinta blanca Autoadhesivas (1 copia)", value: tintaValue, unit: "ARS/unidad", min: 0.01, max: 1000000, step: 0.01, description: "Adicional seguro", editable: true, applies_today: true, impact: "Cotización" }],
+    tipo_cambio: [{ key: "tipo_cambio_usd", label: "Tipo de cambio USD", value: 1410, unit: "ARS/USD", min: 1, max: 100000, step: 1, description: "Referencia", editable: true, tipo: "variable_madre", impacta_hoy: false, impact: "Preparado" }],
+    clicks: [{ key: "click_color", label: "Click color", value: 3, unit: "ARS", min: 0.01, max: 100000, step: 0.01, description: "Click seguro", editable: true, tipo: "variable_madre", impacta_hoy: true, impact: "Traza circular" }],
+    papeles: [{ key: "obra_90g", label: "Papel obra/ilustración 90g", value: 14, unit: "USD", min: 0.01, max: 1000000, step: 0.01, description: "Material seguro", editable: true, tipo: "variable_madre", impacta_hoy: true, impact: "Traza circular" }],
+    multiplicadores: [{ key: "multiplicador_general", label: "Multiplicador comercial general", value: 1, unit: "factor", min: 0.01, max: 100, step: 0.01, description: "Multiplicador seguro", editable: true, tipo: "variable_madre", impacta_hoy: true, impact: "Traza circular" }],
+    adicionales: [{ key: "adicional_tinta_blanca_base_1_copia", label: "Tinta blanca Autoadhesivas (1 copia)", value: tintaValue, unit: "ARS/unidad", min: 0.01, max: 1000000, step: 0.01, description: "Adicional seguro", editable: true, tipo: "variable_madre", impacta_hoy: true, impact: "Cotización" }],
+    papeles_detectados: { "Papeles Bajadas": [{ key: "ilustracion_150g", label: "Ilustración 150G", editable: false, tipo: "detectado_sin_costo_base" }] },
+    valores_derivados: [{ key: "precios_finales_por_rango", label: "Precios finales por rango", editable: false, tipo: "derivado", motivo_no_editable: "Derivado" }],
+    tablas_fijas_pdf: [{ key: "matrices_pdf_productos", label: "Matrices PDF de productos", editable: false, tipo: "tabla_fija_pdf", motivo_no_editable: "Tabla fija" }],
     variables_no_encontradas: ["click_bn"],
   });
   await page.route("**/variables-principales/audit", (route) => route.fulfill({
@@ -230,7 +233,7 @@ test("Variables principales expone solo valores seguros y permite guardar y reca
   await page.route("**/variables-principales/rangos", (route) => route.fulfill({
     status: 200,
     contentType: "application/json",
-    body: JSON.stringify({ warning: "No editables", rangos: [{ grupo: "Bajadas Fullcolor / Kraft", rangos: ["1", "2 a 25"], editable: false, fuente: "data/test.json" }] }),
+    body: JSON.stringify({ warning: "Rangos fijos", rangos: [{ grupo: "Bajadas Fullcolor / Kraft", rangos: ["1", "2 a 25"], editable: false, tipo: "rango_fijo", motivo: "Matriz cerrada", fuente: "data/test.json" }] }),
   }));
   await page.route("**/export/precios/pdf", (route) => route.fulfill({
     status: 200,
@@ -255,6 +258,10 @@ test("Variables principales expone solo valores seguros y permite guardar y reca
   await page.goto("/", { waitUntil: "networkidle" });
   await page.getByRole("button", { name: "Variables principales" }).click();
   await expect(page.getByTestId("principal-variables-title")).toBeVisible();
+  await expect(page.getByTestId("principal-group-tipo_cambio")).toContainText("Variables madre editables");
+  await expect(page.getByText("Rangos fijos de matrices")).toBeVisible();
+  await expect(page.getByText("Valores derivados y tablas PDF fijas")).toBeVisible();
+  await expect(page.getByTestId("principal-derived-fixed").getByText("Tabla fija PDF")).toBeVisible();
   for (const group of ["tipo_cambio", "clicks", "papeles", "multiplicadores", "adicionales"]) {
     await expect(page.getByTestId(`principal-group-${group}`)).toBeVisible();
   }

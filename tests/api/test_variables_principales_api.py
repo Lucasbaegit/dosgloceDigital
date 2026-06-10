@@ -71,15 +71,27 @@ class TestVariablesPrincipalesApi(unittest.TestCase):
         self.assertIn("click_color", keys)
         self.assertIn("adicional_tinta_blanca_base_1_copia", keys)
         self.assertNotIn("factor_ajuste_pdf", keys)
-        self.assertTrue(all(item["editable"] for group in body.values() if isinstance(group, list) for item in group if isinstance(item, dict)))
+        editable_items = [
+            item
+            for group in ["tipo_cambio", "clicks", "papeles", "multiplicadores", "adicionales"]
+            for item in body[group]
+        ]
+        self.assertTrue(all(item["editable"] for item in editable_items))
+        self.assertTrue(all(item["tipo"] == "variable_madre" for item in editable_items))
+        self.assertTrue(all("impacta_hoy" in item for item in editable_items))
         self.assertIn("Papeles Bajadas", body["papeles_detectados"])
-        self.assertTrue(any(item["key"] == "ilustracion_150g" and not item["editable"] for item in body["papeles_detectados"]["Papeles Bajadas"]))
+        self.assertTrue(any(item["key"] == "obra_90g" and item["tipo"] == "variable_madre" and item["editable"] for item in body["papeles_detectados"]["Papeles Bajadas"]))
+        self.assertTrue(any(item["key"] == "ilustracion_150g" and item["tipo"] == "detectado_sin_costo_base" and not item["editable"] for item in body["papeles_detectados"]["Papeles Bajadas"]))
+        self.assertTrue(all(not item["editable"] for item in body["valores_derivados"]))
+        self.assertTrue(all(item["tipo"] == "tabla_fija_pdf" and not item["editable"] for item in body["tablas_fijas_pdf"]))
 
     def test_rangos_son_visibles_y_no_editables(self):
         status, body = self.call("GET", "/variables-principales/rangos")
         self.assertEqual(status, 200)
         self.assertGreaterEqual(len(body["rangos"]), 9)
         self.assertTrue(all(not item["editable"] for item in body["rangos"]))
+        self.assertTrue(all(item["tipo"] == "rango_fijo" for item in body["rangos"]))
+        self.assertTrue(all("motivo" in item for item in body["rangos"]))
 
     def test_export_json_y_pdf(self):
         status, body = self.call("GET", "/export/precios/json")

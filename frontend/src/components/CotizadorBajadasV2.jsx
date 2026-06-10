@@ -1644,11 +1644,11 @@ export default function CotizadorBajadasV2() {
 
   const renderPrincipalVariablesTab = () => {
     const groups = [
-      ["tipo_cambio", "Tipo de cambio"],
-      ["clicks", "Clicks"],
-      ["papeles", "Papeles"],
-      ["multiplicadores", "Multiplicadores"],
-      ["adicionales", "Adicionales"],
+      ["tipo_cambio", "Variables madre editables - Tipo de cambio"],
+      ["clicks", "Variables madre editables - Clicks"],
+      ["papeles", "Papeles base en USD"],
+      ["multiplicadores", "Variables madre editables - Multiplicadores"],
+      ["adicionales", "Variables madre editables - Adicionales puntuales"],
     ];
     if (!principalVariables) {
       return <section className="card result-card"><div className="placeholder"><p>Cargando variables principales...</p></div></section>;
@@ -1658,9 +1658,12 @@ export default function CotizadorBajadasV2() {
         <div className="card-head">
           <div>
             <h3 data-testid="principal-variables-title">Variables principales</h3>
-            <p>Estos valores modifican costos comerciales globales del cotizador. No editan las matrices PDF cerradas.</p>
+            <p>Solo se editan variables madre: tipo de cambio, click, costos base y adicionales puntuales. Las tablas PDF, rangos y precios finales son fijos o derivados.</p>
           </div>
-          <span>{Object.values(principalDraft).length} variables seguras</span>
+          <span>{Object.values(principalDraft).length} variables madre</span>
+        </div>
+        <div className="warning-box">
+          Los precios finales de las tablas no se editan manualmente. Solo se editan costos base, click y tipo de cambio; los productos en modo PDF fijo mantienen sus precios publicados.
         </div>
         {principalMsg ? <div className="info-box" data-testid="principal-variables-message">{principalMsg}</div> : null}
         <div className="principal-actions">
@@ -1677,6 +1680,7 @@ export default function CotizadorBajadasV2() {
                   {(principalVariables[groupKey] || []).map((item) => (
                     <label className="principal-variable" key={item.key}>
                       <span className="principal-variable-title">{item.label}</span>
+                      <span className="principal-badge">{item.tipo === "variable_madre" ? "Variable madre editable" : item.tipo}</span>
                       <div className="principal-input-row">
                         <input
                           type="number"
@@ -1690,7 +1694,7 @@ export default function CotizadorBajadasV2() {
                         <strong>{item.unit}</strong>
                       </div>
                       <small>{item.description}</small>
-                      <small>{item.applies_today ? `Impacta hoy: ${item.impact}` : `Preparada: ${item.impact}`}</small>
+                      <small>{item.impacta_hoy ? `Impacta hoy: ${item.impact}` : `Preparada: ${item.impact}`}</small>
                     </label>
                   ))}
                 </div>
@@ -1699,30 +1703,50 @@ export default function CotizadorBajadasV2() {
           ))}
         </div>
         <section className="principal-group" data-testid="principal-detected-papers">
-          <h4>Papeles detectados</h4>
-          <p className="range-hint">Los papeles sin valor operativo confiable se muestran para control, pero no se pueden editar.</p>
+          <h4>Papeles detectados y estado comercial</h4>
+          <p className="range-hint">Este papel aparece en las tablas, pero solo se edita si tenemos su costo base en dólares. Los demás quedan como detectados sin costo base o tabla fija PDF.</p>
           <div className="paper-family-grid">
             {Object.entries(principalVariables.papeles_detectados || {}).map(([family, papers]) => (
               <article className="paper-family" key={family}>
                 <strong>{family}</strong>
-                <ul>{papers.map((paper) => <li key={paper.key}>{paper.label} <span>{paper.editable ? "Editable" : "No editable"}</span></li>)}</ul>
+                <ul>{papers.map((paper) => (
+                  <li key={paper.key}>
+                    {paper.label}
+                    <span>{paper.tipo === "variable_madre" ? "Variable madre editable" : "Detectado sin costo base"}</span>
+                  </li>
+                ))}</ul>
+              </article>
+            ))}
+          </div>
+        </section>
+        <section className="principal-group" data-testid="principal-derived-fixed">
+          <h4>Valores derivados y tablas PDF fijas</h4>
+          <p className="range-hint">Estos valores no se editan directamente. Se recalculan desde variables madre cuando el producto usa fórmula variable, o permanecen fijos si provienen del PDF.</p>
+          <div className="ranges-control-grid">
+            {[...(principalVariables.valores_derivados || []), ...(principalVariables.tablas_fijas_pdf || [])].map((item) => (
+              <article className="range-control-card" key={item.key}>
+                <strong>{item.label}</strong>
+                <div><span>{item.tipo === "tabla_fija_pdf" ? "Tabla fija PDF" : "Derivado"}</span><span>No editable</span></div>
+                <small>{item.motivo_no_editable}</small>
               </article>
             ))}
           </div>
         </section>
         <section className="principal-group" data-testid="principal-ranges">
-          <h4>Rangos de precios</h4>
+          <h4>Rangos fijos de matrices</h4>
           <p className="range-hint">{principalRanges?.warning || "Los rangos se muestran para control. No son editables en esta etapa."}</p>
           <div className="ranges-control-grid">
             {(principalRanges?.rangos || []).map((entry) => (
               <article className="range-control-card" key={entry.grupo}>
                 <strong>{entry.grupo}</strong>
                 <div>{entry.rangos.map((range) => <span key={range}>{range}</span>)}</div>
+                <small>{entry.tipo === "rango_fijo" ? "Rango fijo · No editable" : "No editable"} · {entry.motivo || "Matriz cerrada"}</small>
                 <small>Fuente: {entry.fuente}</small>
               </article>
             ))}
           </div>
         </section>
+        <div className="info-box">El PDF exportado muestra tablas finales vigentes. No implica que esas tablas sean editables.</div>
         <details className="raw-json">
           <summary>Ver auditoría</summary>
           <div className="warning-box">No encontradas: {(principalAudit?.variables_no_encontradas || []).join(", ") || "-"}</div>

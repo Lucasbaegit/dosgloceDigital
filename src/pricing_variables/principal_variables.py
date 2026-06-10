@@ -1,4 +1,4 @@
-"""Controlled read/write access to the small set of principal commercial variables."""
+"""Controlled read/write access to principal commercial variables."""
 
 from __future__ import annotations
 
@@ -24,20 +24,22 @@ class PrincipalVariablesService:
                 "group": "tipo_cambio",
                 "label": "Tipo de cambio USD",
                 "unit": "ARS/USD",
-                "description": "Tipo de cambio comercial de referencia de Bajadas.",
+                "description": "Tipo de cambio comercial de referencia.",
+                "tipo": "variable_madre",
                 "min": 1,
                 "max": 100000,
                 "step": 1,
                 "source_file": "data/bajadas_v2/bajadas_v2_config_final.json",
                 "path": ["dolar_actual"],
                 "applies_today": False,
-                "impact": "Productos Bajadas que adopten cálculo variable; precios PDF fijos no cambian.",
+                "impact": "Impacta costos expresados en USD cuando el producto usa f?rmula variable; precios PDF fijos no cambian.",
             },
             "click_color": {
                 "group": "clicks",
-                "label": "Click color",
+                "label": "Click color base",
                 "unit": "ARS",
-                "description": "Click color usado en la fórmula editable calibrada de Stickers Circulares.",
+                "description": "Click color base usado en f?rmulas variables calibradas.",
+                "tipo": "variable_madre",
                 "min": 0.01,
                 "max": 100000,
                 "step": 0.01,
@@ -48,9 +50,10 @@ class PrincipalVariablesService:
             },
             "obra_90g": {
                 "group": "papeles",
-                "label": "Papel obra/ilustración 90g",
-                "unit": "ARS",
-                "description": "Costo base de material usado por Stickers Circulares.",
+                "label": "Papel obra/ilustraci?n 90g",
+                "unit": "USD",
+                "description": "Costo base real del material usado en f?rmula editable de Stickers Circulares.",
+                "tipo": "variable_madre",
                 "min": 0.01,
                 "max": 1000000,
                 "step": 0.01,
@@ -63,7 +66,8 @@ class PrincipalVariablesService:
                 "group": "multiplicadores",
                 "label": "Multiplicador comercial general",
                 "unit": "factor",
-                "description": "Multiplicador comercial de la fórmula editable de Stickers Circulares.",
+                "description": "Multiplicador comercial general de f?rmulas variables calibradas.",
+                "tipo": "variable_madre",
                 "min": 0.01,
                 "max": 100,
                 "step": 0.01,
@@ -77,6 +81,7 @@ class PrincipalVariablesService:
                 "label": "Tinta blanca Autoadhesivas (1 copia)",
                 "unit": "ARS/unidad",
                 "description": "Valor unitario proporcional del adicional Tinta Blanca.",
+                "tipo": "variable_madre",
                 "min": 0.01,
                 "max": 1000000,
                 "step": 0.01,
@@ -120,32 +125,40 @@ class PrincipalVariablesService:
         grouped = {group: [] for group in self.GROUP_ORDER}
         for key, meta in self.catalog.items():
             item = deepcopy(meta)
-            item.update({"key": key, "value": self._read_value(meta), "editable": True})
+            item.update({
+                "key": key,
+                "value": self._read_value(meta),
+                "editable": True,
+                "impacta_hoy": bool(meta.get("applies_today")),
+            })
             item.pop("path", None)
             grouped[meta["group"]].append(item)
         return {
             **grouped,
             "papeles_detectados": self._detected_papers_status(),
+            "valores_derivados": self._derived_values_status(),
+            "tablas_fijas_pdf": self._fixed_tables_status(),
             "variables_no_encontradas": list(self.expected_but_missing),
-            "warning": "Los productos en modo PDF fijo no cambian por editar estas variables.",
+            "warning": "Solo se editan variables madre. Rangos, matrices PDF y precios finales son fijos o derivados.",
         }
 
     def ranges(self) -> dict[str, Any]:
         package = ["100", "200", "300", "500", "1000"]
         standard = ["1", "2 a 25", "26 a 50", "51 a 100", "101 a 300", "301 a 500", "501 a 1000"]
+        reason = "Los rangos pertenecen a matrices PDF cerradas"
         return {
             "rangos": [
-                {"grupo": "Bajadas Fullcolor / Kraft", "rangos": standard, "editable": False, "fuente": "data/bajadas_v2/precios_pdf_objetivo_limpio.json"},
-                {"grupo": "Bajadas Blanco y Negro", "rangos": ["1", "2 a 50", "51 a 100", "101 a 500", "501 a 1000", "1001 a 5000"], "editable": False, "fuente": "data/bajadas_v2/precios_pdf_objetivo_limpio.json"},
-                {"grupo": "Autoadhesivas", "rangos": standard, "editable": False, "fuente": "data/bajadas_autoadhesivas/autoadhesivas_v1_config.json"},
-                {"grupo": "Troquelado Digital", "rangos": ["1 a 2", "3 a 9", "10 a 25", "26 a 50", "51 a 100", "más de 100"], "editable": False, "fuente": "data/troquelado_digital/precios_pdf_objetivo_troquelado_digital.json"},
-                {"grupo": "Tarjetas / Postales / Folletos / Stickers / Imanes", "rangos": package, "editable": False, "fuente": "matrices PDF por producto"},
-                {"grupo": "Carpetas", "rangos": standard, "editable": False, "fuente": "data/carpetas/precios_pdf_objetivo_carpetas.json"},
-                {"grupo": "Sobres", "rangos": package, "editable": False, "fuente": "data/sobres/precios_pdf_objetivo_sobres.json"},
-                {"grupo": "Plancha Imán", "rangos": ["1", "2 a 25", "26 a 50", "51 a 100", "101 a 300", "301 a 500"], "editable": False, "fuente": "data/plancha_iman_impreso/precios_pdf_objetivo_plancha_iman_impreso.json"},
-                {"grupo": "Agendas / Cuadernos", "rangos": ["desde 2 unidades", "mínimos según producto"], "editable": False, "fuente": "data/agendas_cuadernos/precios_pdf_objetivo_agendas_cuadernos.json"},
+                {"grupo": "Bajadas Fullcolor / Kraft", "rangos": standard, "editable": False, "tipo": "rango_fijo", "motivo": reason, "fuente": "data/bajadas_v2/precios_pdf_objetivo_limpio.json"},
+                {"grupo": "Bajadas Blanco y Negro", "rangos": ["1", "2 a 50", "51 a 100", "101 a 500", "501 a 1000", "1001 a 5000"], "editable": False, "tipo": "rango_fijo", "motivo": reason, "fuente": "data/bajadas_v2/precios_pdf_objetivo_limpio.json"},
+                {"grupo": "Autoadhesivas", "rangos": standard, "editable": False, "tipo": "rango_fijo", "motivo": reason, "fuente": "data/bajadas_autoadhesivas/autoadhesivas_v1_config.json"},
+                {"grupo": "Troquelado Digital", "rangos": ["1 a 2", "3 a 9", "10 a 25", "26 a 50", "51 a 100", "m?s de 100"], "editable": False, "tipo": "rango_fijo", "motivo": reason, "fuente": "data/troquelado_digital/precios_pdf_objetivo_troquelado_digital.json"},
+                {"grupo": "Tarjetas / Postales / Folletos / Stickers / Imanes", "rangos": package, "editable": False, "tipo": "rango_fijo", "motivo": reason, "fuente": "matrices PDF por producto"},
+                {"grupo": "Carpetas", "rangos": standard, "editable": False, "tipo": "rango_fijo", "motivo": reason, "fuente": "data/carpetas/precios_pdf_objetivo_carpetas.json"},
+                {"grupo": "Sobres", "rangos": package, "editable": False, "tipo": "rango_fijo", "motivo": reason, "fuente": "data/sobres/precios_pdf_objetivo_sobres.json"},
+                {"grupo": "Plancha Im?n", "rangos": ["1", "2 a 25", "26 a 50", "51 a 100", "101 a 300", "301 a 500"], "editable": False, "tipo": "rango_fijo", "motivo": reason, "fuente": "data/plancha_iman_impreso/precios_pdf_objetivo_plancha_iman_impreso.json"},
+                {"grupo": "Agendas / Cuadernos", "rangos": ["desde 2 unidades", "m?nimos seg?n producto"], "editable": False, "tipo": "rango_fijo", "motivo": "Los m?nimos pertenecen a matrices PDF cerradas", "fuente": "data/agendas_cuadernos/precios_pdf_objetivo_agendas_cuadernos.json"},
             ],
-            "warning": "Los rangos se muestran para control. No son editables en esta etapa.",
+            "warning": "Rangos fijos de matrices. No son editables en esta etapa.",
         }
 
     def audit(self) -> dict[str, Any]:
@@ -163,7 +176,7 @@ class PrincipalVariablesService:
             "variables_no_encontradas": list(self.expected_but_missing),
             "papeles_detectados_no_editables": self._detected_papers_status(),
             "advertencias": [
-                "No se exponen matrices PDF, factores de ajuste PDF ni coeficientes técnicos internos.",
+                "No se exponen matrices PDF, factores de ajuste PDF ni coeficientes t?cnicos internos.",
                 "Los precios finales PDF fijos permanecen sin cambios.",
             ],
         }
@@ -177,17 +190,35 @@ class PrincipalVariablesService:
                     "key": key,
                     "label": key.replace("_", " ").title(),
                     "editable": key in editable_keys,
-                    "estado": "editable" if key in editable_keys else "detectado_sin_valor_operativo_confiable",
+                    "tipo": "variable_madre" if key in editable_keys else "detectado_sin_costo_base",
+                    "unit": "USD",
+                    "estado": "variable_madre_editable" if key in editable_keys else "detectado_sin_costo_base_confiable",
+                    "motivo_no_editable": None if key in editable_keys else "Detectado en tablas PDF, pero no existe costo base confiable en USD.",
+                    "impacta_hoy": key in editable_keys,
                     "source_file": "data/variables_comerciales/papeles.json",
                 }
                 for key in keys
             ]
         return result
 
+    @staticmethod
+    def _derived_values_status() -> list[dict[str, Any]]:
+        return [
+            {"key": "precios_finales_por_rango", "label": "Precios finales por rango", "editable": False, "tipo": "derivado", "motivo_no_editable": "Son resultado de matrices PDF o f?rmulas controladas.", "impacta_hoy": False},
+            {"key": "recargos_urgencia", "label": "Precios con urgencia", "editable": False, "tipo": "derivado", "motivo_no_editable": "Se calculan desde la cotizaci?n base y reglas internas.", "impacta_hoy": False},
+        ]
+
+    @staticmethod
+    def _fixed_tables_status() -> list[dict[str, Any]]:
+        return [
+            {"key": "matrices_pdf_productos", "label": "Matrices PDF de productos", "editable": False, "tipo": "tabla_fija_pdf", "source_file": "data/*/precios_pdf_objetivo*.json", "motivo_no_editable": "Fuente final publicada; no se edita desde Variables principales."},
+            {"key": "rangos_matrices", "label": "Rangos de matrices", "editable": False, "tipo": "tabla_fija_pdf", "source_file": "data/*", "motivo_no_editable": "Rangos fijos de lista de precios."},
+        ]
+
     def update(self, payload: dict[str, Any]) -> dict[str, Any]:
         updates = payload.get("updates")
         if not isinstance(updates, list) or not updates:
-            raise PrincipalVariableError("updates debe ser una lista no vacía.")
+            raise PrincipalVariableError("updates debe ser una lista no vac?a.")
 
         prepared: list[tuple[str, float, dict[str, Any], float]] = []
         for raw in updates:
