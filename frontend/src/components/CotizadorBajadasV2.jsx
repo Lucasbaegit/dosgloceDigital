@@ -26,6 +26,8 @@ import {
   fetchBajadasMetrics,
   fetchPrincipalVariables,
   fetchPrincipalVariablesAudit,
+  fetchPrincipalVariablesRanges,
+  exportPricesPdf,
   promoteBajadasConfigCandidate,
   rejectBajadasConfigCandidate,
   restoreBajadasConfig,
@@ -373,6 +375,7 @@ export default function CotizadorBajadasV2() {
   const [principalVariables, setPrincipalVariables] = useState(null);
   const [principalDraft, setPrincipalDraft] = useState({});
   const [principalAudit, setPrincipalAudit] = useState(null);
+  const [principalRanges, setPrincipalRanges] = useState(null);
   const [principalMsg, setPrincipalMsg] = useState("");
 
   const inferred = useMemo(() => inferQuoteContext(form), [form]);
@@ -505,7 +508,11 @@ export default function CotizadorBajadasV2() {
   const loadPrincipalVariables = async () => {
     try {
       setPrincipalMsg("");
-      const [variables, audit] = await Promise.all([fetchPrincipalVariables(), fetchPrincipalVariablesAudit()]);
+      const [variables, audit, ranges] = await Promise.all([
+        fetchPrincipalVariables(),
+        fetchPrincipalVariablesAudit(),
+        fetchPrincipalVariablesRanges(),
+      ]);
       const draft = {};
       ["tipo_cambio", "clicks", "papeles", "multiplicadores", "adicionales"].forEach((group) => {
         (variables[group] || []).forEach((item) => {
@@ -515,8 +522,27 @@ export default function CotizadorBajadasV2() {
       setPrincipalVariables(variables);
       setPrincipalDraft(draft);
       setPrincipalAudit(audit);
+      setPrincipalRanges(ranges);
     } catch (err) {
       setPrincipalMsg(err.message || "No se pudieron cargar las variables principales.");
+    }
+  };
+
+  const downloadPricesPdf = async () => {
+    try {
+      setPrincipalMsg("Generando PDF...");
+      const { filename, blob } = await exportPricesPdf();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+      setPrincipalMsg("PDF exportado correctamente.");
+    } catch (err) {
+      setPrincipalMsg(err.message || "No se pudo exportar PDF. Revisar backend.");
     }
   };
 
@@ -1640,6 +1666,7 @@ export default function CotizadorBajadasV2() {
         <div className="principal-actions">
           <button type="button" className="calculate-btn compact-calculate-btn" onClick={savePrincipalVariables}>Guardar cambios</button>
           <button type="button" className="secondary-btn" onClick={loadPrincipalVariables}>Recargar valores</button>
+          <button type="button" className="secondary-btn" data-testid="export-prices-pdf" onClick={downloadPricesPdf}>Exportar tablas PDF</button>
         </div>
         <div className="principal-groups">
           {groups.map(([groupKey, label]) => (
@@ -1671,6 +1698,31 @@ export default function CotizadorBajadasV2() {
             </section>
           ))}
         </div>
+        <section className="principal-group" data-testid="principal-detected-papers">
+          <h4>Papeles detectados</h4>
+          <p className="range-hint">Los papeles sin valor operativo confiable se muestran para control, pero no se pueden editar.</p>
+          <div className="paper-family-grid">
+            {Object.entries(principalVariables.papeles_detectados || {}).map(([family, papers]) => (
+              <article className="paper-family" key={family}>
+                <strong>{family}</strong>
+                <ul>{papers.map((paper) => <li key={paper.key}>{paper.label} <span>{paper.editable ? "Editable" : "No editable"}</span></li>)}</ul>
+              </article>
+            ))}
+          </div>
+        </section>
+        <section className="principal-group" data-testid="principal-ranges">
+          <h4>Rangos de precios</h4>
+          <p className="range-hint">{principalRanges?.warning || "Los rangos se muestran para control. No son editables en esta etapa."}</p>
+          <div className="ranges-control-grid">
+            {(principalRanges?.rangos || []).map((entry) => (
+              <article className="range-control-card" key={entry.grupo}>
+                <strong>{entry.grupo}</strong>
+                <div>{entry.rangos.map((range) => <span key={range}>{range}</span>)}</div>
+                <small>Fuente: {entry.fuente}</small>
+              </article>
+            ))}
+          </div>
+        </section>
         <details className="raw-json">
           <summary>Ver auditoría</summary>
           <div className="warning-box">No encontradas: {(principalAudit?.variables_no_encontradas || []).join(", ") || "-"}</div>

@@ -55,6 +55,10 @@ class TestVariablesPrincipalesApi(unittest.TestCase):
             finally:
                 exc.close()
 
+    def call_raw(self, path):
+        with request.urlopen(f"http://127.0.0.1:{self.port}{path}", timeout=10) as resp:
+            return resp.status, dict(resp.headers.items()), resp.read()
+
     def test_get_devuelve_solo_catalogo_controlado(self):
         status, body = self.call("GET", "/variables-principales")
         self.assertEqual(status, 200)
@@ -68,6 +72,30 @@ class TestVariablesPrincipalesApi(unittest.TestCase):
         self.assertIn("adicional_tinta_blanca_base_1_copia", keys)
         self.assertNotIn("factor_ajuste_pdf", keys)
         self.assertTrue(all(item["editable"] for group in body.values() if isinstance(group, list) for item in group if isinstance(item, dict)))
+        self.assertIn("Papeles Bajadas", body["papeles_detectados"])
+        self.assertTrue(any(item["key"] == "ilustracion_150g" and not item["editable"] for item in body["papeles_detectados"]["Papeles Bajadas"]))
+
+    def test_rangos_son_visibles_y_no_editables(self):
+        status, body = self.call("GET", "/variables-principales/rangos")
+        self.assertEqual(status, 200)
+        self.assertGreaterEqual(len(body["rangos"]), 9)
+        self.assertTrue(all(not item["editable"] for item in body["rangos"]))
+
+    def test_export_json_y_pdf(self):
+        status, body = self.call("GET", "/export/precios/json")
+        self.assertEqual(status, 200)
+        titles = {item["titulo"] for item in body["tablas"]}
+        for expected in ["Tarjetas Personales", "Tarjetas Postales", "Folletos", "Carpetas", "Sobres", "Stickers Corte Recto", "Imanes Corte Recto", "Plancha de Imán Impreso", "Agendas / Cuadernos"]:
+            self.assertIn(expected, titles)
+        self.assertEqual(next(item for item in body["tablas"] if item["titulo"] == "Membretes")["estado"], "bloqueado")
+        self.assertNotIn("DTF UV", titles)
+
+        status, headers, pdf = self.call_raw("/export/precios/pdf")
+        self.assertEqual(status, 200)
+        self.assertEqual(headers["Content-Type"], "application/pdf")
+        self.assertTrue(headers["Content-Disposition"].endswith('.pdf"'))
+        self.assertGreater(len(pdf), 1000)
+        self.assertTrue(pdf.startswith(b"%PDF-"))
 
     def test_put_rechaza_key_y_valores_invalidos(self):
         status, _ = self.call("PUT", "/variables-principales", {"updates": [{"key": "factor_ajuste_pdf", "value": 2}]})

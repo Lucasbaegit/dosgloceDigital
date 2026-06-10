@@ -101,6 +101,20 @@ class PrincipalVariablesService:
             "multiplicador_stickers",
             "multiplicador_tarjetas",
         ]
+        self.detected_papers = {
+            "Papeles Bajadas": [
+                "obra_80g", "obra_90g", "ilustracion_90g", "ilustracion_115g", "ilustracion_150g",
+                "ilustracion_200g", "ilustracion_250g", "ilustracion_300g", "ilustracion_350g",
+                "triplex_350g", "kraft_80g", "kraft_200g",
+            ],
+            "Papeles Autoadhesivas": [
+                "autoadhesivo_obra_90g", "autoadhesivo_ilustracion_90g", "opp_blanco", "opp_clear",
+                "papel_kraft_marron", "papel_fluo",
+            ],
+            "Papeles Productos": [
+                "papel_300g_ilustracion", "papel_150g_ilustracion", "papel_80g_ilustracion", "papel_63g_sobres",
+            ],
+        }
 
     def get_grouped(self) -> dict[str, Any]:
         grouped = {group: [] for group in self.GROUP_ORDER}
@@ -111,8 +125,27 @@ class PrincipalVariablesService:
             grouped[meta["group"]].append(item)
         return {
             **grouped,
+            "papeles_detectados": self._detected_papers_status(),
             "variables_no_encontradas": list(self.expected_but_missing),
             "warning": "Los productos en modo PDF fijo no cambian por editar estas variables.",
+        }
+
+    def ranges(self) -> dict[str, Any]:
+        package = ["100", "200", "300", "500", "1000"]
+        standard = ["1", "2 a 25", "26 a 50", "51 a 100", "101 a 300", "301 a 500", "501 a 1000"]
+        return {
+            "rangos": [
+                {"grupo": "Bajadas Fullcolor / Kraft", "rangos": standard, "editable": False, "fuente": "data/bajadas_v2/precios_pdf_objetivo_limpio.json"},
+                {"grupo": "Bajadas Blanco y Negro", "rangos": ["1", "2 a 50", "51 a 100", "101 a 500", "501 a 1000", "1001 a 5000"], "editable": False, "fuente": "data/bajadas_v2/precios_pdf_objetivo_limpio.json"},
+                {"grupo": "Autoadhesivas", "rangos": standard, "editable": False, "fuente": "data/bajadas_autoadhesivas/autoadhesivas_v1_config.json"},
+                {"grupo": "Troquelado Digital", "rangos": ["1 a 2", "3 a 9", "10 a 25", "26 a 50", "51 a 100", "más de 100"], "editable": False, "fuente": "data/troquelado_digital/precios_pdf_objetivo_troquelado_digital.json"},
+                {"grupo": "Tarjetas / Postales / Folletos / Stickers / Imanes", "rangos": package, "editable": False, "fuente": "matrices PDF por producto"},
+                {"grupo": "Carpetas", "rangos": standard, "editable": False, "fuente": "data/carpetas/precios_pdf_objetivo_carpetas.json"},
+                {"grupo": "Sobres", "rangos": package, "editable": False, "fuente": "data/sobres/precios_pdf_objetivo_sobres.json"},
+                {"grupo": "Plancha Imán", "rangos": ["1", "2 a 25", "26 a 50", "51 a 100", "101 a 300", "301 a 500"], "editable": False, "fuente": "data/plancha_iman_impreso/precios_pdf_objetivo_plancha_iman_impreso.json"},
+                {"grupo": "Agendas / Cuadernos", "rangos": ["desde 2 unidades", "mínimos según producto"], "editable": False, "fuente": "data/agendas_cuadernos/precios_pdf_objetivo_agendas_cuadernos.json"},
+            ],
+            "warning": "Los rangos se muestran para control. No son editables en esta etapa.",
         }
 
     def audit(self) -> dict[str, Any]:
@@ -128,11 +161,28 @@ class PrincipalVariablesService:
             "archivos_mapeados": files,
             "variables_editables_disponibles": sorted(self.catalog),
             "variables_no_encontradas": list(self.expected_but_missing),
+            "papeles_detectados_no_editables": self._detected_papers_status(),
             "advertencias": [
                 "No se exponen matrices PDF, factores de ajuste PDF ni coeficientes técnicos internos.",
                 "Los precios finales PDF fijos permanecen sin cambios.",
             ],
         }
+
+    def _detected_papers_status(self) -> dict[str, list[dict[str, Any]]]:
+        editable_keys = set(self.catalog)
+        result = {}
+        for family, keys in self.detected_papers.items():
+            result[family] = [
+                {
+                    "key": key,
+                    "label": key.replace("_", " ").title(),
+                    "editable": key in editable_keys,
+                    "estado": "editable" if key in editable_keys else "detectado_sin_valor_operativo_confiable",
+                    "source_file": "data/variables_comerciales/papeles.json",
+                }
+                for key in keys
+            ]
+        return result
 
     def update(self, payload: dict[str, Any]) -> dict[str, Any]:
         updates = payload.get("updates")

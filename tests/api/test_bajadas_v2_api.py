@@ -1227,7 +1227,7 @@ class TestBajadasV2Api(unittest.TestCase):
         self.assertEqual(status, 400)
         self.assertEqual(body["error"], "adicional_no_soportado_para_autoadhesivas")
 
-    def test_autoadhesiva_rechaza_tinta_blanca_laca_uv(self):
+    def test_autoadhesiva_tinta_blanca_calcula_desde_valor_base(self):
         payload = {
             "categoria": "Bajadas Autoadhesivas",
             "modo_color": "fullcolor",
@@ -1244,8 +1244,9 @@ class TestBajadasV2Api(unittest.TestCase):
             "adicional_tinta_blanca": True,
         }
         status, body = self._post_json("/bajadas-v2/cotizar", payload)
-        self.assertEqual(status, 400)
-        self.assertEqual(body["error"], "tinta_blanca_bloqueada_por_falta_de_valor_base_1_copia")
+        self.assertEqual(status, 200)
+        self.assertAlmostEqual(body["adicional_unitario_sin_iva"], 603.0, places=6)
+        self.assertAlmostEqual(body["total_adicional_sin_iva"], 603.0 * 30, places=6)
 
     def test_autoadhesiva_rechaza_laminado_por_lado(self):
         payload = {

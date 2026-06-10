@@ -255,6 +255,21 @@ export async function fetchPrincipalVariablesAudit() {
   return body;
 }
 
+export async function fetchPrincipalVariablesRanges() {
+  const response = await fetch(`${API_BASE}/variables-principales/rangos`);
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(body?.detail || "No se pudieron cargar los rangos.");
+  return body;
+}
+
+export async function exportPricesPdf() {
+  const response = await fetch(`${API_BASE}/export/precios/pdf`);
+  if (!response.ok) throw new Error("No se pudo exportar PDF. Revisar backend.");
+  const disposition = response.headers.get("Content-Disposition") || "";
+  const filename = disposition.match(/filename="([^"]+)"/)?.[1] || "lista_precios_cotizador.pdf";
+  return { filename, blob: await response.blob() };
+}
+
 export async function fetchBajadasConfig() {
   const response = await fetch(`${API_BASE}/bajadas-v2/config`);
   if (!response.ok) throw new Error("No se pudo cargar configuración.");

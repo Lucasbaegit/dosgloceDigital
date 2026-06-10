@@ -66,6 +66,18 @@ class ApiHandler(BaseHTTPRequestHandler):
             status, payload = self.service.audit_principal_variables()
             self._send_json(status, payload)
             return
+        if path == "/variables-principales/rangos":
+            status, payload = self.service.principal_variables_ranges()
+            self._send_json(status, payload)
+            return
+        if path == "/export/precios/json":
+            status, payload = self.service.export_prices_json()
+            self._send_json(status, payload)
+            return
+        if path == "/export/precios/pdf":
+            filename, payload = self.service.export_prices_pdf()
+            self._send_bytes(200, payload, "application/pdf", filename)
+            return
         if path == "/tarjetas-9x5/health":
             self._send_json(200, self.service.tarjetas_9x5_engine.health())
             return
@@ -318,6 +330,15 @@ class ApiHandler(BaseHTTPRequestHandler):
         content_type = mimetypes.guess_type(str(file_path))[0] or "application/octet-stream"
         self.send_response(200)
         self.send_header("Content-Type", content_type)
+        self.send_header("Content-Length", str(len(data)))
+        self.end_headers()
+        self.wfile.write(data)
+
+    def _send_bytes(self, status_code: int, data: bytes, content_type: str, filename: str) -> None:
+        self.send_response(status_code)
+        self.send_header("Content-Type", content_type)
+        self.send_header("Content-Disposition", f'attachment; filename="{filename}"')
+        self.send_header("Access-Control-Allow-Origin", "*")
         self.send_header("Content-Length", str(len(data)))
         self.end_headers()
         self.wfile.write(data)

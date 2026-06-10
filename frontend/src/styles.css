@@ -631,6 +631,52 @@ select:focus {
   margin-bottom: 16px;
 }
 
+.paper-family-grid,
+.ranges-control-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(260px, 1fr));
+  gap: 12px;
+}
+
+.paper-family,
+.range-control-card {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: rgba(12, 21, 38, 0.55);
+  padding: 12px;
+}
+
+.paper-family ul {
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 6px;
+}
+
+.paper-family li,
+.range-control-card div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: space-between;
+}
+
+.paper-family li span,
+.range-control-card span {
+  border-radius: 999px;
+  background: rgba(56, 189, 248, 0.12);
+  color: #bfeaff;
+  padding: 3px 8px;
+  font-size: 0.78rem;
+}
+
+.range-control-card small {
+  display: block;
+  margin-top: 10px;
+  color: var(--text-soft);
+}
+
 .principal-groups {
   display: grid;
   gap: 14px;
@@ -681,6 +727,11 @@ select:focus {
 
 @media (max-width: 900px) {
   .principal-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .paper-family-grid,
+  .ranges-control-grid {
     grid-template-columns: 1fr;
   }
 

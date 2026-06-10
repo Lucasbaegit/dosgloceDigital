@@ -227,6 +227,17 @@ test("Variables principales expone solo valores seguros y permite guardar y reca
     contentType: "application/json",
     body: JSON.stringify({ variables_no_encontradas: ["click_bn"], advertencias: ["Sin matrices PDF"] }),
   }));
+  await page.route("**/variables-principales/rangos", (route) => route.fulfill({
+    status: 200,
+    contentType: "application/json",
+    body: JSON.stringify({ warning: "No editables", rangos: [{ grupo: "Bajadas Fullcolor / Kraft", rangos: ["1", "2 a 25"], editable: false, fuente: "data/test.json" }] }),
+  }));
+  await page.route("**/export/precios/pdf", (route) => route.fulfill({
+    status: 200,
+    contentType: "application/pdf",
+    headers: { "Content-Disposition": 'attachment; filename="lista_precios_cotizador_test.pdf"' },
+    body: "%PDF-1.4 test",
+  }));
   await page.route("**/variables-principales", async (route) => {
     if (route.request().method() === "PUT") {
       const payload = JSON.parse(route.request().postData() || "{}");
@@ -249,6 +260,10 @@ test("Variables principales expone solo valores seguros y permite guardar y reca
   }
   await expect(page.getByText("factor_ajuste_pdf")).toHaveCount(0);
   await expect(page.getByText("precio_objetivo_pdf")).toHaveCount(0);
+  await expect(page.getByTestId("principal-detected-papers")).toBeVisible();
+  await expect(page.getByTestId("principal-ranges")).toContainText("Bajadas Fullcolor / Kraft");
+  await page.getByTestId("export-prices-pdf").click();
+  await expect(page.getByTestId("principal-variables-message")).toContainText("PDF exportado correctamente");
 
   const tintaInput = page.getByTestId("principal-variable-adicional_tinta_blanca_base_1_copia");
   await tintaInput.fill("700");

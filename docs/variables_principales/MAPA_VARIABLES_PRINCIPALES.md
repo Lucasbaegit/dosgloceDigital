@@ -16,6 +16,16 @@ La pantalla **Variables principales** expone solamente valores comerciales numé
 
 `click_bn`, papeles principales sin valor numérico operativo y multiplicadores por familia aparecen en la auditoría como no encontrados. Se excluyen de edición hasta que exista una fuente confiable y una ruta de persistencia única.
 
+La UI muestra además un inventario agrupado de papeles detectados. Los que no poseen valor numérico confiable aparecen como **No editable**.
+
+## Rangos y exportación
+
+- `GET /variables-principales/rangos` muestra los rangos comerciales por familia, únicamente para control.
+- `GET /export/precios/json` normaliza las matrices internas activas y productos bloqueados.
+- `GET /export/precios/pdf` genera una lista legible desde esa estructura, sin capturas de pantalla.
+- Membretes y terminaciones de tarjetas permanecen marcados como bloqueados.
+- DTF UV, DTF Textil y PegaManía quedan excluidos.
+
 ## Seguridad y persistencia
 
 - `GET /variables-principales` devuelve el catálogo controlado.

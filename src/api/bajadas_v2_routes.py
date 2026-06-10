@@ -67,6 +67,7 @@ from agendas_cuadernos.exceptions import PriceNotFoundError as AgendasCuadernosP
 from agendas_cuadernos.exceptions import QuoteInputError as AgendasCuadernosQuoteInputError
 from agendas_cuadernos.types import AgendasCuadernosQuoteInput
 from pricing_variables import PrincipalVariableError, PrincipalVariablesService
+from export import PricesPdfExporter, PricesTablesBuilder
 
 from .schemas import (
     ApiValidationError,
@@ -110,6 +111,8 @@ class BajadasV2ApiService:
         self.plancha_iman_impreso_engine = PlanchaImanImpresoPricingEngine(load_plancha_iman_impreso_bundle(project_root))
         self.agendas_cuadernos_engine = AgendasCuadernosPricingEngine(load_agendas_cuadernos_bundle(project_root))
         self.principal_variables = PrincipalVariablesService(project_root)
+        self.prices_tables_builder = PricesTablesBuilder(project_root)
+        self.prices_pdf_exporter = PricesPdfExporter()
         self.usar_adicionales_laminado_v1 = False
         self.config_path = project_root / "data" / "bajadas_v2" / "bajadas_v2_config_final.json"
         self.config_editable_path = project_root / "data" / "bajadas_v2" / "bajadas_v2_config_editable.json"
@@ -124,6 +127,15 @@ class BajadasV2ApiService:
 
     def audit_principal_variables(self) -> tuple[int, dict[str, Any]]:
         return 200, self.principal_variables.audit()
+
+    def principal_variables_ranges(self) -> tuple[int, dict[str, Any]]:
+        return 200, self.principal_variables.ranges()
+
+    def export_prices_json(self) -> tuple[int, dict[str, Any]]:
+        return 200, self.prices_tables_builder.build()
+
+    def export_prices_pdf(self) -> tuple[str, bytes]:
+        return self.prices_pdf_exporter.render(self.prices_tables_builder.build())
 
     def update_principal_variables(self, payload: dict[str, Any]) -> tuple[int, dict[str, Any]]:
         try:
