@@ -66,6 +66,7 @@ from agendas_cuadernos import AgendasCuadernosPricingEngine, load_agendas_cuader
 from agendas_cuadernos.exceptions import PriceNotFoundError as AgendasCuadernosPriceNotFoundError
 from agendas_cuadernos.exceptions import QuoteInputError as AgendasCuadernosQuoteInputError
 from agendas_cuadernos.types import AgendasCuadernosQuoteInput
+from pricing_variables import PrincipalVariableError, PrincipalVariablesService
 
 from .schemas import (
     ApiValidationError,
@@ -108,6 +109,7 @@ class BajadasV2ApiService:
         )
         self.plancha_iman_impreso_engine = PlanchaImanImpresoPricingEngine(load_plancha_iman_impreso_bundle(project_root))
         self.agendas_cuadernos_engine = AgendasCuadernosPricingEngine(load_agendas_cuadernos_bundle(project_root))
+        self.principal_variables = PrincipalVariablesService(project_root)
         self.usar_adicionales_laminado_v1 = False
         self.config_path = project_root / "data" / "bajadas_v2" / "bajadas_v2_config_final.json"
         self.config_editable_path = project_root / "data" / "bajadas_v2" / "bajadas_v2_config_editable.json"
@@ -116,6 +118,35 @@ class BajadasV2ApiService:
         self.backups_dir = project_root / "data" / "bajadas_v2" / "backups"
         self.snapshot_path = project_root / "data" / "bajadas_v2" / "snapshots" / "bajadas_v2_metrics_snapshot.json"
         self._ensure_editable_config()
+
+    def get_principal_variables(self) -> tuple[int, dict[str, Any]]:
+        return 200, self.principal_variables.get_grouped()
+
+    def audit_principal_variables(self) -> tuple[int, dict[str, Any]]:
+        return 200, self.principal_variables.audit()
+
+    def update_principal_variables(self, payload: dict[str, Any]) -> tuple[int, dict[str, Any]]:
+        try:
+            result = self.principal_variables.update(payload)
+            self._reload_engines_after_principal_variables_update()
+            return 200, result
+        except PrincipalVariableError as exc:
+            return 400, {"error": "variables_principales_validation_error", "detail": str(exc)}
+
+    def reset_principal_variables(self, payload: dict[str, Any]) -> tuple[int, dict[str, Any]]:
+        try:
+            result = self.principal_variables.reset(payload)
+            self._reload_engines_after_principal_variables_update()
+            return 200, result
+        except PrincipalVariableError as exc:
+            return 400, {"error": "variables_principales_validation_error", "detail": str(exc)}
+
+    def _reload_engines_after_principal_variables_update(self) -> None:
+        self.engine = BajadasV2PricingEngine(load_bajadas_v2_bundle(self.project_root))
+        self.stickers_circulares_engine = StickersCircularesPricingEngine(
+            load_stickers_circulares_bundle(self.project_root),
+            project_root=self.project_root,
+        )
 
     def health(self) -> dict[str, Any]:
         return {"status": "ok", "service": "bajadas_v2_api"}
@@ -769,6 +800,18 @@ class BajadasV2ApiService:
 
         trace = result.setdefault("trazabilidad", {})
         trace["adicionales_autoadhesiva"] = details
+        trace["variables_principales_usadas"] = (
+            [
+                {
+                    "key": "adicional_tinta_blanca_base_1_copia",
+                    "label": "Tinta blanca Autoadhesivas (1 copia)",
+                    "value": round(tinta_unit, 6),
+                    "unit": "ARS/unidad",
+                }
+            ]
+            if wants_tinta
+            else []
+        )
         trace["adicional_laminado"] = {
             "seleccion": adicional_out,
             "adicional_unitario": round(adicional_unit, 6),

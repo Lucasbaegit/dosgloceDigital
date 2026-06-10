@@ -133,6 +133,20 @@ class StickersCircularesPricingEngine:
                 "formula_excel_reconstruida": "((material_base + click_color_base * coeficiente_tamano) * laca_uv_factor * corte_circular_factor * coeficiente_cantidad) * multiplicador_comercial",
                 "config_variables_base": self._variables_bundle.config_variables_base if self._variables_bundle else None,
                 "config_formula_editable_path": "data/stickers_circulares/formula_editable_config.json",
+                "variables_principales_usadas": [
+                    {
+                        "key": "click_color",
+                        "label": "Click color",
+                        "value": formula_breakdown["click_color_base"],
+                        "unit": "ARS",
+                    },
+                    {
+                        "key": "multiplicador_general",
+                        "label": "Multiplicador comercial general",
+                        "value": formula_breakdown["multiplicador_comercial"],
+                        "unit": "factor",
+                    },
+                ],
             },
         )
 
@@ -216,6 +230,7 @@ class StickersCircularesPricingEngine:
 
         return {
             "material_base": material_base,
+            "click_color_base": click_color_base,
             "click_total": click_total,
             "laca_factor": laca_factor,
             "corte_factor": corte_circular_factor,

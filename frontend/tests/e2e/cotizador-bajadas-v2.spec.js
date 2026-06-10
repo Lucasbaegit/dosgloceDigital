@@ -212,6 +212,53 @@ test("tab Configuración carga y permite ver historial", async ({ page }) => {
   await expect(page.getByRole("button", { name: "Restaurar desde config final" })).toBeVisible();
 });
 
+test("Variables principales expone solo valores seguros y permite guardar y recargar", async ({ page }) => {
+  let tintaValue = 603;
+  const variablesResponse = () => ({
+    tipo_cambio: [{ key: "tipo_cambio_usd", label: "Tipo de cambio USD", value: 1410, unit: "ARS/USD", min: 1, max: 100000, step: 1, description: "Referencia", editable: true, applies_today: false, impact: "Preparado" }],
+    clicks: [{ key: "click_color", label: "Click color", value: 3, unit: "ARS", min: 0.01, max: 100000, step: 0.01, description: "Click seguro", editable: true, applies_today: true, impact: "Traza circular" }],
+    papeles: [{ key: "obra_90g", label: "Papel obra/ilustración 90g", value: 14, unit: "ARS", min: 0.01, max: 1000000, step: 0.01, description: "Material seguro", editable: true, applies_today: true, impact: "Traza circular" }],
+    multiplicadores: [{ key: "multiplicador_general", label: "Multiplicador comercial general", value: 1, unit: "factor", min: 0.01, max: 100, step: 0.01, description: "Multiplicador seguro", editable: true, applies_today: true, impact: "Traza circular" }],
+    adicionales: [{ key: "adicional_tinta_blanca_base_1_copia", label: "Tinta blanca Autoadhesivas (1 copia)", value: tintaValue, unit: "ARS/unidad", min: 0.01, max: 1000000, step: 0.01, description: "Adicional seguro", editable: true, applies_today: true, impact: "Cotización" }],
+    variables_no_encontradas: ["click_bn"],
+  });
+  await page.route("**/variables-principales/audit", (route) => route.fulfill({
+    status: 200,
+    contentType: "application/json",
+    body: JSON.stringify({ variables_no_encontradas: ["click_bn"], advertencias: ["Sin matrices PDF"] }),
+  }));
+  await page.route("**/variables-principales", async (route) => {
+    if (route.request().method() === "PUT") {
+      const payload = JSON.parse(route.request().postData() || "{}");
+      tintaValue = payload.updates.find((item) => item.key === "adicional_tinta_blanca_base_1_copia")?.value ?? tintaValue;
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ updates: [{ key: "adicional_tinta_blanca_base_1_copia", previous_value: 603, new_value: tintaValue }] }),
+      });
+      return;
+    }
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(variablesResponse()) });
+  });
+
+  await page.goto("/", { waitUntil: "networkidle" });
+  await page.getByRole("button", { name: "Variables principales" }).click();
+  await expect(page.getByTestId("principal-variables-title")).toBeVisible();
+  for (const group of ["tipo_cambio", "clicks", "papeles", "multiplicadores", "adicionales"]) {
+    await expect(page.getByTestId(`principal-group-${group}`)).toBeVisible();
+  }
+  await expect(page.getByText("factor_ajuste_pdf")).toHaveCount(0);
+  await expect(page.getByText("precio_objetivo_pdf")).toHaveCount(0);
+
+  const tintaInput = page.getByTestId("principal-variable-adicional_tinta_blanca_base_1_copia");
+  await tintaInput.fill("700");
+  await page.getByRole("button", { name: "Guardar cambios" }).click();
+  await expect(page.getByTestId("principal-variables-message")).toContainText("603");
+  await expect(tintaInput).toHaveValue("700");
+  await page.getByRole("button", { name: "Recargar valores" }).click();
+  await expect(tintaInput).toHaveValue("700");
+});
+
 test("botón Limpiar y Copiar resultado", async ({ page }) => {
   await page.goto("/", { waitUntil: "networkidle" });
   await page.getByLabel("Medida / formato").selectOption("A3+");

@@ -260,6 +260,35 @@ select:focus {
   padding: 12px;
 }
 
+.checkbox-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-self: end;
+}
+
+.checkbox-group > span {
+  color: #d5dcf2;
+  font-size: 14px;
+}
+
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #dbe2fa;
+  font-size: 14px;
+}
+
+.checkbox-row input[type="checkbox"] {
+  margin: 0;
+}
+
+.checkbox-row span {
+  color: inherit;
+  font-size: inherit;
+}
+
 .actions-row {
   margin-top: 16px;
   display: grid;
@@ -589,4 +618,73 @@ select:focus {
   border-radius: 8px;
   background: rgba(15, 19, 28, 0.7);
   border: 1px solid var(--line);
+}
+
+.principal-variables-card .card-head p {
+  margin: 6px 0 0;
+  color: var(--text-soft);
+}
+
+.principal-actions {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.principal-groups {
+  display: grid;
+  gap: 14px;
+}
+
+.principal-group {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 14px;
+  background: rgba(10, 12, 20, 0.58);
+}
+
+.principal-group h4 {
+  margin: 0 0 12px;
+  color: #e1e7ff;
+}
+
+.principal-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(260px, 1fr));
+  gap: 12px;
+}
+
+.principal-variable {
+  display: grid;
+  gap: 7px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 12px;
+  background: rgba(15, 19, 28, 0.72);
+}
+
+.principal-variable-title {
+  font-weight: 700;
+}
+
+.principal-input-row {
+  display: grid;
+  grid-template-columns: minmax(140px, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+}
+
+.principal-input-row strong,
+.principal-variable small {
+  color: var(--text-soft);
+}
+
+@media (max-width: 900px) {
+  .principal-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .principal-actions {
+    flex-direction: column;
+  }
 }

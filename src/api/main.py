@@ -22,7 +22,7 @@ class ApiHandler(BaseHTTPRequestHandler):
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Access-Control-Allow-Origin", "*")
         self.send_header("Access-Control-Allow-Headers", "Content-Type")
-        self.send_header("Access-Control-Allow-Methods", "GET,POST,OPTIONS")
+        self.send_header("Access-Control-Allow-Methods", "GET,POST,PUT,OPTIONS")
         self.send_header("Content-Length", str(len(body)))
         self.end_headers()
         self.wfile.write(body)
@@ -31,7 +31,7 @@ class ApiHandler(BaseHTTPRequestHandler):
         self.send_response(204)
         self.send_header("Access-Control-Allow-Origin", "*")
         self.send_header("Access-Control-Allow-Headers", "Content-Type")
-        self.send_header("Access-Control-Allow-Methods", "GET,POST,OPTIONS")
+        self.send_header("Access-Control-Allow-Methods", "GET,POST,PUT,OPTIONS")
         self.end_headers()
 
     def do_GET(self) -> None:  # noqa: N802
@@ -58,6 +58,14 @@ class ApiHandler(BaseHTTPRequestHandler):
             status, payload = self.service.autoadhesivas_config()
             self._send_json(status, payload)
             return
+        if path == "/variables-principales":
+            status, payload = self.service.get_principal_variables()
+            self._send_json(status, payload)
+            return
+        if path == "/variables-principales/audit":
+            status, payload = self.service.audit_principal_variables()
+            self._send_json(status, payload)
+            return
         if path == "/tarjetas-9x5/health":
             self._send_json(200, self.service.tarjetas_9x5_engine.health())
             return
@@ -81,6 +89,18 @@ class ApiHandler(BaseHTTPRequestHandler):
             return
         if path == "/stickers-circulares/health":
             self._send_json(200, self.service.stickers_circulares_engine.health())
+            return
+        if path == "/troquelado-digital/health":
+            self._send_json(200, self.service.troquelado_digital_engine.health())
+            return
+        if path == "/tarjetas-troqueladas-circulares/health":
+            self._send_json(200, self.service.tarjetas_troqueladas_circulares_engine.health())
+            return
+        if path == "/plancha-iman-impreso/health":
+            self._send_json(200, self.service.plancha_iman_impreso_engine.health())
+            return
+        if path == "/agendas-cuadernos/health":
+            self._send_json(200, self.service.agendas_cuadernos_engine.health())
             return
         if path == "/bajadas-v2/config":
             status, payload = self.service.get_config()
@@ -147,11 +167,16 @@ class ApiHandler(BaseHTTPRequestHandler):
             "/stickers-corte-recto/cotizar",
             "/imanes-corte-recto/cotizar",
             "/stickers-circulares/cotizar",
+            "/troquelado-digital/cotizar",
+            "/tarjetas-troqueladas-circulares/cotizar",
+            "/plancha-iman-impreso/cotizar",
+            "/agendas-cuadernos/cotizar",
             "/bajadas-v2/config/update",
             "/bajadas-v2/config/restore",
             "/bajadas-v2/config/validate",
             "/bajadas-v2/config/simulate",
             "/bajadas-v2/config/candidate/create",
+            "/variables-principales/reset",
         }
         is_candidate_reject = path.startswith("/bajadas-v2/config/candidate/") and path.endswith("/reject")
         is_candidate_approve = path.startswith("/bajadas-v2/config/candidate/") and path.endswith("/approve")
@@ -220,6 +245,16 @@ class ApiHandler(BaseHTTPRequestHandler):
             status, response = self.service.cotizar_imanes_corte_recto(payload)
         elif path == "/stickers-circulares/cotizar":
             status, response = self.service.cotizar_stickers_circulares(payload)
+        elif path == "/troquelado-digital/cotizar":
+            status, response = self.service.cotizar_troquelado_digital(payload)
+        elif path == "/tarjetas-troqueladas-circulares/cotizar":
+            status, response = self.service.cotizar_tarjetas_troqueladas_circulares(payload)
+        elif path == "/plancha-iman-impreso/cotizar":
+            status, response = self.service.cotizar_plancha_iman_impreso(payload)
+        elif path == "/agendas-cuadernos/cotizar":
+            status, response = self.service.cotizar_agendas_cuadernos(payload)
+        elif path == "/variables-principales/reset":
+            status, response = self.service.reset_principal_variables(payload)
         elif path == "/bajadas-v2/config/update":
             status, response = self.service.update_config(payload)
         elif path == "/bajadas-v2/config/validate":
@@ -230,6 +265,24 @@ class ApiHandler(BaseHTTPRequestHandler):
             status, response = self.service.create_candidate(payload)
         else:
             status, response = self.service.restore_config_from_final(payload)
+        self._send_json(status, response)
+
+    def do_PUT(self) -> None:  # noqa: N802
+        if self.service is None:
+            self._send_json(500, {"error": "internal_error", "detail": "Service no inicializado"})
+            return
+        path = urlparse(self.path).path
+        if path != "/variables-principales":
+            self._send_json(404, {"error": "not_found", "detail": "Endpoint no encontrado"})
+            return
+        try:
+            content_len = int(self.headers.get("Content-Length", "0"))
+            raw = self.rfile.read(content_len) if content_len > 0 else b"{}"
+            payload = json.loads(raw.decode("utf-8"))
+        except json.JSONDecodeError:
+            self._send_json(400, {"error": "validation_error", "detail": "JSON inválido"})
+            return
+        status, response = self.service.update_principal_variables(payload)
         self._send_json(status, response)
 
     def log_message(self, format: str, *args: Any) -> None:

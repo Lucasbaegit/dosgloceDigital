@@ -150,6 +150,70 @@ export async function cotizarStickersCirculares(payload) {
   return body;
 }
 
+export async function cotizarTroqueladoDigital(payload) {
+  const response = await fetch(`${API_BASE}/troquelado-digital/cotizar`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const error = new Error(body?.detail || "Error desconocido");
+    error.status = response.status;
+    error.code = body?.error || "api_error";
+    throw error;
+  }
+  return body;
+}
+
+export async function cotizarTarjetasTroqueladasCirculares(payload) {
+  const response = await fetch(`${API_BASE}/tarjetas-troqueladas-circulares/cotizar`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const error = new Error(body?.detail || "Error desconocido");
+    error.status = response.status;
+    error.code = body?.error || "api_error";
+    throw error;
+  }
+  return body;
+}
+
+export async function cotizarPlanchaImanImpreso(payload) {
+  const response = await fetch(`${API_BASE}/plancha-iman-impreso/cotizar`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const error = new Error(body?.detail || "Error desconocido");
+    error.status = response.status;
+    error.code = body?.error || "api_error";
+    throw error;
+  }
+  return body;
+}
+
+export async function cotizarAgendasCuadernos(payload) {
+  const response = await fetch(`${API_BASE}/agendas-cuadernos/cotizar`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const error = new Error(body?.detail || "Error desconocido");
+    error.status = response.status;
+    error.code = body?.error || "api_error";
+    throw error;
+  }
+  return body;
+}
+
 export async function fetchBajadasMetrics() {
   const response = await fetch(`${API_BASE}/bajadas-v2/metrics`);
   if (!response.ok) {
@@ -164,6 +228,31 @@ export async function fetchBajadasHealth() {
     throw new Error("No se pudo validar salud de API.");
   }
   return response.json();
+}
+
+export async function fetchPrincipalVariables() {
+  const response = await fetch(`${API_BASE}/variables-principales`);
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(body?.detail || "No se pudieron cargar variables principales.");
+  return body;
+}
+
+export async function updatePrincipalVariables(updates) {
+  const response = await fetch(`${API_BASE}/variables-principales`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ updates }),
+  });
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(body?.detail || "No se pudieron guardar variables principales.");
+  return body;
+}
+
+export async function fetchPrincipalVariablesAudit() {
+  const response = await fetch(`${API_BASE}/variables-principales/audit`);
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(body?.detail || "No se pudo cargar la auditoría.");
+  return body;
 }
 
 export async function fetchBajadasConfig() {

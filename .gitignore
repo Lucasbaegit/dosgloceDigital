@@ -1,0 +1,5 @@
+reports/
+data/backups/
+__pycache__/
+*.pyc
+frontend/dist/

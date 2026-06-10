@@ -24,6 +24,8 @@ import {
   fetchBajadasConfigHistory,
   fetchBajadasHealth,
   fetchBajadasMetrics,
+  fetchPrincipalVariables,
+  fetchPrincipalVariablesAudit,
   promoteBajadasConfigCandidate,
   rejectBajadasConfigCandidate,
   restoreBajadasConfig,
@@ -31,12 +33,13 @@ import {
   simulateRestoreBajadasBackup,
   simulateBajadasConfig,
   updateBajadasConfig,
+  updatePrincipalVariables,
   validateBajadasConfig,
 } from "../api/bajadasV2Api";
 import optionRows from "../data/bajadasOptions.json";
 
-const NAV_ITEMS = ["Cotizador", "Árbol del precio", "Configuración", "Pedidos", "Plantillas", "Historial", "Precios", "Ajustes"];
-const TAB_KEYS = new Set(["Cotizador", "Árbol del precio", "Configuración"]);
+const NAV_ITEMS = ["Cotizador", "Árbol del precio", "Variables principales", "Configuración", "Pedidos", "Plantillas", "Historial", "Precios", "Ajustes"];
+const TAB_KEYS = new Set(["Cotizador", "Árbol del precio", "Variables principales", "Configuración"]);
 const CARAS = ["4/0", "4/4", "1/0", "1/1"];
 const URGENCIAS = ["normal", "express", "super_express", "ya_24hs"];
 const CATEGORIAS = [
@@ -169,11 +172,6 @@ const ADICIONALES = [
   { label: "Laca UV", value: "laca" },
   { label: "Laminado brillo", value: "laminado_brillo" },
   { label: "Laminado mate", value: "laminado_mate" },
-];
-const ADICIONALES_AUTOADHESIVAS = [
-  { label: "Sin adicional", value: "sin_adicional" },
-  { label: "Laca UV", value: "laca" },
-  { label: "Tinta blanca", value: "tinta_blanca" },
 ];
 const ADICIONALES_LIVIANO = [
   { label: "Sin adicional", value: "sin_adicional" },
@@ -372,6 +370,10 @@ export default function CotizadorBajadasV2() {
   const [cfgBackupDetail, setCfgBackupDetail] = useState(null);
   const [cfgBackupPreview, setCfgBackupPreview] = useState(null);
   const [cfgBackupSimulation, setCfgBackupSimulation] = useState(null);
+  const [principalVariables, setPrincipalVariables] = useState(null);
+  const [principalDraft, setPrincipalDraft] = useState({});
+  const [principalAudit, setPrincipalAudit] = useState(null);
+  const [principalMsg, setPrincipalMsg] = useState("");
 
   const inferred = useMemo(() => inferQuoteContext(form), [form]);
   const isAutoadhesivas = inferred.categoria === "Bajadas Autoadhesivas";
@@ -396,7 +398,7 @@ export default function CotizadorBajadasV2() {
     String(form.tipo_papel || "").toLowerCase() === "liviano";
   const adicionalesDisponibles = useMemo(() => {
     if (!isBajadasFlow) return ADICIONALES;
-    if (isAutoadhesivas) return ADICIONALES_AUTOADHESIVAS;
+    if (isAutoadhesivas) return ADICIONALES_LIVIANO;
     if (isLivianoBajadaNoAutoadhesiva) return ADICIONALES_LIVIANO;
     return ADICIONALES;
   }, [isBajadasFlow, isAutoadhesivas, isLivianoBajadaNoAutoadhesiva]);
@@ -497,6 +499,49 @@ export default function CotizadorBajadasV2() {
       setCfgBackups(backups?.backups || []);
     } catch {
       setCfgMsg("No se pudo cargar configuración editable.");
+    }
+  };
+
+  const loadPrincipalVariables = async () => {
+    try {
+      setPrincipalMsg("");
+      const [variables, audit] = await Promise.all([fetchPrincipalVariables(), fetchPrincipalVariablesAudit()]);
+      const draft = {};
+      ["tipo_cambio", "clicks", "papeles", "multiplicadores", "adicionales"].forEach((group) => {
+        (variables[group] || []).forEach((item) => {
+          draft[item.key] = item.value;
+        });
+      });
+      setPrincipalVariables(variables);
+      setPrincipalDraft(draft);
+      setPrincipalAudit(audit);
+    } catch (err) {
+      setPrincipalMsg(err.message || "No se pudieron cargar las variables principales.");
+    }
+  };
+
+  const savePrincipalVariables = async () => {
+    if (!principalVariables) return;
+    const updates = [];
+    ["tipo_cambio", "clicks", "papeles", "multiplicadores", "adicionales"].forEach((group) => {
+      (principalVariables[group] || []).forEach((item) => {
+        const value = Number(principalDraft[item.key]);
+        if (Number.isFinite(value) && value !== Number(item.value)) updates.push({ key: item.key, value });
+      });
+    });
+    if (!updates.length) {
+      setPrincipalMsg("No hay cambios para guardar.");
+      return;
+    }
+    try {
+      const response = await updatePrincipalVariables(updates);
+      const summary = (response.updates || [])
+        .map((item) => `${item.key}: ${item.previous_value} → ${item.new_value}`)
+        .join(" · ");
+      await loadPrincipalVariables();
+      setPrincipalMsg(`Variables actualizadas: ${summary}`);
+    } catch (err) {
+      setPrincipalMsg(err.message || "No se pudieron guardar las variables principales.");
     }
   };
 
@@ -641,6 +686,7 @@ export default function CotizadorBajadasV2() {
       .then((res) => setApiConnected(Boolean(res?.status === "ok" && Object.values(res?.checks ?? {}).every(Boolean))))
       .catch(() => setApiConnected(false));
     loadConfigData();
+    loadPrincipalVariables();
   }, []);
 
   useEffect(() => {
@@ -1570,6 +1616,70 @@ export default function CotizadorBajadasV2() {
     );
   };
 
+  const renderPrincipalVariablesTab = () => {
+    const groups = [
+      ["tipo_cambio", "Tipo de cambio"],
+      ["clicks", "Clicks"],
+      ["papeles", "Papeles"],
+      ["multiplicadores", "Multiplicadores"],
+      ["adicionales", "Adicionales"],
+    ];
+    if (!principalVariables) {
+      return <section className="card result-card"><div className="placeholder"><p>Cargando variables principales...</p></div></section>;
+    }
+    return (
+      <section className="card result-card principal-variables-card">
+        <div className="card-head">
+          <div>
+            <h3 data-testid="principal-variables-title">Variables principales</h3>
+            <p>Estos valores modifican costos comerciales globales del cotizador. No editan las matrices PDF cerradas.</p>
+          </div>
+          <span>{Object.values(principalDraft).length} variables seguras</span>
+        </div>
+        {principalMsg ? <div className="info-box" data-testid="principal-variables-message">{principalMsg}</div> : null}
+        <div className="principal-actions">
+          <button type="button" className="calculate-btn compact-calculate-btn" onClick={savePrincipalVariables}>Guardar cambios</button>
+          <button type="button" className="secondary-btn" onClick={loadPrincipalVariables}>Recargar valores</button>
+        </div>
+        <div className="principal-groups">
+          {groups.map(([groupKey, label]) => (
+            <section className="principal-group" key={groupKey} data-testid={`principal-group-${groupKey}`}>
+              <h4>{label}</h4>
+              {(principalVariables[groupKey] || []).length ? (
+                <div className="principal-grid">
+                  {(principalVariables[groupKey] || []).map((item) => (
+                    <label className="principal-variable" key={item.key}>
+                      <span className="principal-variable-title">{item.label}</span>
+                      <div className="principal-input-row">
+                        <input
+                          type="number"
+                          min={item.min}
+                          max={item.max}
+                          step={item.step}
+                          value={principalDraft[item.key] ?? ""}
+                          data-testid={`principal-variable-${item.key}`}
+                          onChange={(event) => setPrincipalDraft((prev) => ({ ...prev, [item.key]: event.target.value }))}
+                        />
+                        <strong>{item.unit}</strong>
+                      </div>
+                      <small>{item.description}</small>
+                      <small>{item.applies_today ? `Impacta hoy: ${item.impact}` : `Preparada: ${item.impact}`}</small>
+                    </label>
+                  ))}
+                </div>
+              ) : <p className="range-hint">Sin valores numéricos confiables para exponer todavía.</p>}
+            </section>
+          ))}
+        </div>
+        <details className="raw-json">
+          <summary>Ver auditoría</summary>
+          <div className="warning-box">No encontradas: {(principalAudit?.variables_no_encontradas || []).join(", ") || "-"}</div>
+          <pre>{JSON.stringify(principalAudit, null, 2)}</pre>
+        </details>
+      </section>
+    );
+  };
+
   const renderCotizador = () => (
     <div className="cotizador-layout" data-testid="cotizador-layout">
       <form className="card form-card compact-card" onSubmit={handleSubmit}>
@@ -1713,23 +1823,23 @@ export default function CotizadorBajadasV2() {
           {isAutoadhesivas ? (
             <div className="checkbox-group">
               <span>Adicionales</span>
-              <label className="inline-check">
+              <label className="checkbox-row">
                 <input
                   type="checkbox"
                   data-testid="autoadh-laca-uv-checkbox"
                   checked={Boolean(form.adicional_laca_uv)}
                   onChange={(event) => setForm((prev) => ({ ...prev, adicional_laca_uv: event.target.checked }))}
                 />
-                Laca UV
+                <span>Laca UV</span>
               </label>
-              <label className="inline-check">
+              <label className="checkbox-row">
                 <input
                   type="checkbox"
                   data-testid="autoadh-tinta-blanca-checkbox"
                   checked={Boolean(form.adicional_tinta_blanca)}
                   onChange={(event) => setForm((prev) => ({ ...prev, adicional_tinta_blanca: event.target.checked }))}
                 />
-                Tinta blanca
+                <span>Tinta blanca</span>
               </label>
             </div>
           ) : null}
@@ -1852,6 +1962,7 @@ export default function CotizadorBajadasV2() {
         <section className="content-grid content-grid-tabs">
           {activeTab === "Cotizador" ? renderCotizador() : null}
           {activeTab === "Árbol del precio" ? renderTreeTab() : null}
+          {activeTab === "Variables principales" ? renderPrincipalVariablesTab() : null}
           {activeTab === "Configuración" ? renderConfigTab() : null}
         </section>
       </main>
