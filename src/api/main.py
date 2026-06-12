@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import json
+from email.parser import BytesParser
+from email.policy import default
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import mimetypes
 from pathlib import Path
@@ -177,6 +179,10 @@ class ApiHandler(BaseHTTPRequestHandler):
             self._send_json(500, {"error": "internal_error", "detail": "Service no inicializado"})
             return
         path = urlparse(self.path).path
+        if path == "/import/excel-maestro/preview":
+            status, response = self._handle_excel_maestro_preview()
+            self._send_json(status, response)
+            return
 
         allowed_exact = {
             "/bajadas-v2/cotizar",
@@ -287,6 +293,28 @@ class ApiHandler(BaseHTTPRequestHandler):
         else:
             status, response = self.service.restore_config_from_final(payload)
         self._send_json(status, response)
+
+    def _handle_excel_maestro_preview(self) -> tuple[int, dict[str, Any]]:
+        if self.service is None:
+            return 500, {"ok": False, "error": "internal_error", "detail": "Service no inicializado"}
+        content_type = self.headers.get("Content-Type", "")
+        if "multipart/form-data" not in content_type:
+            return 400, {"ok": False, "error": "multipart_requerido", "detail": "Enviar multipart/form-data con campo file"}
+        try:
+            content_len = int(self.headers.get("Content-Length", "0"))
+            body = self.rfile.read(content_len) if content_len > 0 else b""
+            message = BytesParser(policy=default).parsebytes(
+                f"Content-Type: {content_type}\r\nMIME-Version: 1.0\r\n\r\n".encode("utf-8") + body
+            )
+            for part in message.iter_parts():
+                if part.get_param("name", header="content-disposition") != "file":
+                    continue
+                filename = part.get_filename() or "archivo.xlsx"
+                payload = part.get_payload(decode=True) or b""
+                return self.service.preview_excel_maestro_import(filename, payload)
+            return 400, {"ok": False, "error": "archivo_requerido", "detail": "Falta campo file"}
+        except Exception as exc:
+            return 400, {"ok": False, "error": "multipart_invalido", "detail": str(exc)}
 
     def do_PUT(self) -> None:  # noqa: N802
         if self.service is None:

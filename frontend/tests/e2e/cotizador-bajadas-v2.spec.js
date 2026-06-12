@@ -265,6 +265,11 @@ test("Variables principales expone solo valores seguros y permite guardar y reca
   await expect(page.getByTestId("principal-variables-title")).toBeVisible();
   await expect(page.getByTestId("principal-impact-today")).toContainText("Variables madre que impactan hoy");
   await expect(page.getByTestId("principal-prepared")).toContainText("Variables madre preparadas");
+  await expect(page.getByTestId("excel-import-preview-section")).toBeVisible();
+  await expect(page.getByText("Modo actual: solo preview")).toBeVisible();
+  await expect(page.getByTestId("excel-import-file")).toBeVisible();
+  await expect(page.getByTestId("excel-import-preview-button")).toBeVisible();
+  await expect(page.getByTestId("excel-import-apply-disabled")).toBeDisabled();
   await expect(page.getByText("Rangos fijos de matrices")).toBeVisible();
   await expect(page.getByText("Valores derivados y tablas PDF fijas")).toBeVisible();
   await expect(page.getByTestId("principal-derived-fixed").getByText("Tabla fija PDF")).toBeVisible();

@@ -29,6 +29,7 @@ import {
   fetchPrincipalVariablesRanges,
   exportPricesExcel,
   exportPricesPdf,
+  previewExcelMaestro,
   promoteBajadasConfigCandidate,
   rejectBajadasConfigCandidate,
   restoreBajadasConfig,
@@ -378,6 +379,10 @@ export default function CotizadorBajadasV2() {
   const [principalAudit, setPrincipalAudit] = useState(null);
   const [principalRanges, setPrincipalRanges] = useState(null);
   const [principalMsg, setPrincipalMsg] = useState("");
+  const [excelImportFile, setExcelImportFile] = useState(null);
+  const [excelImportPreview, setExcelImportPreview] = useState(null);
+  const [excelImportLoading, setExcelImportLoading] = useState(false);
+  const [excelImportError, setExcelImportError] = useState("");
 
   const inferred = useMemo(() => inferQuoteContext(form), [form]);
   const isAutoadhesivas = inferred.categoria === "Bajadas Autoadhesivas";
@@ -562,6 +567,26 @@ export default function CotizadorBajadasV2() {
       setPrincipalMsg("Excel maestro exportado correctamente.");
     } catch (err) {
       setPrincipalMsg(err.message || "No se pudo exportar Excel maestro. Revisar backend.");
+    }
+  };
+
+  const previewExcelImport = async () => {
+    if (!excelImportFile) {
+      setExcelImportError("Seleccioná un archivo .xlsx para previsualizar.");
+      setExcelImportPreview(null);
+      return;
+    }
+    try {
+      setExcelImportLoading(true);
+      setExcelImportError("");
+      const preview = await previewExcelMaestro(excelImportFile);
+      setExcelImportPreview(preview);
+      setPrincipalMsg("Preview de Excel maestro generado. No se aplicaron cambios.");
+    } catch (err) {
+      setExcelImportPreview(null);
+      setExcelImportError(err.message || "No se pudo previsualizar el Excel maestro.");
+    } finally {
+      setExcelImportLoading(false);
     }
   };
 
@@ -1711,6 +1736,11 @@ export default function CotizadorBajadasV2() {
         </div>
       </section>
     );
+    const previewSummary = excelImportPreview?.resumen || {};
+    const previewChanges = excelImportPreview?.cambios || [];
+    const previewBlocked = excelImportPreview?.bloqueados || [];
+    const previewWarnings = excelImportPreview?.advertencias || [];
+    const previewErrors = excelImportPreview?.errores || [];
     return (
       <section className="card result-card principal-variables-card">
         <div className="card-head">
@@ -1730,6 +1760,70 @@ export default function CotizadorBajadasV2() {
           <button type="button" className="secondary-btn" data-testid="export-prices-pdf" onClick={downloadPricesPdf}>Exportar tablas PDF</button>
           <button type="button" className="secondary-btn" data-testid="export-prices-excel" onClick={downloadPricesExcel}>Exportar Excel maestro</button>
         </div>
+        <section className="principal-group" data-testid="excel-import-preview-section">
+          <h4>Importar Excel maestro</h4>
+          <p className="range-hint">Modo actual: solo preview. Se leen únicamente variables operativas de 01_VARIABLES_MADRE y no se aplican cambios.</p>
+          <div className="principal-actions">
+            <input
+              type="file"
+              accept=".xlsx"
+              data-testid="excel-import-file"
+              onChange={(event) => {
+                setExcelImportFile(event.target.files?.[0] || null);
+                setExcelImportPreview(null);
+                setExcelImportError("");
+              }}
+            />
+            <button
+              type="button"
+              className="secondary-btn"
+              data-testid="excel-import-preview-button"
+              onClick={previewExcelImport}
+              disabled={excelImportLoading}
+            >
+              {excelImportLoading ? "Previsualizando..." : "Previsualizar cambios"}
+            </button>
+            <button type="button" className="secondary-btn" data-testid="excel-import-apply-disabled" disabled>
+              Aplicación de cambios disponible en próxima etapa.
+            </button>
+          </div>
+          {excelImportError ? <div className="error-box" data-testid="excel-import-error">{excelImportError}</div> : null}
+          {excelImportPreview ? (
+            <>
+              <div className="info-box" data-testid="excel-import-summary">
+                Archivo: {excelImportPreview.archivo || "-"} · Cambios importables: {previewSummary.cambios_importables ?? 0} · Bloqueados: {previewSummary.cambios_bloqueados ?? 0} · Sin cambios: {previewSummary.sin_cambios ?? 0}
+              </div>
+              <div className="ranges-control-grid">
+                <section>
+                  <h4>Cambios importables</h4>
+                  <div className="diff-table" data-testid="excel-import-changes">
+                    {previewChanges.length ? previewChanges.map((item) => (
+                      <div key={item.key} className="diff-row">
+                        <span>{item.key}</span>
+                        <span>{item.valor_actual} → {item.valor_excel}</span>
+                        <span>{item.estado}</span>
+                      </div>
+                    )) : <p className="range-hint">Sin cambios importables.</p>}
+                  </div>
+                </section>
+                <section>
+                  <h4>Cambios bloqueados</h4>
+                  <div className="diff-table" data-testid="excel-import-blocked">
+                    {previewBlocked.length ? previewBlocked.map((item, index) => (
+                      <div key={`${item.key}-${index}`} className="diff-row">
+                        <span>{item.key}</span>
+                        <span>{item.valor_excel ?? "-"}</span>
+                        <span>{item.motivo}</span>
+                      </div>
+                    )) : <p className="range-hint">Sin cambios bloqueados.</p>}
+                  </div>
+                </section>
+              </div>
+              {previewWarnings.length ? <div className="warning-box" data-testid="excel-import-warnings">Advertencias: {previewWarnings.join(" · ")}</div> : null}
+              {previewErrors.length ? <div className="error-box" data-testid="excel-import-errors">Errores: {previewErrors.join(" · ")}</div> : null}
+            </>
+          ) : null}
+        </section>
         {renderPrincipalGroupSet(
           "Variables madre que impactan hoy",
           "Cambian trazabilidad o cálculo actual donde el producto ya usa fórmula editable.",

@@ -68,6 +68,7 @@ from agendas_cuadernos.exceptions import QuoteInputError as AgendasCuadernosQuot
 from agendas_cuadernos.types import AgendasCuadernosQuoteInput
 from pricing_variables import PrincipalVariableError, PrincipalVariablesService
 from export import PricesExcelExporter, PricesPdfExporter, PricesTablesBuilder
+from importers import ExcelMaestroImporter, ExcelMasterPreviewError
 
 from .schemas import (
     ApiValidationError,
@@ -111,6 +112,7 @@ class BajadasV2ApiService:
         self.plancha_iman_impreso_engine = PlanchaImanImpresoPricingEngine(load_plancha_iman_impreso_bundle(project_root))
         self.agendas_cuadernos_engine = AgendasCuadernosPricingEngine(load_agendas_cuadernos_bundle(project_root))
         self.principal_variables = PrincipalVariablesService(project_root)
+        self.excel_maestro_importer = ExcelMaestroImporter(project_root)
         self.prices_tables_builder = PricesTablesBuilder(project_root)
         self.prices_pdf_exporter = PricesPdfExporter()
         self.prices_excel_exporter = PricesExcelExporter(project_root)
@@ -140,6 +142,12 @@ class BajadasV2ApiService:
 
     def export_prices_excel(self) -> tuple[str, bytes]:
         return self.prices_excel_exporter.render(self.prices_tables_builder.build())
+
+    def preview_excel_maestro_import(self, filename: str, content: bytes) -> tuple[int, dict[str, Any]]:
+        try:
+            return 200, self.excel_maestro_importer.preview(filename, content)
+        except ExcelMasterPreviewError as exc:
+            return 400, {"ok": False, "error": exc.error, "detail": exc.detail}
 
     def update_principal_variables(self, payload: dict[str, Any]) -> tuple[int, dict[str, Any]]:
         try:

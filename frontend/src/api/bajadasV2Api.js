@@ -278,6 +278,23 @@ export async function exportPricesExcel() {
   return { filename, blob: await response.blob() };
 }
 
+export async function previewExcelMaestro(file) {
+  const formData = new FormData();
+  formData.append("file", file);
+  const response = await fetch(`${API_BASE}/import/excel-maestro/preview`, {
+    method: "POST",
+    body: formData,
+  });
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const error = new Error(body?.detail || "No se pudo previsualizar el Excel maestro.");
+    error.status = response.status;
+    error.code = body?.error || "api_error";
+    throw error;
+  }
+  return body;
+}
+
 export async function fetchBajadasConfig() {
   const response = await fetch(`${API_BASE}/bajadas-v2/config`);
   if (!response.ok) throw new Error("No se pudo cargar configuración.");
