@@ -78,6 +78,15 @@ class ApiHandler(BaseHTTPRequestHandler):
             filename, payload = self.service.export_prices_pdf()
             self._send_bytes(200, payload, "application/pdf", filename)
             return
+        if path == "/export/precios/excel":
+            filename, payload = self.service.export_prices_excel()
+            self._send_bytes(
+                200,
+                payload,
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                filename,
+            )
+            return
         if path == "/tarjetas-9x5/health":
             self._send_json(200, self.service.tarjetas_9x5_engine.health())
             return

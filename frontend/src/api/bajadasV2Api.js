@@ -270,6 +270,14 @@ export async function exportPricesPdf() {
   return { filename, blob: await response.blob() };
 }
 
+export async function exportPricesExcel() {
+  const response = await fetch(`${API_BASE}/export/precios/excel`);
+  if (!response.ok) throw new Error("No se pudo exportar Excel maestro. Revisar backend.");
+  const disposition = response.headers.get("Content-Disposition") || "";
+  const filename = disposition.match(/filename="([^"]+)"/)?.[1] || "cotizador_digital_maestro.xlsx";
+  return { filename, blob: await response.blob() };
+}
+
 export async function fetchBajadasConfig() {
   const response = await fetch(`${API_BASE}/bajadas-v2/config`);
   if (!response.ok) throw new Error("No se pudo cargar configuración.");

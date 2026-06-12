@@ -27,6 +27,7 @@ import {
   fetchPrincipalVariables,
   fetchPrincipalVariablesAudit,
   fetchPrincipalVariablesRanges,
+  exportPricesExcel,
   exportPricesPdf,
   promoteBajadasConfigCandidate,
   rejectBajadasConfigCandidate,
@@ -543,6 +544,24 @@ export default function CotizadorBajadasV2() {
       setPrincipalMsg("PDF exportado correctamente.");
     } catch (err) {
       setPrincipalMsg(err.message || "No se pudo exportar PDF. Revisar backend.");
+    }
+  };
+
+  const downloadPricesExcel = async () => {
+    try {
+      setPrincipalMsg("Generando Excel maestro...");
+      const { filename, blob } = await exportPricesExcel();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+      setPrincipalMsg("Excel maestro exportado correctamente.");
+    } catch (err) {
+      setPrincipalMsg(err.message || "No se pudo exportar Excel maestro. Revisar backend.");
     }
   };
 
@@ -1653,6 +1672,45 @@ export default function CotizadorBajadasV2() {
     if (!principalVariables) {
       return <section className="card result-card"><div className="placeholder"><p>Cargando variables principales...</p></div></section>;
     }
+    const renderPrincipalVariable = (item) => (
+      <label className="principal-variable" key={item.key}>
+        <span className="principal-variable-title">{item.label}</span>
+        <span className="principal-badge">{item.tipo === "variable_madre" ? "Variable madre editable" : item.tipo}</span>
+        <div className="principal-input-row">
+          <input
+            type="number"
+            min={item.min}
+            max={item.max}
+            step={item.step}
+            value={principalDraft[item.key] ?? ""}
+            data-testid={`principal-variable-${item.key}`}
+            onChange={(event) => setPrincipalDraft((prev) => ({ ...prev, [item.key]: event.target.value }))}
+          />
+          <strong>{item.unit}</strong>
+        </div>
+        <small>{item.description}</small>
+        <small>Confiabilidad: {item.confiabilidad || "alta"}</small>
+        <small>{item.impacta_hoy ? `Impacta hoy: ${item.impact}` : `Preparada, no impacta todavía: ${item.impact}`}</small>
+        {(item.productos_afectados || []).length ? <small>Productos afectados: {item.productos_afectados.join(", ")}</small> : null}
+      </label>
+    );
+    const renderPrincipalGroupSet = (title, hint, predicate, testId) => (
+      <section className="principal-group" data-testid={testId}>
+        <h4>{title}</h4>
+        <p className="range-hint">{hint}</p>
+        <div className="principal-groups">
+          {groups.map(([groupKey, label]) => {
+            const items = (principalVariables[groupKey] || []).filter(predicate);
+            return (
+              <section className="principal-group" key={`${testId}-${groupKey}`} data-testid={`principal-group-${testId}-${groupKey}`}>
+                <h4>{label}</h4>
+                {items.length ? <div className="principal-grid">{items.map(renderPrincipalVariable)}</div> : <p className="range-hint">Sin variables en este grupo.</p>}
+              </section>
+            );
+          })}
+        </div>
+      </section>
+    );
     return (
       <section className="card result-card principal-variables-card">
         <div className="card-head">
@@ -1670,38 +1728,20 @@ export default function CotizadorBajadasV2() {
           <button type="button" className="calculate-btn compact-calculate-btn" onClick={savePrincipalVariables}>Guardar cambios</button>
           <button type="button" className="secondary-btn" onClick={loadPrincipalVariables}>Recargar valores</button>
           <button type="button" className="secondary-btn" data-testid="export-prices-pdf" onClick={downloadPricesPdf}>Exportar tablas PDF</button>
+          <button type="button" className="secondary-btn" data-testid="export-prices-excel" onClick={downloadPricesExcel}>Exportar Excel maestro</button>
         </div>
-        <div className="principal-groups">
-          {groups.map(([groupKey, label]) => (
-            <section className="principal-group" key={groupKey} data-testid={`principal-group-${groupKey}`}>
-              <h4>{label}</h4>
-              {(principalVariables[groupKey] || []).length ? (
-                <div className="principal-grid">
-                  {(principalVariables[groupKey] || []).map((item) => (
-                    <label className="principal-variable" key={item.key}>
-                      <span className="principal-variable-title">{item.label}</span>
-                      <span className="principal-badge">{item.tipo === "variable_madre" ? "Variable madre editable" : item.tipo}</span>
-                      <div className="principal-input-row">
-                        <input
-                          type="number"
-                          min={item.min}
-                          max={item.max}
-                          step={item.step}
-                          value={principalDraft[item.key] ?? ""}
-                          data-testid={`principal-variable-${item.key}`}
-                          onChange={(event) => setPrincipalDraft((prev) => ({ ...prev, [item.key]: event.target.value }))}
-                        />
-                        <strong>{item.unit}</strong>
-                      </div>
-                      <small>{item.description}</small>
-                      <small>{item.impacta_hoy ? `Impacta hoy: ${item.impact}` : `Preparada: ${item.impact}`}</small>
-                    </label>
-                  ))}
-                </div>
-              ) : <p className="range-hint">Sin valores numéricos confiables para exponer todavía.</p>}
-            </section>
-          ))}
-        </div>
+        {renderPrincipalGroupSet(
+          "Variables madre que impactan hoy",
+          "Cambian trazabilidad o cálculo actual donde el producto ya usa fórmula editable.",
+          (item) => item.impacta_hoy,
+          "principal-impact-today"
+        )}
+        {renderPrincipalGroupSet(
+          "Variables madre preparadas, no impactan todavía",
+          "Valores base confiables encontrados en Excel histórico. Se pueden preparar, pero aún no recalculan productos PDF fijos.",
+          (item) => !item.impacta_hoy,
+          "principal-prepared"
+        )}
         <section className="principal-group" data-testid="principal-detected-papers">
           <h4>Papeles detectados y estado comercial</h4>
           <p className="range-hint">Este papel aparece en las tablas, pero solo se edita si tenemos su costo base en dólares. Los demás quedan como detectados sin costo base o tabla fija PDF.</p>

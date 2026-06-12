@@ -67,7 +67,7 @@ from agendas_cuadernos.exceptions import PriceNotFoundError as AgendasCuadernosP
 from agendas_cuadernos.exceptions import QuoteInputError as AgendasCuadernosQuoteInputError
 from agendas_cuadernos.types import AgendasCuadernosQuoteInput
 from pricing_variables import PrincipalVariableError, PrincipalVariablesService
-from export import PricesPdfExporter, PricesTablesBuilder
+from export import PricesExcelExporter, PricesPdfExporter, PricesTablesBuilder
 
 from .schemas import (
     ApiValidationError,
@@ -113,6 +113,7 @@ class BajadasV2ApiService:
         self.principal_variables = PrincipalVariablesService(project_root)
         self.prices_tables_builder = PricesTablesBuilder(project_root)
         self.prices_pdf_exporter = PricesPdfExporter()
+        self.prices_excel_exporter = PricesExcelExporter(project_root)
         self.usar_adicionales_laminado_v1 = False
         self.config_path = project_root / "data" / "bajadas_v2" / "bajadas_v2_config_final.json"
         self.config_editable_path = project_root / "data" / "bajadas_v2" / "bajadas_v2_config_editable.json"
@@ -136,6 +137,9 @@ class BajadasV2ApiService:
 
     def export_prices_pdf(self) -> tuple[str, bytes]:
         return self.prices_pdf_exporter.render(self.prices_tables_builder.build())
+
+    def export_prices_excel(self) -> tuple[str, bytes]:
+        return self.prices_excel_exporter.render(self.prices_tables_builder.build())
 
     def update_principal_variables(self, payload: dict[str, Any]) -> tuple[int, dict[str, Any]]:
         try:

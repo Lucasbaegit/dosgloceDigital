@@ -19,6 +19,7 @@ class PrincipalVariablesService:
     def __init__(self, project_root: Path):
         self.project_root = project_root
         self.backups_dir = project_root / "data" / "backups" / "variables_principales"
+        self.prepared_variables_file = "data/variables_principales/variables_madre.json"
         self.catalog = {
             "tipo_cambio_usd": {
                 "group": "tipo_cambio",
@@ -31,7 +32,10 @@ class PrincipalVariablesService:
                 "step": 1,
                 "source_file": "data/bajadas_v2/bajadas_v2_config_final.json",
                 "path": ["dolar_actual"],
+                "source_path": "dolar_actual",
                 "applies_today": False,
+                "confiabilidad": "alta",
+                "productos_afectados": ["Fórmulas variables futuras"],
                 "impact": "Impacta costos expresados en USD cuando el producto usa f?rmula variable; precios PDF fijos no cambian.",
             },
             "click_color": {
@@ -45,7 +49,10 @@ class PrincipalVariablesService:
                 "step": 0.01,
                 "source_file": "data/stickers_circulares/formula_editable_config.json",
                 "path": ["variables", "click_color_base"],
+                "source_path": "variables.click_color_base",
                 "applies_today": True,
+                "confiabilidad": "alta",
+                "productos_afectados": ["Stickers Circulares"],
                 "impact": "Cambia el precio base estimado y la trazabilidad de Stickers Circulares.",
             },
             "obra_90g": {
@@ -59,7 +66,10 @@ class PrincipalVariablesService:
                 "step": 0.01,
                 "source_file": "data/stickers_circulares/formula_editable_config.json",
                 "path": ["variables", "material_base", "obra_ilustracion_90g"],
+                "source_path": "variables.material_base.obra_ilustracion_90g",
                 "applies_today": True,
+                "confiabilidad": "alta",
+                "productos_afectados": ["Stickers Circulares"],
                 "impact": "Cambia el precio base estimado y la trazabilidad de Stickers Circulares.",
             },
             "multiplicador_general": {
@@ -73,7 +83,10 @@ class PrincipalVariablesService:
                 "step": 0.01,
                 "source_file": "data/stickers_circulares/formula_editable_config.json",
                 "path": ["variables", "multiplicador_comercial"],
+                "source_path": "variables.multiplicador_comercial",
                 "applies_today": True,
+                "confiabilidad": "alta",
+                "productos_afectados": ["Stickers Circulares"],
                 "impact": "Cambia el precio base estimado y la trazabilidad de Stickers Circulares.",
             },
             "adicional_tinta_blanca_base_1_copia": {
@@ -87,7 +100,10 @@ class PrincipalVariablesService:
                 "step": 0.01,
                 "source_file": "data/bajadas_autoadhesivas/autoadhesivas_v1_config.json",
                 "path": ["adicional_tinta_blanca_base_1_copia"],
+                "source_path": "adicional_tinta_blanca_base_1_copia",
                 "applies_today": True,
+                "confiabilidad": "alta",
+                "productos_afectados": ["Bajadas Autoadhesivas"],
                 "impact": "Cambia inmediatamente el adicional Tinta Blanca de Autoadhesivas.",
             },
         }
@@ -120,6 +136,7 @@ class PrincipalVariablesService:
                 "papel_300g_ilustracion", "papel_150g_ilustracion", "papel_80g_ilustracion", "papel_63g_sobres",
             ],
         }
+        self._load_prepared_variables()
 
     def get_grouped(self) -> dict[str, Any]:
         grouped = {group: [] for group in self.GROUP_ORDER}
@@ -130,11 +147,17 @@ class PrincipalVariablesService:
                 "value": self._read_value(meta),
                 "editable": True,
                 "impacta_hoy": bool(meta.get("applies_today")),
+                "confiabilidad": meta.get("confiabilidad", "alta"),
+                "productos_afectados": meta.get("productos_afectados", []),
             })
             item.pop("path", None)
+            item.pop("storage_file", None)
             grouped[meta["group"]].append(item)
+        mother_variables = [item for group in self.GROUP_ORDER for item in grouped[group]]
         return {
             **grouped,
+            "variables_madre_impactan_hoy": [item for item in mother_variables if item["impacta_hoy"]],
+            "variables_madre_preparadas": [item for item in mother_variables if not item["impacta_hoy"]],
             "papeles_detectados": self._detected_papers_status(),
             "valores_derivados": self._derived_values_status(),
             "tablas_fijas_pdf": self._fixed_tables_status(),
@@ -162,22 +185,37 @@ class PrincipalVariablesService:
         }
 
     def audit(self) -> dict[str, Any]:
-        files = sorted({str(meta["source_file"]) for meta in self.catalog.values()})
+        files = sorted({str(meta.get("storage_file", meta["source_file"])) for meta in self.catalog.values()})
         mtimes = {}
         for relative in files:
             path = self.project_root / relative
             mtimes[relative] = (
                 datetime.fromtimestamp(path.stat().st_mtime, timezone.utc).isoformat() if path.exists() else None
             )
+        variables = self.get_grouped()
+        mother_variables = [
+            item
+            for group in self.GROUP_ORDER
+            for item in variables.get(group, [])
+        ]
+        found_config = [item for item in mother_variables if item.get("confiabilidad") == "alta"]
+        found_excel = [item for item in mother_variables if item.get("confiabilidad") == "media"]
+        discarded = self._prepared_discarded_variables()
         return {
             "ultima_modificacion_por_archivo": mtimes,
             "archivos_mapeados": files,
             "variables_editables_disponibles": sorted(self.catalog),
+            "variables_madre_encontradas_config": found_config,
+            "variables_madre_encontradas_excel": found_excel,
+            "variables_preparadas_sin_impacto_actual": [item for item in mother_variables if not item.get("impacta_hoy")],
+            "variables_descartadas_por_falta_de_valor": discarded,
             "variables_no_encontradas": list(self.expected_but_missing),
             "papeles_detectados_no_editables": self._detected_papers_status(),
+            "papeles_detectados_solo_pdf": self._detected_papers_status(),
             "advertencias": [
                 "No se exponen matrices PDF, factores de ajuste PDF ni coeficientes t?cnicos internos.",
                 "Los precios finales PDF fijos permanecen sin cambios.",
+                "Las variables de confiabilidad media se guardan en JSON preparado y no impactan el motor actual.",
             ],
         }
 
@@ -195,11 +233,70 @@ class PrincipalVariablesService:
                     "estado": "variable_madre_editable" if key in editable_keys else "detectado_sin_costo_base_confiable",
                     "motivo_no_editable": None if key in editable_keys else "Detectado en tablas PDF, pero no existe costo base confiable en USD.",
                     "impacta_hoy": key in editable_keys,
+                    "variables_madre_relacionadas": self._related_prepared_variables(key),
                     "source_file": "data/variables_comerciales/papeles.json",
                 }
                 for key in keys
             ]
         return result
+
+    def _load_prepared_variables(self) -> None:
+        path = self.project_root / self.prepared_variables_file
+        if not path.exists():
+            return
+        payload = self._read_json(path)
+        variables = payload.get("variables", {})
+        if not isinstance(variables, dict):
+            return
+        for key, raw in variables.items():
+            if not isinstance(raw, dict):
+                continue
+            value = raw.get("value")
+            if isinstance(value, bool) or not isinstance(value, (int, float)):
+                continue
+            if str(raw.get("confiabilidad", "")).lower() not in {"alta", "media"}:
+                continue
+            meta = {
+                "group": raw.get("group", "papeles"),
+                "label": raw.get("label", key),
+                "unit": raw.get("unit", "USD"),
+                "description": raw.get("description", "Variable madre preparada desde auditoría."),
+                "tipo": "variable_madre",
+                "min": raw.get("min", 0.0001),
+                "max": raw.get("max", 1000000),
+                "step": raw.get("step", 0.0001),
+                "source_file": raw.get("source_file", self.prepared_variables_file),
+                "source_cell": raw.get("source_cell"),
+                "source_path": raw.get("source_path") or f"variables.{key}.value",
+                "storage_file": self.prepared_variables_file,
+                "path": ["variables", key, "value"],
+                "applies_today": bool(raw.get("impacta_hoy", False)),
+                "confiabilidad": raw.get("confiabilidad", "media"),
+                "productos_afectados": raw.get("productos_afectados", []),
+                "impact": "Preparada para fórmulas variables futuras; no cambia precios actuales."
+                if not raw.get("impacta_hoy", False)
+                else raw.get("impact", "Impacta el cálculo actual."),
+            }
+            if meta["group"] in self.GROUP_ORDER:
+                self.catalog[key] = meta
+
+    def _prepared_discarded_variables(self) -> list[dict[str, Any]]:
+        path = self.project_root / self.prepared_variables_file
+        if not path.exists():
+            return []
+        payload = self._read_json(path)
+        discarded = payload.get("descartadas", [])
+        return discarded if isinstance(discarded, list) else []
+
+    def _related_prepared_variables(self, key: str) -> list[str]:
+        normalized = key.replace("papel_", "").replace("autoadhesivo_", "")
+        related = []
+        for catalog_key, meta in self.catalog.items():
+            if meta.get("confiabilidad") != "media":
+                continue
+            if key in catalog_key or normalized in catalog_key:
+                related.append(catalog_key)
+        return related
 
     @staticmethod
     def _derived_values_status() -> list[dict[str, Any]]:
@@ -236,12 +333,12 @@ class PrincipalVariablesService:
                 raise PrincipalVariableError(f"valor_fuera_de_rango:{key}")
             prepared.append((key, numeric, meta, float(self._read_value(meta))))
 
-        files = sorted({meta["source_file"] for _, _, meta, _ in prepared})
+        files = sorted({meta.get("storage_file", meta["source_file"]) for _, _, meta, _ in prepared})
         backups = [self._backup_file(relative) for relative in files]
         documents = {relative: self._read_json(self.project_root / relative) for relative in files}
 
         for _, value, meta, _ in prepared:
-            self._set_nested(documents[meta["source_file"]], meta["path"], value)
+            self._set_nested(documents[meta.get("storage_file", meta["source_file"])], meta["path"], value)
         for relative, document in documents.items():
             self._write_json(self.project_root / relative, document)
 
@@ -263,7 +360,7 @@ class PrincipalVariablesService:
             raise PrincipalVariableError("backup_no_encontrado")
         backup = self._read_json(backup_path)
         source_file = str(backup.get("_variables_principales_source_file", ""))
-        if source_file not in {meta["source_file"] for meta in self.catalog.values()}:
+        if source_file not in {meta.get("storage_file", meta["source_file"]) for meta in self.catalog.values()}:
             raise PrincipalVariableError("backup_incompatible")
         current_backup = self._backup_file(source_file)
         restored = deepcopy(backup)
@@ -273,7 +370,7 @@ class PrincipalVariablesService:
         return {"archivo_restaurado": source_file, "backup_previo_generado": current_backup}
 
     def _read_value(self, meta: dict[str, Any]) -> float:
-        data = self._read_json(self.project_root / meta["source_file"])
+        data = self._read_json(self.project_root / meta.get("storage_file", meta["source_file"]))
         current: Any = data
         for part in meta["path"]:
             current = current[part]
