@@ -40,6 +40,7 @@ class PricesExcelExporter:
         "17_AGENDAS_CUADERNOS",
         "18_BLOQUEADOS",
         "19_TRAZABILIDAD",
+        "21_TRAZABILIDAD_PRECIOS",
     ]
 
     SHEET_BY_TITLE = {
@@ -100,6 +101,39 @@ class PricesExcelExporter:
         "501 a 1000": 85,
     }
 
+    PRICE_TRACE_HEADERS = [
+        "producto",
+        "familia",
+        "variante",
+        "material",
+        "gramaje",
+        "formato",
+        "cantidad",
+        "rango",
+        "caras",
+        "terminacion",
+        "adicional",
+        "modo_precio",
+        "precio_final",
+        "precio_unitario",
+        "componente",
+        "tipo_componente",
+        "variable_key",
+        "variable_label",
+        "valor_base",
+        "unidad",
+        "operacion",
+        "factor_multiplicador",
+        "subtotal_componente",
+        "fuente_componente",
+        "fuente_precio_final",
+        "editable_en_sistema",
+        "editable_en_excel_maestro",
+        "impacta_hoy",
+        "estado_operativo",
+        "observacion",
+    ]
+
     def __init__(
         self,
         project_root: Path,
@@ -124,6 +158,7 @@ class PricesExcelExporter:
         self._build_product_sheets(workbook, export)
         self._build_blocked(workbook["18_BLOQUEADOS"], export)
         self._build_trace(workbook["19_TRAZABILIDAD"], export)
+        self._build_price_trace(workbook["21_TRAZABILIDAD_PRECIOS"], export)
 
         self._sanitize_workbook_text(workbook)
         for worksheet in workbook.worksheets:
@@ -161,6 +196,8 @@ class PricesExcelExporter:
             ("hojas_generadas", len(self.REQUIRED_SHEETS)),
             ("validacion_excel", self.validation_excel_status),
             ("reporte_validacion", self.validation_report_path or "ver tests/api/test_variables_principales_api.py y scripts/qa/validar_excel_maestro.py"),
+            ("trazabilidad_precios", True),
+            ("hoja_trazabilidad_precios", "21_TRAZABILIDAD_PRECIOS"),
             ("nota", "Productos PDF fijo no se editan desde este Excel; las variables madre se auditan por separado."),
         ]
         for row in rows:
@@ -376,6 +413,517 @@ class PricesExcelExporter:
                 row.get("estado"),
                 row.get("motivo"),
             ])
+
+    def _build_price_trace(self, ws, export: dict[str, Any]) -> None:
+        ws.append(self.PRICE_TRACE_HEADERS)
+        variable_by_key = {str(item.get("key")): item for item in self._mother_variables()}
+        auto_config = self._read_json("data/bajadas_autoadhesivas/autoadhesivas_v1_config.json")
+        circular_config = self._read_json("data/stickers_circulares/formula_editable_config.json")
+        circular_factor = self._find_circular_factor("obra_ilustracion_90g", "10cm", "con_laca_uv", 1000)
+        tinta_base = auto_config.get("adicional_tinta_blanca_base_1_copia")
+
+        rows = [
+            self._price_trace_row(
+                producto="Bajadas Kraft",
+                familia="Bajadas",
+                material="Kraft",
+                gramaje="80g",
+                formato="A3",
+                cantidad=1,
+                rango="1",
+                caras="4/0",
+                modo_precio="tabla_fija_pdf",
+                precio_final=782,
+                precio_unitario=782,
+                componente="precio_base_pdf",
+                tipo_componente="tabla_pdf",
+                operacion="precio tomado directo de matriz PDF",
+                subtotal_componente=782,
+                fuente_componente="data/bajadas_v2/precios_pdf_objetivo_limpio.json",
+                fuente_precio_final="lista-low.pdf",
+                estado_operativo="tabla_pdf_fija",
+                observacion="Kraft A3 usa matriz PDF específica; no se recalcula desde variables madre.",
+            ),
+            self._price_trace_row(
+                producto="Bajadas Kraft",
+                familia="Bajadas",
+                material="Kraft",
+                gramaje="80g",
+                formato="A3",
+                cantidad=100,
+                rango="51 a 100",
+                caras="4/0",
+                modo_precio="tabla_fija_pdf",
+                precio_final=56900,
+                precio_unitario=569,
+                componente="precio_base_pdf",
+                tipo_componente="tabla_pdf",
+                operacion="precio unitario PDF x cantidad",
+                subtotal_componente=56900,
+                fuente_componente="data/bajadas_v2/precios_pdf_objetivo_limpio.json",
+                fuente_precio_final="lista-low.pdf",
+                estado_operativo="tabla_pdf_fija",
+                observacion="Precio final formado por unitario 569 por 100 unidades.",
+            ),
+            self._price_trace_row(
+                producto="Bajadas Fullcolor",
+                familia="Bajadas",
+                material="Ilustracion",
+                gramaje="150g",
+                formato="A3+",
+                cantidad=53,
+                rango="51 a 100",
+                caras="4/0",
+                modo_precio="tabla_pdf_fija_con_adicional_variable",
+                precio_final=32966,
+                precio_unitario=622,
+                componente="precio_base_pdf",
+                tipo_componente="tabla_pdf",
+                variable_key="ilustracion_150g_65x95_usd",
+                variable_label="Ilustración 150g 65x95",
+                operacion="precio tomado directo de matriz PDF",
+                subtotal_componente=32966,
+                fuente_componente="data/bajadas_v2/precios_pdf_objetivo_limpio.json",
+                fuente_precio_final="lista-low.pdf",
+                editable_en_excel_maestro=True,
+                estado_operativo="tabla_pdf_fija",
+                observacion="El papel está relacionado conceptualmente, pero cambiar la variable preparada no modifica hoy Bajadas Fullcolor.",
+            ),
+            self._price_trace_row(
+                producto="Bajadas Fullcolor",
+                familia="Bajadas",
+                material="Ilustracion",
+                gramaje="150g",
+                formato="A3+",
+                cantidad=53,
+                rango="51 a 100",
+                caras="4/0",
+                adicional="laca_uv",
+                modo_precio="tabla_pdf_fija_con_adicional_variable",
+                precio_final=38584,
+                precio_unitario=728,
+                componente="laca_uv",
+                tipo_componente="adicional_variable",
+                valor_base=106,
+                unidad="ARS/unidad",
+                operacion="valor x cantidad",
+                subtotal_componente=5618,
+                fuente_componente="matriz_laca_uv_bajadas",
+                fuente_precio_final="lista-low.pdf + matriz_laca_uv_bajadas",
+                impacta_hoy=True,
+                estado_operativo="adicional_operativo",
+                observacion="Laca UV usa escala fija por rango validada; en rango 51 a 100 vale 106 por unidad.",
+            ),
+            self._price_trace_row(
+                producto="Bajadas Autoadhesivas",
+                familia="Bajadas",
+                variante="especial",
+                material="OPP blanco",
+                formato="A3+",
+                cantidad=30,
+                rango="26 a 50",
+                caras="4/0",
+                adicional="laca_uv",
+                modo_precio="tabla_pdf_fija_con_adicional_variable",
+                componente="laca_uv",
+                tipo_componente="adicional_variable",
+                valor_base=116,
+                unidad="ARS/unidad",
+                operacion="valor x cantidad",
+                subtotal_componente=3480,
+                fuente_componente="matriz_laca_uv_bajadas",
+                fuente_precio_final="lista-low.pdf + matriz_laca_uv_bajadas",
+                impacta_hoy=True,
+                estado_operativo="adicional_operativo",
+                observacion="Laca UV en autoadhesivas se suma como adicional acumulable; no duplica con payload legacy.",
+            ),
+            self._price_trace_row(
+                producto="Bajadas Autoadhesivas",
+                familia="Bajadas",
+                variante="especial",
+                material="OPP blanco",
+                formato="A3+",
+                cantidad=30,
+                rango="26 a 50",
+                caras="4/0",
+                adicional="tinta_blanca",
+                modo_precio="tabla_pdf_fija_con_adicional_variable",
+                componente="tinta_blanca",
+                tipo_componente="adicional_variable",
+                variable_key="adicional_tinta_blanca_base_1_copia",
+                variable_label=self._variable_label(variable_by_key, "adicional_tinta_blanca_base_1_copia", "Tinta blanca Autoadhesivas (1 copia)"),
+                valor_base=tinta_base,
+                unidad="ARS/unidad",
+                operacion="valor_base x cantidad",
+                subtotal_componente=tinta_base * 30 if isinstance(tinta_base, (int, float)) else None,
+                fuente_componente="data/bajadas_autoadhesivas/autoadhesivas_v1_config.json",
+                fuente_precio_final="lista-low.pdf + adicional operativo",
+                editable_en_sistema=True,
+                editable_en_excel_maestro=True,
+                impacta_hoy=True,
+                estado_operativo="adicional_operativo",
+                observacion="La base de tinta blanca impacta hoy como adicional proporcional por cantidad.",
+            ),
+            self._price_trace_row(
+                producto="Tarjetas 9x5",
+                familia="Tarjetas",
+                material="Ilustracion",
+                gramaje="300g",
+                formato="9x5",
+                cantidad=100,
+                caras="4/0",
+                terminacion="sin_laminar",
+                modo_precio="tabla_fija_pdf",
+                precio_final=5139,
+                precio_unitario=51.39,
+                componente="precio_base_pdf",
+                tipo_componente="tabla_pdf",
+                operacion="precio tomado directo de matriz PDF",
+                subtotal_componente=5139,
+                fuente_componente="data/tarjetas_9x5/precios_pdf_objetivo_tarjetas_9x5.json",
+                fuente_precio_final="lista-low.pdf",
+                estado_operativo="tabla_pdf_fija",
+                observacion="Precio final cerrado por matriz PDF. No se edita desde variables madre.",
+            ),
+            self._price_trace_row(
+                producto="Tarjetas 9x5",
+                familia="Tarjetas",
+                material="Ilustracion",
+                gramaje="300g",
+                formato="9x5",
+                cantidad=1000,
+                caras="4/4",
+                terminacion="laminado_mate",
+                modo_precio="tabla_fija_pdf",
+                precio_final=48401,
+                precio_unitario=48.401,
+                componente="precio_base_pdf",
+                tipo_componente="tabla_pdf",
+                operacion="precio tomado directo de matriz PDF",
+                subtotal_componente=48401,
+                fuente_componente="data/tarjetas_9x5/precios_pdf_objetivo_tarjetas_9x5.json",
+                fuente_precio_final="lista-low.pdf",
+                estado_operativo="tabla_pdf_fija",
+                observacion="Terminación incluida en matriz final PDF.",
+            ),
+            self._price_trace_row(
+                producto="Tarjetas Postales",
+                familia="Tarjetas",
+                material="Ilustracion",
+                gramaje="300g",
+                formato="postal",
+                cantidad=100,
+                caras="4/0",
+                terminacion="sin_laminar",
+                modo_precio="tabla_fija_pdf",
+                precio_final=10932,
+                precio_unitario=109.32,
+                componente="precio_base_pdf",
+                tipo_componente="tabla_pdf",
+                operacion="precio tomado directo de matriz PDF",
+                subtotal_componente=10932,
+                fuente_componente="data/tarjetas_postales/precios_pdf_objetivo_tarjetas_postales.json",
+                fuente_precio_final="lista-low.pdf",
+                estado_operativo="tabla_pdf_fija",
+                observacion="Precio final cerrado por matriz PDF.",
+            ),
+            self._price_trace_row(
+                producto="Tarjetas Postales",
+                familia="Tarjetas",
+                material="Ilustracion",
+                gramaje="300g",
+                formato="postal",
+                cantidad=1000,
+                caras="4/4",
+                terminacion="laminado_mate",
+                modo_precio="tabla_fija_pdf",
+                precio_final=136795,
+                precio_unitario=136.795,
+                componente="precio_base_pdf",
+                tipo_componente="tabla_pdf",
+                operacion="precio tomado directo de matriz PDF",
+                subtotal_componente=136795,
+                fuente_componente="data/tarjetas_postales/precios_pdf_objetivo_tarjetas_postales.json",
+                fuente_precio_final="lista-low.pdf",
+                estado_operativo="tabla_pdf_fija",
+                observacion="Terminación incluida en matriz final PDF.",
+            ),
+        ]
+
+        rows.extend(self._fixed_price_trace_rows())
+        rows.extend(self._stickers_circulares_trace_rows(variable_by_key, circular_config, circular_factor))
+        rows.extend(self._blocked_price_trace_rows(export))
+        for row in rows:
+            ws.append([row.get(header) for header in self.PRICE_TRACE_HEADERS])
+
+    def _price_trace_row(self, **kwargs: Any) -> dict[str, Any]:
+        row = {header: None for header in self.PRICE_TRACE_HEADERS}
+        row.update({
+            "editable_en_sistema": False,
+            "editable_en_excel_maestro": False,
+            "impacta_hoy": False,
+            "estado_operativo": "tabla_pdf_fija",
+        })
+        row.update(kwargs)
+        return row
+
+    def _fixed_price_trace_rows(self) -> list[dict[str, Any]]:
+        specs = [
+            ("Folletos", "Folletos", "Ilustracion", "80g", "A4", 1000, None, "1/1", None, None, 119247, 119.247, "data/folletos/precios_pdf_objetivo_folletos.json", "A4 80g escala grises 1/1."),
+            ("Folletos", "Folletos", "Ilustracion", "150g", "10x15", 100, None, "4/0", None, None, 8445, 84.45, "data/folletos/precios_pdf_objetivo_folletos.json", "10x15 150g fullcolor 4/0."),
+            ("Folletos", "Folletos", "Ilustracion", "150g", "10x10", 100, None, "4/0", None, None, 6496, 64.96, "data/folletos/precios_pdf_objetivo_folletos.json", "10x10 150g fullcolor 4/0."),
+            ("Carpetas", "Papelería", "Ilustracion", "300g", "A4", 1, "1", "4/0", "sin_laminar", None, 1762, 1762, "data/carpetas/precios_pdf_objetivo_carpetas.json", "Sin solapa impresa."),
+            ("Carpetas", "Papelería", "Ilustracion", "300g", "A4", 1, "1", "4/0", "sin_laminar", "solapa_impresa", 2017, 2017, "data/carpetas/precios_pdf_objetivo_carpetas.json", "Base 1762 + solapa 255."),
+            ("Carpetas", "Papelería", "Ilustracion", "300g", "A4", 100, "51 a 100", "4/4", "laca_uv", "solapa_impresa", 187100, 1871, "data/carpetas/precios_pdf_objetivo_carpetas.json", "Unitario 1683 + solapa 188, multiplicado por 100."),
+            ("Sobres", "Papelería", "Papel blanco", "63g", "sobre_bolsa_a4_22_9x32_4", 100, None, "4/0", None, None, 63300, 633, "data/sobres/precios_pdf_objetivo_sobres.json", "Precio unitario PDF por cantidad."),
+            ("Sobres", "Papelería", "Papel blanco", "63g", "sobre_bolsa_27x37", 1000, None, "4/0", None, None, 536000, 536, "data/sobres/precios_pdf_objetivo_sobres.json", "Precio unitario PDF por cantidad."),
+            ("Stickers Corte Recto", "Stickers", "Sticker", None, "6x4", 100, None, "4/0", "sin_laca_uv", None, 2765, 27.65, "data/stickers_corte_recto/precios_pdf_objetivo_stickers_corte_recto.json", "Precio total por paquete PDF."),
+            ("Stickers Corte Recto", "Stickers", "Sticker", None, "10x7", 1000, None, "4/0", "con_laca_uv", None, 61703, 61.703, "data/stickers_corte_recto/precios_pdf_objetivo_stickers_corte_recto.json", "Precio total por paquete PDF."),
+            ("Imanes Corte Recto", "Imanes", "Imán + Ilustracion", "300g", "6x4", 100, None, "4/0", "sin_laca_uv", None, 7526, 75.26, "data/imanes_corte_recto/precios_pdf_objetivo_imanes_corte_recto.json", "Precio total por paquete PDF."),
+            ("Imanes Corte Recto", "Imanes", "Imán + Ilustracion", "300g", "10x7", 1000, None, "4/0", "con_laca_uv", None, 153680, 153.68, "data/imanes_corte_recto/precios_pdf_objetivo_imanes_corte_recto.json", "Precio total por paquete PDF."),
+            ("Plancha de Imán Impreso", "Imanes", "Papel 300g Ilustracion", "300g", "30x46", 500, "301 a 500", "4/0", None, None, 965500, 1931, "data/plancha_iman_impreso/precios_pdf_objetivo_plancha_iman_impreso.json", "Unitario 1931 por 500."),
+            ("Agendas / Cuadernos", "Agendas", "Agenda 2026", None, "A5", 2, None, None, None, None, 6000, 3000, "data/agendas_cuadernos/precios_pdf_objetivo_agendas_cuadernos.json", "Agenda 2026 A5 72 páginas, precio unitario test actual."),
+        ]
+        return [
+            self._price_trace_row(
+                producto=producto,
+                familia=familia,
+                material=material,
+                gramaje=gramaje,
+                formato=formato,
+                cantidad=cantidad,
+                rango=rango,
+                caras=caras,
+                terminacion=terminacion,
+                adicional=adicional,
+                modo_precio="tabla_fija_pdf",
+                precio_final=precio_final,
+                precio_unitario=precio_unitario,
+                componente="precio_base_pdf",
+                tipo_componente="tabla_pdf",
+                operacion="precio tomado directo de matriz PDF",
+                subtotal_componente=precio_final,
+                fuente_componente=fuente,
+                fuente_precio_final="lista-low.pdf",
+                estado_operativo="tabla_pdf_fija",
+                observacion=observacion,
+            )
+            for producto, familia, material, gramaje, formato, cantidad, rango, caras, terminacion, adicional, precio_final, precio_unitario, fuente, observacion in specs
+        ]
+
+    def _stickers_circulares_trace_rows(
+        self,
+        variable_by_key: dict[str, dict[str, Any]],
+        config: dict[str, Any],
+        factor_row: dict[str, Any] | None,
+    ) -> list[dict[str, Any]]:
+        variables = config.get("variables", {})
+        coef_tamano = (variables.get("coeficiente_tamano") or {}).get("10cm")
+        coef_cantidad = (variables.get("coeficiente_cantidad") or {}).get("1000")
+        material_base = (variables.get("material_base") or {}).get("obra_ilustracion_90g")
+        click_color = variables.get("click_color_base")
+        laca_factor = variables.get("laca_uv_factor")
+        corte_factor = variables.get("corte_circular_factor")
+        multiplicador = variables.get("multiplicador_comercial")
+        precio_base = factor_row.get("precio_base_excel") if factor_row else None
+        factor_ajuste = factor_row.get("factor_ajuste_pdf") if factor_row else None
+        precio_pdf = factor_row.get("precio_pdf_objetivo") if factor_row else 85980
+        base_common = {
+            "producto": "Stickers Circulares",
+            "familia": "Stickers",
+            "variante": "circular",
+            "material": "obra_ilustracion_90g",
+            "gramaje": "90g",
+            "formato": "10cm",
+            "cantidad": 1000,
+            "caras": "4/0",
+            "terminacion": "con_laca_uv",
+            "modo_precio": "formula_editable_calibrada",
+            "precio_final": precio_pdf,
+            "precio_unitario": round(precio_pdf / 1000, 4) if isinstance(precio_pdf, (int, float)) else None,
+            "fuente_precio_final": "fórmula editable calibrada contra lista-low.pdf",
+        }
+        return [
+            self._price_trace_row(
+                **base_common,
+                componente="papel",
+                tipo_componente="variable_madre",
+                variable_key="obra_90g",
+                variable_label=self._variable_label(variable_by_key, "obra_90g", "Papel obra/ilustración 90g"),
+                valor_base=material_base,
+                unidad="USD",
+                operacion="participa en subtotal_formula_excel",
+                fuente_componente="data/stickers_circulares/formula_editable_config.json",
+                editable_en_sistema=True,
+                editable_en_excel_maestro=True,
+                impacta_hoy=True,
+                estado_operativo="operativa",
+                observacion="El costo de papel impacta hoy en la fórmula editable calibrada de Stickers Circulares.",
+            ),
+            self._price_trace_row(
+                **base_common,
+                componente="click_color",
+                tipo_componente="variable_madre",
+                variable_key="click_color",
+                variable_label=self._variable_label(variable_by_key, "click_color", "Click color"),
+                valor_base=click_color,
+                unidad="ARS",
+                operacion="participa en subtotal_formula_excel",
+                fuente_componente="data/stickers_circulares/formula_editable_config.json",
+                editable_en_sistema=True,
+                editable_en_excel_maestro=True,
+                impacta_hoy=True,
+                estado_operativo="operativa",
+                observacion="Click color operativo usado por fórmula calibrada.",
+            ),
+            self._price_trace_row(
+                **base_common,
+                componente="laca_uv",
+                tipo_componente="factor",
+                valor_base=laca_factor,
+                unidad="factor",
+                operacion="subtotal x factor",
+                factor_multiplicador=laca_factor,
+                fuente_componente="data/stickers_circulares/formula_editable_config.json",
+                editable_en_excel_maestro=True,
+                impacta_hoy=True,
+                estado_operativo="derivada",
+                observacion="Factor de laca UV de la fórmula editable calibrada.",
+            ),
+            self._price_trace_row(
+                **base_common,
+                componente="corte_circular",
+                tipo_componente="factor",
+                valor_base=corte_factor,
+                unidad="factor",
+                operacion="subtotal x factor",
+                factor_multiplicador=corte_factor,
+                fuente_componente="data/stickers_circulares/formula_editable_config.json",
+                editable_en_excel_maestro=True,
+                impacta_hoy=True,
+                estado_operativo="derivada",
+                observacion="Factor de corte circular detectado en configuración editable.",
+            ),
+            self._price_trace_row(
+                **base_common,
+                componente="coeficiente_tamano",
+                tipo_componente="factor",
+                valor_base=coef_tamano,
+                unidad="factor",
+                operacion="valor x coeficiente",
+                factor_multiplicador=coef_tamano,
+                fuente_componente="data/stickers_circulares/formula_editable_config.json",
+                editable_en_excel_maestro=True,
+                impacta_hoy=True,
+                estado_operativo="derivada",
+                observacion="Coeficiente de tamaño 10cm.",
+            ),
+            self._price_trace_row(
+                **base_common,
+                componente="coeficiente_cantidad",
+                tipo_componente="factor",
+                valor_base=coef_cantidad,
+                unidad="factor",
+                operacion="valor x coeficiente",
+                factor_multiplicador=coef_cantidad,
+                fuente_componente="data/stickers_circulares/formula_editable_config.json",
+                editable_en_excel_maestro=True,
+                impacta_hoy=True,
+                estado_operativo="derivada",
+                observacion="Coeficiente de cantidad 1000.",
+            ),
+            self._price_trace_row(
+                **base_common,
+                componente="multiplicador_general",
+                tipo_componente="multiplicador",
+                variable_key="multiplicador_general",
+                variable_label=self._variable_label(variable_by_key, "multiplicador_general", "Multiplicador comercial general"),
+                valor_base=multiplicador,
+                unidad="factor",
+                operacion="subtotal x factor",
+                factor_multiplicador=multiplicador,
+                fuente_componente="data/stickers_circulares/formula_editable_config.json",
+                editable_en_sistema=True,
+                editable_en_excel_maestro=True,
+                impacta_hoy=True,
+                estado_operativo="operativa",
+                observacion="Multiplicador operativo de la fórmula editable calibrada.",
+            ),
+            self._price_trace_row(
+                **base_common,
+                componente="subtotal_formula",
+                tipo_componente="derivado",
+                valor_base=precio_base,
+                unidad="ARS",
+                operacion="subtotal reconstruido desde fórmula Excel",
+                subtotal_componente=precio_base,
+                fuente_componente="data/stickers_circulares/factores_ajuste_pdf.json",
+                estado_operativo="derivada",
+                observacion="Subtotal base antes de calibración PDF.",
+            ),
+            self._price_trace_row(
+                **base_common,
+                componente="factor_ajuste_pdf",
+                tipo_componente="factor",
+                valor_base=factor_ajuste,
+                unidad="factor",
+                operacion="subtotal x factor",
+                factor_multiplicador=factor_ajuste,
+                subtotal_componente=precio_pdf,
+                fuente_componente="data/stickers_circulares/factores_ajuste_pdf.json",
+                estado_operativo="derivada",
+                observacion="Factor de ajuste calibra la fórmula para coincidir con PDF; no es variable madre editable.",
+            ),
+            self._price_trace_row(
+                **base_common,
+                componente="total_final",
+                tipo_componente="derivado",
+                valor_base=precio_pdf,
+                unidad="ARS",
+                operacion="subtotal_formula x factor_ajuste_pdf",
+                subtotal_componente=precio_pdf,
+                fuente_componente="data/stickers_circulares/precios_pdf_objetivo_stickers_circulares.json",
+                estado_operativo="derivada",
+                observacion="Total final coincide con PDF vigente.",
+            ),
+        ]
+
+    def _blocked_price_trace_rows(self, export: dict[str, Any]) -> list[dict[str, Any]]:
+        rows = []
+        for blocked in self._blocked_rows(export):
+            rows.append(self._price_trace_row(
+                producto=blocked.get("producto"),
+                familia="Bloqueados",
+                modo_precio="bloqueado",
+                componente="bloqueado",
+                tipo_componente="bloqueado",
+                operacion="bloqueado por falta de datos",
+                fuente_componente=blocked.get("fuente"),
+                fuente_precio_final="bloqueado",
+                estado_operativo="bloqueada",
+                observacion=blocked.get("motivo"),
+            ))
+        return rows
+
+    def _variable_label(self, variable_by_key: dict[str, dict[str, Any]], key: str, fallback: str) -> str:
+        return str(variable_by_key.get(key, {}).get("label") or fallback)
+
+    def _find_circular_factor(self, material: str, formato: str, terminacion: str, cantidad: int) -> dict[str, Any] | None:
+        document = self._read_json("data/stickers_circulares/factores_ajuste_pdf.json")
+        rows = document.get("rows", document) if isinstance(document, dict) else document
+        if not isinstance(rows, list):
+            return None
+        for row in rows:
+            if not isinstance(row, dict):
+                continue
+            if (
+                row.get("material") == material
+                and row.get("formato") == formato
+                and row.get("terminacion") == terminacion
+                and row.get("cantidad_unidades") == cantidad
+            ):
+                return row
+        return None
 
     def _format_sheet(self, ws) -> None:
         thin = Side(style="thin", color="D9E2EC")

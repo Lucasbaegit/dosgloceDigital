@@ -193,6 +193,9 @@ Hojas clave:
 - `02_RANGOS`
 - `18_BLOQUEADOS`
 - `19_TRAZABILIDAD`
+- `21_TRAZABILIDAD_PRECIOS`
+
+El Excel maestro incluye la hoja `21_TRAZABILIDAD_PRECIOS`, donde se explica de dónde provienen precios testigo y cómo se componen: tabla PDF, variables madre, adicionales, factores, derivados o bloqueados.
 
 La hoja más importante para revisar cambios de precios es:
 

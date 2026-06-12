@@ -39,6 +39,38 @@ VARIABLE_HEADERS = [
 BROKEN_PATTERNS = ["�", "m?nimos", "m?nimo", "ilustraci?n", "f?rmula", "f?rmulas", "configuraci?n", "informaci?n", "hist?rico", "l?gica", "Im?n"]
 FORBIDDEN_VARIABLE_KEYS = ("precio_final", "precio_pdf", "precio_objetivo_pdf", "factor_ajuste_pdf", "total_final", "matriz_pdf")
 OPERATIVE_KEYS = ["tipo_cambio_usd", "click_color", "obra_90g", "multiplicador_general", "adicional_tinta_blanca_base_1_copia"]
+PRICE_TRACE_HEADERS = [
+    "producto",
+    "familia",
+    "variante",
+    "material",
+    "gramaje",
+    "formato",
+    "cantidad",
+    "rango",
+    "caras",
+    "terminacion",
+    "adicional",
+    "modo_precio",
+    "precio_final",
+    "precio_unitario",
+    "componente",
+    "tipo_componente",
+    "variable_key",
+    "variable_label",
+    "valor_base",
+    "unidad",
+    "operacion",
+    "factor_multiplicador",
+    "subtotal_componente",
+    "fuente_componente",
+    "fuente_precio_final",
+    "editable_en_sistema",
+    "editable_en_excel_maestro",
+    "impacta_hoy",
+    "estado_operativo",
+    "observacion",
+]
 
 
 def main() -> int:
@@ -77,6 +109,8 @@ def main() -> int:
     check(results, "bloqueados", blocked_validation["ok"], blocked_validation)
     trace_validation = validate_trace(workbook["19_TRAZABILIDAD"])
     check(results, "trazabilidad", trace_validation["ok"], trace_validation)
+    price_trace_validation = validate_price_trace(workbook["21_TRAZABILIDAD_PRECIOS"])
+    check(results, "trazabilidad_precios", price_trace_validation["ok"], price_trace_validation)
     formatting_validation = validate_basic_format(workbook)
     check(results, "formato_basico", formatting_validation["ok"], formatting_validation)
 
@@ -98,6 +132,7 @@ def main() -> int:
         "variables_operativas_validadas": operative_validation,
         "variables_preparadas_validadas": prepared_validation,
         "bloqueados_validados": blocked_validation,
+        "trazabilidad_precios_validada": price_trace_validation,
         "veredicto": "PASS" if not failed else "FAIL",
         "resultados": results,
     }
@@ -135,6 +170,8 @@ def summary_has_required_fields(ws) -> bool:
         "productos_bloqueados",
         "hojas_generadas",
         "validacion_excel",
+        "trazabilidad_precios",
+        "hoja_trazabilidad_precios",
     }
     found = {str(row[0]) for row in ws.iter_rows(min_row=2, values_only=True) if row[0]}
     return required <= found
@@ -217,6 +254,53 @@ def validate_trace(ws) -> dict[str, Any]:
     modes = {row.get("modo_precio") for row in rows}
     ok = headers == required_headers and "/bajadas-v2/cotizar" in {row.get("endpoint") for row in rows} and "formula_editable_calibrada" in modes and "tabla_fija_pdf" in modes and "bloqueado" in modes
     return {"ok": ok, "headers": headers, "modos": sorted(str(mode) for mode in modes), "cantidad": len(rows)}
+
+
+def validate_price_trace(ws) -> dict[str, Any]:
+    headers = [cell.value for cell in ws[1]]
+    rows = [dict(zip(headers, row)) for row in ws.iter_rows(min_row=2, values_only=True) if row[0]]
+    required_cases = {
+        "tarjetas_9x5_5139": any(row.get("producto") == "Tarjetas 9x5" and row.get("precio_final") == 5139 for row in rows),
+        "stickers_circulares_85980": any(row.get("producto") == "Stickers Circulares" and row.get("precio_final") == 85980 for row in rows),
+        "autoadhesivas_tinta_603": any(row.get("producto") == "Bajadas Autoadhesivas" and row.get("componente") == "tinta_blanca" and row.get("valor_base") == 603 for row in rows),
+        "bajadas_fullcolor_622": any(row.get("producto") == "Bajadas Fullcolor" and row.get("precio_unitario") == 622 for row in rows),
+        "membretes_bloqueado": any(row.get("producto") == "Membretes" and row.get("modo_precio") == "bloqueado" for row in rows),
+    }
+    tipos = {row.get("tipo_componente") for row in rows}
+    componentes = {row.get("componente") for row in rows}
+    tabla_pdf_safe = all(
+        row.get("editable_en_sistema") is not True and row.get("impacta_hoy") is not True
+        for row in rows
+        if row.get("tipo_componente") == "tabla_pdf" or row.get("estado_operativo") == "tabla_pdf_fija"
+    )
+    blocked_safe = all(
+        row.get("precio_final") in (None, "")
+        and row.get("precio_unitario") in (None, "")
+        and row.get("subtotal_componente") in (None, "")
+        for row in rows
+        if row.get("modo_precio") == "bloqueado" or row.get("tipo_componente") == "bloqueado"
+    )
+    ok = (
+        headers == PRICE_TRACE_HEADERS
+        and all(required_cases.values())
+        and "tabla_pdf" in tipos
+        and "variable_madre" in tipos
+        and "adicional_variable" in tipos
+        and ({"factor", "multiplicador"} & tipos)
+        and "total_final" in componentes
+        and tabla_pdf_safe
+        and blocked_safe
+    )
+    return {
+        "ok": ok,
+        "headers": headers,
+        "cantidad": len(rows),
+        "required_cases": required_cases,
+        "tipos": sorted(str(tipo) for tipo in tipos),
+        "componentes": sorted(str(componente) for componente in componentes),
+        "tabla_pdf_safe": tabla_pdf_safe,
+        "blocked_safe": blocked_safe,
+    }
 
 
 def validate_basic_format(workbook) -> dict[str, Any]:

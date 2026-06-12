@@ -36,6 +36,7 @@ class TestVariablesPrincipalesApi(unittest.TestCase):
         "17_AGENDAS_CUADERNOS",
         "18_BLOQUEADOS",
         "19_TRAZABILIDAD",
+        "21_TRAZABILIDAD_PRECIOS",
     ]
 
     @classmethod
@@ -214,6 +215,24 @@ class TestVariablesPrincipalesApi(unittest.TestCase):
         self.assertIn("/stickers-circulares/cotizar", trace_values)
         trace_headers = [cell.value for cell in workbook["19_TRAZABILIDAD"][1]]
         self.assertEqual(trace_headers, ["producto", "endpoint", "modo_precio", "fuente_pdf", "fuente_excel", "archivo_data", "motor_backend", "estado", "notas"])
+
+        price_trace = workbook["21_TRAZABILIDAD_PRECIOS"]
+        price_trace_headers = [cell.value for cell in price_trace[1]]
+        self.assertIn("producto", price_trace_headers)
+        self.assertIn("componente", price_trace_headers)
+        self.assertIn("tipo_componente", price_trace_headers)
+        self.assertIn("editable_en_sistema", price_trace_headers)
+        self.assertIn("impacta_hoy", price_trace_headers)
+        price_rows = [dict(zip(price_trace_headers, row)) for row in price_trace.iter_rows(min_row=2, values_only=True) if row[0]]
+        self.assertTrue(any(row["producto"] == "Tarjetas 9x5" and row["precio_final"] == 5139 for row in price_rows))
+        self.assertTrue(any(row["producto"] == "Stickers Circulares" and row["precio_final"] == 85980 for row in price_rows))
+        self.assertTrue(any(row["producto"] == "Bajadas Autoadhesivas" and row["componente"] == "tinta_blanca" and row["valor_base"] == 603 for row in price_rows))
+        self.assertTrue(any(row["producto"] == "Membretes" and row["modo_precio"] == "bloqueado" for row in price_rows))
+        self.assertTrue(any(row["tipo_componente"] == "tabla_pdf" for row in price_rows))
+        self.assertTrue(any(row["tipo_componente"] == "variable_madre" for row in price_rows))
+        self.assertTrue(any(row["tipo_componente"] == "adicional_variable" for row in price_rows))
+        self.assertFalse(any(row["tipo_componente"] == "tabla_pdf" and row["editable_en_sistema"] for row in price_rows))
+        self.assertFalse(any(row["estado_operativo"] == "tabla_pdf_fija" and row["impacta_hoy"] for row in price_rows))
 
     def test_put_rechaza_key_y_valores_invalidos(self):
         status, _ = self.call("PUT", "/variables-principales", {"updates": [{"key": "factor_ajuste_pdf", "value": 2}]})

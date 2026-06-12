@@ -275,6 +275,8 @@ Sirve para auditar todo el sistema en formato ordenado.
 
 Incluye variables, rangos, productos, bloqueados y trazabilidad.
 
+También incluye la hoja `21_TRAZABILIDAD_PRECIOS`, donde se explica de dónde provienen precios testigo y cómo se componen: tabla PDF, variables madre, adicionales, factores, derivados o bloqueados.
+
 ---
 
 ## 12. Regla general de uso

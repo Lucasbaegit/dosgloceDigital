@@ -325,6 +325,9 @@ Hojas principales:
 - hojas de productos
 - `18_BLOQUEADOS`
 - `19_TRAZABILIDAD`
+- `21_TRAZABILIDAD_PRECIOS`
+
+La hoja `21_TRAZABILIDAD_PRECIOS` explica de dónde provienen precios testigo y cómo se componen: tabla PDF, variables madre, adicionales, factores, derivados o bloqueados.
 
 Archivos clave:
 
