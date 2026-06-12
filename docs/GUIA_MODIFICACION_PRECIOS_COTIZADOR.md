@@ -346,3 +346,31 @@ estado_operativo = preparada_no_conectada
 ```
 
 Si hay duda, no modificar el precio. Revisar fuente, trazabilidad y QA primero.
+
+---
+
+## 16. Usar trazabilidad visual antes de modificar
+
+Antes de tocar una variable madre o matriz, revisar la pestaña `Trazabilidad visual`.
+
+La vista ayuda a diferenciar:
+
+- Variables madre editables.
+- Derivados calculados desde otra base.
+- Factores o multiplicadores.
+- Tablas PDF fijas no editables.
+- Productos bloqueados por falta de datos.
+
+Ejemplo de regla protegida:
+
+```text
+click_color -> precio_click_A3 -> precio_click_XL / precio_click_A4
+```
+
+En este caso, XL y A4 no se editan como variables madre: derivan desde A3.
+
+La trazabilidad visual no reemplaza el QA masivo. Después de cualquier cambio de precios, correr siempre:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\qa\run_qa_precios.ps1
+```

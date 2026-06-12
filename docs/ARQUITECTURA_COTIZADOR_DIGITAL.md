@@ -502,3 +502,28 @@ Si una fuente no es confiable:
 - Se documenta como bloqueado o detectado sin costo base.
 
 Esta regla protege la confiabilidad comercial del cotizador.
+
+---
+
+## 19. Trazabilidad visual de precios
+
+El sistema expone una vista de lectura llamada `Trazabilidad visual`.
+
+Backend:
+
+- Endpoint: `GET /trazabilidad/grafo`.
+- Devuelve nodos, relaciones y leyenda para explicar cómo se conecta una variable madre, un derivado, un factor o una tabla PDF con el precio final.
+- Es read-only: no modifica precios, variables, matrices ni configuración.
+
+Casos iniciales:
+
+- Click Bajadas por formato: `click_color -> precio_click_A3 -> precio_click_XL / precio_click_A4`.
+- Stickers Circulares con fórmula editable calibrada.
+- Autoadhesivas Tinta Blanca.
+- Tarjetas 9x5 con matriz PDF.
+
+Regla importante:
+
+- En Bajadas, A3 es la base proporcional de click.
+- XL y A4 derivan desde A3.
+- XL y A4 no son variables madre editables.

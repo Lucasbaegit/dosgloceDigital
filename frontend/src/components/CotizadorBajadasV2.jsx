@@ -27,6 +27,7 @@ import {
   fetchPrincipalVariables,
   fetchPrincipalVariablesAudit,
   fetchPrincipalVariablesRanges,
+  fetchTraceGraph,
   exportPricesExcel,
   exportPricesPdf,
   previewExcelMaestro,
@@ -181,6 +182,22 @@ const ADICIONALES_LIVIANO = [
   { label: "Sin adicional", value: "sin_adicional" },
   { label: "Laca UV", value: "laca" },
 ];
+const TRACE_GRAPH_CASES = [
+  { value: "click_bajadas", label: "Click Bajadas por formato" },
+  { value: "stickers_circulares", label: "Stickers Circulares fórmula calibrada" },
+  { value: "autoadhesivas_tinta_blanca", label: "Autoadhesivas tinta blanca" },
+  { value: "tarjetas_9x5", label: "Tarjetas 9x5 matriz PDF" },
+];
+
+const TRACE_TYPE_LABELS = {
+  variable_madre: "Variable madre",
+  derivado: "Derivado",
+  tabla_pdf: "Tabla PDF",
+  preparada: "Preparada",
+  bloqueado: "Bloqueado",
+  factor: "Factor / multiplicador",
+};
+
 const INITIAL_FORM = {
   categoria_ui: "Bajadas Fullcolor/ByN",
   formato: "A4",
@@ -218,6 +235,49 @@ const INITIAL_FORM = {
   formato_agendas: "A5",
   paginas_agendas: "24",
 };
+
+function formatTraceValue(node) {
+  if (!node || node.value === null || node.value === undefined || node.value === "") return "-";
+  const value = typeof node.value === "number" ? Number(node.value.toFixed(4)).toLocaleString("es-AR") : String(node.value);
+  return node.unit ? `${value} ${node.unit}` : value;
+}
+
+function traceNodeVisualType(node) {
+  if (!node) return "derivado";
+  if (node.type === "variable_madre" && node.editable_en_sistema && node.impacta_hoy) return "variable_madre";
+  if (node.type === "factor" || String(node.id || "").includes("factor") || String(node.id || "").includes("multiplicador")) return "factor";
+  return node.type || "derivado";
+}
+
+function layoutTraceGraph(graph) {
+  const nodes = graph?.nodes || [];
+  const edges = graph?.edges || [];
+  const depths = Object.fromEntries(nodes.map((node) => [node.id, 0]));
+  for (let pass = 0; pass < nodes.length; pass += 1) {
+    edges.forEach((edge) => {
+      if (depths[edge.source] === undefined || depths[edge.target] === undefined) return;
+      depths[edge.target] = Math.max(depths[edge.target], depths[edge.source] + 1);
+    });
+  }
+  const groups = nodes.reduce((acc, node) => {
+    const depth = depths[node.id] || 0;
+    acc[depth] = acc[depth] || [];
+    acc[depth].push(node);
+    return acc;
+  }, {});
+  const positions = {};
+  const xStep = 235;
+  const yStep = 108;
+  Object.entries(groups).forEach(([depthKey, group]) => {
+    const depth = Number(depthKey);
+    group.forEach((node, index) => {
+      positions[node.id] = { x: 34 + depth * xStep, y: 34 + index * yStep };
+    });
+  });
+  const maxDepth = Math.max(0, ...Object.keys(groups).map(Number));
+  const maxRows = Math.max(1, ...Object.values(groups).map((group) => group.length));
+  return { positions, width: Math.max(760, 34 + (maxDepth + 1) * xStep), height: Math.max(360, 58 + maxRows * yStep) };
+}
 
 function inferFromCaras(caras) {
   const full = caras === "4/0" || caras === "4/4";
@@ -383,6 +443,11 @@ export default function CotizadorBajadasV2() {
   const [excelImportPreview, setExcelImportPreview] = useState(null);
   const [excelImportLoading, setExcelImportLoading] = useState(false);
   const [excelImportError, setExcelImportError] = useState("");
+  const [traceCase, setTraceCase] = useState("click_bajadas");
+  const [traceGraph, setTraceGraph] = useState(null);
+  const [traceLoading, setTraceLoading] = useState(false);
+  const [traceError, setTraceError] = useState("");
+  const [selectedTraceNodeId, setSelectedTraceNodeId] = useState(null);
 
   const inferred = useMemo(() => inferQuoteContext(form), [form]);
   const isAutoadhesivas = inferred.categoria === "Bajadas Autoadhesivas";
@@ -531,6 +596,22 @@ export default function CotizadorBajadasV2() {
       setPrincipalRanges(ranges);
     } catch (err) {
       setPrincipalMsg(err.message || "No se pudieron cargar las variables principales.");
+    }
+  };
+
+  const loadTraceGraph = async (selectedCase = traceCase) => {
+    try {
+      setTraceLoading(true);
+      setTraceError("");
+      const graph = await fetchTraceGraph({ caso: selectedCase });
+      setTraceGraph(graph);
+      setSelectedTraceNodeId(graph?.nodes?.[0]?.id || null);
+    } catch (err) {
+      setTraceGraph(null);
+      setSelectedTraceNodeId(null);
+      setTraceError(err.message || "No se pudo cargar la trazabilidad visual.");
+    } finally {
+      setTraceLoading(false);
     }
   };
 
@@ -1145,6 +1226,13 @@ export default function CotizadorBajadasV2() {
     }
   };
 
+  useEffect(() => {
+    if (activeTab === "Trazabilidad visual" && !traceGraph && !traceLoading) {
+      loadTraceGraph(traceCase);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab]);
+
   const handleSubmit = async (event) => {
     event.preventDefault();
     setError("");
@@ -1472,6 +1560,120 @@ export default function CotizadorBajadasV2() {
           <details open><summary>Urgencia</summary><ul><li>recargo_urgencia_aplicado: {result.trazabilidad?.recargo_urgencia_aplicado ?? "-"}</li></ul></details>
         </div>
         <details className="raw-json"><summary>Ver JSON técnico</summary><pre>{JSON.stringify({ payload: lastPayload, result }, null, 2)}</pre></details>
+      </section>
+    );
+  };
+
+  const renderTraceVisualTab = () => {
+    const graph = traceGraph || { nodes: [], edges: [], legend: {} };
+    const { positions, width, height } = layoutTraceGraph(graph);
+    const selectedNode = graph.nodes.find((node) => node.id === selectedTraceNodeId) || graph.nodes[0] || null;
+    const selectedCase = TRACE_GRAPH_CASES.find((item) => item.value === traceCase);
+
+    return (
+      <section className="card result-card trace-visual-card">
+        <div className="card-head">
+          <div>
+            <h3 data-testid="trace-visual-title">Trazabilidad visual</h3>
+            <p>Relaciones entre variable madre, derivado, factor y precio final. Es lectura: no modifica precios.</p>
+          </div>
+          <span>{graph.producto || selectedCase?.label || "Grafo"}</span>
+        </div>
+
+        <div className="trace-toolbar">
+          <label>
+            <span>Caso</span>
+            <select
+              data-testid="trace-case-select"
+              value={traceCase}
+              onChange={(event) => {
+                const nextCase = event.target.value;
+                setTraceCase(nextCase);
+                setTraceGraph(null);
+                setSelectedTraceNodeId(null);
+              }}
+            >
+              {TRACE_GRAPH_CASES.map((item) => (
+                <option key={item.value} value={item.value}>{item.label}</option>
+              ))}
+            </select>
+          </label>
+          <button type="button" className="secondary-button" data-testid="trace-load-button" onClick={() => loadTraceGraph(traceCase)} disabled={traceLoading}>
+            {traceLoading ? "Cargando..." : "Cargar grafo"}
+          </button>
+        </div>
+
+        {traceError ? <div className="error-banner">{traceError}</div> : null}
+
+        <div className="trace-legend" data-testid="trace-legend">
+          {Object.entries(graph.legend || {}).map(([type, label]) => (
+            <span className={`legend-chip ${type}`} key={type}><i />{TRACE_TYPE_LABELS[type] || type}: {label}</span>
+          ))}
+        </div>
+
+        <div className="trace-layout">
+          <div className="trace-graph-card" data-testid="trace-graph-container">
+            {graph.nodes.length ? (
+              <svg className="trace-svg" viewBox={`0 0 ${width} ${height}`} role="img" aria-label="Grafo de trazabilidad de precios">
+                <defs>
+                  <marker id="trace-arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+                    <path d="M0,0 L0,6 L9,3 z" fill="#8aa4d6" />
+                  </marker>
+                </defs>
+                {graph.edges.map((edge) => {
+                  const from = positions[edge.source];
+                  const to = positions[edge.target];
+                  if (!from || !to) return null;
+                  const startX = from.x + 178;
+                  const startY = from.y + 36;
+                  const endX = to.x - 8;
+                  const endY = to.y + 36;
+                  const curve = Math.max(60, (endX - startX) / 2);
+                  return (
+                    <g key={edge.id}>
+                      <path className="trace-edge" d={`M ${startX} ${startY} C ${startX + curve} ${startY}, ${endX - curve} ${endY}, ${endX} ${endY}`} markerEnd="url(#trace-arrow)" />
+                      <text className="trace-edge-label" x={(startX + endX) / 2} y={(startY + endY) / 2 - 6}>{edge.label}</text>
+                    </g>
+                  );
+                })}
+                {graph.nodes.map((node) => {
+                  const pos = positions[node.id] || { x: 0, y: 0 };
+                  const visualType = traceNodeVisualType(node);
+                  const selected = selectedNode?.id === node.id;
+                  return (
+                    <g key={node.id} className={`trace-node ${visualType} ${selected ? "selected" : ""}`} transform={`translate(${pos.x} ${pos.y})`} onClick={() => setSelectedTraceNodeId(node.id)} tabIndex="0" role="button" aria-label={`Nodo ${node.label}`}>
+                      <rect className="trace-node-rect" width="176" height="78" rx="15" />
+                      <text className="trace-node-title" x="14" y="24">{node.label}</text>
+                      <text className="trace-node-meta" x="14" y="46">{TRACE_TYPE_LABELS[visualType] || visualType}</text>
+                      <text className="trace-node-value" x="14" y="66">{formatTraceValue(node)}</text>
+                    </g>
+                  );
+                })}
+              </svg>
+            ) : (
+              <div className="placeholder"><p>{traceLoading ? "Cargando grafo..." : "Elegí un caso y presioná Cargar grafo."}</p></div>
+            )}
+          </div>
+
+          <aside className="trace-detail" data-testid="trace-node-detail">
+            <h4>Detalle del nodo</h4>
+            {selectedNode ? (
+              <div className="trace-detail-grid">
+                <div><strong>Nombre</strong><span>{selectedNode.label}</span></div>
+                <div><strong>Valor</strong><span>{formatTraceValue(selectedNode)}</span></div>
+                <div><strong>Tipo</strong><span>{TRACE_TYPE_LABELS[traceNodeVisualType(selectedNode)] || selectedNode.type}</span></div>
+                <div><strong>Editable</strong><span>{selectedNode.editable_en_sistema ? "s?" : "no"}</span></div>
+                <div><strong>Impacta hoy</strong><span>{selectedNode.impacta_hoy ? "s?" : "no"}</span></div>
+                <div><strong>Fuente</strong><span>{selectedNode.source || "-"}</span></div>
+                <div><strong>Operaci?n</strong><span>{selectedNode.operation || "-"}</span></div>
+                <div><strong>Descripci?n</strong><span>{selectedNode.description || "-"}</span></div>
+                <div><strong>Observaci?n</strong><span>{selectedNode.observation || "-"}</span></div>
+              </div>
+            ) : (
+              <p>Seleccion? un nodo del grafo para ver fuente, operaci?n y observaci?n.</p>
+            )}
+          </aside>
+        </div>
       </section>
     );
   };
@@ -2153,7 +2355,7 @@ export default function CotizadorBajadasV2() {
             <button
               key={item}
               type="button"
-              data-testid={item === "Árbol del precio" ? "tab-price-tree" : undefined}
+              data-testid={item === "Árbol del precio" ? "tab-price-tree" : item === "Trazabilidad visual" ? "tab-trace-visual" : undefined}
               className={activeTab === item ? "nav-item active" : "nav-item"}
               onClick={() => TAB_KEYS.has(item) && setActiveTab(item)}
             >
@@ -2172,6 +2374,7 @@ export default function CotizadorBajadasV2() {
         <section className="content-grid content-grid-tabs">
           {activeTab === "Cotizador" ? renderCotizador() : null}
           {activeTab === "Árbol del precio" ? renderTreeTab() : null}
+          {activeTab === "Trazabilidad visual" ? renderTraceVisualTab() : null}
           {activeTab === "Variables principales" ? renderPrincipalVariablesTab() : null}
           {activeTab === "Configuración" ? renderConfigTab() : null}
         </section>

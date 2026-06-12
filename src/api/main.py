@@ -9,7 +9,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import mimetypes
 from pathlib import Path
 from typing import Any
-from urllib.parse import urlparse
+from urllib.parse import parse_qs, urlparse
 
 from .bajadas_v2_routes import BajadasV2ApiService
 
@@ -40,7 +40,8 @@ class ApiHandler(BaseHTTPRequestHandler):
         if self.service is None:
             self._send_json(500, {"error": "internal_error", "detail": "Service no inicializado"})
             return
-        path = urlparse(self.path).path
+        parsed_url = urlparse(self.path)
+        path = parsed_url.path
         if path == "/health":
             self._send_json(200, self.service.health())
             return
@@ -70,6 +71,11 @@ class ApiHandler(BaseHTTPRequestHandler):
             return
         if path == "/variables-principales/rangos":
             status, payload = self.service.principal_variables_ranges()
+            self._send_json(status, payload)
+            return
+        if path == "/trazabilidad/grafo":
+            params = {key: values[-1] for key, values in parse_qs(parsed_url.query).items() if values}
+            status, payload = self.service.trace_graph(params)
             self._send_json(status, payload)
             return
         if path == "/export/precios/json":

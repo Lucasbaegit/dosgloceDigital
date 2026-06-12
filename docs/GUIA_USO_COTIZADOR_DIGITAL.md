@@ -288,3 +288,27 @@ El PDF sigue siendo la fuente confiable de precios finales.
 El Excel viejo queda como fuente histórica.
 
 El Excel maestro nuevo sirve para ordenar, revisar y documentar el sistema actual.
+
+---
+
+## 13. Trazabilidad visual
+
+La pestaña `Trazabilidad visual` permite ver un grafo simple de origen del precio.
+
+Uso:
+
+1. Abrir `Trazabilidad visual`.
+2. Elegir un caso.
+3. Presionar `Cargar grafo`.
+4. Hacer click en un nodo para ver detalle.
+
+Colores:
+
+- Verde: variable madre editable que impacta hoy.
+- Azul: derivado calculado.
+- Gris: tabla PDF fija.
+- Naranja: variable preparada no conectada.
+- Rojo: dato bloqueado.
+- Violeta: factor o multiplicador.
+
+La vista es informativa. No cambia precios ni aplica modificaciones.

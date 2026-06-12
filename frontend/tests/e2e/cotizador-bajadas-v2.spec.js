@@ -12,7 +12,7 @@ test.beforeEach(async ({ page }) => {
 
 test("UI muestra tabs nuevas y controles base", async ({ page }) => {
   await page.setViewportSize({ width: 1366, height: 900 });
-  await page.goto("/", { waitUntil: "networkidle" });
+  await page.goto("/", { waitUntil: "domcontentloaded" });
   await expect(page.getByRole("button", { name: "Cotizador" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Árbol del precio" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Configuración" })).toBeVisible();
@@ -23,6 +23,41 @@ test("UI muestra tabs nuevas y controles base", async ({ page }) => {
   await page.getByTestId("print-option-1-0").click();
   await expect(page.getByTestId("formato-select")).toBeVisible();
   await expect(page.getByTestId("result-panel")).toBeVisible();
+});
+
+test("tab Trazabilidad visual muestra selector, leyenda y grafo", async ({ page }) => {
+  await page.route("http://127.0.0.1:8000/trazabilidad/grafo**", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        ok: true,
+        producto: "Bajadas Fullcolor",
+        caso: "click_bajadas",
+        legend: {
+          variable_madre: "Editable si impacta hoy",
+          derivado: "Calculado",
+          tabla_pdf: "Precio fijo PDF",
+        },
+        nodes: [
+          { id: "click_color", label: "Click color", type: "variable_madre", value: 39, unit: "ARS", editable_en_sistema: true, impacta_hoy: true, description: "Variable madre", source: "config", operation: "base", observation: "operativa" },
+          { id: "precio_click_A3", label: "Precio click A3", type: "derivado", value: 195, unit: "ARS", editable_en_sistema: false, impacta_hoy: false, description: "A3 base", source: "Excel", operation: "x5", observation: "base proporcional" },
+          { id: "precio_click_XL", label: "Precio click XL", type: "derivado", value: 390, unit: "ARS", editable_en_sistema: false, impacta_hoy: false, description: "XL deriva", source: "regla", operation: "x2", observation: "deriva desde A3" },
+        ],
+        edges: [
+          { id: "e_click_a3", source: "click_color", target: "precio_click_A3", label: "escala a A3" },
+          { id: "e_a3_xl", source: "precio_click_A3", target: "precio_click_XL", label: "x 2" },
+        ],
+      }),
+    });
+  });
+  await page.goto("/", { waitUntil: "domcontentloaded" });
+  await page.getByTestId("tab-trace-visual").click();
+  await expect(page.getByTestId("trace-visual-title")).toBeVisible();
+  await expect(page.getByTestId("trace-case-select")).toBeVisible();
+  await expect(page.getByTestId("trace-legend")).toBeVisible();
+  await expect(page.getByTestId("trace-graph-container")).toBeVisible();
+  await expect(page.getByTestId("trace-node-detail")).toContainText("Click color");
 });
 
 test("troquelado digital se usa como adicional en Bajadas y no como categoría principal", async ({ page }) => {

@@ -262,6 +262,25 @@ export async function fetchPrincipalVariablesRanges() {
   return body;
 }
 
+export async function fetchTraceGraph(params = {}) {
+  const query = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && String(value).trim() !== "") {
+      query.set(key, String(value));
+    }
+  });
+  const suffix = query.toString() ? `?${query.toString()}` : "";
+  const response = await fetch(`${API_BASE}/trazabilidad/grafo${suffix}`);
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const error = new Error(body?.detail || "No se pudo cargar el grafo de trazabilidad.");
+    error.status = response.status;
+    error.code = body?.error || "api_error";
+    throw error;
+  }
+  return body;
+}
+
 export async function exportPricesPdf() {
   const response = await fetch(`${API_BASE}/export/precios/pdf`);
   if (!response.ok) throw new Error("No se pudo exportar PDF. Revisar backend.");

@@ -67,6 +67,7 @@ from agendas_cuadernos.exceptions import PriceNotFoundError as AgendasCuadernosP
 from agendas_cuadernos.exceptions import QuoteInputError as AgendasCuadernosQuoteInputError
 from agendas_cuadernos.types import AgendasCuadernosQuoteInput
 from pricing_variables import PrincipalVariableError, PrincipalVariablesService
+from pricing_trace.graph_builder import PriceTraceGraphBuilder
 from export import PricesExcelExporter, PricesPdfExporter, PricesTablesBuilder
 from importers import ExcelMaestroImporter, ExcelMasterPreviewError
 
@@ -112,6 +113,7 @@ class BajadasV2ApiService:
         self.plancha_iman_impreso_engine = PlanchaImanImpresoPricingEngine(load_plancha_iman_impreso_bundle(project_root))
         self.agendas_cuadernos_engine = AgendasCuadernosPricingEngine(load_agendas_cuadernos_bundle(project_root))
         self.principal_variables = PrincipalVariablesService(project_root)
+        self.price_trace_graph = PriceTraceGraphBuilder(project_root)
         self.excel_maestro_importer = ExcelMaestroImporter(project_root)
         self.prices_tables_builder = PricesTablesBuilder(project_root)
         self.prices_pdf_exporter = PricesPdfExporter()
@@ -133,6 +135,9 @@ class BajadasV2ApiService:
 
     def principal_variables_ranges(self) -> tuple[int, dict[str, Any]]:
         return 200, self.principal_variables.ranges()
+
+    def trace_graph(self, params: dict[str, str] | None = None) -> tuple[int, dict[str, Any]]:
+        return 200, self.price_trace_graph.build(params or {})
 
     def export_prices_json(self) -> tuple[int, dict[str, Any]]:
         return 200, self.prices_tables_builder.build()
