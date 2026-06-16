@@ -43,8 +43,8 @@ import {
 } from "../api/bajadasV2Api";
 import optionRows from "../data/bajadasOptions.json";
 
-const NAV_ITEMS = ["Cotizador", "Árbol del precio", "Variables principales", "Configuración", "Pedidos", "Plantillas", "Historial", "Precios", "Ajustes"];
-const TAB_KEYS = new Set(["Cotizador", "Árbol del precio", "Variables principales", "Configuración"]);
+const NAV_ITEMS = ["Cotizador", "Árbol del precio", "Trazabilidad visual", "Variables principales", "Configuración", "Pedidos", "Plantillas", "Historial", "Precios", "Ajustes"];
+const TAB_KEYS = new Set(["Cotizador", "Árbol del precio", "Trazabilidad visual", "Variables principales", "Configuración"]);
 const CARAS = ["4/0", "4/4", "1/0", "1/1"];
 const URGENCIAS = ["normal", "express", "super_express", "ya_24hs"];
 const CATEGORIAS = [
@@ -279,6 +279,120 @@ function layoutTraceGraph(graph) {
   return { positions, width: Math.max(760, 34 + (maxDepth + 1) * xStep), height: Math.max(360, 58 + maxRows * yStep) };
 }
 
+function traceNode(id, label, type, value, unit, description, source, operation, observation) {
+  return {
+    id,
+    label,
+    type,
+    value,
+    unit,
+    editable_en_sistema: false,
+    impacta_hoy: type !== "tabla_pdf",
+    description,
+    source,
+    operation,
+    observation,
+  };
+}
+
+function traceEdge(id, source, target, label) {
+  return { id, source, target, label };
+}
+
+function describeCurrentQuoteMaterial(payload) {
+  const material = payload?.material || payload?.papel || payload?.tipo_papel || "Material no informado";
+  const gramaje = payload?.gramaje && payload.gramaje !== "N/A" ? ` ${payload.gramaje}` : "";
+  return `${material}${gramaje}`.trim();
+}
+
+function collectCurrentQuoteAdditions(payload, result) {
+  const additions = [];
+  if (result?.adicional_laminado && result.adicional_laminado !== "sin_adicional") {
+    additions.push({
+      label: result.adicional_laminado,
+      value: result.total_adicional_sin_iva ?? result.adicional_unitario_sin_iva,
+      detail: `Unitario ${formatMoney(result.adicional_unitario_sin_iva ?? 0)} x ${result.caras_adicional_laminado ?? payload?.caras_adicional_laminado ?? 1} cara(s)`,
+      source: result.fuente_adicional || result.trazabilidad?.adicional_laminado?.fuente || "motor de adicionales",
+    });
+  }
+  const autoadh = result?.trazabilidad?.adicionales_autoadhesiva || {};
+  if (autoadh.laca_uv) {
+    additions.push({ label: "Laca UV", value: autoadh.laca_uv.subtotal_laca_uv, detail: "Adicional autoadhesiva", source: autoadh.laca_uv.fuente || "matriz_laca_uv_bajadas" });
+  }
+  if (autoadh.tinta_blanca) {
+    additions.push({ label: "Tinta blanca", value: autoadh.tinta_blanca.subtotal_tinta_blanca, detail: "Proporcional por cantidad", source: autoadh.tinta_blanca.fuente_config || "config autoadhesivas" });
+  }
+  const hoja4 = result?.trazabilidad?.adicionales_hoja4?.detalle || {};
+  Object.entries(hoja4).forEach(([key, value]) => {
+    if (value && value.subtotal) additions.push({ label: key, value: value.subtotal, detail: value.regla || "Adicional hoja 4", source: value.fuente || "PDF hoja 4 / Excel" });
+  });
+  if (result?.adicional_troquelado) {
+    additions.push({
+      label: `Troquelado ${result.complejidad_troquelado || payload?.complejidad_troquelado || ""}`.trim(),
+      value: result.total_adicional_troquelado_sin_iva,
+      detail: `Unitario ${formatMoney(result.adicional_troquelado_unitario_sin_iva ?? 0)}`,
+      source: result.fuente_troquelado || "PDF Troqueles digitales",
+    });
+  }
+  return additions;
+}
+
+function buildCurrentQuoteTraceGraph(payload, result) {
+  if (!payload || !result) return null;
+  const materialLabel = describeCurrentQuoteMaterial(payload);
+  const range = result.cantidad_rango_aplicado || payload.cantidad_rango || "Sin rango";
+  const baseUnit = result.precio_unitario_base_sin_iva ?? result.precio_base_unitario_sin_iva ?? result.precio_unitario_sin_iva ?? result.precio_sin_iva;
+  const totalFinal = result.total_con_urgencia ?? result.total_sin_iva ?? result.precio_con_recargo_urgencia ?? result.precio_sin_iva;
+  const urgencyValue = result.trazabilidad?.recargo_urgencia_aplicado ?? payload.urgencia ?? "normal";
+  const additions = collectCurrentQuoteAdditions(payload, result);
+
+  const nodes = [
+    traceNode("entrada_usuario", "Entrada usuario", "derivado", payload.cantidad_unidades, "unidades", `Categoría: ${payload.categoria || "-"}. Urgencia: ${payload.urgencia || "normal"}.`, "payload actual", "datos ingresados", "Nodo raíz de la cotización actual."),
+    traceNode("material_cotizado", `Material ${materialLabel}`, "derivado", materialLabel, null, "Material real de la cotización actual.", "lastPayload.material / lastPayload.papel", "selección del usuario", "No se usa material genérico cuando hay cotización real."),
+    traceNode("formato", `Formato ${payload.formato || "-"}`, "derivado", payload.formato || "-", null, "Formato cotizado.", "lastPayload.formato", "selección del usuario", "Debe coincidir con la cotización visible."),
+    traceNode("caras", `Impresión ${payload.caras || "-"}`, "derivado", payload.caras || "-", null, "Caras / impresión solicitada.", "lastPayload.caras", "selección del usuario", "Define modo color cuando corresponde."),
+    traceNode("rango", `Rango ${range}`, "derivado", range, null, "Rango aplicado por cantidad.", "result.cantidad_rango_aplicado", "derivado desde cantidad", "Si el producto usa matriz exacta, muestra la cantidad/rango devuelto."),
+    traceNode("precio_base_unitario", "Precio base unitario", "tabla_pdf", baseUnit, "ARS", "Precio base unitario de la cotización actual.", result.fuente || "motor de cotización", result.regla_aplicada || "regla aplicada", "Se toma del resultado real, no de un caso fijo."),
+  ];
+
+  const edges = [
+    traceEdge("e_entrada_material", "entrada_usuario", "material_cotizado", "selección"),
+    traceEdge("e_material_formato", "material_cotizado", "formato", "con formato"),
+    traceEdge("e_formato_caras", "formato", "caras", "impresión"),
+    traceEdge("e_caras_rango", "caras", "rango", "cantidad"),
+    traceEdge("e_rango_base", "rango", "precio_base_unitario", "lookup/regla"),
+  ];
+
+  if (additions.length) {
+    additions.forEach((addition, index) => {
+      const id = `adicional_${index + 1}`;
+      nodes.push(traceNode(id, `Adicional ${addition.label}`, "factor", addition.value, "ARS", addition.detail || "Adicional aplicado.", addition.source || "resultado actual", "suma al precio base", "Adicional real de la cotización actual."));
+      edges.push(traceEdge(`e_base_${id}`, "precio_base_unitario", id, "suma"));
+    });
+  } else {
+    nodes.push(traceNode("sin_adicional", "Sin adicional", "derivado", 0, "ARS", "La cotización actual no tiene adicionales aplicados.", "lastPayload/result", "sin suma adicional", "Nodo explícito para evitar ambigüedad."));
+    edges.push(traceEdge("e_base_sin_adicional", "precio_base_unitario", "sin_adicional", "sin adicional"));
+  }
+
+  nodes.push(
+    traceNode("urgencia", `Urgencia ${payload.urgencia || "normal"}`, "factor", urgencyValue, typeof urgencyValue === "number" ? "factor" : null, "Recargo de urgencia aplicado.", "result.trazabilidad.recargo_urgencia_aplicado", "aplica al total si corresponde", "Urgencia normal no altera el total."),
+    traceNode("total_final", "Total final", "derivado", totalFinal, "ARS", "Total final de la cotización actual.", "result.total_con_urgencia", "base + adicionales + urgencia", "Valor que ve el usuario en el panel de resultado.")
+  );
+
+  const lastAdditionId = additions.length ? `adicional_${additions.length}` : "sin_adicional";
+  edges.push(traceEdge("e_adicional_urgencia", lastAdditionId, "urgencia", "aplica urgencia"));
+  edges.push(traceEdge("e_urgencia_total", "urgencia", "total_final", "total"));
+
+  return {
+    ok: true,
+    producto: payload.categoria || "Cotización actual",
+    caso: "cotizacion_actual",
+    nodes,
+    edges,
+    legend: TRACE_DEFAULT_LEGEND,
+  };
+}
+
 function inferFromCaras(caras) {
   const full = caras === "4/0" || caras === "4/4";
   return {
@@ -443,6 +557,7 @@ export default function CotizadorBajadasV2() {
   const [excelImportPreview, setExcelImportPreview] = useState(null);
   const [excelImportLoading, setExcelImportLoading] = useState(false);
   const [excelImportError, setExcelImportError] = useState("");
+  const [traceMode, setTraceMode] = useState("cotizacion_actual");
   const [traceCase, setTraceCase] = useState("click_bajadas");
   const [traceGraph, setTraceGraph] = useState(null);
   const [traceLoading, setTraceLoading] = useState(false);
@@ -613,6 +728,19 @@ export default function CotizadorBajadasV2() {
     } finally {
       setTraceLoading(false);
     }
+  };
+
+  const loadCurrentQuoteTraceGraph = () => {
+    if (!lastPayload || !result) {
+      setTraceGraph(null);
+      setSelectedTraceNodeId(null);
+      setTraceError("Primero calculá una cotización para ver su trazabilidad visual.");
+      return;
+    }
+    const graph = buildCurrentQuoteTraceGraph(lastPayload, result);
+    setTraceError("");
+    setTraceGraph(graph);
+    setSelectedTraceNodeId(graph?.nodes?.[0]?.id || null);
   };
 
   const downloadPricesPdf = async () => {
@@ -1227,16 +1355,21 @@ export default function CotizadorBajadasV2() {
   };
 
   useEffect(() => {
-    if (activeTab === "Trazabilidad visual" && !traceGraph && !traceLoading) {
+    if (activeTab !== "Trazabilidad visual" || traceGraph || traceLoading) return;
+    if (traceMode === "caso_fijo") {
       loadTraceGraph(traceCase);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab]);
+  }, [activeTab, traceMode]);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
     setError("");
     setResult(null);
+    if (traceMode === "cotizacion_actual") {
+      setTraceGraph(null);
+      setSelectedTraceNodeId(null);
+    }
     setCopyStatus("");
 
     if (missingFields.length > 0) {
@@ -1569,6 +1702,7 @@ export default function CotizadorBajadasV2() {
     const { positions, width, height } = layoutTraceGraph(graph);
     const selectedNode = graph.nodes.find((node) => node.id === selectedTraceNodeId) || graph.nodes[0] || null;
     const selectedCase = TRACE_GRAPH_CASES.find((item) => item.value === traceCase);
+    const isCurrentMode = traceMode === "cotizacion_actual";
 
     return (
       <section className="card result-card trace-visual-card">
@@ -1577,30 +1711,72 @@ export default function CotizadorBajadasV2() {
             <h3 data-testid="trace-visual-title">Trazabilidad visual</h3>
             <p>Relaciones entre variable madre, derivado, factor y precio final. Es lectura: no modifica precios.</p>
           </div>
-          <span>{graph.producto || selectedCase?.label || "Grafo"}</span>
+          <span>{isCurrentMode ? "Cotización actual" : graph.producto || selectedCase?.label || "Grafo"}</span>
+        </div>
+
+        <div className="trace-mode-box">
+          <span>Modo de trazabilidad</span>
+          <div className="trace-mode-options" role="group" aria-label="Modo de trazabilidad">
+            {TRACE_MODES.map((mode) => (
+              <button
+                key={mode.value}
+                type="button"
+                className={traceMode === mode.value ? "trace-mode-pill active" : "trace-mode-pill"}
+                data-testid={`trace-mode-${mode.value}`}
+                onClick={() => {
+                  setTraceMode(mode.value);
+                  setTraceGraph(null);
+                  setSelectedTraceNodeId(null);
+                  setTraceError("");
+                }}
+              >
+                {mode.label}
+              </button>
+            ))}
+          </div>
         </div>
 
         <div className="trace-toolbar">
-          <label>
-            <span>Caso</span>
-            <select
-              data-testid="trace-case-select"
-              value={traceCase}
-              onChange={(event) => {
-                const nextCase = event.target.value;
-                setTraceCase(nextCase);
-                setTraceGraph(null);
-                setSelectedTraceNodeId(null);
-              }}
-            >
-              {TRACE_GRAPH_CASES.map((item) => (
-                <option key={item.value} value={item.value}>{item.label}</option>
-              ))}
-            </select>
-          </label>
-          <button type="button" className="secondary-button" data-testid="trace-load-button" onClick={() => loadTraceGraph(traceCase)} disabled={traceLoading}>
-            {traceLoading ? "Cargando..." : "Cargar grafo"}
-          </button>
+          {isCurrentMode ? (
+            <>
+              <div className="trace-current-summary" data-testid="trace-current-summary">
+                {lastPayload && result ? (
+                  <>
+                    <strong>{lastPayload.categoria || "Cotización actual"}</strong>
+                    <span>{describeCurrentQuoteMaterial(lastPayload)} · {lastPayload.formato || "-"} · {lastPayload.caras || "-"} · {lastPayload.cantidad_unidades || "-"} u.</span>
+                  </>
+                ) : (
+                  <span>Primero calculá una cotización para ver su trazabilidad visual.</span>
+                )}
+              </div>
+              <button type="button" className="secondary-button" data-testid="trace-current-load-button" onClick={loadCurrentQuoteTraceGraph} disabled={!lastPayload || !result}>
+                Cargar grafo de cotización actual
+              </button>
+            </>
+          ) : (
+            <>
+              <label>
+                <span>Casos de l?gica general</span>
+                <select
+                  data-testid="trace-case-select"
+                  value={traceCase}
+                  onChange={(event) => {
+                    const nextCase = event.target.value;
+                    setTraceCase(nextCase);
+                    setTraceGraph(null);
+                    setSelectedTraceNodeId(null);
+                  }}
+                >
+                  {TRACE_GRAPH_CASES.map((item) => (
+                    <option key={item.value} value={item.value}>{item.label}</option>
+                  ))}
+                </select>
+              </label>
+              <button type="button" className="secondary-button" data-testid="trace-load-button" onClick={() => loadTraceGraph(traceCase)} disabled={traceLoading}>
+                {traceLoading ? "Cargando..." : "Cargar caso fijo"}
+              </button>
+            </>
+          )}
         </div>
 
         {traceError ? <div className="error-banner">{traceError}</div> : null}
@@ -1662,8 +1838,8 @@ export default function CotizadorBajadasV2() {
                 <div><strong>Nombre</strong><span>{selectedNode.label}</span></div>
                 <div><strong>Valor</strong><span>{formatTraceValue(selectedNode)}</span></div>
                 <div><strong>Tipo</strong><span>{TRACE_TYPE_LABELS[traceNodeVisualType(selectedNode)] || selectedNode.type}</span></div>
-                <div><strong>Editable</strong><span>{selectedNode.editable_en_sistema ? "s?" : "no"}</span></div>
-                <div><strong>Impacta hoy</strong><span>{selectedNode.impacta_hoy ? "s?" : "no"}</span></div>
+                <div><strong>Editable</strong><span>{selectedNode.editable_en_sistema ? "sí" : "no"}</span></div>
+                <div><strong>Impacta hoy</strong><span>{selectedNode.impacta_hoy ? "sí" : "no"}</span></div>
                 <div><strong>Fuente</strong><span>{selectedNode.source || "-"}</span></div>
                 <div><strong>Operaci?n</strong><span>{selectedNode.operation || "-"}</span></div>
                 <div><strong>Descripci?n</strong><span>{selectedNode.description || "-"}</span></div>
@@ -2382,3 +2558,4 @@ export default function CotizadorBajadasV2() {
     </div>
   );
 }
+

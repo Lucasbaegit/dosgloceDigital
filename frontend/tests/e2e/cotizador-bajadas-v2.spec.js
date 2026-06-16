@@ -54,10 +54,55 @@ test("tab Trazabilidad visual muestra selector, leyenda y grafo", async ({ page 
   await page.goto("/", { waitUntil: "domcontentloaded" });
   await page.getByTestId("tab-trace-visual").click();
   await expect(page.getByTestId("trace-visual-title")).toBeVisible();
+  await expect(page.getByTestId("trace-mode-cotizacion_actual")).toBeVisible();
+  await expect(page.getByText("Primero calculá una cotización para ver su trazabilidad visual.")).toBeVisible();
+  await page.getByTestId("trace-mode-caso_fijo").click();
   await expect(page.getByTestId("trace-case-select")).toBeVisible();
+  await page.getByTestId("trace-load-button").click();
   await expect(page.getByTestId("trace-legend")).toBeVisible();
   await expect(page.getByTestId("trace-graph-container")).toBeVisible();
   await expect(page.getByTestId("trace-node-detail")).toContainText("Click color");
+});
+
+test("Trazabilidad visual de cotización actual usa material real cotizado", async ({ page }) => {
+  await page.route("http://127.0.0.1:8000/bajadas-v2/cotizar", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        precio_unitario_sin_iva: 437.93,
+        precio_unitario_con_urgencia: 437.93,
+        precio_unitario_base_sin_iva: 437.93,
+        cantidad_unidades: 1,
+        cantidad_rango_aplicado: "1",
+        total_sin_iva: 437.93,
+        total_con_urgencia: 437.93,
+        precio_sin_iva: 437.93,
+        precio_con_recargo_urgencia: 437.93,
+        adicional_laminado: "sin_adicional",
+        regla_aplicada: "TEST_A4_115G",
+        fuente: "mock_pdf",
+        trazabilidad: { recargo_urgencia_aplicado: 0 },
+      }),
+    });
+  });
+
+  await page.goto("/", { waitUntil: "domcontentloaded" });
+  await page.getByLabel("Medida / formato").selectOption("A4");
+  await page.getByLabel("Tipo de papel").selectOption("liviano");
+  await page.getByLabel("Material").selectOption("Ilustracion");
+  await page.getByLabel("Gramaje").selectOption("115g");
+  await page.getByLabel("Cantidad").fill("1");
+  await page.getByRole("button", { name: "Calcular" }).click();
+  await expect(page.getByText("Total final con urgencia")).toBeVisible();
+
+  await page.getByTestId("tab-trace-visual").click();
+  await page.getByTestId("trace-mode-cotizacion_actual").click();
+  await page.getByTestId("trace-current-load-button").click();
+  await expect(page.getByTestId("trace-graph-container")).toContainText("Ilustracion 115g");
+  await expect(page.getByTestId("trace-graph-container")).toContainText("Formato A4");
+  await expect(page.getByTestId("trace-graph-container")).toContainText("Impresión 4/0");
+  await expect(page.getByTestId("trace-graph-container")).toContainText("Total final");
 });
 
 test("troquelado digital se usa como adicional en Bajadas y no como categoría principal", async ({ page }) => {
