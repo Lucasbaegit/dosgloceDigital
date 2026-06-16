@@ -45,6 +45,10 @@ import optionRows from "../data/bajadasOptions.json";
 
 const NAV_ITEMS = ["Cotizador", "Árbol del precio", "Trazabilidad visual", "Variables principales", "Configuración", "Pedidos", "Plantillas", "Historial", "Precios", "Ajustes"];
 const TAB_KEYS = new Set(["Cotizador", "Árbol del precio", "Trazabilidad visual", "Variables principales", "Configuración"]);
+const TRACE_MODES = [
+  { value: "cotizacion_actual", label: "Cotización actual" },
+  { value: "casos_generales", label: "Casos de lógica general" },
+];
 const CARAS = ["4/0", "4/4", "1/0", "1/1"];
 const URGENCIAS = ["normal", "express", "super_express", "ya_24hs"];
 const CATEGORIAS = [
@@ -730,17 +734,33 @@ export default function CotizadorBajadasV2() {
     }
   };
 
-  const loadCurrentQuoteTraceGraph = () => {
-    if (!lastPayload || !result) {
+  const handleLoadCurrentQuoteGraph = () => {
+    setTraceError("");
+
+    if (!result || !lastPayload) {
       setTraceGraph(null);
       setSelectedTraceNodeId(null);
       setTraceError("Primero calculá una cotización para ver su trazabilidad visual.");
       return;
     }
-    const graph = buildCurrentQuoteTraceGraph(lastPayload, result);
-    setTraceError("");
-    setTraceGraph(graph);
-    setSelectedTraceNodeId(graph?.nodes?.[0]?.id || null);
+
+    try {
+      const graph = buildCurrentQuoteTraceGraph(lastPayload, result);
+
+      if (!graph || !Array.isArray(graph.nodes) || graph.nodes.length === 0) {
+        setTraceGraph(null);
+        setSelectedTraceNodeId(null);
+        setTraceError("No se pudo construir el grafo de la cotización actual.");
+        return;
+      }
+
+      setTraceGraph(graph);
+      setSelectedTraceNodeId(graph.nodes[0]?.id ?? null);
+    } catch (err) {
+      setTraceGraph(null);
+      setSelectedTraceNodeId(null);
+      setTraceError(err.message || "No se pudo construir el grafo de la cotización actual.");
+    }
   };
 
   const downloadPricesPdf = async () => {
@@ -1356,7 +1376,7 @@ export default function CotizadorBajadasV2() {
 
   useEffect(() => {
     if (activeTab !== "Trazabilidad visual" || traceGraph || traceLoading) return;
-    if (traceMode === "caso_fijo") {
+    if (traceMode === "casos_generales") {
       loadTraceGraph(traceCase);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1749,14 +1769,14 @@ export default function CotizadorBajadasV2() {
                   <span>Primero calculá una cotización para ver su trazabilidad visual.</span>
                 )}
               </div>
-              <button type="button" className="secondary-button" data-testid="trace-current-load-button" onClick={loadCurrentQuoteTraceGraph} disabled={!lastPayload || !result}>
+              <button type="button" className="secondary-button" data-testid="trace-current-load-button" onClick={handleLoadCurrentQuoteGraph} disabled={!lastPayload || !result}>
                 Cargar grafo de cotización actual
               </button>
             </>
           ) : (
             <>
               <label>
-                <span>Casos de l?gica general</span>
+                <span>Casos de lógica general</span>
                 <select
                   data-testid="trace-case-select"
                   value={traceCase}
@@ -1827,7 +1847,15 @@ export default function CotizadorBajadasV2() {
                 })}
               </svg>
             ) : (
-              <div className="placeholder"><p>{traceLoading ? "Cargando grafo..." : "Elegí un caso y presioná Cargar grafo."}</p></div>
+              <div className="placeholder">
+                <p>
+                  {traceLoading
+                    ? "Cargando grafo..."
+                    : isCurrentMode
+                      ? "Presioná Cargar grafo de cotización actual para ver la trazabilidad del último cálculo."
+                      : "Elegí un caso y presioná Cargar grafo."}
+                </p>
+              </div>
             )}
           </div>
 
@@ -1841,12 +1869,12 @@ export default function CotizadorBajadasV2() {
                 <div><strong>Editable</strong><span>{selectedNode.editable_en_sistema ? "sí" : "no"}</span></div>
                 <div><strong>Impacta hoy</strong><span>{selectedNode.impacta_hoy ? "sí" : "no"}</span></div>
                 <div><strong>Fuente</strong><span>{selectedNode.source || "-"}</span></div>
-                <div><strong>Operaci?n</strong><span>{selectedNode.operation || "-"}</span></div>
-                <div><strong>Descripci?n</strong><span>{selectedNode.description || "-"}</span></div>
-                <div><strong>Observaci?n</strong><span>{selectedNode.observation || "-"}</span></div>
+                <div><strong>Operación</strong><span>{selectedNode.operation || "-"}</span></div>
+                <div><strong>Descripción</strong><span>{selectedNode.description || "-"}</span></div>
+                <div><strong>Observación</strong><span>{selectedNode.observation || "-"}</span></div>
               </div>
             ) : (
-              <p>Seleccion? un nodo del grafo para ver fuente, operaci?n y observaci?n.</p>
+              <p>Seleccioná un nodo del grafo para ver fuente, operación y observación.</p>
             )}
           </aside>
         </div>
@@ -2558,4 +2586,3 @@ export default function CotizadorBajadasV2() {
     </div>
   );
 }
-
