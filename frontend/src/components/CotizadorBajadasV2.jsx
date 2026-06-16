@@ -49,6 +49,14 @@ const TRACE_MODES = [
   { value: "cotizacion_actual", label: "Cotización actual" },
   { value: "casos_generales", label: "Casos de lógica general" },
 ];
+const TRACE_DEFAULT_LEGEND = {
+  variable_madre: "Variable madre editable",
+  derivado: "Calculado desde otra variable o regla",
+  tabla_pdf: "Precio fijo PDF",
+  preparada: "Detectada/preparada, no conectada al cálculo actual",
+  bloqueado: "Sin datos confiables",
+  factor: "Factor o multiplicador de fórmula",
+};
 const CARAS = ["4/0", "4/4", "1/0", "1/1"];
 const URGENCIAS = ["normal", "express", "super_express", "ya_24hs"];
 const CATEGORIAS = [
@@ -2586,3 +2594,5 @@ export default function CotizadorBajadasV2() {
     </div>
   );
 }
+
+
