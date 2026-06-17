@@ -56,7 +56,7 @@ test("tab Trazabilidad visual muestra selector, leyenda y grafo", async ({ page 
   await expect(page.getByTestId("trace-visual-title")).toBeVisible();
   await expect(page.getByTestId("trace-mode-cotizacion_actual")).toBeVisible();
   await expect(page.getByText("Primero calculá una cotización para ver su trazabilidad visual.")).toBeVisible();
-  await page.getByTestId("trace-mode-caso_fijo").click();
+  await page.getByTestId("trace-mode-casos_generales").click();
   await expect(page.getByTestId("trace-case-select")).toBeVisible();
   await page.getByTestId("trace-load-button").click();
   await expect(page.getByTestId("trace-legend")).toBeVisible();

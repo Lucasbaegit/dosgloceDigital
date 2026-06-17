@@ -202,6 +202,7 @@ const TRACE_GRAPH_CASES = [
 ];
 
 const TRACE_TYPE_LABELS = {
+  entrada: "Entrada",
   variable_madre: "Variable madre",
   derivado: "Derivado",
   tabla_pdf: "Tabla PDF",
@@ -209,6 +210,8 @@ const TRACE_TYPE_LABELS = {
   bloqueado: "Bloqueado",
   factor: "Factor / multiplicador",
 };
+const TRACE_NODE_WIDTH = 236;
+const TRACE_NODE_HEIGHT = 98;
 
 const INITIAL_FORM = {
   categoria_ui: "Bajadas Fullcolor/ByN",
@@ -261,9 +264,67 @@ function traceNodeVisualType(node) {
   return node.type || "derivado";
 }
 
+function inferTraceBranch(node) {
+  const id = String(node?.id || "");
+  if (node?.branch) return node.branch;
+  if (id.includes("material") || id.includes("papel")) return "material";
+  if (id.includes("click") || id.includes("formato") || id.includes("caras") || id.includes("impresion")) return "impresion";
+  if (id.includes("cantidad") || id.includes("rango")) return "cantidad";
+  if (id.includes("adicional") || id.includes("troquel") || id.includes("laca") || id.includes("laminado")) return "adicionales";
+  if (id.includes("urgencia")) return "urgencia";
+  if (id.includes("total") || id.includes("precio") || id.includes("subtotal")) return "resultado";
+  return "entrada";
+}
+
 function layoutTraceGraph(graph) {
   const nodes = graph?.nodes || [];
   const edges = graph?.edges || [];
+  const explicitLayout = nodes.some((node) => node.column !== undefined || node.branch || node.row !== undefined);
+  const positions = {};
+  const xStep = 330;
+  const yStep = 150;
+  const marginX = 42;
+  const marginY = 46;
+
+  if (explicitLayout) {
+    const branchOrder = ["material", "impresion", "cantidad", "adicionales", "urgencia", "entrada", "resultado"];
+    const branchIndex = Object.fromEntries(branchOrder.map((branch, index) => [branch, index]));
+    const lanes = nodes.map((node) => ({
+      node,
+      column: Number(node.column ?? 0),
+      branch: inferTraceBranch(node),
+      row: node.row,
+      lane: node.lane,
+    }));
+    const grouped = lanes.reduce((acc, item) => {
+      const key = `${item.column}:${item.branch}`;
+      acc[key] = acc[key] || [];
+      acc[key].push(item);
+      return acc;
+    }, {});
+    Object.values(grouped).forEach((items) => {
+      items.sort((a, b) => Number(a.row ?? 999) - Number(b.row ?? 999));
+      items.forEach((item, index) => {
+        if (item.row === undefined) item.autoRow = index;
+      });
+    });
+    lanes.forEach((item) => {
+      const lane = Number(item.lane ?? (branchIndex[item.branch] ?? branchIndex.entrada));
+      const rowOffset = Number(item.row ?? item.autoRow ?? 0) * (TRACE_NODE_HEIGHT + 18);
+      positions[item.node.id] = {
+        x: marginX + item.column * xStep,
+        y: marginY + lane * yStep + rowOffset,
+      };
+    });
+    const maxX = Math.max(0, ...Object.values(positions).map((pos) => pos.x));
+    const maxY = Math.max(0, ...Object.values(positions).map((pos) => pos.y));
+    return {
+      positions,
+      width: Math.max(1180, maxX + TRACE_NODE_WIDTH + 90),
+      height: Math.max(780, maxY + TRACE_NODE_HEIGHT + 80),
+    };
+  }
+
   const depths = Object.fromEntries(nodes.map((node) => [node.id, 0]));
   for (let pass = 0; pass < nodes.length; pass += 1) {
     edges.forEach((edge) => {
@@ -277,21 +338,22 @@ function layoutTraceGraph(graph) {
     acc[depth].push(node);
     return acc;
   }, {});
-  const positions = {};
-  const xStep = 235;
-  const yStep = 108;
   Object.entries(groups).forEach(([depthKey, group]) => {
     const depth = Number(depthKey);
     group.forEach((node, index) => {
-      positions[node.id] = { x: 34 + depth * xStep, y: 34 + index * yStep };
+      positions[node.id] = { x: marginX + depth * xStep, y: marginY + index * yStep };
     });
   });
   const maxDepth = Math.max(0, ...Object.keys(groups).map(Number));
   const maxRows = Math.max(1, ...Object.values(groups).map((group) => group.length));
-  return { positions, width: Math.max(760, 34 + (maxDepth + 1) * xStep), height: Math.max(360, 58 + maxRows * yStep) };
+  return {
+    positions,
+    width: Math.max(980, marginX + (maxDepth + 1) * xStep + TRACE_NODE_WIDTH),
+    height: Math.max(520, marginY + maxRows * yStep + TRACE_NODE_HEIGHT),
+  };
 }
 
-function traceNode(id, label, type, value, unit, description, source, operation, observation) {
+function traceNode(id, label, type, value, unit, description, source, operation, observation, meta = {}) {
   return {
     id,
     label,
@@ -304,6 +366,7 @@ function traceNode(id, label, type, value, unit, description, source, operation,
     source,
     operation,
     observation,
+    ...meta,
   };
 }
 
@@ -351,54 +414,82 @@ function collectCurrentQuoteAdditions(payload, result) {
 
 function buildCurrentQuoteTraceGraph(payload, result) {
   if (!payload || !result) return null;
+  const quantity = Number(payload.cantidad_unidades || result.cantidad_unidades || 0);
   const materialLabel = describeCurrentQuoteMaterial(payload);
   const range = result.cantidad_rango_aplicado || payload.cantidad_rango || "Sin rango";
   const baseUnit = result.precio_unitario_base_sin_iva ?? result.precio_base_unitario_sin_iva ?? result.precio_unitario_sin_iva ?? result.precio_sin_iva;
+  const baseTotal = result.total_base_sin_iva ?? result.total_sin_adicional_sin_iva ?? (Number.isFinite(baseUnit) && quantity ? baseUnit * quantity : null);
   const totalFinal = result.total_con_urgencia ?? result.total_sin_iva ?? result.precio_con_recargo_urgencia ?? result.precio_sin_iva;
   const urgencyValue = result.trazabilidad?.recargo_urgencia_aplicado ?? payload.urgencia ?? "normal";
   const additions = collectCurrentQuoteAdditions(payload, result);
+  const additionsTotal = additions.reduce((sum, item) => sum + (Number(item.value) || 0), 0);
+  const subtotalWithAdditions = result.total_sin_iva ?? (Number.isFinite(baseTotal) ? baseTotal + additionsTotal : null);
+  const source = result.fuente || result.trazabilidad?.fuente_precio_final || "motor de cotización";
+  const rule = result.regla_aplicada || result.trazabilidad?.modo_calculo || "regla aplicada";
+  const modeColor = payload.modo_color || (String(payload.caras || "").startsWith("4") ? "fullcolor" : "blanco_y_negro");
 
   const nodes = [
-    traceNode("entrada_usuario", "Entrada usuario", "derivado", payload.cantidad_unidades, "unidades", `Categoría: ${payload.categoria || "-"}. Urgencia: ${payload.urgencia || "normal"}.`, "payload actual", "datos ingresados", "Nodo raíz de la cotización actual."),
-    traceNode("material_cotizado", `Material ${materialLabel}`, "derivado", materialLabel, null, "Material real de la cotización actual.", "lastPayload.material / lastPayload.papel", "selección del usuario", "No se usa material genérico cuando hay cotización real."),
-    traceNode("formato", `Formato ${payload.formato || "-"}`, "derivado", payload.formato || "-", null, "Formato cotizado.", "lastPayload.formato", "selección del usuario", "Debe coincidir con la cotización visible."),
-    traceNode("caras", `Impresión ${payload.caras || "-"}`, "derivado", payload.caras || "-", null, "Caras / impresión solicitada.", "lastPayload.caras", "selección del usuario", "Define modo color cuando corresponde."),
-    traceNode("rango", `Rango ${range}`, "derivado", range, null, "Rango aplicado por cantidad.", "result.cantidad_rango_aplicado", "derivado desde cantidad", "Si el producto usa matriz exacta, muestra la cantidad/rango devuelto."),
-    traceNode("precio_base_unitario", "Precio base unitario", "tabla_pdf", baseUnit, "ARS", "Precio base unitario de la cotización actual.", result.fuente || "motor de cotización", result.regla_aplicada || "regla aplicada", "Se toma del resultado real, no de un caso fijo."),
+    traceNode("entrada_usuario", "Entrada del usuario", "entrada", payload.categoria || "Cotización actual", null, `Cantidad: ${quantity || "-"}. Producto: ${payload.producto || payload.categoria || "-"}.`, "payload actual", "captura del formulario", "Nodo raíz: contiene la selección real calculada por el usuario.", { branch: "entrada", column: 0, lane: 3, row: 0 }),
+
+    traceNode("origen_material", "Origen papel/material", "preparada", payload.tipo_papel || payload.papel || payload.material || "material", null, "Fuente semántica del material seleccionado. Si hay variable madre conectada, aparece como origen; si no, queda como tabla/preparado.", "payload + configuración comercial", "define familia de material", "No reemplaza al material cotizado real; solo explica su origen.", { branch: "material", column: 0, lane: 0, row: 0 }),
+    traceNode("material_cotizado", `Material ${materialLabel}`, "derivado", materialLabel, null, "Material real de la cotización actual.", "lastPayload.material / lastPayload.papel / lastPayload.gramaje", "selección del usuario", "Debe coincidir con lo cotizado, por ejemplo Ilustracion 115g.", { branch: "material", column: 1, lane: 0, row: 0 }),
+
+    traceNode("click_base", `Click ${modeColor}`, "variable_madre", modeColor, null, "Rama de click/impresión usada para explicar el origen del costo de impresión.", "variables comerciales / motor de cotización", "define base de impresión", "Cuando el producto usa PDF fijo, el nodo queda como referencia lógica y el precio final sigue viniendo del resultado real.", { branch: "impresion", column: 0, lane: 1, row: 0, editable_en_sistema: true, impacta_hoy: true }),
+    traceNode("formato", `Formato ${payload.formato || "-"}`, "derivado", payload.formato || "-", null, "Formato cotizado y posible derivación proporcional del click/base.", "lastPayload.formato", "deriva tamaño/formato", "Debe coincidir con el formulario de la cotización actual.", { branch: "impresion", column: 1, lane: 1, row: 0 }),
+    traceNode("caras", `Impresión ${payload.caras || "-"}`, "derivado", payload.caras || "-", null, "Caras / impresión solicitada.", "lastPayload.caras", "define caras y modo color", "Separa visualmente la impresión de papel y cantidad.", { branch: "impresion", column: 2, lane: 1, row: 0 }),
+
+    traceNode("cantidad", "Cantidad ingresada", "entrada", quantity || "-", "u.", "Cantidad ingresada por el usuario.", "lastPayload.cantidad_unidades", "entrada directa", "Desde acá se define rango o cantidad de matriz.", { branch: "cantidad", column: 0, lane: 2, row: 0 }),
+    traceNode("rango", `Rango aplicado ${range}`, "factor", range, null, "Rango aplicado por cantidad.", "result.cantidad_rango_aplicado / lastPayload.cantidad_rango", "lookup por cantidad", "Si el producto usa matriz exacta, muestra la cantidad o rango devuelto.", { branch: "cantidad", column: 1, lane: 2, row: 0 }),
+
+    traceNode("precio_base_unitario", "Precio base unitario", "tabla_pdf", baseUnit, "ARS", "Precio base unitario de la cotización actual.", source, rule, "Se toma del resultado real, no de un caso fijo.", { branch: "resultado", column: 3, lane: 2, row: 0 }),
+    traceNode("base_total", "Base x cantidad", "derivado", baseTotal, "ARS", "Subtotal base antes de adicionales y urgencia.", "resultado actual", "precio base unitario x cantidad", "Convergencia de material, click, formato, impresión y rango.", { branch: "resultado", column: 4, lane: 2, row: 0 }),
   ];
 
   const edges = [
-    traceEdge("e_entrada_material", "entrada_usuario", "material_cotizado", "selección"),
-    traceEdge("e_material_formato", "material_cotizado", "formato", "con formato"),
-    traceEdge("e_formato_caras", "formato", "caras", "impresión"),
-    traceEdge("e_caras_rango", "caras", "rango", "cantidad"),
-    traceEdge("e_rango_base", "rango", "precio_base_unitario", "lookup/regla"),
+    traceEdge("e_entrada_material", "entrada_usuario", "material_cotizado", "usa"),
+    traceEdge("e_origen_material", "origen_material", "material_cotizado", "define"),
+    traceEdge("e_material_base", "material_cotizado", "precio_base_unitario", "aporta"),
+
+    traceEdge("e_entrada_formato", "entrada_usuario", "formato", "usa"),
+    traceEdge("e_click_formato", "click_base", "formato", "deriva"),
+    traceEdge("e_formato_caras", "formato", "caras", "aplica"),
+    traceEdge("e_caras_base", "caras", "precio_base_unitario", "aporta"),
+
+    traceEdge("e_entrada_cantidad", "entrada_usuario", "cantidad", "usa"),
+    traceEdge("e_cantidad_rango", "cantidad", "rango", "lookup"),
+    traceEdge("e_rango_base", "rango", "precio_base_unitario", "define"),
+    traceEdge("e_base_total", "precio_base_unitario", "base_total", "x cantidad"),
   ];
 
   if (additions.length) {
     additions.forEach((addition, index) => {
       const id = `adicional_${index + 1}`;
-      nodes.push(traceNode(id, `Adicional ${addition.label}`, "factor", addition.value, "ARS", addition.detail || "Adicional aplicado.", addition.source || "resultado actual", "suma al precio base", "Adicional real de la cotización actual."));
-      edges.push(traceEdge(`e_base_${id}`, "precio_base_unitario", id, "suma"));
+      nodes.push(traceNode(id, `Adicional ${addition.label}`, "factor", addition.value, "ARS", addition.detail || "Adicional aplicado.", addition.source || "resultado actual", "suma al subtotal", "Adicional real de la cotización actual.", { branch: "adicionales", column: 1 + index, lane: 3, row: 0 }));
+      edges.push(traceEdge(`e_entrada_${id}`, "entrada_usuario", id, "elige"));
+      edges.push(traceEdge(`e_${id}_subtotal`, id, "subtotal_con_adicionales", "suma"));
     });
   } else {
-    nodes.push(traceNode("sin_adicional", "Sin adicional", "derivado", 0, "ARS", "La cotización actual no tiene adicionales aplicados.", "lastPayload/result", "sin suma adicional", "Nodo explícito para evitar ambigüedad."));
-    edges.push(traceEdge("e_base_sin_adicional", "precio_base_unitario", "sin_adicional", "sin adicional"));
+    nodes.push(traceNode("sin_adicional", "Sin adicional", "derivado", 0, "ARS", "La cotización actual no tiene adicionales aplicados.", "lastPayload/result", "sin suma adicional", "Nodo explícito para evitar ambigüedad.", { branch: "adicionales", column: 1, lane: 3, row: 0 }));
+    edges.push(traceEdge("e_entrada_sin_adicional", "entrada_usuario", "sin_adicional", "elige"));
+    edges.push(traceEdge("e_sin_adicional_subtotal", "sin_adicional", "subtotal_con_adicionales", "no suma"));
   }
 
   nodes.push(
-    traceNode("urgencia", `Urgencia ${payload.urgencia || "normal"}`, "factor", urgencyValue, typeof urgencyValue === "number" ? "factor" : null, "Recargo de urgencia aplicado.", "result.trazabilidad.recargo_urgencia_aplicado", "aplica al total si corresponde", "Urgencia normal no altera el total."),
-    traceNode("total_final", "Total final", "derivado", totalFinal, "ARS", "Total final de la cotización actual.", "result.total_con_urgencia", "base + adicionales + urgencia", "Valor que ve el usuario en el panel de resultado.")
+    traceNode("subtotal_con_adicionales", "Subtotal con adicionales", "derivado", subtotalWithAdditions, "ARS", "Subtotal antes de urgencia.", "resultado actual", "base + adicionales", "Punto de convergencia de base y extras.", { branch: "resultado", column: 5, lane: 2, row: 0 }),
+    traceNode("urgencia", `Urgencia ${payload.urgencia || "normal"}`, "factor", urgencyValue, typeof urgencyValue === "number" ? "factor" : null, "Recargo de urgencia aplicado.", "result.trazabilidad.recargo_urgencia_aplicado", "recarga o mantiene", "Urgencia normal funciona como factor neutro.", { branch: "urgencia", column: 6, lane: 4, row: 0 }),
+    traceNode("total_final", "Total final", "derivado", totalFinal, "ARS", "Total final de la cotización actual.", "result.total_con_urgencia / result.total_sin_iva", "subtotal + urgencia", "Valor que ve el usuario en el panel de resultado.", { branch: "resultado", column: 7, lane: 2, row: 0 })
   );
 
-  const lastAdditionId = additions.length ? `adicional_${additions.length}` : "sin_adicional";
-  edges.push(traceEdge("e_adicional_urgencia", lastAdditionId, "urgencia", "aplica urgencia"));
+  edges.push(traceEdge("e_base_subtotal", "base_total", "subtotal_con_adicionales", "base"));
+  edges.push(traceEdge("e_entrada_urgencia", "entrada_usuario", "urgencia", "elige"));
+  edges.push(traceEdge("e_subtotal_urgencia", "subtotal_con_adicionales", "urgencia", "recarga"));
   edges.push(traceEdge("e_urgencia_total", "urgencia", "total_final", "total"));
 
   return {
     ok: true,
     producto: payload.categoria || "Cotización actual",
     caso: "cotizacion_actual",
+    layout: "branched",
     nodes,
     edges,
     legend: TRACE_DEFAULT_LEGEND,
@@ -1820,19 +1911,19 @@ export default function CotizadorBajadasV2() {
             {graph.nodes.length ? (
               <svg className="trace-svg" viewBox={`0 0 ${width} ${height}`} role="img" aria-label="Grafo de trazabilidad de precios">
                 <defs>
-                  <marker id="trace-arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
-                    <path d="M0,0 L0,6 L9,3 z" fill="#8aa4d6" />
+                  <marker id="trace-arrow" markerWidth="13" markerHeight="13" refX="11" refY="4" orient="auto" markerUnits="strokeWidth">
+                    <path d="M0,0 L0,8 L11,4 z" fill="#8aa4d6" />
                   </marker>
                 </defs>
                 {graph.edges.map((edge) => {
                   const from = positions[edge.source];
                   const to = positions[edge.target];
                   if (!from || !to) return null;
-                  const startX = from.x + 178;
-                  const startY = from.y + 36;
-                  const endX = to.x - 8;
-                  const endY = to.y + 36;
-                  const curve = Math.max(60, (endX - startX) / 2);
+                  const startX = from.x + TRACE_NODE_WIDTH;
+                  const startY = from.y + TRACE_NODE_HEIGHT / 2;
+                  const endX = to.x - 12;
+                  const endY = to.y + TRACE_NODE_HEIGHT / 2;
+                  const curve = Math.max(80, Math.abs(endX - startX) / 2);
                   return (
                     <g key={edge.id}>
                       <path className="trace-edge" d={`M ${startX} ${startY} C ${startX + curve} ${startY}, ${endX - curve} ${endY}, ${endX} ${endY}`} markerEnd="url(#trace-arrow)" />
@@ -1846,10 +1937,10 @@ export default function CotizadorBajadasV2() {
                   const selected = selectedNode?.id === node.id;
                   return (
                     <g key={node.id} className={`trace-node ${visualType} ${selected ? "selected" : ""}`} transform={`translate(${pos.x} ${pos.y})`} onClick={() => setSelectedTraceNodeId(node.id)} tabIndex="0" role="button" aria-label={`Nodo ${node.label}`}>
-                      <rect className="trace-node-rect" width="176" height="78" rx="15" />
-                      <text className="trace-node-title" x="14" y="24">{node.label}</text>
-                      <text className="trace-node-meta" x="14" y="46">{TRACE_TYPE_LABELS[visualType] || visualType}</text>
-                      <text className="trace-node-value" x="14" y="66">{formatTraceValue(node)}</text>
+                      <rect className="trace-node-rect" width={TRACE_NODE_WIDTH} height={TRACE_NODE_HEIGHT} rx="18" />
+                      <text className="trace-node-title" x="18" y="30">{node.label}</text>
+                      <text className="trace-node-meta" x="18" y="56">{TRACE_TYPE_LABELS[visualType] || visualType}</text>
+                      <text className="trace-node-value" x="18" y="80">{formatTraceValue(node)}</text>
                     </g>
                   );
                 })}

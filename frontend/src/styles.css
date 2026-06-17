@@ -325,7 +325,10 @@ select:focus {
 .placeholder {
   border: 1px dashed rgba(255, 255, 255, 0.2);
   border-radius: 12px;
-  padding: 16px;
+  padding: 18px;
+  align-self: start;
+  position: sticky;
+  top: 12px;
   color: var(--text-soft);
 }
 
@@ -656,6 +659,7 @@ select:focus {
   background: #7aa2ff;
 }
 
+.legend-chip.entrada i { background: #f97316; }
 .legend-chip.variable_madre i { background: #22c55e; }
 .legend-chip.derivado i { background: #38bdf8; }
 .legend-chip.tabla_pdf i { background: #94a3b8; }
@@ -665,8 +669,8 @@ select:focus {
 
 .trace-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(260px, 330px);
-  gap: 14px;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 360px);
+  gap: 18px;
   align-items: stretch;
 }
 
@@ -680,27 +684,32 @@ select:focus {
 }
 
 .trace-graph-card {
-  min-height: 420px;
+  min-height: 680px;
+  max-height: min(76vh, 880px);
   overflow: auto;
-  padding: 10px;
+  padding: 18px;
+  scrollbar-color: rgba(56, 189, 248, 0.45) rgba(15, 23, 42, 0.4);
 }
 
 .trace-svg {
-  min-width: 760px;
-  width: 100%;
+  min-width: 1120px;
+  width: max-content;
   height: auto;
+  display: block;
 }
 
 .trace-edge {
   fill: none;
-  stroke: rgba(138, 164, 214, 0.82);
-  stroke-width: 2;
+  stroke: rgba(138, 164, 214, 0.9);
+  stroke-width: 2.7;
+  stroke-linecap: round;
 }
 
 .trace-edge-label {
-  fill: #b8c5e6;
-  font-size: 11px;
-  font-weight: 700;
+  fill: #d5e3ff;
+  font-size: 15px;
+  font-weight: 900;
+  letter-spacing: -0.01em;
   paint-order: stroke;
   stroke: rgba(8, 11, 19, 0.9);
   stroke-width: 4px;
@@ -712,39 +721,53 @@ select:focus {
 }
 
 .trace-node-rect {
-  fill: rgba(13, 18, 30, 0.94);
+  fill: rgba(13, 18, 30, 0.96);
   stroke: #38bdf8;
-  stroke-width: 1.5;
-  filter: drop-shadow(0 14px 18px rgba(0, 0, 0, 0.25));
+  stroke-width: 2;
+  filter: drop-shadow(0 18px 26px rgba(0, 0, 0, 0.34));
 }
 
+.trace-node.entrada .trace-node-rect { stroke: #f97316; fill: rgba(68, 39, 16, 0.9); }
 .trace-node.variable_madre .trace-node-rect { stroke: #22c55e; fill: rgba(18, 60, 38, 0.84); }
 .trace-node.derivado .trace-node-rect { stroke: #38bdf8; }
 .trace-node.tabla_pdf .trace-node-rect { stroke: #94a3b8; fill: rgba(45, 52, 63, 0.84); }
 .trace-node.preparada .trace-node-rect { stroke: #f59e0b; fill: rgba(66, 45, 12, 0.84); }
 .trace-node.bloqueado .trace-node-rect { stroke: #ef4444; fill: rgba(67, 21, 27, 0.84); }
 .trace-node.factor .trace-node-rect { stroke: #a78bfa; fill: rgba(50, 37, 88, 0.84); }
-.trace-node.selected .trace-node-rect { stroke-width: 3; filter: drop-shadow(0 0 18px rgba(125, 211, 252, 0.35)); }
+.trace-node.selected .trace-node-rect {
+  stroke: #f8fafc;
+  stroke-width: 4;
+  filter: drop-shadow(0 0 24px rgba(125, 211, 252, 0.58));
+}
+
+.trace-node.selected .trace-node-title {
+  fill: #ffffff;
+}
 
 .trace-node-title {
   fill: #eef4ff;
-  font-size: 13px;
-  font-weight: 800;
+  font-size: 15px;
+  font-weight: 900;
+  letter-spacing: -0.01em;
 }
 
 .trace-node-meta,
 .trace-node-value {
   fill: #c5d0ea;
-  font-size: 11px;
+  font-size: 12px;
 }
 
 .trace-node-value {
   fill: #f8fbff;
-  font-weight: 700;
+  font-size: 13px;
+  font-weight: 800;
 }
 
 .trace-detail {
-  padding: 16px;
+  padding: 18px;
+  align-self: start;
+  position: sticky;
+  top: 12px;
 }
 
 .trace-detail h4 {
