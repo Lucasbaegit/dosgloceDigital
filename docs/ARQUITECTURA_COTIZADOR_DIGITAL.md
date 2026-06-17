@@ -17,6 +17,8 @@ Regla central:
 - No se inventan precios.
 - Si no hay datos confiables, el producto o dato queda bloqueado.
 - Los precios finales publicados se toman del PDF o de matrices validadas contra esa fuente.
+- La edición operativa de variables se realiza desde el sistema, no desde el Excel maestro.
+- El Excel maestro queda como visualización, auditoría, soporte y exportación.
 
 ---
 
@@ -39,9 +41,17 @@ Regla central:
 ### Exportaciones
 
 - Exportación PDF de tablas finales
-- Excel maestro exportable
+- Excel maestro exportable como documento de soporte/auditoría
 - `openpyxl` para generar y validar Excel
 - Validación exhaustiva del Excel maestro
+
+### Administración de precios
+
+- `Administrador de precios` expone solo variables operativas editables.
+- Todo guardado requiere preview previo.
+- Antes de escribir se genera backup de la configuración afectada.
+- Cada cambio queda registrado en historial operativo.
+- Las matrices PDF, factores de ajuste no editables y productos bloqueados no se escriben desde esta pantalla.
 
 ### QA
 

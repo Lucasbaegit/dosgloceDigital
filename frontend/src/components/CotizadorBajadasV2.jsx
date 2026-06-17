@@ -1,5 +1,6 @@
 ﻿import { useEffect, useMemo, useState } from "react";
 import {
+  applyAdminPrecio,
   approveBajadasConfigCandidate,
   cotizarBajadaV2,
   cotizarFolletos,
@@ -24,6 +25,8 @@ import {
   fetchBajadasConfigHistory,
   fetchBajadasHealth,
   fetchBajadasMetrics,
+  fetchAdminPreciosHistorial,
+  fetchAdminPreciosVariables,
   fetchPrincipalVariables,
   fetchPrincipalVariablesAudit,
   fetchPrincipalVariablesRanges,
@@ -31,6 +34,7 @@ import {
   fetchVariablesImpacto,
   exportPricesExcel,
   exportPricesPdf,
+  previewAdminPrecio,
   previewExcelMaestro,
   promoteBajadasConfigCandidate,
   rejectBajadasConfigCandidate,
@@ -44,8 +48,8 @@ import {
 } from "../api/bajadasV2Api";
 import optionRows from "../data/bajadasOptions.json";
 
-const NAV_ITEMS = ["Cotizador", "Árbol del precio", "Trazabilidad visual", "Impacto de variables", "Variables principales", "Configuración", "Pedidos", "Plantillas", "Historial", "Precios", "Ajustes"];
-const TAB_KEYS = new Set(["Cotizador", "Árbol del precio", "Trazabilidad visual", "Impacto de variables", "Variables principales", "Configuración"]);
+const NAV_ITEMS = ["Cotizador", "Árbol del precio", "Trazabilidad visual", "Impacto de variables", "Administrador de precios", "Variables principales", "Configuración", "Pedidos", "Plantillas", "Historial", "Precios", "Ajustes"];
+const TAB_KEYS = new Set(["Cotizador", "Árbol del precio", "Trazabilidad visual", "Impacto de variables", "Administrador de precios", "Variables principales", "Configuración"]);
 const TRACE_MODES = [
   { value: "cotizacion_actual", label: "Cotización actual" },
   { value: "casos_generales", label: "Casos de lógica general" },
@@ -673,6 +677,14 @@ export default function CotizadorBajadasV2() {
   const [impactMode, setImpactMode] = useState("variable");
   const [impactVariable, setImpactVariable] = useState("click_color");
   const [impactProduct, setImpactProduct] = useState("bajadas_fullcolor_byn");
+  const [adminPrices, setAdminPrices] = useState(null);
+  const [adminHistory, setAdminHistory] = useState([]);
+  const [adminVariable, setAdminVariable] = useState("click_color");
+  const [adminNewValue, setAdminNewValue] = useState("");
+  const [adminPreview, setAdminPreview] = useState(null);
+  const [adminLoading, setAdminLoading] = useState(false);
+  const [adminMsg, setAdminMsg] = useState("");
+  const [adminError, setAdminError] = useState("");
 
   const inferred = useMemo(() => inferQuoteContext(form), [form]);
   const isAutoadhesivas = inferred.categoria === "Bajadas Autoadhesivas";
@@ -857,6 +869,72 @@ export default function CotizadorBajadasV2() {
       setImpactError(err.message || "No se pudo cargar el impacto de variables.");
     } finally {
       setImpactLoading(false);
+    }
+  };
+
+  const loadAdminPrices = async () => {
+    try {
+      setAdminLoading(true);
+      setAdminError("");
+      const [variables, history] = await Promise.all([
+        fetchAdminPreciosVariables(),
+        fetchAdminPreciosHistorial(),
+      ]);
+      setAdminPrices(variables);
+      setAdminHistory(history?.historial || []);
+      if (variables?.variables?.length) {
+        const selectedKey = variables.variables.some((item) => item.key === adminVariable)
+          ? adminVariable
+          : variables.variables[0].key;
+        const selectedItem = variables.variables.find((item) => item.key === selectedKey);
+        setAdminVariable(selectedKey);
+        if (adminNewValue === "" && selectedItem) {
+          setAdminNewValue(String(selectedItem.value));
+        }
+      }
+    } catch (err) {
+      setAdminError(err.message || "No se pudo cargar Administrador de precios.");
+    } finally {
+      setAdminLoading(false);
+    }
+  };
+
+  const handleAdminPreview = async () => {
+    try {
+      setAdminLoading(true);
+      setAdminError("");
+      setAdminMsg("");
+      const preview = await previewAdminPrecio({ variable: adminVariable, nuevo_valor: Number(adminNewValue) });
+      setAdminPreview(preview);
+      setAdminMsg("Preview válido. Revisá impactos antes de guardar.");
+    } catch (err) {
+      setAdminPreview(null);
+      setAdminError(err.message || "No se pudo previsualizar el cambio.");
+    } finally {
+      setAdminLoading(false);
+    }
+  };
+
+  const handleAdminApply = async () => {
+    if (!adminPreview || adminPreview.variable !== adminVariable || Number(adminPreview.nuevo_valor) !== Number(adminNewValue)) {
+      setAdminError("Primero generá un preview válido para este valor.");
+      return;
+    }
+    const confirmed = window.confirm("Confirmar cambio operativo de variable. Se creará backup e historial.");
+    if (!confirmed) return;
+    try {
+      setAdminLoading(true);
+      setAdminError("");
+      const applied = await applyAdminPrecio({ variable: adminVariable, nuevo_valor: Number(adminNewValue), confirmado: true });
+      setAdminMsg(`Cambio guardado. Backup: ${(applied.backup || []).join(", ") || "-"}`);
+      setAdminPreview(null);
+      await loadAdminPrices();
+      await loadPrincipalVariables();
+      setImpactData(null);
+    } catch (err) {
+      setAdminError(err.message || "No se pudo guardar el cambio.");
+    } finally {
+      setAdminLoading(false);
     }
   };
 
@@ -1511,6 +1589,12 @@ export default function CotizadorBajadasV2() {
   useEffect(() => {
     if (activeTab !== "Impacto de variables" || impactData || impactLoading) return;
     loadVariablesImpacto();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab]);
+
+  useEffect(() => {
+    if (activeTab !== "Administrador de precios" || adminPrices || adminLoading) return;
+    loadAdminPrices();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
 
@@ -2356,6 +2440,172 @@ export default function CotizadorBajadasV2() {
     );
   };
 
+  const renderAdminPricesTab = () => {
+    const variables = adminPrices?.variables || [];
+    const selected = variables.find((item) => item.key === adminVariable);
+    const previewMatches = adminPreview && adminPreview.variable === adminVariable && Number(adminPreview.nuevo_valor) === Number(adminNewValue);
+    return (
+      <section className="card result-card admin-prices-card">
+        <div className="card-head">
+          <div>
+            <h3 data-testid="admin-prices-title">Administrador de precios</h3>
+            <p>Edición operativa segura: el Excel maestro queda como soporte, auditoría y exportación. Guardar requiere preview válido, backup e historial.</p>
+          </div>
+          <span>Sistema operativo</span>
+        </div>
+
+        <div className="warning-box">
+          No se editan matrices PDF ni precios finales fijos. Solo variables madre conectadas y aprobadas para edición desde sistema.
+        </div>
+        {adminError ? <div className="error-box" data-testid="admin-prices-error">{adminError}</div> : null}
+        {adminMsg ? <div className="info-box" data-testid="admin-prices-message">{adminMsg}</div> : null}
+        {adminLoading && !adminPrices ? <div className="placeholder"><p>Cargando administrador...</p></div> : null}
+
+        {adminPrices ? (
+          <>
+            <div className="admin-prices-layout">
+              <aside className="admin-variable-list" data-testid="admin-variable-list">
+                {variables.map((item) => (
+                  <button
+                    type="button"
+                    key={item.key}
+                    className={adminVariable === item.key ? "admin-variable-item active" : "admin-variable-item"}
+                    onClick={() => {
+                      setAdminVariable(item.key);
+                      setAdminNewValue(String(item.value));
+                      setAdminPreview(null);
+                      setAdminMsg("");
+                      setAdminError("");
+                    }}
+                  >
+                    <strong>{item.label}</strong>
+                    <span>{item.key}</span>
+                    <em>{item.impacta_hoy ? "impacta_hoy" : "documentado_no_conectado"}</em>
+                  </button>
+                ))}
+              </aside>
+
+              <div className="admin-editor">
+                <div className="admin-editor-head">
+                  <div>
+                    <span>Variable seleccionada</span>
+                    <strong>{selected?.label || adminVariable}</strong>
+                    <small>{selected?.description}</small>
+                  </div>
+                  <em>{selected?.unit || "-"}</em>
+                </div>
+
+                <div className="admin-current-grid">
+                  <div><span>Valor actual</span><strong>{selected?.value ?? "-"}</strong></div>
+                  <div><span>Unidad</span><strong>{selected?.unit || "-"}</strong></div>
+                  <div><span>Estado</span><strong>{selected?.estado || "-"}</strong></div>
+                  <div><span>Productos</span><strong>{(selected?.productos_afectados || []).join(", ") || "-"}</strong></div>
+                </div>
+
+                <label className="admin-new-value">
+                  <span>Nuevo valor</span>
+                  <input
+                    type="number"
+                    data-testid="admin-new-value-input"
+                    value={adminNewValue}
+                    placeholder={selected ? String(selected.value) : ""}
+                    min={selected?.min}
+                    max={selected?.max}
+                    step={selected?.step || "0.01"}
+                    onChange={(event) => {
+                      setAdminNewValue(event.target.value);
+                      setAdminPreview(null);
+                      setAdminMsg("");
+                    }}
+                  />
+                </label>
+
+                <div className="principal-actions">
+                  <button
+                    type="button"
+                    className="secondary-btn"
+                    data-testid="admin-preview-button"
+                    onClick={handleAdminPreview}
+                    disabled={adminLoading || adminNewValue === ""}
+                  >
+                    Previsualizar impacto
+                  </button>
+                  <button
+                    type="button"
+                    className="calculate-btn compact-calculate-btn"
+                    data-testid="admin-apply-button"
+                    onClick={handleAdminApply}
+                    disabled={adminLoading || !previewMatches}
+                  >
+                    Guardar cambio
+                  </button>
+                  <button type="button" className="secondary-btn" onClick={loadAdminPrices}>Recargar</button>
+                </div>
+
+                {adminPreview ? (
+                  <div className="admin-preview-panel" data-testid="admin-preview-panel">
+                    <h4>Preview de impacto</h4>
+                    <div className="admin-current-grid">
+                      <div><span>Actual</span><strong>{adminPreview.valor_actual}</strong></div>
+                      <div><span>Nuevo</span><strong>{adminPreview.nuevo_valor}</strong></div>
+                      <div><span>Diferencia</span><strong>{adminPreview.diferencia}</strong></div>
+                      <div><span>Diferencia %</span><strong>{adminPreview.diferencia_porcentual == null ? "-" : `${adminPreview.diferencia_porcentual.toFixed(2)}%`}</strong></div>
+                    </div>
+                    {adminPreview.advertencias?.length ? <div className="warning-box">{adminPreview.advertencias.join(" · ")}</div> : null}
+                    <h4>Productos afectados</h4>
+                    <div className="impact-results">
+                      {(adminPreview.impactos || []).map((impact) => (
+                        <article className={`impact-relation-card ${impact.estado === "bloqueado" ? "bloqueado" : impact.impacta_hoy ? "variable_madre" : "preparada"}`} key={`${impact.variable}-${impact.producto_key}-${impact.componente}`}>
+                          <div className="impact-relation-head">
+                            <div>
+                              <strong>{impact.producto}</strong>
+                              <span>{impact.componente}</span>
+                            </div>
+                            <em>{impact.impacta_hoy ? "Impacta hoy" : "Documentado"}</em>
+                          </div>
+                          <p>{impact.detalle}</p>
+                          <small>Fuente: {impact.fuente}</small>
+                        </article>
+                      ))}
+                    </div>
+                    {adminPreview.precios_ejemplo?.length ? (
+                      <>
+                        <h4>Precios de ejemplo</h4>
+                        <div className="admin-example-grid">
+                          {adminPreview.precios_ejemplo.map((example) => (
+                            <article key={example.nombre}>
+                              <strong>{example.nombre}</strong>
+                              <span>Antes: {example.antes == null ? "-" : formatMoney(example.antes)}</span>
+                              <span>Después: {example.despues == null ? "-" : formatMoney(example.despues)}</span>
+                              <small>{example.detalle}</small>
+                            </article>
+                          ))}
+                        </div>
+                      </>
+                    ) : null}
+                  </div>
+                ) : null}
+              </div>
+            </div>
+
+            <section className="principal-group admin-history" data-testid="admin-history">
+              <h4>Historial de cambios</h4>
+              {adminHistory.length ? (
+                <div className="history-list">
+                  {adminHistory.slice().reverse().slice(0, 10).map((item, index) => (
+                    <div key={`${item.timestamp}-${index}`}>
+                      <strong>{item.variable}</strong> · {item.valor_anterior} → {item.valor_nuevo} · {item.fuente || "sistema"}
+                    </div>
+                  ))}
+                </div>
+              ) : <p className="range-hint">Sin cambios registrados todavía.</p>}
+            </section>
+          </>
+        ) : null}
+      </section>
+    );
+  };
+
   const renderPrincipalVariablesTab = () => {
     const groups = [
       ["tipo_cambio", "Variables madre editables - Tipo de cambio"],
@@ -2834,7 +3084,7 @@ export default function CotizadorBajadasV2() {
             <button
               key={item}
               type="button"
-              data-testid={item === "Árbol del precio" ? "tab-price-tree" : item === "Trazabilidad visual" ? "tab-trace-visual" : item === "Impacto de variables" ? "tab-variable-impact" : undefined}
+              data-testid={item === "Árbol del precio" ? "tab-price-tree" : item === "Trazabilidad visual" ? "tab-trace-visual" : item === "Impacto de variables" ? "tab-variable-impact" : item === "Administrador de precios" ? "tab-admin-prices" : undefined}
               className={activeTab === item ? "nav-item active" : "nav-item"}
               onClick={() => TAB_KEYS.has(item) && setActiveTab(item)}
             >
@@ -2855,6 +3105,7 @@ export default function CotizadorBajadasV2() {
           {activeTab === "Árbol del precio" ? renderTreeTab() : null}
           {activeTab === "Trazabilidad visual" ? renderTraceVisualTab() : null}
           {activeTab === "Impacto de variables" ? renderVariableImpactTab() : null}
+          {activeTab === "Administrador de precios" ? renderAdminPricesTab() : null}
           {activeTab === "Variables principales" ? renderPrincipalVariablesTab() : null}
           {activeTab === "Configuración" ? renderConfigTab() : null}
         </section>

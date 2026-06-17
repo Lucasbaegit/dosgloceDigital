@@ -1058,6 +1058,165 @@ select:focus {
   background: rgba(14, 165, 233, 0.22);
 }
 
+.admin-prices-card .card-head p {
+  margin: 6px 0 0;
+  color: var(--text-soft);
+}
+
+.admin-prices-layout {
+  display: grid;
+  grid-template-columns: minmax(240px, 0.8fr) minmax(420px, 1.5fr);
+  gap: 16px;
+  margin-top: 18px;
+}
+
+.admin-variable-list {
+  display: grid;
+  gap: 10px;
+  align-content: start;
+}
+
+.admin-variable-item {
+  display: grid;
+  gap: 5px;
+  text-align: left;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 13px;
+  color: #dce8ff;
+  background: rgba(15, 23, 42, 0.66);
+}
+
+.admin-variable-item.active {
+  border-color: rgba(34, 197, 94, 0.58);
+  background:
+    radial-gradient(circle at 100% 0%, rgba(34, 197, 94, 0.18), transparent 38%),
+    rgba(15, 23, 42, 0.82);
+}
+
+.admin-variable-item span {
+  color: #91a2c8;
+  font-size: 12px;
+}
+
+.admin-variable-item em {
+  justify-self: start;
+  border-radius: 999px;
+  padding: 4px 8px;
+  color: #dff7ff;
+  background: rgba(56, 189, 248, 0.14);
+  font-size: 12px;
+  font-style: normal;
+}
+
+.admin-editor,
+.admin-preview-panel {
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 20px;
+  padding: 18px;
+  background: rgba(15, 23, 42, 0.74);
+}
+
+.admin-editor-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.admin-editor-head div {
+  display: grid;
+  gap: 4px;
+}
+
+.admin-editor-head span,
+.admin-editor-head small {
+  color: var(--text-soft);
+}
+
+.admin-editor-head strong {
+  color: #f8fbff;
+  font-size: 22px;
+}
+
+.admin-editor-head em {
+  border: 1px solid rgba(56, 189, 248, 0.28);
+  border-radius: 999px;
+  align-self: start;
+  padding: 7px 10px;
+  color: #e0f7ff;
+  font-style: normal;
+  background: rgba(14, 165, 233, 0.1);
+}
+
+.admin-current-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.admin-current-grid div {
+  display: grid;
+  gap: 4px;
+  border-radius: 14px;
+  padding: 12px;
+  background: rgba(2, 6, 23, 0.32);
+}
+
+.admin-current-grid span {
+  color: #91a2c8;
+  font-size: 12px;
+}
+
+.admin-current-grid strong {
+  color: #f8fbff;
+  overflow-wrap: anywhere;
+}
+
+.admin-new-value {
+  display: grid;
+  gap: 8px;
+  margin: 14px 0;
+}
+
+.admin-preview-panel {
+  margin-top: 16px;
+}
+
+.admin-preview-panel h4 {
+  color: #edf3ff;
+  margin: 0 0 12px;
+}
+
+.admin-example-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 10px;
+}
+
+.admin-example-grid article {
+  display: grid;
+  gap: 6px;
+  border: 1px solid rgba(56, 189, 248, 0.18);
+  border-radius: 14px;
+  padding: 12px;
+  background: rgba(2, 6, 23, 0.24);
+}
+
+.admin-example-grid strong {
+  color: #f8fbff;
+}
+
+.admin-example-grid span,
+.admin-example-grid small {
+  color: var(--text-soft);
+}
+
+.admin-history {
+  margin-top: 16px;
+}
+
 .principal-variables-card .card-head p {
   margin: 6px 0 0;
   color: var(--text-soft);
@@ -1191,6 +1350,11 @@ select:focus {
   }
 
   .impact-meta-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-prices-layout,
+  .admin-current-grid {
     grid-template-columns: 1fr;
   }
 

@@ -97,6 +97,14 @@ class ApiHandler(BaseHTTPRequestHandler):
             status, payload = self.service.variables_impacto_producto(product_key)
             self._send_json(status, payload)
             return
+        if path == "/admin-precios/variables-editables":
+            status, payload = self.service.admin_precios_variables_editables()
+            self._send_json(status, payload)
+            return
+        if path == "/admin-precios/historial":
+            status, payload = self.service.admin_precios_historial()
+            self._send_json(status, payload)
+            return
         if path == "/trazabilidad/grafo":
             params = {key: values[-1] for key, values in parse_qs(parsed_url.query).items() if values}
             status, payload = self.service.trace_graph(params)
@@ -234,6 +242,8 @@ class ApiHandler(BaseHTTPRequestHandler):
             "/bajadas-v2/config/simulate",
             "/bajadas-v2/config/candidate/create",
             "/variables-principales/reset",
+            "/admin-precios/preview",
+            "/admin-precios/aplicar",
         }
         is_candidate_reject = path.startswith("/bajadas-v2/config/candidate/") and path.endswith("/reject")
         is_candidate_approve = path.startswith("/bajadas-v2/config/candidate/") and path.endswith("/approve")
@@ -312,6 +322,10 @@ class ApiHandler(BaseHTTPRequestHandler):
             status, response = self.service.cotizar_agendas_cuadernos(payload)
         elif path == "/variables-principales/reset":
             status, response = self.service.reset_principal_variables(payload)
+        elif path == "/admin-precios/preview":
+            status, response = self.service.admin_precios_preview(payload)
+        elif path == "/admin-precios/aplicar":
+            status, response = self.service.admin_precios_aplicar(payload)
         elif path == "/bajadas-v2/config/update":
             status, response = self.service.update_config(payload)
         elif path == "/bajadas-v2/config/validate":

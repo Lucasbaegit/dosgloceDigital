@@ -9,6 +9,7 @@ import json
 from pathlib import Path
 from typing import Any
 
+from admin_precios import AdminPricesService
 from bajadas_v2 import BajadasV2PricingEngine, load_bajadas_v2_bundle
 from bajadas_v2.config_loader import BajadasV2Bundle
 from bajadas_v2.exceptions import PriceNotFoundError, QuoteInputError
@@ -116,6 +117,7 @@ class BajadasV2ApiService:
         self.principal_variables = PrincipalVariablesService(project_root)
         self.price_trace_graph = PriceTraceGraphBuilder(project_root)
         self.variable_impact_map = VariableImpactMap(project_root)
+        self.admin_prices = AdminPricesService(project_root, self.principal_variables)
         self.excel_maestro_importer = ExcelMaestroImporter(project_root)
         self.prices_tables_builder = PricesTablesBuilder(project_root)
         self.prices_pdf_exporter = PricesPdfExporter()
@@ -152,6 +154,21 @@ class BajadasV2ApiService:
 
     def variables_impacto_producto(self, product_key: str) -> tuple[int, dict[str, Any]]:
         return self.variable_impact_map.by_product(product_key)
+
+    def admin_precios_variables_editables(self) -> tuple[int, dict[str, Any]]:
+        return 200, self.admin_prices.variables_editables()
+
+    def admin_precios_preview(self, payload: dict[str, Any]) -> tuple[int, dict[str, Any]]:
+        return self.admin_prices.preview(payload)
+
+    def admin_precios_aplicar(self, payload: dict[str, Any]) -> tuple[int, dict[str, Any]]:
+        status, result = self.admin_prices.apply(payload)
+        if status == 200:
+            self._reload_engines_after_principal_variables_update()
+        return status, result
+
+    def admin_precios_historial(self) -> tuple[int, dict[str, Any]]:
+        return 200, self.admin_prices.history()
 
     def export_prices_json(self) -> tuple[int, dict[str, Any]]:
         return 200, self.prices_tables_builder.build()

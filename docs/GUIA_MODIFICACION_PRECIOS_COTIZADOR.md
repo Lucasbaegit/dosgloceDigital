@@ -25,8 +25,18 @@ Esto evita cambios aislados sin trazabilidad y mantiene alineado el sistema con 
 Los cambios seguros se hacen desde la sección:
 
 ```text
-Variables principales
+Administrador de precios
 ```
+
+La sección `Variables principales` sigue existiendo como vista técnica de variables madre, pero la vía operativa recomendada para modificar valores es `Administrador de precios`.
+
+El Excel maestro no es la fuente operativa de escritura. Debe usarse como:
+
+- visualización
+- auditoría
+- soporte externo
+- exportación
+- respaldo para revisión
 
 Las variables operativas actuales son:
 
@@ -43,6 +53,15 @@ Estas variables deben figurar con:
 - `estado_operativo = operativa`
 
 Cuando una variable cumple esas condiciones, el sistema la considera una variable real de operación.
+
+Flujo obligatorio:
+
+1. Elegir variable.
+2. Ingresar nuevo valor.
+3. Previsualizar impacto.
+4. Revisar diferencia, productos afectados y advertencias.
+5. Guardar cambio solo con preview válido.
+6. El sistema crea backup e historial automáticamente.
 
 ---
 

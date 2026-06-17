@@ -14,6 +14,12 @@ El sistema toma como referencia principal:
 
 El cotizador no busca copiar el Excel viejo tal cual estaba, sino modernizarlo y ordenarlo.
 
+Importante:
+
+- Los cambios operativos de precios y variables se hacen desde el sistema, en `Administrador de precios`.
+- El Excel maestro es una herramienta de visualización, auditoría, soporte y exportación.
+- No se recomienda usar el Excel como fuente operativa principal para modificar precios.
+
 ---
 
 ## 2. Cómo se usa el cotizador
@@ -48,6 +54,22 @@ El sistema devuelve:
 - Detalle del cálculo
 - Estado del cálculo
 - Trazabilidad técnica, cuando está disponible
+
+---
+
+## 2.1 Administrador de precios
+
+La sección `Administrador de precios` permite modificar variables madre operativas de forma controlada.
+
+El flujo seguro es:
+
+- seleccionar una variable editable
+- ingresar un nuevo valor
+- previsualizar impacto
+- revisar productos afectados y advertencias
+- guardar solo si el preview es válido
+
+Al guardar, el sistema registra backup e historial. No modifica matrices PDF ni precios finales fijos.
 
 ---
 

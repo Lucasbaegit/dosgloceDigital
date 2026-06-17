@@ -202,6 +202,107 @@ test("Impacto de variables muestra relaciones por variable y producto", async ({
   await expect(page.getByTestId("impact-visual-chain")).toBeVisible();
 });
 
+test("Administrador de precios exige preview antes de guardar y muestra historial", async ({ page }) => {
+  await page.route("**/admin-precios/variables-editables", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        ok: true,
+        variables: [
+          {
+            key: "click_color",
+            label: "Click color base",
+            value: 39,
+            unit: "ARS",
+            description: "Click operativo",
+            impacta_hoy: true,
+            editable: true,
+            estado: "editable",
+            productos_afectados: ["Stickers Circulares"],
+            min: 0.01,
+            max: 100000,
+            step: 0.01,
+          },
+        ],
+      }),
+    });
+  });
+  await page.route("**/admin-precios/historial", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        ok: true,
+        historial: [
+          { timestamp: "2026-06-17T00:00:00Z", variable: "click_color", valor_anterior: 38, valor_nuevo: 39, fuente: "sistema" },
+        ],
+      }),
+    });
+  });
+  await page.route("**/admin-precios/preview", async (route) => {
+    const payload = JSON.parse(route.request().postData() || "{}");
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        ok: true,
+        variable: payload.variable,
+        label: "Click color base",
+        valor_actual: 39,
+        nuevo_valor: payload.nuevo_valor,
+        unidad: "ARS",
+        diferencia: payload.nuevo_valor - 39,
+        diferencia_porcentual: 2.56,
+        impactos: [
+          {
+            variable: "click_color",
+            producto_key: "stickers_circulares",
+            producto: "Stickers Circulares",
+            componente: "formula editable",
+            impacta_hoy: true,
+            estado: "conectado",
+            detalle: "Impacta formula calibrada.",
+            fuente: "formula_editable_config",
+          },
+        ],
+        precios_ejemplo: [],
+        advertencias: [],
+        requiere_confirmacion: true,
+      }),
+    });
+  });
+  await page.route("**/admin-precios/aplicar", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        ok: true,
+        aplicado: true,
+        variable: "click_color",
+        backup: ["data/backups/variables_principales/mock.json"],
+        historial: { variable: "click_color" },
+      }),
+    });
+  });
+
+  page.on("dialog", (dialog) => dialog.accept());
+  await page.goto("/", { waitUntil: "domcontentloaded" });
+  await page.getByTestId("tab-admin-prices").click();
+  await expect(page.getByTestId("admin-prices-title")).toBeVisible();
+  await expect(page.getByTestId("admin-variable-list")).toContainText("click_color");
+  await expect(page.getByTestId("admin-apply-button")).toBeDisabled();
+  await page.getByTestId("admin-new-value-input").fill("40");
+  await expect(page.getByTestId("admin-apply-button")).toBeDisabled();
+  await page.getByTestId("admin-preview-button").click();
+  await expect(page.getByTestId("admin-preview-panel")).toContainText("Preview de impacto");
+  await expect(page.getByTestId("admin-preview-panel")).toContainText("Stickers Circulares");
+  await expect(page.getByTestId("admin-apply-button")).toBeEnabled();
+  await page.getByTestId("admin-apply-button").click();
+  await expect(page.getByTestId("admin-prices-message")).toContainText("Cambio guardado");
+  await expect(page.getByTestId("admin-history")).toContainText("click_color");
+});
+
 test("troquelado digital se usa como adicional en Bajadas y no como categoría principal", async ({ page }) => {
   await page.goto("/", { waitUntil: "networkidle" });
   await expect(page.getByTestId("categoria-select").locator("option[value='Troquelado Digital']")).toHaveCount(0);
