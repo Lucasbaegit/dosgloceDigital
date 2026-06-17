@@ -281,6 +281,54 @@ export async function fetchTraceGraph(params = {}) {
   return body;
 }
 
+export async function fetchVariablesImpacto() {
+  const response = await fetch(`${API_BASE}/variables-impacto`);
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const error = new Error(body?.detail || "No se pudo cargar el impacto de variables.");
+    error.status = response.status;
+    error.code = body?.error || "api_error";
+    throw error;
+  }
+  return body;
+}
+
+export async function fetchVariablesImpactoResumen() {
+  const response = await fetch(`${API_BASE}/variables-impacto/resumen`);
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const error = new Error(body?.detail || "No se pudo cargar el resumen de impacto.");
+    error.status = response.status;
+    error.code = body?.error || "api_error";
+    throw error;
+  }
+  return body;
+}
+
+export async function fetchVariablesImpactoVariable(variableKey) {
+  const response = await fetch(`${API_BASE}/variables-impacto/variable/${encodeURIComponent(variableKey)}`);
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const error = new Error(body?.detail || "No se pudo cargar el impacto de la variable.");
+    error.status = response.status;
+    error.code = body?.error || "api_error";
+    throw error;
+  }
+  return body;
+}
+
+export async function fetchVariablesImpactoProducto(productKey) {
+  const response = await fetch(`${API_BASE}/variables-impacto/producto/${encodeURIComponent(productKey)}`);
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const error = new Error(body?.detail || "No se pudo cargar el impacto del producto.");
+    error.status = response.status;
+    error.code = body?.error || "api_error";
+    throw error;
+  }
+  return body;
+}
+
 export async function exportPricesPdf() {
   const response = await fetch(`${API_BASE}/export/precios/pdf`);
   if (!response.ok) throw new Error("No se pudo exportar PDF. Revisar backend.");

@@ -28,6 +28,7 @@ import {
   fetchPrincipalVariablesAudit,
   fetchPrincipalVariablesRanges,
   fetchTraceGraph,
+  fetchVariablesImpacto,
   exportPricesExcel,
   exportPricesPdf,
   previewExcelMaestro,
@@ -43,8 +44,8 @@ import {
 } from "../api/bajadasV2Api";
 import optionRows from "../data/bajadasOptions.json";
 
-const NAV_ITEMS = ["Cotizador", "Árbol del precio", "Trazabilidad visual", "Variables principales", "Configuración", "Pedidos", "Plantillas", "Historial", "Precios", "Ajustes"];
-const TAB_KEYS = new Set(["Cotizador", "Árbol del precio", "Trazabilidad visual", "Variables principales", "Configuración"]);
+const NAV_ITEMS = ["Cotizador", "Árbol del precio", "Trazabilidad visual", "Impacto de variables", "Variables principales", "Configuración", "Pedidos", "Plantillas", "Historial", "Precios", "Ajustes"];
+const TAB_KEYS = new Set(["Cotizador", "Árbol del precio", "Trazabilidad visual", "Impacto de variables", "Variables principales", "Configuración"]);
 const TRACE_MODES = [
   { value: "cotizacion_actual", label: "Cotización actual" },
   { value: "casos_generales", label: "Casos de lógica general" },
@@ -666,6 +667,12 @@ export default function CotizadorBajadasV2() {
   const [traceLoading, setTraceLoading] = useState(false);
   const [traceError, setTraceError] = useState("");
   const [selectedTraceNodeId, setSelectedTraceNodeId] = useState(null);
+  const [impactData, setImpactData] = useState(null);
+  const [impactLoading, setImpactLoading] = useState(false);
+  const [impactError, setImpactError] = useState("");
+  const [impactMode, setImpactMode] = useState("variable");
+  const [impactVariable, setImpactVariable] = useState("click_color");
+  const [impactProduct, setImpactProduct] = useState("bajadas_fullcolor_byn");
 
   const inferred = useMemo(() => inferQuoteContext(form), [form]);
   const isAutoadhesivas = inferred.categoria === "Bajadas Autoadhesivas";
@@ -830,6 +837,26 @@ export default function CotizadorBajadasV2() {
       setTraceError(err.message || "No se pudo cargar la trazabilidad visual.");
     } finally {
       setTraceLoading(false);
+    }
+  };
+
+  const loadVariablesImpacto = async () => {
+    try {
+      setImpactLoading(true);
+      setImpactError("");
+      const data = await fetchVariablesImpacto();
+      setImpactData(data);
+      if (data?.variables?.length && !data.variables.some((item) => item.key === impactVariable)) {
+        setImpactVariable(data.variables[0].key);
+      }
+      if (data?.productos?.length && !data.productos.some((item) => item.key === impactProduct)) {
+        setImpactProduct(data.productos[0].key);
+      }
+    } catch (err) {
+      setImpactData(null);
+      setImpactError(err.message || "No se pudo cargar el impacto de variables.");
+    } finally {
+      setImpactLoading(false);
     }
   };
 
@@ -1480,6 +1507,12 @@ export default function CotizadorBajadasV2() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, traceMode]);
+
+  useEffect(() => {
+    if (activeTab !== "Impacto de variables" || impactData || impactLoading) return;
+    loadVariablesImpacto();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab]);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -2191,6 +2224,138 @@ export default function CotizadorBajadasV2() {
     );
   };
 
+  const renderVariableImpactTab = () => {
+    const variables = impactData?.variables || [];
+    const products = impactData?.productos || [];
+    const relations = impactData?.relaciones || [];
+    const selectedRelations =
+      impactMode === "variable"
+        ? relations.filter((item) => item.variable === impactVariable)
+        : relations.filter((item) => item.producto_key === impactProduct);
+    const selectedMeta =
+      impactMode === "variable"
+        ? variables.find((item) => item.key === impactVariable)
+        : products.find((item) => item.key === impactProduct);
+    const summary = impactData?.resumen || {};
+    const firstRelation = selectedRelations[0];
+
+    const statusLabel = (relation) => {
+      if (relation.estado === "bloqueado") return "Bloqueado";
+      if (relation.impacta_hoy) return "Impacta hoy";
+      return "Documentado no conectado";
+    };
+
+    const statusClass = (relation) => {
+      if (relation.estado === "bloqueado") return "bloqueado";
+      if (relation.tipo === "tabla_pdf" || relation.tipo === "matriz_pdf") return "tabla_pdf";
+      if (relation.tipo === "factor") return "factor";
+      if (relation.impacta_hoy) return "variable_madre";
+      return "preparada";
+    };
+
+    return (
+      <section className="card result-card impact-card">
+        <div className="card-head">
+          <div>
+            <h3 data-testid="variable-impact-title">Impacto de variables</h3>
+            <p>Mapa read-only para saber que cambia realmente hoy, que esta documentado para futuro y que sigue bloqueado por falta de datos.</p>
+          </div>
+          <span>Mapa preventivo</span>
+        </div>
+
+        {impactError ? <div className="error-box" data-testid="impact-error">{impactError}</div> : null}
+        {impactLoading && !impactData ? <div className="placeholder"><p>Cargando mapa de impacto...</p></div> : null}
+
+        {impactData ? (
+          <>
+            <div className="impact-summary-grid" data-testid="impact-summary">
+              <article><strong>{summary.variables_editables ?? 0}</strong><span>Variables editables</span></article>
+              <article><strong>{summary.relaciones_conectadas ?? 0}</strong><span>Relaciones conectadas</span></article>
+              <article><strong>{summary.relaciones_documentadas_no_conectadas ?? 0}</strong><span>Documentadas no conectadas</span></article>
+              <article><strong>{summary.productos_bloqueados ?? 0}</strong><span>Productos bloqueados</span></article>
+            </div>
+
+            <div className="impact-explainer">
+              <p><strong>Impacta hoy</strong> significa que cambiar esa variable modifica precios actuales. <strong>Documentado no conectado</strong> existe como logica historica o futura, pero hoy no recalcula. <strong>Tabla PDF fija</strong> viene de precio publicado. <strong>Bloqueado</strong> no tiene datos confiables.</p>
+            </div>
+
+            <div className="impact-toolbar">
+              <div className="trace-mode-options" role="group" aria-label="Modo impacto">
+                <button
+                  type="button"
+                  data-testid="impact-mode-variable"
+                  className={impactMode === "variable" ? "trace-mode-pill active" : "trace-mode-pill"}
+                  onClick={() => setImpactMode("variable")}
+                >
+                  Variable → Productos
+                </button>
+                <button
+                  type="button"
+                  data-testid="impact-mode-producto"
+                  className={impactMode === "producto" ? "trace-mode-pill active" : "trace-mode-pill"}
+                  onClick={() => setImpactMode("producto")}
+                >
+                  Producto → Variables
+                </button>
+              </div>
+              {impactMode === "variable" ? (
+                <label>
+                  <span>Variable</span>
+                  <select data-testid="impact-variable-select" value={impactVariable} onChange={(event) => setImpactVariable(event.target.value)}>
+                    {variables.map((item) => <option key={item.key} value={item.key}>{item.label} · {item.key}</option>)}
+                  </select>
+                </label>
+              ) : (
+                <label>
+                  <span>Producto</span>
+                  <select data-testid="impact-product-select" value={impactProduct} onChange={(event) => setImpactProduct(event.target.value)}>
+                    {products.map((item) => <option key={item.key} value={item.key}>{item.label}</option>)}
+                  </select>
+                </label>
+              )}
+            </div>
+
+            <div className="impact-focus-card">
+              <span>{impactMode === "variable" ? "Variable seleccionada" : "Producto seleccionado"}</span>
+              <strong>{selectedMeta?.label || selectedMeta?.key || "Sin seleccion"}</strong>
+              <small>{impactMode === "variable" ? selectedMeta?.descripcion : `${selectedMeta?.modo_precio || "-"} · ${selectedMeta?.endpoint || "-"}`}</small>
+            </div>
+
+            {firstRelation ? (
+              <div className="impact-chain" data-testid="impact-visual-chain">
+                {(firstRelation.ruta_calculo || []).map((step, index) => (
+                  <span key={`${step}-${index}`}>{step}</span>
+                ))}
+              </div>
+            ) : null}
+
+            <div className="impact-results" data-testid="impact-results">
+              {selectedRelations.length ? selectedRelations.map((relation) => (
+                <article className={`impact-relation-card ${statusClass(relation)}`} key={`${relation.variable}-${relation.producto_key}-${relation.componente}`}>
+                  <div className="impact-relation-head">
+                    <div>
+                      <strong>{impactMode === "variable" ? relation.producto : relation.variable_label}</strong>
+                      <span>{relation.componente}</span>
+                    </div>
+                    <em>{statusLabel(relation)}</em>
+                  </div>
+                  <div className="impact-meta-grid">
+                    <div><span>Editable</span><strong>{relation.editable ? "si" : "no"}</strong></div>
+                    <div><span>Nivel</span><strong>{relation.nivel_impacto}</strong></div>
+                    <div><span>Estado</span><strong>{relation.estado}</strong></div>
+                    <div><span>Modo precio</span><strong>{relation.modo_precio}</strong></div>
+                  </div>
+                  <p>{relation.detalle}</p>
+                  <small>Fuente: {relation.fuente}</small>
+                </article>
+              )) : <div className="placeholder"><p>No hay relaciones para esta seleccion.</p></div>}
+            </div>
+          </>
+        ) : null}
+      </section>
+    );
+  };
+
   const renderPrincipalVariablesTab = () => {
     const groups = [
       ["tipo_cambio", "Variables madre editables - Tipo de cambio"],
@@ -2222,6 +2387,17 @@ export default function CotizadorBajadasV2() {
         <small>Confiabilidad: {item.confiabilidad || "alta"}</small>
         <small>{item.impacta_hoy ? `Impacta hoy: ${item.impact}` : `Preparada, no impacta todavía: ${item.impact}`}</small>
         {(item.productos_afectados || []).length ? <small>Productos afectados: {item.productos_afectados.join(", ")}</small> : null}
+        <button
+          type="button"
+          className="impact-link-btn"
+          onClick={() => {
+            setImpactMode("variable");
+            setImpactVariable(item.key);
+            setActiveTab("Impacto de variables");
+          }}
+        >
+          Ver impacto
+        </button>
       </label>
     );
     const renderPrincipalGroupSet = (title, hint, predicate, testId) => (
@@ -2658,7 +2834,7 @@ export default function CotizadorBajadasV2() {
             <button
               key={item}
               type="button"
-              data-testid={item === "Árbol del precio" ? "tab-price-tree" : item === "Trazabilidad visual" ? "tab-trace-visual" : undefined}
+              data-testid={item === "Árbol del precio" ? "tab-price-tree" : item === "Trazabilidad visual" ? "tab-trace-visual" : item === "Impacto de variables" ? "tab-variable-impact" : undefined}
               className={activeTab === item ? "nav-item active" : "nav-item"}
               onClick={() => TAB_KEYS.has(item) && setActiveTab(item)}
             >
@@ -2678,6 +2854,7 @@ export default function CotizadorBajadasV2() {
           {activeTab === "Cotizador" ? renderCotizador() : null}
           {activeTab === "Árbol del precio" ? renderTreeTab() : null}
           {activeTab === "Trazabilidad visual" ? renderTraceVisualTab() : null}
+          {activeTab === "Impacto de variables" ? renderVariableImpactTab() : null}
           {activeTab === "Variables principales" ? renderPrincipalVariablesTab() : null}
           {activeTab === "Configuración" ? renderConfigTab() : null}
         </section>

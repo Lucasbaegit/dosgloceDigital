@@ -864,6 +864,200 @@ select:focus {
   border: 1px solid var(--line);
 }
 
+.impact-card .card-head p {
+  margin: 6px 0 0;
+  color: var(--text-soft);
+}
+
+.impact-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin: 18px 0;
+}
+
+.impact-summary-grid article {
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 18px;
+  padding: 16px;
+  background:
+    radial-gradient(circle at 20% 20%, rgba(56, 189, 248, 0.14), transparent 34%),
+    rgba(15, 23, 42, 0.72);
+}
+
+.impact-summary-grid strong {
+  display: block;
+  color: #f8fbff;
+  font-size: 28px;
+  line-height: 1;
+}
+
+.impact-summary-grid span,
+.impact-explainer,
+.impact-focus-card span,
+.impact-focus-card small,
+.impact-relation-card small,
+.impact-relation-card p {
+  color: var(--text-soft);
+}
+
+.impact-explainer {
+  border: 1px solid rgba(245, 158, 11, 0.28);
+  border-radius: 18px;
+  padding: 14px 16px;
+  background: rgba(66, 45, 12, 0.38);
+}
+
+.impact-explainer p {
+  margin: 0;
+}
+
+.impact-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 18px 0;
+}
+
+.impact-toolbar label {
+  display: grid;
+  gap: 8px;
+  min-width: min(420px, 100%);
+}
+
+.impact-focus-card {
+  display: grid;
+  gap: 6px;
+  border: 1px solid rgba(56, 189, 248, 0.24);
+  border-radius: 20px;
+  padding: 18px;
+  margin-bottom: 16px;
+  background:
+    linear-gradient(135deg, rgba(14, 165, 233, 0.12), rgba(15, 23, 42, 0.82)),
+    rgba(15, 23, 42, 0.72);
+}
+
+.impact-focus-card strong {
+  color: #f8fbff;
+  font-size: 22px;
+}
+
+.impact-chain {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  margin: 0 0 18px;
+}
+
+.impact-chain span {
+  position: relative;
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  border-radius: 999px;
+  padding: 9px 12px;
+  color: #eaf2ff;
+  background: rgba(15, 23, 42, 0.88);
+}
+
+.impact-chain span:not(:last-child)::after {
+  content: ">";
+  position: absolute;
+  right: -16px;
+  color: #38bdf8;
+}
+
+.impact-results {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 14px;
+}
+
+.impact-relation-card {
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 20px;
+  padding: 16px;
+  background: rgba(15, 23, 42, 0.74);
+  box-shadow: 0 18px 40px rgba(2, 6, 23, 0.18);
+}
+
+.impact-relation-card.variable_madre { border-color: rgba(34, 197, 94, 0.5); }
+.impact-relation-card.tabla_pdf { border-color: rgba(148, 163, 184, 0.55); }
+.impact-relation-card.factor { border-color: rgba(167, 139, 250, 0.55); }
+.impact-relation-card.preparada { border-color: rgba(245, 158, 11, 0.6); }
+.impact-relation-card.bloqueado { border-color: rgba(239, 68, 68, 0.62); }
+
+.impact-relation-head {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.impact-relation-head div {
+  display: grid;
+  gap: 4px;
+}
+
+.impact-relation-head strong {
+  color: #f8fbff;
+}
+
+.impact-relation-head span {
+  color: #9fb1d7;
+}
+
+.impact-relation-head em {
+  border-radius: 999px;
+  padding: 5px 9px;
+  color: #f8fbff;
+  font-size: 12px;
+  font-style: normal;
+  background: rgba(56, 189, 248, 0.18);
+  white-space: nowrap;
+}
+
+.impact-meta-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin: 12px 0;
+}
+
+.impact-meta-grid div {
+  display: grid;
+  gap: 2px;
+  border-radius: 12px;
+  padding: 9px;
+  background: rgba(2, 6, 23, 0.28);
+}
+
+.impact-meta-grid span {
+  color: #91a2c8;
+  font-size: 12px;
+}
+
+.impact-meta-grid strong {
+  color: #f8fbff;
+  font-size: 13px;
+}
+
+.impact-link-btn {
+  justify-self: start;
+  border: 1px solid rgba(56, 189, 248, 0.36);
+  border-radius: 999px;
+  padding: 7px 10px;
+  color: #dff7ff;
+  background: rgba(14, 165, 233, 0.12);
+}
+
+.impact-link-btn:hover {
+  border-color: #38bdf8;
+  background: rgba(14, 165, 233, 0.22);
+}
+
 .principal-variables-card .card-head p {
   margin: 6px 0 0;
   color: var(--text-soft);
@@ -986,6 +1180,18 @@ select:focus {
 
   .trace-toolbar {
     align-items: stretch;
+  }
+
+  .impact-summary-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .impact-toolbar {
+    align-items: stretch;
+  }
+
+  .impact-meta-grid {
+    grid-template-columns: 1fr;
   }
 
   .principal-grid {

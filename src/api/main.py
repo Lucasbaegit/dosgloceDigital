@@ -9,7 +9,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import mimetypes
 from pathlib import Path
 from typing import Any
-from urllib.parse import parse_qs, urlparse
+from urllib.parse import parse_qs, unquote, urlparse
 
 from .bajadas_v2_routes import BajadasV2ApiService
 
@@ -71,6 +71,30 @@ class ApiHandler(BaseHTTPRequestHandler):
             return
         if path == "/variables-principales/rangos":
             status, payload = self.service.principal_variables_ranges()
+            self._send_json(status, payload)
+            return
+        if path == "/variables-impacto":
+            status, payload = self.service.variables_impacto()
+            self._send_json(status, payload)
+            return
+        if path == "/variables-impacto/resumen":
+            status, payload = self.service.variables_impacto_resumen()
+            self._send_json(status, payload)
+            return
+        if path.startswith("/variables-impacto/variable/"):
+            variable_key = unquote(path.split("/variables-impacto/variable/", 1)[1].strip("/"))
+            if not variable_key:
+                self._send_json(404, {"error": "not_found", "detail": "variable_key requerido"})
+                return
+            status, payload = self.service.variables_impacto_variable(variable_key)
+            self._send_json(status, payload)
+            return
+        if path.startswith("/variables-impacto/producto/"):
+            product_key = unquote(path.split("/variables-impacto/producto/", 1)[1].strip("/"))
+            if not product_key:
+                self._send_json(404, {"error": "not_found", "detail": "producto_key requerido"})
+                return
+            status, payload = self.service.variables_impacto_producto(product_key)
             self._send_json(status, payload)
             return
         if path == "/trazabilidad/grafo":

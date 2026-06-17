@@ -68,6 +68,7 @@ from agendas_cuadernos.exceptions import QuoteInputError as AgendasCuadernosQuot
 from agendas_cuadernos.types import AgendasCuadernosQuoteInput
 from pricing_variables import PrincipalVariableError, PrincipalVariablesService
 from pricing_trace.graph_builder import PriceTraceGraphBuilder
+from pricing_trace.impact_map import VariableImpactMap
 from export import PricesExcelExporter, PricesPdfExporter, PricesTablesBuilder
 from importers import ExcelMaestroImporter, ExcelMasterPreviewError
 
@@ -114,6 +115,7 @@ class BajadasV2ApiService:
         self.agendas_cuadernos_engine = AgendasCuadernosPricingEngine(load_agendas_cuadernos_bundle(project_root))
         self.principal_variables = PrincipalVariablesService(project_root)
         self.price_trace_graph = PriceTraceGraphBuilder(project_root)
+        self.variable_impact_map = VariableImpactMap(project_root)
         self.excel_maestro_importer = ExcelMaestroImporter(project_root)
         self.prices_tables_builder = PricesTablesBuilder(project_root)
         self.prices_pdf_exporter = PricesPdfExporter()
@@ -138,6 +140,18 @@ class BajadasV2ApiService:
 
     def trace_graph(self, params: dict[str, str] | None = None) -> tuple[int, dict[str, Any]]:
         return 200, self.price_trace_graph.build(params or {})
+
+    def variables_impacto(self) -> tuple[int, dict[str, Any]]:
+        return 200, self.variable_impact_map.build()
+
+    def variables_impacto_resumen(self) -> tuple[int, dict[str, Any]]:
+        return 200, self.variable_impact_map.summary()
+
+    def variables_impacto_variable(self, variable_key: str) -> tuple[int, dict[str, Any]]:
+        return self.variable_impact_map.by_variable(variable_key)
+
+    def variables_impacto_producto(self, product_key: str) -> tuple[int, dict[str, Any]]:
+        return self.variable_impact_map.by_product(product_key)
 
     def export_prices_json(self) -> tuple[int, dict[str, Any]]:
         return 200, self.prices_tables_builder.build()

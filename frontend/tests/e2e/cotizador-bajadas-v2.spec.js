@@ -105,6 +105,103 @@ test("Trazabilidad visual de cotización actual usa material real cotizado", asy
   await expect(page.getByTestId("trace-graph-container")).toContainText("Total final");
 });
 
+test("Impacto de variables muestra relaciones por variable y producto", async ({ page }) => {
+  const impactMock = {
+    ok: true,
+    version: "variables_impacto_v1",
+    variables: [
+      { key: "click_color", label: "Click color", tipo: "variable_madre", editable: true, impacta_hoy: true, estado: "conectado", descripcion: "Click operativo" },
+      { key: "matriz_pdf", label: "Matriz PDF", tipo: "matriz_pdf", editable: false, impacta_hoy: true, estado: "conectado", descripcion: "Tabla fija" },
+    ],
+    productos: [
+      { key: "bajadas_fullcolor_byn", label: "Bajadas Fullcolor/ByN", estado: "activo", endpoint: "/bajadas-v2/cotizar", modo_precio: "matriz_pdf" },
+      { key: "stickers_circulares", label: "Stickers Circulares", estado: "activo", endpoint: "/stickers-circulares/cotizar", modo_precio: "formula_editable_calibrada" },
+    ],
+    relaciones: [
+      {
+        variable: "click_color",
+        variable_label: "Click color",
+        producto_key: "bajadas_fullcolor_byn",
+        producto: "Bajadas Fullcolor/ByN",
+        componente: "click / impresión",
+        impacta_hoy: false,
+        editable: true,
+        tipo: "variable_madre",
+        nivel_impacto: "medio",
+        estado: "preparado_no_conectado",
+        detalle: "Documentado para formulas futuras.",
+        ruta_calculo: ["click_color", "referencia_tecnica", "matriz_pdf", "precio_final"],
+        fuente: "variables_principales",
+        endpoint: "/bajadas-v2/cotizar",
+        modo_precio: "matriz_pdf",
+      },
+      {
+        variable: "click_color",
+        variable_label: "Click color",
+        producto_key: "stickers_circulares",
+        producto: "Stickers Circulares",
+        componente: "formula editable",
+        impacta_hoy: true,
+        editable: true,
+        tipo: "variable_madre",
+        nivel_impacto: "alto",
+        estado: "conectado",
+        detalle: "Impacta la formula calibrada.",
+        ruta_calculo: ["click_color", "subtotal_formula_excel", "factor_ajuste_pdf", "precio_final"],
+        fuente: "formula_editable_config",
+        endpoint: "/stickers-circulares/cotizar",
+        modo_precio: "formula_editable_calibrada",
+      },
+      {
+        variable: "matriz_pdf",
+        variable_label: "Matriz PDF",
+        producto_key: "bajadas_fullcolor_byn",
+        producto: "Bajadas Fullcolor/ByN",
+        componente: "tabla PDF fija",
+        impacta_hoy: true,
+        editable: false,
+        tipo: "matriz_pdf",
+        nivel_impacto: "alto",
+        estado: "conectado",
+        detalle: "Precio final publicado.",
+        ruta_calculo: ["matriz_pdf", "rango", "precio_final"],
+        fuente: "precios_pdf",
+        endpoint: "/bajadas-v2/cotizar",
+        modo_precio: "matriz_pdf",
+      },
+    ],
+    resumen: {
+      variables_editables: 1,
+      productos_afectados: 2,
+      relaciones_conectadas: 2,
+      relaciones_documentadas_no_conectadas: 1,
+      productos_bloqueados: 0,
+    },
+    leyenda: {},
+  };
+  await page.route("**/variables-impacto", async (route) => {
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(impactMock) });
+  });
+
+  await page.goto("/", { waitUntil: "domcontentloaded" });
+  await expect(page.getByTestId("tab-variable-impact")).toBeVisible();
+  await page.getByTestId("tab-variable-impact").click();
+  await expect(page.getByTestId("variable-impact-title")).toBeVisible();
+  await expect(page.getByTestId("impact-mode-variable")).toBeVisible();
+  await expect(page.getByTestId("impact-variable-select")).toContainText("Click color");
+  await page.getByTestId("impact-variable-select").selectOption("click_color");
+  await expect(page.getByTestId("impact-results")).toContainText("Bajadas Fullcolor/ByN");
+  await expect(page.getByTestId("impact-results")).toContainText("Stickers Circulares");
+  await expect(page.getByTestId("impact-results")).toContainText("Impacta hoy");
+
+  await page.getByTestId("impact-mode-producto").click();
+  await expect(page.getByTestId("impact-product-select")).toBeVisible();
+  await page.getByTestId("impact-product-select").selectOption("bajadas_fullcolor_byn");
+  await expect(page.getByTestId("impact-results")).toContainText("click / impresión");
+  await expect(page.getByTestId("impact-results")).toContainText("Matriz PDF");
+  await expect(page.getByTestId("impact-visual-chain")).toBeVisible();
+});
+
 test("troquelado digital se usa como adicional en Bajadas y no como categoría principal", async ({ page }) => {
   await page.goto("/", { waitUntil: "networkidle" });
   await expect(page.getByTestId("categoria-select").locator("option[value='Troquelado Digital']")).toHaveCount(0);
