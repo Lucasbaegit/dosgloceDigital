@@ -13,9 +13,13 @@ test.beforeEach(async ({ page }) => {
 test("UI muestra tabs nuevas y controles base", async ({ page }) => {
   await page.setViewportSize({ width: 1366, height: 900 });
   await page.goto("/", { waitUntil: "domcontentloaded" });
-  await expect(page.getByRole("button", { name: "Cotizador" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Árbol del precio" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Configuración" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Cotizar" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Modificar precios" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Entender un precio" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Ver impacto de cambios" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Historial y backups" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Exportar soporte Excel" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Configuración avanzada" })).toBeVisible();
   await expect(page.locator('img[src="/logoPromo.jpg"]')).toBeVisible();
   await expect(page.getByText(/API (conectada|no disponible)/)).toBeVisible();
   await expect(page.getByLabel("Adicional")).toBeVisible();
@@ -25,7 +29,7 @@ test("UI muestra tabs nuevas y controles base", async ({ page }) => {
   await expect(page.getByTestId("result-panel")).toBeVisible();
 });
 
-test("tab Trazabilidad visual muestra selector, leyenda y grafo", async ({ page }) => {
+test("Entender un precio muestra trazabilidad avanzada, selector, leyenda y grafo", async ({ page }) => {
   await page.route("http://127.0.0.1:8000/trazabilidad/grafo**", async (route) => {
     await route.fulfill({
       status: 200,
@@ -52,7 +56,8 @@ test("tab Trazabilidad visual muestra selector, leyenda y grafo", async ({ page 
     });
   });
   await page.goto("/", { waitUntil: "domcontentloaded" });
-  await page.getByTestId("tab-trace-visual").click();
+  await page.getByTestId("tab-understand-price").click();
+  await page.getByTestId("understand-trace-button").click();
   await expect(page.getByTestId("trace-visual-title")).toBeVisible();
   await expect(page.getByTestId("trace-mode-cotizacion_actual")).toBeVisible();
   await expect(page.getByText("Primero calculá una cotización para ver su trazabilidad visual.")).toBeVisible();
@@ -96,7 +101,8 @@ test("Trazabilidad visual de cotización actual usa material real cotizado", asy
   await page.getByRole("button", { name: "Calcular" }).click();
   await expect(page.getByText("Total final con urgencia")).toBeVisible();
 
-  await page.getByTestId("tab-trace-visual").click();
+  await page.getByTestId("tab-understand-price").click();
+  await page.getByTestId("understand-trace-button").click();
   await page.getByTestId("trace-mode-cotizacion_actual").click();
   await page.getByTestId("trace-current-load-button").click();
   await expect(page.getByTestId("trace-graph-container")).toContainText("Ilustracion 115g");
@@ -202,7 +208,7 @@ test("Impacto de variables muestra relaciones por variable y producto", async ({
   await expect(page.getByTestId("impact-visual-chain")).toBeVisible();
 });
 
-test("Administrador de precios exige preview antes de guardar y muestra historial", async ({ page }) => {
+test("Modificar precios exige preview antes de guardar y muestra historial", async ({ page }) => {
   await page.route("**/admin-precios/variables-editables", async (route) => {
     await route.fulfill({
       status: 200,
@@ -301,6 +307,44 @@ test("Administrador de precios exige preview antes de guardar y muestra historia
   await page.getByTestId("admin-apply-button").click();
   await expect(page.getByTestId("admin-prices-message")).toContainText("Cambio guardado");
   await expect(page.getByTestId("admin-history")).toContainText("click_color");
+});
+
+test("Historial y backups y Exportar soporte Excel quedan accesibles", async ({ page }) => {
+  await page.route("**/admin-precios/variables-editables", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ ok: true, variables: [] }),
+    });
+  });
+  await page.route("**/admin-precios/historial", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        ok: true,
+        historial: [
+          { timestamp: "2026-06-18T00:00:00Z", variable: "click_color", valor_anterior: 39, valor_nuevo: 40, fuente: "sistema" },
+        ],
+      }),
+    });
+  });
+  await page.route("**/export/precios/excel", (route) => route.fulfill({
+    status: 200,
+    contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    headers: { "Content-Disposition": 'attachment; filename="cotizador_test.xlsx"' },
+    body: "excel-test",
+  }));
+
+  await page.goto("/", { waitUntil: "domcontentloaded" });
+  await page.getByTestId("tab-history-backups").click();
+  await expect(page.getByTestId("history-backups-screen")).toContainText("Cada cambio guardado desde Modificar precios genera backup e historial");
+  await expect(page.getByTestId("history-backups-admin-history")).toContainText("click_color");
+
+  await page.getByTestId("tab-export-support-excel").click();
+  await expect(page.getByTestId("export-support-excel-screen")).toContainText("El Excel maestro es un soporte de visualización y auditoría");
+  await page.getByTestId("export-support-excel-button").click();
+  await expect(page.getByTestId("export-support-message")).toContainText("Excel maestro exportado correctamente");
 });
 
 test("troquelado digital se usa como adicional en Bajadas y no como categoría principal", async ({ page }) => {
@@ -438,7 +482,7 @@ test("cotizacion muestra rango aplicado y total destacado", async ({ page }) => 
   await expect(page.getByText("Precio unitario con adicional")).toBeVisible();
 });
 
-test("tab Árbol del precio muestra composición del último cálculo", async ({ page }) => {
+test("Entender un precio muestra detalle del cálculo del último cálculo", async ({ page }) => {
   await page.goto("/", { waitUntil: "networkidle" });
   await page.getByLabel("Medida / formato").selectOption("A3+");
   await page.getByLabel("Tipo de papel").selectOption("liviano");
@@ -474,19 +518,20 @@ test("tab Árbol del precio muestra composición del último cálculo", async ({
   });
 
   await page.getByRole("button", { name: "Calcular" }).click();
-  await page.getByTestId("tab-price-tree").click();
+  await page.getByTestId("tab-understand-price").click();
+  await page.getByTestId("understand-detail-button").click();
   await expect(page.getByText("Entrada del usuario")).toBeVisible();
   await expect(page.getByText("Rango aplicado")).toBeVisible();
   await expect(page.getByTestId("price-tree-rule-section")).toBeVisible();
   await expect(page.getByText("Adicional laminado/laca")).toBeVisible();
 });
 
-test("tab Configuración carga y permite ver historial", async ({ page }) => {
+test("Configuración avanzada carga y permite ver historial", async ({ page }) => {
   await page.goto("/", { waitUntil: "networkidle" });
-  await page.getByRole("button", { name: "Configuración" }).click();
+  await page.getByTestId("tab-advanced-config").click();
   await expect(page.getByTestId("config-editable-title")).toBeVisible();
   await expect(page.getByText("Escalas de cantidad")).toBeVisible();
-  await expect(page.getByRole("button", { name: "Guardar cambios" })).toBeVisible();
+  await expect(page.getByTestId("config-save-scales-button")).toBeVisible();
   await expect(page.getByRole("button", { name: "Restaurar desde config final" })).toBeVisible();
 });
 
@@ -539,7 +584,7 @@ test("Variables principales expone solo valores seguros y permite guardar y reca
   });
 
   await page.goto("/", { waitUntil: "networkidle" });
-  await page.getByRole("button", { name: "Variables principales" }).click();
+  await page.getByTestId("tab-advanced-config").click();
   await expect(page.getByTestId("principal-variables-title")).toBeVisible();
   await expect(page.getByTestId("principal-impact-today")).toContainText("Variables madre que impactan hoy");
   await expect(page.getByTestId("principal-prepared")).toContainText("Variables madre preparadas");
@@ -564,7 +609,7 @@ test("Variables principales expone solo valores seguros y permite guardar y reca
 
   const tintaInput = page.getByTestId("principal-variable-adicional_tinta_blanca_base_1_copia");
   await tintaInput.fill("700");
-  await page.getByRole("button", { name: "Guardar cambios" }).click();
+  await page.getByTestId("principal-save-button").click();
   await expect(page.getByTestId("principal-variables-message")).toContainText("603");
   await expect(tintaInput).toHaveValue("700");
   await page.getByRole("button", { name: "Recargar valores" }).click();
@@ -709,7 +754,8 @@ test("XA3 muestra trazabilidad de derivación 1.10", async ({ page }) => {
   });
 
   await page.getByRole("button", { name: "Calcular" }).click();
-  await page.getByTestId("tab-price-tree").click();
+  await page.getByTestId("tab-understand-price").click();
+  await page.getByTestId("understand-detail-button").click();
   await expect(page.getByText("base_formato: A3+")).toBeVisible();
   await expect(page.getByText("factor_aplicado: 1.1")).toBeVisible();
   await expect(page.getByText("regla_especial: FACTOR_XA3_1_10")).toBeVisible();

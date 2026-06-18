@@ -25,10 +25,10 @@ Esto evita cambios aislados sin trazabilidad y mantiene alineado el sistema con 
 Los cambios seguros se hacen desde la sección:
 
 ```text
-Administrador de precios
+Modificar precios
 ```
 
-La sección `Variables principales` sigue existiendo como vista técnica de variables madre, pero la vía operativa recomendada para modificar valores es `Administrador de precios`.
+La sección `Costos base / Configuración avanzada` sigue existiendo como vista técnica de variables madre, pero la vía operativa recomendada para modificar valores es `Modificar precios`.
 
 El Excel maestro no es la fuente operativa de escritura. Debe usarse como:
 
@@ -263,17 +263,18 @@ Valores posibles:
 
 ## 11. Flujo recomendado para modificar precios
 
-Flujo recomendado:
+Flujo recomendado desde `Modificar precios`:
 
-1. Revisar la variable en `Variables principales`.
-2. Confirmar `editable_en_sistema = true`.
-3. Confirmar `impacta_hoy = true`.
-4. Modificar el valor.
-5. Guardar.
-6. Ejecutar QA.
-7. Revisar productos afectados.
-8. Exportar Excel maestro actualizado.
-9. Guardar commit/tag si el cambio es importante.
+1. Elegir la variable operativa.
+2. Revisar valor actual y productos afectados.
+3. Ingresar nuevo valor.
+4. Previsualizar impacto.
+5. Confirmar y guardar solo si el preview es correcto.
+6. Ver backup/historial generado.
+7. Ejecutar QA.
+8. Revisar productos afectados.
+9. Exportar soporte Excel actualizado si hace falta.
+10. Guardar commit/tag si el cambio es importante.
 
 Si la variable no cumple esas condiciones, no debe tratarse como cambio operativo.
 
@@ -368,11 +369,11 @@ Si hay duda, no modificar el precio. Revisar fuente, trazabilidad y QA primero.
 
 ---
 
-## 16. Usar trazabilidad visual antes de modificar
+## 16. Usar Entender un precio antes de modificar
 
-Antes de tocar una variable madre o matriz, revisar la pestaña `Trazabilidad visual`.
+Antes de tocar una variable madre o matriz, revisar la pestaña `Entender un precio`.
 
-La vista ayuda a diferenciar:
+La vista simple ayuda a entender material, impresión, cantidad, adicionales, urgencia y total final. La vista avanzada mantiene la trazabilidad visual y ayuda a diferenciar:
 
 - Variables madre editables.
 - Derivados calculados desde otra base.
@@ -388,7 +389,7 @@ click_color -> precio_click_A3 -> precio_click_XL / precio_click_A4
 
 En este caso, XL y A4 no se editan como variables madre: derivan desde A3.
 
-La trazabilidad visual no reemplaza el QA masivo. Después de cualquier cambio de precios, correr siempre:
+`Entender un precio` no reemplaza el QA masivo. Después de cualquier cambio de precios, correr siempre:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\qa\run_qa_precios.ps1

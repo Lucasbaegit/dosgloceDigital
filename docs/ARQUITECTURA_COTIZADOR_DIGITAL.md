@@ -47,11 +47,25 @@ Regla central:
 
 ### Administración de precios
 
-- `Administrador de precios` expone solo variables operativas editables.
+- `Modificar precios` expone solo variables operativas editables.
 - Todo guardado requiere preview previo.
 - Antes de escribir se genera backup de la configuración afectada.
 - Cada cambio queda registrado en historial operativo.
 - Las matrices PDF, factores de ajuste no editables y productos bloqueados no se escriben desde esta pantalla.
+
+### Navegación UX por tareas
+
+La interfaz principal se organiza por intención del usuario, no por módulos técnicos:
+
+- `Cotizar`: cálculo diario de productos.
+- `Modificar precios`: edición operativa segura de variables conectadas.
+- `Entender un precio`: detalle del cálculo y trazabilidad visual avanzada.
+- `Ver impacto de cambios`: análisis preventivo antes de tocar costos.
+- `Historial y backups`: bitácora de cambios y respaldos.
+- `Exportar soporte Excel`: Excel maestro como soporte, auditoría y exportación.
+- `Configuración avanzada`: vistas técnicas, costos base, variables principales y configuración interna.
+
+Las pantallas técnicas siguen existiendo, pero quedan agrupadas bajo nombres operativos o avanzados para reducir riesgo de uso incorrecto.
 
 ### QA
 
@@ -184,11 +198,15 @@ http://127.0.0.1:5174
 La pantalla principal permite:
 
 - Cotizar productos
-- Revisar variables principales
+- Modificar precios operativos con preview
+- Entender un precio mediante detalle y trazabilidad
+- Ver impacto de cambios antes de guardar
+- Revisar historial y backups
+- Revisar variables principales en configuración avanzada
 - Exportar PDF
-- Exportar Excel maestro
+- Exportar soporte Excel maestro
 - Ver rangos y estados comerciales
-- Revisar trazabilidad del cálculo
+- Revisar trazabilidad avanzada del cálculo
 
 Archivos clave:
 
@@ -515,9 +533,11 @@ Esta regla protege la confiabilidad comercial del cotizador.
 
 ---
 
-## 19. Trazabilidad visual de precios
+## 19. Entender un precio y trazabilidad visual
 
-El sistema expone una vista de lectura llamada `Trazabilidad visual`.
+El sistema expone una vista operativa llamada `Entender un precio`.
+
+La primera capa muestra el detalle del cálculo. La capa avanzada conserva `Trazabilidad visual`.
 
 Backend:
 

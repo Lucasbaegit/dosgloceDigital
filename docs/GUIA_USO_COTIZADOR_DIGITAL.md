@@ -16,9 +16,19 @@ El cotizador no busca copiar el Excel viejo tal cual estaba, sino modernizarlo y
 
 Importante:
 
-- Los cambios operativos de precios y variables se hacen desde el sistema, en `Administrador de precios`.
+- Los cambios operativos de precios y variables se hacen desde el sistema, en `Modificar precios`.
 - El Excel maestro es una herramienta de visualización, auditoría, soporte y exportación.
 - No se recomienda usar el Excel como fuente operativa principal para modificar precios.
+
+Navegación principal recomendada:
+
+- `Cotizar`: calcular trabajos.
+- `Modificar precios`: cambiar variables operativas con preview, backup e historial.
+- `Entender un precio`: revisar detalle del cálculo y trazabilidad visual avanzada.
+- `Ver impacto de cambios`: analizar qué productos se afectan antes de tocar una variable.
+- `Historial y backups`: consultar cambios guardados y respaldos.
+- `Exportar soporte Excel`: generar el Excel maestro como soporte/auditoría.
+- `Configuración avanzada`: revisar costos base, variables técnicas y configuración interna.
 
 ---
 
@@ -57,9 +67,9 @@ El sistema devuelve:
 
 ---
 
-## 2.1 Administrador de precios
+## 2.1 Modificar precios
 
-La sección `Administrador de precios` permite modificar variables madre operativas de forma controlada.
+La sección `Modificar precios` permite modificar variables madre operativas de forma controlada.
 
 El flujo seguro es:
 
@@ -313,16 +323,18 @@ El Excel maestro nuevo sirve para ordenar, revisar y documentar el sistema actua
 
 ---
 
-## 13. Trazabilidad visual
+## 13. Entender un precio
 
-La pestaña `Trazabilidad visual` permite ver un grafo simple de origen del precio.
+La pestaña `Entender un precio` agrupa el detalle del cálculo y la trazabilidad visual avanzada.
 
 Uso:
 
-1. Abrir `Trazabilidad visual`.
-2. Elegir un caso.
-3. Presionar `Cargar grafo`.
-4. Hacer click en un nodo para ver detalle.
+1. Abrir `Entender un precio`.
+2. Usar `Resumen / Detalle del cálculo` para ver componentes principales.
+3. Usar `Trazabilidad visual avanzada` para ver grafo, nodos y fuentes.
+4. Hacer click en un nodo para ver detalle técnico.
+
+La vista simple ayuda a explicar material, impresión, cantidad, adicionales, urgencia y total final. La vista avanzada conserva grafo, árbol técnico, variables y fuentes.
 
 Colores:
 

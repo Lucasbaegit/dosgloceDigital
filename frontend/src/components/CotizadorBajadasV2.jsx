@@ -48,8 +48,25 @@ import {
 } from "../api/bajadasV2Api";
 import optionRows from "../data/bajadasOptions.json";
 
-const NAV_ITEMS = ["Cotizador", "Árbol del precio", "Trazabilidad visual", "Impacto de variables", "Administrador de precios", "Variables principales", "Configuración", "Pedidos", "Plantillas", "Historial", "Precios", "Ajustes"];
-const TAB_KEYS = new Set(["Cotizador", "Árbol del precio", "Trazabilidad visual", "Impacto de variables", "Administrador de precios", "Variables principales", "Configuración"]);
+const NAV_ITEMS = [
+  "Cotizar",
+  "Modificar precios",
+  "Entender un precio",
+  "Ver impacto de cambios",
+  "Historial y backups",
+  "Exportar soporte Excel",
+  "Configuración avanzada",
+];
+const TAB_KEYS = new Set(NAV_ITEMS);
+const NAV_TEST_IDS = {
+  "Cotizar": "tab-quote",
+  "Modificar precios": "tab-admin-prices",
+  "Entender un precio": "tab-understand-price",
+  "Ver impacto de cambios": "tab-variable-impact",
+  "Historial y backups": "tab-history-backups",
+  "Exportar soporte Excel": "tab-export-support-excel",
+  "Configuración avanzada": "tab-advanced-config",
+};
 const TRACE_MODES = [
   { value: "cotizacion_actual", label: "Cotización actual" },
   { value: "casos_generales", label: "Casos de lógica general" },
@@ -634,7 +651,8 @@ async function copyToClipboard(text) {
 }
 
 export default function CotizadorBajadasV2() {
-  const [activeTab, setActiveTab] = useState("Cotizador");
+  const [activeTab, setActiveTab] = useState("Cotizar");
+  const [understandMode, setUnderstandMode] = useState("detalle");
   const [form, setForm] = useState(INITIAL_FORM);
   const [result, setResult] = useState(null);
   const [lastPayload, setLastPayload] = useState(null);
@@ -1579,21 +1597,21 @@ export default function CotizadorBajadasV2() {
   };
 
   useEffect(() => {
-    if (activeTab !== "Trazabilidad visual" || traceGraph || traceLoading) return;
+    if (activeTab !== "Entender un precio" || understandMode !== "trazabilidad" || traceGraph || traceLoading) return;
     if (traceMode === "casos_generales") {
       loadTraceGraph(traceCase);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab, traceMode]);
+  }, [activeTab, understandMode, traceMode]);
 
   useEffect(() => {
-    if (activeTab !== "Impacto de variables" || impactData || impactLoading) return;
+    if (activeTab !== "Ver impacto de cambios" || impactData || impactLoading) return;
     loadVariablesImpacto();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
 
   useEffect(() => {
-    if (activeTab !== "Administrador de precios" || adminPrices || adminLoading) return;
+    if (!["Modificar precios", "Historial y backups"].includes(activeTab) || adminPrices || adminLoading) return;
     loadAdminPrices();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
@@ -1907,14 +1925,14 @@ export default function CotizadorBajadasV2() {
     if (!result || !lastPayload) {
       return (
         <section className="card result-card">
-          <div className="card-head"><h3>Árbol del precio</h3></div>
+          <div className="card-head"><h3>Detalle del cálculo</h3></div>
           <div className="placeholder"><p>Completá los datos y presioná Calcular.</p></div>
         </section>
       );
     }
     return (
       <section className="card result-card">
-        <div className="card-head"><h3>Árbol del precio</h3><span>Último cálculo</span></div>
+        <div className="card-head"><h3>Detalle del cálculo</h3><span>Último cálculo</span></div>
         <div className="tree-grid">
           <details open><summary>Entrada del usuario</summary><ul><li>Formato: {lastPayload.formato}</li><li>Impresión: {lastPayload.caras}</li><li>Tipo papel: {lastPayload.tipo_papel ?? lastPayload.papel ?? "-"}</li><li>Tipo autoadhesivo: {lastPayload.columna_precio ?? "-"}</li><li>Terminación: {lastPayload.terminacion ?? "-"}</li><li>Material: {lastPayload.material ?? lastPayload.papel ?? "-"}</li><li>Gramaje: {lastPayload.gramaje}</li><li>Cantidad: {lastPayload.cantidad_unidades}</li><li>Urgencia: {lastPayload.urgencia}</li></ul></details>
           <details open><summary>Rango aplicado</summary><ul><li>{result.cantidad_rango_aplicado}</li></ul></details>
@@ -1944,8 +1962,8 @@ export default function CotizadorBajadasV2() {
       <section className="card result-card trace-visual-card">
         <div className="card-head">
           <div>
-            <h3 data-testid="trace-visual-title">Trazabilidad visual</h3>
-            <p>Relaciones entre variable madre, derivado, factor y precio final. Es lectura: no modifica precios.</p>
+            <h3 data-testid="trace-visual-title">Trazabilidad visual avanzada</h3>
+            <p>Modo avanzado: relaciones entre variable madre, derivado, factor y precio final. Es lectura: no modifica precios.</p>
           </div>
           <span>{isCurrentMode ? "Cotización actual" : graph.producto || selectedCase?.label || "Grafo"}</span>
         </div>
@@ -2097,6 +2115,134 @@ export default function CotizadorBajadasV2() {
       </section>
     );
   };
+
+  const renderUnderstandPriceTab = () => (
+    <div className="ux-section" data-testid="understand-price-screen">
+      <section className="card result-card ux-intro-card">
+        <div className="card-head">
+          <div>
+            <h3>Entender un precio</h3>
+            <p>Usá esta sección para ver de dónde salió un precio: material, impresión, cantidad, adicionales, urgencia y total final.</p>
+          </div>
+          <span>Modo simple + avanzado</span>
+        </div>
+        <div className="ux-mode-note">
+          <strong>Modo simple:</strong> resumen comercial del cálculo. <strong>Modo avanzado:</strong> grafo, árbol técnico, variables y origen PDF/fórmula.
+        </div>
+        <div className="trace-mode-options ux-subnav" role="group" aria-label="Vista para entender precio">
+          <button
+            type="button"
+            data-testid="understand-detail-button"
+            className={understandMode === "detalle" ? "trace-mode-pill active" : "trace-mode-pill"}
+            onClick={() => setUnderstandMode("detalle")}
+          >
+            Resumen / Detalle del cálculo
+          </button>
+          <button
+            type="button"
+            data-testid="understand-trace-button"
+            className={understandMode === "trazabilidad" ? "trace-mode-pill active" : "trace-mode-pill"}
+            onClick={() => setUnderstandMode("trazabilidad")}
+          >
+            Trazabilidad visual avanzada
+          </button>
+        </div>
+      </section>
+      {understandMode === "detalle" ? renderTreeTab() : renderTraceVisualTab()}
+    </div>
+  );
+
+  const renderHistoryBackupsTab = () => (
+    <section className="card result-card ux-section" data-testid="history-backups-screen">
+      <div className="card-head">
+        <div>
+          <h3>Historial y backups</h3>
+          <p>Cada cambio guardado desde Modificar precios genera backup e historial. Esta pantalla reúne la bitácora operativa y los respaldos disponibles.</p>
+        </div>
+        <span>Auditoría operativa</span>
+      </div>
+      {adminError ? <div className="error-box">{adminError}</div> : null}
+      {adminLoading && !adminPrices ? <div className="placeholder"><p>Cargando historial...</p></div> : null}
+      <div className="ux-history-grid">
+        <section className="principal-group" data-testid="history-backups-admin-history">
+          <h4>Cambios de precios</h4>
+          <p className="range-hint">Registro de variables modificadas desde Modificar precios. El rollback automático todavía no está habilitado desde esta pantalla.</p>
+          {adminHistory.length ? (
+            <div className="history-list">
+              {adminHistory.slice().reverse().slice(0, 20).map((item, index) => (
+                <div key={`${item.timestamp}-${index}`}>
+                  <strong>{item.variable}</strong> · {item.valor_anterior} → {item.valor_nuevo} · {item.fuente || "sistema"} · {item.timestamp || "-"}
+                </div>
+              ))}
+            </div>
+          ) : <p className="range-hint">Sin cambios registrados todavía.</p>}
+        </section>
+        <section className="principal-group" data-testid="history-backups-config">
+          <h4>Backups técnicos disponibles</h4>
+          <p className="range-hint">Backups de configuración productiva. Restaurar sigue siendo una acción avanzada y requiere previsualización.</p>
+          <div className="history-list">
+            {(cfgBackups || []).slice(0, 10).map((backup) => (
+              <div key={backup.archivo}>
+                <strong>{backup.archivo}</strong> · {backup.fecha || "-"} · {backup.tamano_bytes ?? "-"} bytes
+              </div>
+            ))}
+            {!(cfgBackups || []).length ? <p className="range-hint">Sin backups listados.</p> : null}
+          </div>
+        </section>
+      </div>
+    </section>
+  );
+
+  const renderExportSupportExcelTab = () => (
+    <section className="card result-card ux-section" data-testid="export-support-excel-screen">
+      <div className="card-head">
+        <div>
+          <h3>Exportar soporte Excel</h3>
+          <p>El Excel maestro es un soporte de visualización y auditoría. No es el lugar principal para modificar precios.</p>
+        </div>
+        <span>Soporte / auditoría</span>
+      </div>
+      <div className="warning-box">
+        Los cambios reales se hacen desde Modificar precios. Este export sirve para revisar, compartir, auditar y respaldar información.
+      </div>
+      {principalMsg ? <div className="info-box" data-testid="export-support-message">{principalMsg}</div> : null}
+      <div className="ux-export-grid">
+        <article className="range-control-card">
+          <strong>Excel maestro</strong>
+          <span>Variables, rangos, tablas finales, bloqueados y trazabilidad.</span>
+          <button type="button" className="calculate-btn compact-calculate-btn" data-testid="export-support-excel-button" onClick={downloadPricesExcel}>
+            Generar Excel maestro
+          </button>
+        </article>
+        <article className="range-control-card">
+          <strong>PDF de tablas finales</strong>
+          <span>Salida comercial de consulta. No implica edición de matrices.</span>
+          <button type="button" className="secondary-btn" data-testid="export-support-pdf-button" onClick={downloadPricesPdf}>
+            Exportar tablas PDF
+          </button>
+        </article>
+      </div>
+    </section>
+  );
+
+  const renderAdvancedConfigTab = () => (
+    <div className="ux-section" data-testid="advanced-config-screen">
+      <section className="card result-card ux-intro-card">
+        <div className="card-head">
+          <div>
+            <h3>Configuración avanzada</h3>
+            <p>Sección técnica para costos base, variables principales, importador preview y configuración interna. No es el flujo diario para modificar precios.</p>
+          </div>
+          <span>Modo avanzado</span>
+        </div>
+        <div className="warning-box">
+          Si querés cambiar un precio operativo, usá Modificar precios. Esta sección conserva las vistas técnicas existentes para auditoría y mantenimiento.
+        </div>
+      </section>
+      {renderPrincipalVariablesTab()}
+      {renderConfigTab()}
+    </div>
+  );
 
   const renderConfigTab = () => {
     if (!cfg) return <section className="card result-card"><div className="placeholder"><p>Cargando configuración...</p></div></section>;
@@ -2272,7 +2418,7 @@ export default function CotizadorBajadasV2() {
           ))}
         </div>
         <div className="actions-row">
-          <button type="button" className="calculate-btn" onClick={saveScales}>Guardar cambios</button>
+          <button type="button" className="calculate-btn" data-testid="config-save-scales-button" onClick={saveScales}>Guardar cambios</button>
           <button type="button" className="secondary-btn" onClick={restoreCfg}>Restaurar desde config final</button>
         </div>
 
@@ -2341,8 +2487,8 @@ export default function CotizadorBajadasV2() {
       <section className="card result-card impact-card">
         <div className="card-head">
           <div>
-            <h3 data-testid="variable-impact-title">Impacto de variables</h3>
-            <p>Mapa read-only para saber que cambia realmente hoy, que esta documentado para futuro y que sigue bloqueado por falta de datos.</p>
+            <h3 data-testid="variable-impact-title">Ver impacto de cambios</h3>
+            <p>Usá esta sección para saber qué productos se afectan antes de modificar una variable o costo. Es una vista de prevención: no guarda cambios.</p>
           </div>
           <span>Mapa preventivo</span>
         </div>
@@ -2448,14 +2594,14 @@ export default function CotizadorBajadasV2() {
       <section className="card result-card admin-prices-card">
         <div className="card-head">
           <div>
-            <h3 data-testid="admin-prices-title">Administrador de precios</h3>
-            <p>Edición operativa segura: el Excel maestro queda como soporte, auditoría y exportación. Guardar requiere preview válido, backup e historial.</p>
+            <h3 data-testid="admin-prices-title">Modificar precios</h3>
+            <p>Los cambios se hacen desde el sistema. Primero previsualizá impacto; después podés guardar con backup e historial.</p>
           </div>
           <span>Sistema operativo</span>
         </div>
 
         <div className="warning-box">
-          No se editan matrices PDF ni precios finales fijos. Solo variables madre conectadas y aprobadas para edición desde sistema.
+          El Excel es solo soporte de lectura/auditoría. No se editan matrices PDF ni precios finales fijos desde esta pantalla.
         </div>
         {adminError ? <div className="error-box" data-testid="admin-prices-error">{adminError}</div> : null}
         {adminMsg ? <div className="info-box" data-testid="admin-prices-message">{adminMsg}</div> : null}
@@ -2643,7 +2789,7 @@ export default function CotizadorBajadasV2() {
           onClick={() => {
             setImpactMode("variable");
             setImpactVariable(item.key);
-            setActiveTab("Impacto de variables");
+            setActiveTab("Ver impacto de cambios");
           }}
         >
           Ver impacto
@@ -2686,7 +2832,7 @@ export default function CotizadorBajadasV2() {
         </div>
         {principalMsg ? <div className="info-box" data-testid="principal-variables-message">{principalMsg}</div> : null}
         <div className="principal-actions">
-          <button type="button" className="calculate-btn compact-calculate-btn" onClick={savePrincipalVariables}>Guardar cambios</button>
+          <button type="button" className="calculate-btn compact-calculate-btn" data-testid="principal-save-button" onClick={savePrincipalVariables}>Guardar cambios</button>
           <button type="button" className="secondary-btn" onClick={loadPrincipalVariables}>Recargar valores</button>
           <button type="button" className="secondary-btn" data-testid="export-prices-pdf" onClick={downloadPricesPdf}>Exportar tablas PDF</button>
           <button type="button" className="secondary-btn" data-testid="export-prices-excel" onClick={downloadPricesExcel}>Exportar Excel maestro</button>
@@ -3084,7 +3230,7 @@ export default function CotizadorBajadasV2() {
             <button
               key={item}
               type="button"
-              data-testid={item === "Árbol del precio" ? "tab-price-tree" : item === "Trazabilidad visual" ? "tab-trace-visual" : item === "Impacto de variables" ? "tab-variable-impact" : item === "Administrador de precios" ? "tab-admin-prices" : undefined}
+              data-testid={NAV_TEST_IDS[item]}
               className={activeTab === item ? "nav-item active" : "nav-item"}
               onClick={() => TAB_KEYS.has(item) && setActiveTab(item)}
             >
@@ -3096,18 +3242,18 @@ export default function CotizadorBajadasV2() {
 
       <main className="main">
         <header className="topbar">
-          <div><h2>Cotizador Bajadas</h2><p>Motor productivo v2 conectado a API interna</p></div>
+          <div><h2>{activeTab}</h2><p>Sistema de precios organizado por tareas operativas</p></div>
           <div className="topbar-right"><div className={apiConnected ? "api-status ok" : "api-status down"}>{apiConnected ? "API conectada" : "API no disponible"}</div><div className="metrics-chip">{metrics ? `OK ${metrics.OK} · Alta ${metrics.DIFERENCIA_ALTA}` : "Métricas no disponibles"}</div></div>
         </header>
 
         <section className="content-grid content-grid-tabs">
-          {activeTab === "Cotizador" ? renderCotizador() : null}
-          {activeTab === "Árbol del precio" ? renderTreeTab() : null}
-          {activeTab === "Trazabilidad visual" ? renderTraceVisualTab() : null}
-          {activeTab === "Impacto de variables" ? renderVariableImpactTab() : null}
-          {activeTab === "Administrador de precios" ? renderAdminPricesTab() : null}
-          {activeTab === "Variables principales" ? renderPrincipalVariablesTab() : null}
-          {activeTab === "Configuración" ? renderConfigTab() : null}
+          {activeTab === "Cotizar" ? renderCotizador() : null}
+          {activeTab === "Modificar precios" ? renderAdminPricesTab() : null}
+          {activeTab === "Entender un precio" ? renderUnderstandPriceTab() : null}
+          {activeTab === "Ver impacto de cambios" ? renderVariableImpactTab() : null}
+          {activeTab === "Historial y backups" ? renderHistoryBackupsTab() : null}
+          {activeTab === "Exportar soporte Excel" ? renderExportSupportExcelTab() : null}
+          {activeTab === "Configuración avanzada" ? renderAdvancedConfigTab() : null}
         </section>
       </main>
     </div>
