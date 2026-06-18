@@ -47,11 +47,20 @@ Regla central:
 
 ### Administración de precios
 
-- `Modificar precios` expone solo variables operativas editables.
-- Todo guardado requiere preview previo.
+- `Modificar precios` expone solo variables operativas editables mediante un wizard guiado.
+- Todo guardado requiere preview previo asociado al valor ingresado.
 - Antes de escribir se genera backup de la configuración afectada.
 - Cada cambio queda registrado en historial operativo.
 - Las matrices PDF, factores de ajuste no editables y productos bloqueados no se escriben desde esta pantalla.
+
+El wizard usa los endpoints existentes de administración:
+
+- `GET /admin-precios/variables-editables`
+- `POST /admin-precios/preview`
+- `POST /admin-precios/aplicar`
+- `GET /admin-precios/historial`
+
+La mejora es de flujo y seguridad visual: elegir variable, revisar impacto, ingresar valor, previsualizar, confirmar y ver historial.
 
 ### Navegación UX por tareas
 

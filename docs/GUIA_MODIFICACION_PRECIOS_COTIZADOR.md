@@ -54,14 +54,16 @@ Estas variables deben figurar con:
 
 Cuando una variable cumple esas condiciones, el sistema la considera una variable real de operación.
 
-Flujo obligatorio:
+Flujo obligatorio del wizard:
 
 1. Elegir variable.
-2. Ingresar nuevo valor.
-3. Previsualizar impacto.
-4. Revisar diferencia, productos afectados y advertencias.
-5. Guardar cambio solo con preview válido.
-6. El sistema crea backup e historial automáticamente.
+2. Revisar impacto actual y productos afectados.
+3. Ingresar nuevo valor.
+4. Previsualizar impacto.
+5. Confirmar y guardar solo con preview válido.
+6. Ver backup e historial generado.
+
+El wizard permite volver a pasos anteriores sin perder contexto. El guardado se mantiene deshabilitado si el valor está vacío, no es numérico, está fuera de rango, es negativo cuando no corresponde o no cambió respecto del valor actual.
 
 ---
 

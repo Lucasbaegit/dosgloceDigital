@@ -67,6 +67,14 @@ const NAV_TEST_IDS = {
   "Exportar soporte Excel": "tab-export-support-excel",
   "Configuración avanzada": "tab-advanced-config",
 };
+const ADMIN_PRICE_STEPS = [
+  { id: 1, label: "Elegir variable" },
+  { id: 2, label: "Revisar impacto" },
+  { id: 3, label: "Nuevo valor" },
+  { id: 4, label: "Previsualizar" },
+  { id: 5, label: "Confirmar" },
+  { id: 6, label: "Historial" },
+];
 const TRACE_MODES = [
   { value: "cotizacion_actual", label: "Cotización actual" },
   { value: "casos_generales", label: "Casos de lógica general" },
@@ -703,6 +711,7 @@ export default function CotizadorBajadasV2() {
   const [adminLoading, setAdminLoading] = useState(false);
   const [adminMsg, setAdminMsg] = useState("");
   const [adminError, setAdminError] = useState("");
+  const [adminWizardStep, setAdminWizardStep] = useState(1);
 
   const inferred = useMemo(() => inferQuoteContext(form), [form]);
   const isAutoadhesivas = inferred.categoria === "Bajadas Autoadhesivas";
@@ -925,6 +934,7 @@ export default function CotizadorBajadasV2() {
       const preview = await previewAdminPrecio({ variable: adminVariable, nuevo_valor: Number(adminNewValue) });
       setAdminPreview(preview);
       setAdminMsg("Preview válido. Revisá impactos antes de guardar.");
+      setAdminWizardStep(5);
     } catch (err) {
       setAdminPreview(null);
       setAdminError(err.message || "No se pudo previsualizar el cambio.");
@@ -938,7 +948,10 @@ export default function CotizadorBajadasV2() {
       setAdminError("Primero generá un preview válido para este valor.");
       return;
     }
-    const confirmed = window.confirm("Confirmar cambio operativo de variable. Se creará backup e historial.");
+    const selected = (adminPrices?.variables || []).find((item) => item.key === adminVariable);
+    const confirmed = window.confirm(
+      `Vas a cambiar ${selected?.label || adminVariable} de ${selected?.value ?? adminPreview.valor_actual} a ${adminNewValue}. Se creará backup e historial. ¿Confirmás?`
+    );
     if (!confirmed) return;
     try {
       setAdminLoading(true);
@@ -946,6 +959,7 @@ export default function CotizadorBajadasV2() {
       const applied = await applyAdminPrecio({ variable: adminVariable, nuevo_valor: Number(adminNewValue), confirmado: true });
       setAdminMsg(`Cambio guardado. Backup: ${(applied.backup || []).join(", ") || "-"}`);
       setAdminPreview(null);
+      setAdminWizardStep(6);
       await loadAdminPrices();
       await loadPrincipalVariables();
       setImpactData(null);
@@ -2589,163 +2603,307 @@ export default function CotizadorBajadasV2() {
   const renderAdminPricesTab = () => {
     const variables = adminPrices?.variables || [];
     const selected = variables.find((item) => item.key === adminVariable);
-    const previewMatches = adminPreview && adminPreview.variable === adminVariable && Number(adminPreview.nuevo_valor) === Number(adminNewValue);
+    const numericValue = Number(adminNewValue);
+    const currentValue = Number(selected?.value);
+    const previewMatches = adminPreview && adminPreview.variable === adminVariable && Number(adminPreview.nuevo_valor) === numericValue;
+    const productosAfectados = selected?.productos_afectados || [];
+    const minValue = selected?.min ?? 0;
+    const maxValue = selected?.max;
+    const valueValidation = (() => {
+      if (!selected) return "Eleg? una variable para continuar.";
+      if (String(adminNewValue).trim() === "") return "Ingres? un nuevo valor.";
+      if (!Number.isFinite(numericValue)) return "El valor debe ser num?rico.";
+      if (Number.isFinite(Number(minValue)) && numericValue < Number(minValue)) return `El valor no puede ser menor que ${minValue}.`;
+      if (maxValue != null && Number.isFinite(Number(maxValue)) && numericValue > Number(maxValue)) return `El valor no puede ser mayor que ${maxValue}.`;
+      if (Number.isFinite(currentValue) && numericValue === currentValue) return "El nuevo valor debe ser distinto del valor actual.";
+      return "";
+    })();
+    const canPreviewAdmin = !valueValidation && !adminLoading;
+    const canConfirmAdmin = Boolean(previewMatches) && !adminLoading;
+    const deltaValue = Number.isFinite(numericValue) && Number.isFinite(currentValue) ? numericValue - currentValue : null;
+    const deltaPercent = deltaValue != null && currentValue !== 0 ? (deltaValue / currentValue) * 100 : null;
+    const goToAdminStep = (step) => setAdminWizardStep(Math.max(1, Math.min(6, step)));
+    const selectAdminVariable = (item) => {
+      setAdminVariable(item.key);
+      setAdminNewValue(String(item.value));
+      setAdminPreview(null);
+      setAdminMsg("");
+      setAdminError("");
+      setAdminWizardStep(2);
+    };
+    const previewImpacts = adminPreview?.impactos || [];
+    const previewExamples = adminPreview?.precios_ejemplo || [];
+
+    const renderAdminStepper = () => (
+      <div className="admin-wizard-stepper" data-testid="admin-wizard-stepper">
+        {ADMIN_PRICE_STEPS.map((step) => {
+          const isActive = adminWizardStep === step.id;
+          const isDone = adminWizardStep > step.id;
+          return (
+            <button
+              type="button"
+              key={step.id}
+              className={isActive ? "admin-step active" : isDone ? "admin-step done" : "admin-step"}
+              onClick={() => goToAdminStep(step.id)}
+              data-testid={`admin-step-${step.id}`}
+            >
+              <span>{step.id}</span>
+              <strong>{step.label}</strong>
+            </button>
+          );
+        })}
+      </div>
+    );
+
+    const renderStepActions = ({ back, next, nextDisabled = false, nextLabel = "Continuar" } = {}) => (
+      <div className="admin-wizard-actions">
+        {back ? <button type="button" className="secondary-btn" onClick={() => goToAdminStep(back)}>Volver</button> : null}
+        {next ? <button type="button" className="calculate-btn compact-calculate-btn" disabled={nextDisabled} onClick={() => goToAdminStep(next)}>{nextLabel}</button> : null}
+      </div>
+    );
+
+    const renderVariableList = () => (
+      <div className="admin-wizard-panel" data-testid="admin-variable-list">
+        <div className="admin-wizard-panel-head">
+          <span>Paso 1</span>
+          <h4>Eleg? qu? variable quer?s modificar</h4>
+          <p>Solo aparecen variables habilitadas para edici?n segura desde el sistema.</p>
+        </div>
+        <div className="admin-variable-list wizard-list">
+          {variables.map((item) => (
+            <button
+              type="button"
+              key={item.key}
+              className={adminVariable === item.key ? "admin-variable-item active" : "admin-variable-item"}
+              onClick={() => selectAdminVariable(item)}
+              data-testid={`admin-variable-${item.key}`}
+            >
+              <strong>{item.label}</strong>
+              <span>{item.key}</span>
+              <small>{item.description}</small>
+              <div className="admin-variable-meta">
+                <em>{item.value} {item.unit || ""}</em>
+                <em>{item.impacta_hoy ? "Impacta hoy" : "Preparada"}</em>
+                <em>{item.editable ? "Editable" : "Solo lectura"}</em>
+              </div>
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+
+    const renderImpactStep = () => (
+      <div className="admin-wizard-panel" data-testid="admin-impact-step">
+        <div className="admin-wizard-panel-head">
+          <span>Paso 2</span>
+          <h4>Revis? el impacto actual</h4>
+          <p>Antes de cambiar un n?mero, mir? d?nde interviene esta variable y qu? partes est?n protegidas por tabla fija PDF.</p>
+        </div>
+        <div className="admin-editor-head">
+          <div>
+            <span>Variable seleccionada</span>
+            <strong>{selected?.label || adminVariable}</strong>
+            <small>Clave t?cnica: {selected?.key || adminVariable}</small>
+          </div>
+          <em>{selected?.impacta_hoy ? "Impacta hoy" : "Preparada"}</em>
+        </div>
+        <div className="admin-current-grid">
+          <div><span>Valor actual</span><strong>{selected?.value ?? "-"}</strong></div>
+          <div><span>Unidad</span><strong>{selected?.unit || "-"}</strong></div>
+          <div><span>Estado editable</span><strong>{selected?.editable ? "Editable en sistema" : "No editable"}</strong></div>
+          <div><span>Estado operativo</span><strong>{selected?.estado || selected?.estado_operativo || "-"}</strong></div>
+        </div>
+        <h4>Productos afectados</h4>
+        {productosAfectados.length ? (
+          <div className="admin-impact-chips" data-testid="admin-products-affected">
+            {productosAfectados.map((product) => <span key={product}>{product}</span>)}
+          </div>
+        ) : <p className="range-hint">No hay productos afectados informados para esta variable.</p>}
+        <div className="warning-box">
+          Los precios finales fijos PDF y factores calibrados no se editan directamente desde ac?. Si una tabla est? protegida, el preview lo informa antes de guardar.
+        </div>
+        {renderStepActions({ back: 1, next: 3 })}
+      </div>
+    );
+
+    const renderValueStep = () => (
+      <div className="admin-wizard-panel" data-testid="admin-new-value-step">
+        <div className="admin-wizard-panel-head">
+          <span>Paso 3</span>
+          <h4>Ingres? el nuevo valor</h4>
+          <p>El sistema valida que sea num?rico, permitido, distinto al valor actual y dentro de rango.</p>
+        </div>
+        <div className="admin-current-grid">
+          <div><span>Valor actual</span><strong>{selected?.value ?? "-"}</strong></div>
+          <div><span>Nuevo valor</span><strong>{adminNewValue || "-"}</strong></div>
+          <div><span>Diferencia estimada</span><strong>{deltaValue == null ? "-" : deltaValue.toFixed(4)}</strong></div>
+          <div><span>Diferencia %</span><strong>{deltaPercent == null ? "-" : `${deltaPercent.toFixed(2)}%`}</strong></div>
+        </div>
+        <label className="admin-new-value">
+          <span>Nuevo valor para {selected?.label || adminVariable}</span>
+          <input
+            type="number"
+            data-testid="admin-new-value-input"
+            value={adminNewValue}
+            placeholder={selected ? String(selected.value) : ""}
+            min={selected?.min}
+            max={selected?.max}
+            step={selected?.step || "0.01"}
+            onChange={(event) => {
+              setAdminNewValue(event.target.value);
+              setAdminPreview(null);
+              setAdminMsg("");
+              setAdminError("");
+            }}
+          />
+        </label>
+        {valueValidation ? <div className="error-box" data-testid="admin-value-validation">{valueValidation}</div> : <div className="info-box">Valor v?lido para previsualizar.</div>}
+        {renderStepActions({ back: 2, next: 4, nextDisabled: Boolean(valueValidation) })}
+      </div>
+    );
+
+    const renderPreviewStep = () => (
+      <div className="admin-wizard-panel" data-testid="admin-preview-step">
+        <div className="admin-wizard-panel-head">
+          <span>Paso 4</span>
+          <h4>Previsualiz? el impacto</h4>
+          <p>El preview no guarda cambios. Sirve para revisar diferencias, advertencias y productos afectados.</p>
+        </div>
+        <div className="principal-actions">
+          <button
+            type="button"
+            className="secondary-btn"
+            data-testid="admin-preview-button"
+            onClick={handleAdminPreview}
+            disabled={!canPreviewAdmin}
+          >
+            Previsualizar impacto
+          </button>
+          <button type="button" className="secondary-btn" onClick={() => goToAdminStep(3)}>Volver a editar valor</button>
+        </div>
+        {valueValidation ? <div className="error-box">{valueValidation}</div> : null}
+        {adminPreview ? renderPreviewPanel() : <div className="placeholder"><p>Gener? un preview para habilitar la confirmaci?n.</p></div>}
+      </div>
+    );
+
+    const renderPreviewPanel = () => (
+      <div className="admin-preview-panel" data-testid="admin-preview-panel">
+        <h4>Preview de impacto</h4>
+        <div className="admin-current-grid">
+          <div><span>Actual</span><strong>{adminPreview.valor_actual}</strong></div>
+          <div><span>Nuevo</span><strong>{adminPreview.nuevo_valor}</strong></div>
+          <div><span>Diferencia</span><strong>{adminPreview.diferencia}</strong></div>
+          <div><span>Diferencia %</span><strong>{adminPreview.diferencia_porcentual == null ? "-" : `${adminPreview.diferencia_porcentual.toFixed(2)}%`}</strong></div>
+        </div>
+        {adminPreview.advertencias?.length ? <div className="warning-box">{adminPreview.advertencias.join(" ? ")}</div> : null}
+        <h4>Productos afectados</h4>
+        <div className="impact-results">
+          {previewImpacts.map((impact) => (
+            <article className={`impact-relation-card ${impact.estado === "bloqueado" ? "bloqueado" : impact.impacta_hoy ? "variable_madre" : "preparada"}`} key={`${impact.variable}-${impact.producto_key}-${impact.componente}`}>
+              <div className="impact-relation-head">
+                <div>
+                  <strong>{impact.producto}</strong>
+                  <span>{impact.componente}</span>
+                </div>
+                <em>{impact.impacta_hoy ? "Impacta hoy" : "Documentado"}</em>
+              </div>
+              <p>{impact.detalle}</p>
+              <small>Fuente: {impact.fuente}</small>
+            </article>
+          ))}
+        </div>
+        {previewExamples.length ? (
+          <>
+            <h4>Precios de ejemplo</h4>
+            <div className="admin-example-grid">
+              {previewExamples.map((example) => (
+                <article key={example.nombre}>
+                  <strong>{example.nombre}</strong>
+                  <span>Antes: {example.antes == null ? "-" : formatMoney(example.antes)}</span>
+                  <span>Despu?s: {example.despues == null ? "-" : formatMoney(example.despues)}</span>
+                  <small>{example.detalle}</small>
+                </article>
+              ))}
+            </div>
+          </>
+        ) : null}
+      </div>
+    );
+
+    const renderConfirmStep = () => (
+      <div className="admin-wizard-panel" data-testid="admin-confirm-step">
+        <div className="admin-wizard-panel-head">
+          <span>Paso 5</span>
+          <h4>Confirm? y guard?</h4>
+          <p>Este cambio modifica una variable operativa. Revis? el impacto antes de guardar.</p>
+        </div>
+        <div className="warning-box" data-testid="admin-confirmation-copy">
+          Vas a cambiar {selected?.label || adminVariable} de {selected?.value ?? adminPreview?.valor_actual ?? "-"} a {adminNewValue}. Se crear? backup e historial. ?Confirm?s?
+        </div>
+        {adminPreview ? renderPreviewPanel() : <div className="placeholder"><p>Primero gener? un preview v?lido para este valor.</p></div>}
+        <div className="principal-actions">
+          <button type="button" className="secondary-btn" onClick={() => goToAdminStep(4)}>Volver al preview</button>
+          <button
+            type="button"
+            className="calculate-btn compact-calculate-btn"
+            data-testid="admin-apply-button"
+            onClick={handleAdminApply}
+            disabled={!canConfirmAdmin}
+          >
+            Guardar cambio
+          </button>
+        </div>
+      </div>
+    );
+
+    const renderHistoryStep = () => (
+      <section className="admin-wizard-panel admin-history" data-testid="admin-history">
+        <div className="admin-wizard-panel-head">
+          <span>Paso 6</span>
+          <h4>Historial reciente y backups</h4>
+          <p>Registro de cambios aplicados desde el sistema. El rollback no se implementa en esta etapa.</p>
+        </div>
+        {adminHistory.length ? (
+          <div className="history-list">
+            {adminHistory.slice().reverse().slice(0, 10).map((item, index) => (
+              <div key={`${item.timestamp}-${index}`}>
+                <strong>{item.variable}</strong> ? {item.valor_anterior} ? {item.valor_nuevo} ? {item.fuente || "sistema"} ? {item.timestamp || "-"}
+              </div>
+            ))}
+          </div>
+        ) : <p className="range-hint">Sin cambios registrados todav?a.</p>}
+        {renderStepActions({ back: 5 })}
+      </section>
+    );
+
     return (
       <section className="card result-card admin-prices-card">
         <div className="card-head">
           <div>
             <h3 data-testid="admin-prices-title">Modificar precios</h3>
-            <p>Los cambios se hacen desde el sistema. Primero previsualizá impacto; después podés guardar con backup e historial.</p>
+            <p>Cambi? variables habilitadas desde el sistema. Antes de guardar, revis? el impacto. El sistema crea backup e historial autom?ticamente.</p>
           </div>
-          <span>Sistema operativo</span>
+          <span>Wizard seguro</span>
         </div>
 
         <div className="warning-box">
-          El Excel es solo soporte de lectura/auditoría. No se editan matrices PDF ni precios finales fijos desde esta pantalla.
+          El Excel maestro es solo soporte de visualizaci?n y auditor?a. Los cambios reales se hacen desde esta pantalla.
         </div>
         {adminError ? <div className="error-box" data-testid="admin-prices-error">{adminError}</div> : null}
         {adminMsg ? <div className="info-box" data-testid="admin-prices-message">{adminMsg}</div> : null}
-        {adminLoading && !adminPrices ? <div className="placeholder"><p>Cargando administrador...</p></div> : null}
+        {adminLoading && !adminPrices ? <div className="placeholder"><p>Cargando wizard de precios...</p></div> : null}
 
         {adminPrices ? (
           <>
-            <div className="admin-prices-layout">
-              <aside className="admin-variable-list" data-testid="admin-variable-list">
-                {variables.map((item) => (
-                  <button
-                    type="button"
-                    key={item.key}
-                    className={adminVariable === item.key ? "admin-variable-item active" : "admin-variable-item"}
-                    onClick={() => {
-                      setAdminVariable(item.key);
-                      setAdminNewValue(String(item.value));
-                      setAdminPreview(null);
-                      setAdminMsg("");
-                      setAdminError("");
-                    }}
-                  >
-                    <strong>{item.label}</strong>
-                    <span>{item.key}</span>
-                    <em>{item.impacta_hoy ? "impacta_hoy" : "documentado_no_conectado"}</em>
-                  </button>
-                ))}
-              </aside>
-
-              <div className="admin-editor">
-                <div className="admin-editor-head">
-                  <div>
-                    <span>Variable seleccionada</span>
-                    <strong>{selected?.label || adminVariable}</strong>
-                    <small>{selected?.description}</small>
-                  </div>
-                  <em>{selected?.unit || "-"}</em>
-                </div>
-
-                <div className="admin-current-grid">
-                  <div><span>Valor actual</span><strong>{selected?.value ?? "-"}</strong></div>
-                  <div><span>Unidad</span><strong>{selected?.unit || "-"}</strong></div>
-                  <div><span>Estado</span><strong>{selected?.estado || "-"}</strong></div>
-                  <div><span>Productos</span><strong>{(selected?.productos_afectados || []).join(", ") || "-"}</strong></div>
-                </div>
-
-                <label className="admin-new-value">
-                  <span>Nuevo valor</span>
-                  <input
-                    type="number"
-                    data-testid="admin-new-value-input"
-                    value={adminNewValue}
-                    placeholder={selected ? String(selected.value) : ""}
-                    min={selected?.min}
-                    max={selected?.max}
-                    step={selected?.step || "0.01"}
-                    onChange={(event) => {
-                      setAdminNewValue(event.target.value);
-                      setAdminPreview(null);
-                      setAdminMsg("");
-                    }}
-                  />
-                </label>
-
-                <div className="principal-actions">
-                  <button
-                    type="button"
-                    className="secondary-btn"
-                    data-testid="admin-preview-button"
-                    onClick={handleAdminPreview}
-                    disabled={adminLoading || adminNewValue === ""}
-                  >
-                    Previsualizar impacto
-                  </button>
-                  <button
-                    type="button"
-                    className="calculate-btn compact-calculate-btn"
-                    data-testid="admin-apply-button"
-                    onClick={handleAdminApply}
-                    disabled={adminLoading || !previewMatches}
-                  >
-                    Guardar cambio
-                  </button>
-                  <button type="button" className="secondary-btn" onClick={loadAdminPrices}>Recargar</button>
-                </div>
-
-                {adminPreview ? (
-                  <div className="admin-preview-panel" data-testid="admin-preview-panel">
-                    <h4>Preview de impacto</h4>
-                    <div className="admin-current-grid">
-                      <div><span>Actual</span><strong>{adminPreview.valor_actual}</strong></div>
-                      <div><span>Nuevo</span><strong>{adminPreview.nuevo_valor}</strong></div>
-                      <div><span>Diferencia</span><strong>{adminPreview.diferencia}</strong></div>
-                      <div><span>Diferencia %</span><strong>{adminPreview.diferencia_porcentual == null ? "-" : `${adminPreview.diferencia_porcentual.toFixed(2)}%`}</strong></div>
-                    </div>
-                    {adminPreview.advertencias?.length ? <div className="warning-box">{adminPreview.advertencias.join(" · ")}</div> : null}
-                    <h4>Productos afectados</h4>
-                    <div className="impact-results">
-                      {(adminPreview.impactos || []).map((impact) => (
-                        <article className={`impact-relation-card ${impact.estado === "bloqueado" ? "bloqueado" : impact.impacta_hoy ? "variable_madre" : "preparada"}`} key={`${impact.variable}-${impact.producto_key}-${impact.componente}`}>
-                          <div className="impact-relation-head">
-                            <div>
-                              <strong>{impact.producto}</strong>
-                              <span>{impact.componente}</span>
-                            </div>
-                            <em>{impact.impacta_hoy ? "Impacta hoy" : "Documentado"}</em>
-                          </div>
-                          <p>{impact.detalle}</p>
-                          <small>Fuente: {impact.fuente}</small>
-                        </article>
-                      ))}
-                    </div>
-                    {adminPreview.precios_ejemplo?.length ? (
-                      <>
-                        <h4>Precios de ejemplo</h4>
-                        <div className="admin-example-grid">
-                          {adminPreview.precios_ejemplo.map((example) => (
-                            <article key={example.nombre}>
-                              <strong>{example.nombre}</strong>
-                              <span>Antes: {example.antes == null ? "-" : formatMoney(example.antes)}</span>
-                              <span>Después: {example.despues == null ? "-" : formatMoney(example.despues)}</span>
-                              <small>{example.detalle}</small>
-                            </article>
-                          ))}
-                        </div>
-                      </>
-                    ) : null}
-                  </div>
-                ) : null}
-              </div>
+            {renderAdminStepper()}
+            <div className="admin-wizard-shell">
+              {adminWizardStep === 1 ? renderVariableList() : null}
+              {adminWizardStep === 2 ? renderImpactStep() : null}
+              {adminWizardStep === 3 ? renderValueStep() : null}
+              {adminWizardStep === 4 ? renderPreviewStep() : null}
+              {adminWizardStep === 5 ? renderConfirmStep() : null}
+              {adminWizardStep === 6 ? renderHistoryStep() : null}
             </div>
-
-            <section className="principal-group admin-history" data-testid="admin-history">
-              <h4>Historial de cambios</h4>
-              {adminHistory.length ? (
-                <div className="history-list">
-                  {adminHistory.slice().reverse().slice(0, 10).map((item, index) => (
-                    <div key={`${item.timestamp}-${index}`}>
-                      <strong>{item.variable}</strong> · {item.valor_anterior} → {item.valor_nuevo} · {item.fuente || "sistema"}
-                    </div>
-                  ))}
-                </div>
-              ) : <p className="range-hint">Sin cambios registrados todavía.</p>}
-            </section>
           </>
         ) : null}
       </section>

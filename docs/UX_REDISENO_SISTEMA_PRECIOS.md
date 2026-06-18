@@ -1,82 +1,82 @@
-﻿# RediseÃ±o UX del sistema de precios
+﻿# Rediseño UX del sistema de precios
 
-## 1. DiagnÃ³stico UX actual
+## 1. Diagnóstico UX actual
 
-El cotizador ya resolviÃ³ una parte tÃ©cnica muy importante: cotiza mÃºltiples productos, conserva trazabilidad, diferencia precios fijos PDF de variables operativas, permite administrar variables seguras y exporta soporte Excel.
+El cotizador ya resolvió una parte técnica muy importante: cotiza múltiples productos, conserva trazabilidad, diferencia precios fijos PDF de variables operativas, permite administrar variables seguras y exporta soporte Excel.
 
-El problema actual no es de capacidad, sino de comprensiÃ³n. La interfaz todavÃ­a refleja demasiado la arquitectura interna:
+El problema actual no es de capacidad, sino de comprensión. La interfaz todavía refleja demasiado la arquitectura interna:
 
-- mÃ³dulos tÃ©cnicos separados
+- módulos técnicos separados
 - nombres pensados para desarrollo
 - conceptos de trazabilidad visibles demasiado pronto
-- muchas pantallas que responden a "cÃ³mo estÃ¡ construido" y no a "quÃ© quiere hacer el usuario"
+- muchas pantallas que responden a "cómo está construido" y no a "qué quiere hacer el usuario"
 
-Para una persona operativa o comercial, la pregunta no es "quÃ© mÃ³dulo tengo que abrir", sino:
+Para una persona operativa o comercial, la pregunta no es "qué módulo tengo que abrir", sino:
 
 - quiero cotizar
 - quiero modificar un precio
-- quiero entender por quÃ© saliÃ³ este total
-- quiero saber quÃ© pasa si cambio una variable
-- quiero volver atrÃ¡s si algo saliÃ³ mal
-- quiero exportar informaciÃ³n para revisar o compartir
+- quiero entender por qué salió este total
+- quiero saber qué pasa si cambio una variable
+- quiero volver atrás si algo salió mal
+- quiero exportar información para revisar o compartir
 
-El rediseÃ±o recomendado debe ordenar el sistema alrededor de esas intenciones.
+El rediseño recomendado debe ordenar el sistema alrededor de esas intenciones.
 
-## 2. Problemas de comprensiÃ³n detectados
+## 2. Problemas de comprensión detectados
 
-### No queda claro dÃ³nde modificar precios
+### No queda claro dónde modificar precios
 
-Hoy conviven tÃ©rminos como `Variables principales`, `Administrador de precios`, `ConfiguraciÃ³n` y `Excel maestro`. Aunque la regla tÃ©cnica ya estÃ¡ definida, visualmente todavÃ­a puede parecer que hay varias puertas equivalentes para tocar precios.
+Hoy conviven términos como `Variables principales`, `Administrador de precios`, `Configuración` y `Excel maestro`. Aunque la regla técnica ya está definida, visualmente todavía puede parecer que hay varias puertas equivalentes para tocar precios.
 
-Riesgo: que el usuario intente editar desde una pantalla tÃ©cnica o interprete el Excel maestro como fuente de escritura.
+Riesgo: que el usuario intente editar desde una pantalla técnica o interprete el Excel maestro como fuente de escritura.
 
-### No queda claro dÃ³nde entender un precio
+### No queda claro dónde entender un precio
 
-El sistema tiene `Ãrbol del precio` y `Trazabilidad visual`, pero ambos nombres pueden sonar tÃ©cnicos. El usuario comercial necesita primero una explicaciÃ³n simple:
+El sistema tiene `Árbol del precio` y `Trazabilidad visual`, pero ambos nombres pueden sonar técnicos. El usuario comercial necesita primero una explicación simple:
 
 - material
-- impresiÃ³n
+- impresión
 - cantidad/rango
 - adicionales
 - urgencia
 - total
 
-El grafo y el Ã¡rbol deberÃ­an quedar como detalle avanzado, no como primera respuesta.
+El grafo y el árbol deberían quedar como detalle avanzado, no como primera respuesta.
 
-### No queda claro quÃ© se puede tocar y quÃ© no
+### No queda claro qué se puede tocar y qué no
 
-Hay conceptos que para desarrollo son correctos, pero para operaciÃ³n generan ruido:
+Hay conceptos que para desarrollo son correctos, pero para operación generan ruido:
 
 - variable madre
 - impacta_hoy
 - matriz PDF
 - factor de ajuste
-- fÃ³rmula calibrada
+- fórmula calibrada
 - tabla fija
 - derivado
 
-Estos conceptos deben existir, pero en modo avanzado o en documentaciÃ³n tÃ©cnica. En la operaciÃ³n diaria conviene traducirlos.
+Estos conceptos deben existir, pero en modo avanzado o en documentación técnica. En la operación diaria conviene traducirlos.
 
-### La navegaciÃ³n creciÃ³ por acumulaciÃ³n
+### La navegación creció por acumulación
 
-La barra actual combina tareas reales con mÃ³dulos auxiliares:
+La barra actual combina tareas reales con módulos auxiliares:
 
 - Cotizador
-- Ãrbol del precio
+- Árbol del precio
 - Trazabilidad visual
 - Impacto de variables
 - Variables principales
 - Administrador de precios
-- ConfiguraciÃ³n
+- Configuración
 - Historial
 - Precios
 - Ajustes
 
-Esto genera sensaciÃ³n de tablero tÃ©cnico. El sistema necesita una arquitectura de informaciÃ³n por objetivos.
+Esto genera sensación de tablero técnico. El sistema necesita una arquitectura de información por objetivos.
 
-## 3. Principio de rediseÃ±o
+## 3. Principio de rediseño
 
-El sistema debe organizarse por intenciÃ³n del usuario, no por implementaciÃ³n tÃ©cnica.
+El sistema debe organizarse por intención del usuario, no por implementación técnica.
 
 Principio rector:
 
@@ -84,17 +84,17 @@ Principio rector:
 
 Ejemplos:
 
-- `Cotizar`: Â¿cuÃ¡nto sale este trabajo?
-- `Modificar precios`: Â¿quÃ© valor operativo quiero cambiar y quÃ© impacto tendrÃ¡?
-- `Entender un precio`: Â¿de dÃ³nde saliÃ³ este total?
-- `Ver impacto de cambios`: Â¿quÃ© productos se afectan si cambio esta variable?
-- `Historial y backups`: Â¿quÃ© se cambiÃ³, cuÃ¡ndo y cÃ³mo puedo volver atrÃ¡s?
-- `Exportar soporte Excel`: Â¿cÃ³mo genero un archivo de revisiÃ³n o auditorÃ­a?
-- `ConfiguraciÃ³n avanzada`: Â¿dÃ³nde quedan las herramientas tÃ©cnicas?
+- `Cotizar`: ¿cuánto sale este trabajo?
+- `Modificar precios`: ¿qué valor operativo quiero cambiar y qué impacto tendrá?
+- `Entender un precio`: ¿de dónde salió este total?
+- `Ver impacto de cambios`: ¿qué productos se afectan si cambio esta variable?
+- `Historial y backups`: ¿qué se cambió, cuándo y cómo puedo volver atrás?
+- `Exportar soporte Excel`: ¿cómo genero un archivo de revisión o auditoría?
+- `Configuración avanzada`: ¿dónde quedan las herramientas técnicas?
 
-## 4. Nueva navegaciÃ³n recomendada
+## 4. Nueva navegación recomendada
 
-MenÃº principal recomendado:
+Menú principal recomendado:
 
 1. Cotizar
 2. Modificar precios
@@ -102,7 +102,7 @@ MenÃº principal recomendado:
 4. Ver impacto de cambios
 5. Historial y backups
 6. Exportar soporte Excel
-7. ConfiguraciÃ³n avanzada
+7. Configuración avanzada
 
 ### 1. Cotizar
 
@@ -111,11 +111,11 @@ Pantalla principal de trabajo diario. Debe ser la entrada por defecto.
 Incluye:
 
 - selector de producto
-- campos necesarios segÃºn producto
-- adicionales vÃ¡lidos
+- campos necesarios según producto
+- adicionales válidos
 - resultado final
-- botÃ³n copiar
-- acceso rÃ¡pido a "Entender este precio"
+- botón copiar
+- acceso rápido a "Entender este precio"
 
 ### 2. Modificar precios
 
@@ -126,31 +126,31 @@ Incluye:
 - wizard guiado
 - variables editables reales
 - preview obligatorio
-- confirmaciÃ³n
+- confirmación
 - backup
 - historial del cambio
 
-No debe mostrar desde el inicio todos los detalles tÃ©cnicos.
+No debe mostrar desde el inicio todos los detalles técnicos.
 
 ### 3. Entender un precio
 
 Fusiona conceptualmente:
 
-- `Ãrbol del precio`
+- `Árbol del precio`
 - `Trazabilidad visual`
 
-La primera vista debe ser simple. El grafo y el Ã¡rbol tÃ©cnico aparecen bajo "Ver detalle avanzado".
+La primera vista debe ser simple. El grafo y el árbol técnico aparecen bajo "Ver detalle avanzado".
 
 ### 4. Ver impacto de cambios
 
-Equivale al actual `Impacto de variables`, pero con lenguaje menos tÃ©cnico.
+Equivale al actual `Impacto de variables`, pero con lenguaje menos técnico.
 
 Debe responder:
 
-- quÃ© productos dependen de este valor
-- quÃ© ejemplos cambian
-- quÃ© precios finales estÃ¡n protegidos por PDF
-- quÃ© cambios son directos y cuÃ¡les son preparados para futuro
+- qué productos dependen de este valor
+- qué ejemplos cambian
+- qué precios finales están protegidos por PDF
+- qué cambios son directos y cuáles son preparados para futuro
 
 ### 5. Historial y backups
 
@@ -159,9 +159,9 @@ Agrupa:
 - historial de cambios de precios
 - backups generados
 - restauraciones disponibles
-- quiÃ©n/cuÃ¡ndo/quÃ© cambiÃ³
+- quién/cuándo/qué cambió
 
-Debe ser entendible como bitÃ¡cora operativa, no como lista de archivos.
+Debe ser entendible como bitácora operativa, no como lista de archivos.
 
 ### 6. Exportar soporte Excel
 
@@ -169,16 +169,16 @@ Equivale al Excel maestro exportable.
 
 Mensaje principal:
 
-> El Excel maestro es soporte de revisiÃ³n, auditorÃ­a y documentaciÃ³n. No es la fuente operativa para modificar precios.
+> El Excel maestro es soporte de revisión, auditoría y documentación. No es la fuente operativa para modificar precios.
 
-### 7. ConfiguraciÃ³n avanzada
+### 7. Configuración avanzada
 
-Contiene vistas tÃ©cnicas o de mantenimiento:
+Contiene vistas técnicas o de mantenimiento:
 
 - Variables principales
-- ConfiguraciÃ³n
+- Configuración
 - Importador preview
-- diagnÃ³sticos tÃ©cnicos
+- diagnósticos técnicos
 - vistas JSON/config si existen
 
 Debe estar separada del uso diario.
@@ -189,33 +189,33 @@ Debe estar separada del uso diario.
 | --- | --- | --- |
 | Cotizador | Cotizar | Mantener como pantalla principal, simplificar accesos secundarios. |
 | Administrador de precios | Modificar precios | Renombrar y convertir en wizard guiado. |
-| Ãrbol del precio | Entender un precio | Integrar como detalle avanzado. |
+| Árbol del precio | Entender un precio | Integrar como detalle avanzado. |
 | Trazabilidad visual | Entender un precio | Integrar como detalle avanzado visual. |
 | Impacto de variables | Ver impacto de cambios | Renombrar y simplificar lenguaje. |
-| Variables principales | ConfiguraciÃ³n avanzada / Modificar precios | Vista tÃ©cnica; no debe ser la puerta operativa principal. |
-| Excel maestro exportable | Exportar soporte Excel | Mantener como exportaciÃ³n y auditorÃ­a. |
-| Importador preview | ConfiguraciÃ³n avanzada | Mantener fuera del flujo diario. |
+| Variables principales | Configuración avanzada / Modificar precios | Vista técnica; no debe ser la puerta operativa principal. |
+| Excel maestro exportable | Exportar soporte Excel | Mantener como exportación y auditoría. |
+| Importador preview | Configuración avanzada | Mantener fuera del flujo diario. |
 | Historial | Historial y backups | Fusionar con backups y cambios de precios. |
 | Backups | Historial y backups | Mostrar como restauraciones disponibles. |
-| ConfiguraciÃ³n | ConfiguraciÃ³n avanzada | Mantener para usuarios tÃ©cnicos. |
-| Precios | Modificar precios / ConfiguraciÃ³n avanzada | Evitar duplicaciÃ³n; si es tÃ©cnico, mover a avanzada. |
-| Ajustes | ConfiguraciÃ³n avanzada | Mantener separado de operaciÃ³n diaria. |
+| Configuración | Configuración avanzada | Mantener para usuarios técnicos. |
+| Precios | Modificar precios / Configuración avanzada | Evitar duplicación; si es técnico, mover a avanzada. |
+| Ajustes | Configuración avanzada | Mantener separado de operación diaria. |
 
 ## 6. Flujo recomendado para modificar precios
 
 El flujo debe ser guiado, progresivo y seguro. No conviene mostrar todos los campos a la vez.
 
-### Paso 1: Elegir quÃ© quiero modificar
+### Paso 1: Elegir qué quiero modificar
 
 Mostrar tarjetas o lista simple:
 
-- DÃ³lar
+- Dólar
 - Click color
 - Papel obra 90g
 - Multiplicador general
 - Tinta blanca autoadhesiva
 
-Evitar mostrar claves tÃ©cnicas como primera capa. La clave interna puede aparecer en detalle avanzado.
+Evitar mostrar claves técnicas como primera capa. La clave interna puede aparecer en detalle avanzado.
 
 ### Paso 2: Ver valor actual
 
@@ -223,7 +223,7 @@ Mostrar:
 
 - valor actual
 - unidad
-- Ãºltima modificaciÃ³n
+- última modificación
 - fuente del valor
 - estado: operativo
 
@@ -233,17 +233,17 @@ Mensaje claro:
 
 ### Paso 3: Ver productos afectados
 
-Antes de ingresar el nuevo valor, mostrar quÃ© productos podrÃ­an cambiar.
+Antes de ingresar el nuevo valor, mostrar qué productos podrían cambiar.
 
 Ejemplo:
 
 - Stickers Circulares
 - Bajadas Autoadhesivas
-- fÃ³rmulas calibradas conectadas
+- fórmulas calibradas conectadas
 
 Usar lenguaje humano:
 
-- "Afecta el cÃ¡lculo base"
+- "Afecta el cálculo base"
 - "El precio final puede estar protegido por tabla PDF"
 - "Se usa como recargo proporcional"
 
@@ -253,7 +253,7 @@ Mostrar:
 
 - valor actual
 - campo nuevo valor
-- diferencia automÃ¡tica
+- diferencia automática
 - advertencias si el cambio es grande
 
 ### Paso 5: Previsualizar impacto
@@ -268,37 +268,37 @@ Debe mostrar:
 - diferencia porcentual
 - ejemplos afectados
 - advertencias
-- precios que no se modificarÃ¡n por estar fijos por PDF
+- precios que no se modificarán por estar fijos por PDF
 
 ### Paso 6: Confirmar y guardar
 
-El botÃ³n de guardar solo debe habilitarse si el preview corresponde al valor ingresado.
+El botón de guardar solo debe habilitarse si el preview corresponde al valor ingresado.
 
 Antes de guardar:
 
-- modal de confirmaciÃ³n
+- modal de confirmación
 - resumen del cambio
-- aviso de backup automÃ¡tico
+- aviso de backup automático
 
 ### Paso 7: Ver backup/historial
 
-DespuÃ©s de guardar:
+Después de guardar:
 
-- mostrar mensaje de Ã©xito
+- mostrar mensaje de éxito
 - mostrar backup creado
 - agregar entrada al historial
-- ofrecer acciÃ³n: "Ver historial de cambios"
+- ofrecer acción: "Ver historial de cambios"
 
 ## 7. Flujo recomendado para entender un precio
 
-El objetivo es responder rÃ¡pido "por quÃ© dio este total", sin obligar al usuario a leer un grafo tÃ©cnico.
+El objetivo es responder rápido "por qué dio este total", sin obligar al usuario a leer un grafo técnico.
 
-### Paso 1: Elegir cotizaciÃ³n
+### Paso 1: Elegir cotización
 
 Opciones:
 
-- Usar Ãºltima cotizaciÃ³n
-- Buscar una cotizaciÃ³n guardada
+- Usar última cotización
+- Buscar una cotización guardada
 - Elegir un caso de ejemplo
 
 ### Paso 2: Ver resumen simple
@@ -310,15 +310,15 @@ Total final: $38.584
 Producto: Bajadas Fullcolor
 Cantidad: 53
 Formato: A3+
-ImpresiÃ³n: 4/0
+Impresión: 4/0
 ```
 
 ### Paso 3: Ver componentes principales
 
 Mostrar como desglose simple:
 
-- Material: IlustraciÃ³n 150g
-- ImpresiÃ³n: Fullcolor 4/0
+- Material: Ilustración 150g
+- Impresión: Fullcolor 4/0
 - Rango aplicado: 51 a 100
 - Precio base: $622 por unidad
 - Adicional: Laca UV, 1 cara, $106 por unidad
@@ -328,7 +328,7 @@ Mostrar como desglose simple:
 
 ### Paso 4: Ver detalle avanzado
 
-BotÃ³n:
+Botón:
 
 ```text
 Ver detalle avanzado
@@ -337,14 +337,14 @@ Ver detalle avanzado
 Abre:
 
 - grafo visual
-- Ã¡rbol tÃ©cnico
+- árbol técnico
 - variables usadas
 - fuente PDF
-- fÃ³rmula o matriz aplicada
+- fórmula o matriz aplicada
 
 ## 8. Flujo recomendado para ver impacto
 
-Esta pantalla debe responder "si cambio esto, quÃ© pasa".
+Esta pantalla debe responder "si cambio esto, qué pasa".
 
 ### Paso 1: Elegir valor a analizar
 
@@ -354,7 +354,7 @@ Mostrar nombres entendibles:
 - Papel obra 90g
 - Tinta blanca autoadhesiva
 - Multiplicador general
-- DÃ³lar
+- Dólar
 
 ### Paso 2: Ver productos conectados
 
@@ -362,15 +362,15 @@ Separar por estado:
 
 - Impacta hoy
 - Preparado para futuro
-- Solo referencia histÃ³rica
+- Solo referencia histórica
 
 ### Paso 3: Simular cambio
 
-Permitir ingresar un valor hipotÃ©tico sin guardar.
+Permitir ingresar un valor hipotético sin guardar.
 
 Mostrar:
 
-- ejemplos de precios antes/despuÃ©s
+- ejemplos de precios antes/después
 - diferencia
 - productos afectados
 - advertencias
@@ -383,11 +383,11 @@ Si el usuario decide avanzar:
 Usar este valor en Modificar precios
 ```
 
-Esto abre el wizard con el valor precargado, pero todavÃ­a exige preview y confirmaciÃ³n.
+Esto abre el wizard con el valor precargado, pero todavía exige preview y confirmación.
 
 ## 9. Flujo recomendado para historial y rollback
 
-La pantalla `Historial y backups` debe funcionar como bitÃ¡cora.
+La pantalla `Historial y backups` debe funcionar como bitácora.
 
 ### Vista principal
 
@@ -397,7 +397,7 @@ Columnas sugeridas:
 - Usuario / origen
 - Valor modificado
 - Antes
-- DespuÃ©s
+- Después
 - Productos afectados
 - Backup
 - Estado
@@ -410,24 +410,24 @@ Al abrir un cambio:
 - preview usado
 - backup asociado
 - archivo/config afectado
-- botÃ³n "Comparar"
-- botÃ³n "Restaurar" solo si el flujo de rollback estÃ¡ implementado y validado
+- botón "Comparar"
+- botón "Restaurar" solo si el flujo de rollback está implementado y validado
 
 ### Rollback
 
-Si se implementa restauraciÃ³n:
+Si se implementa restauración:
 
 1. elegir cambio
 2. ver backup
-3. previsualizar restauraciÃ³n
+3. previsualizar restauración
 4. confirmar
 5. guardar nuevo historial de rollback
 
 Nunca restaurar silenciosamente.
 
-## 10. QuÃ© informaciÃ³n va en modo simple
+## 10. Qué información va en modo simple
 
-Modo simple es para operaciÃ³n diaria.
+Modo simple es para operación diaria.
 
 Debe mostrar:
 
@@ -439,20 +439,20 @@ Debe mostrar:
 - total final
 - desglose principal
 - fuente resumida
-- botÃ³n previsualizar
-- botÃ³n guardar
+- botón previsualizar
+- botón guardar
 - backup creado
 
 Lenguaje recomendado:
 
 - "Afecta hoy"
 - "No modifica precios finales fijos"
-- "Se guardarÃ¡ con backup"
+- "Se guardará con backup"
 - "Este Excel es solo soporte"
 
-## 11. QuÃ© informaciÃ³n va en modo avanzado
+## 11. Qué información va en modo avanzado
 
-Modo avanzado es para auditorÃ­a, soporte tÃ©cnico y depuraciÃ³n.
+Modo avanzado es para auditoría, soporte técnico y depuración.
 
 Puede mostrar:
 
@@ -462,10 +462,10 @@ Puede mostrar:
 - factor de ajuste PDF
 - matriz PDF
 - tabla fija
-- fÃ³rmula editable calibrada
+- fórmula editable calibrada
 - fuente exacta de config
-- grafo tÃ©cnico
-- Ã¡rbol tÃ©cnico
+- grafo técnico
+- árbol técnico
 - JSON de trazabilidad
 - endpoints
 - archivos de backend
@@ -478,19 +478,19 @@ Regla UX:
 
 | Nombre actual | Nombre recomendado | Motivo |
 | --- | --- | --- |
-| Cotizador | Cotizar | AcciÃ³n directa y cotidiana. |
-| Administrador de precios | Modificar precios | MÃ¡s claro para uso operativo. |
-| Variables principales | Costos base | Traduce el concepto tÃ©cnico a lenguaje comercial. |
-| Trazabilidad visual | De dÃ³nde sale este precio | Responde una pregunta humana. |
-| Ãrbol del precio | Detalle del cÃ¡lculo | MÃ¡s simple y menos abstracto. |
-| Impacto de variables | QuÃ© afecta este cambio | Orientado a decisiÃ³n. |
+| Cotizador | Cotizar | Acción directa y cotidiana. |
+| Administrador de precios | Modificar precios | Más claro para uso operativo. |
+| Variables principales | Costos base | Traduce el concepto técnico a lenguaje comercial. |
+| Trazabilidad visual | De dónde sale este precio | Responde una pregunta humana. |
+| Árbol del precio | Detalle del cálculo | Más simple y menos abstracto. |
+| Impacto de variables | Qué afecta este cambio | Orientado a decisión. |
 | Excel maestro | Exportar soporte Excel | Deja claro que es salida, no fuente operativa. |
-| ConfiguraciÃ³n | ConfiguraciÃ³n avanzada | Reduce riesgo de tocar algo por error. |
-| Matriz PDF | Tabla fija validada | MÃ¡s entendible y menos tÃ©cnico. |
-| impacta_hoy | Afecta precios actuales | TraducciÃ³n operativa. |
-| FÃ³rmula editable calibrada | FÃ³rmula conectada con ajuste PDF | MÃ¡s explicativo para auditorÃ­a. |
-| Factor de ajuste PDF | Ajuste para coincidir con PDF | MÃ¡s claro para no tÃ©cnicos. |
-| Variable madre | Costo base | MÃ¡s comercial. |
+| Configuración | Configuración avanzada | Reduce riesgo de tocar algo por error. |
+| Matriz PDF | Tabla fija validada | Más entendible y menos técnico. |
+| impacta_hoy | Afecta precios actuales | Traducción operativa. |
+| Fórmula editable calibrada | Fórmula conectada con ajuste PDF | Más explicativo para auditoría. |
+| Factor de ajuste PDF | Ajuste para coincidir con PDF | Más claro para no técnicos. |
+| Variable madre | Costo base | Más comercial. |
 
 ## 13. Wireframes textuales
 
@@ -499,7 +499,7 @@ Regla UX:
 ```text
 [Header]
 Cotizar
-CalculÃ¡ precios actuales validados contra PDF.
+Calculá precios actuales validados contra PDF.
 
 [Panel principal]
 Producto
@@ -526,14 +526,14 @@ Ver detalle avanzado
 ```text
 [Header]
 Modificar precios
-CambiÃ¡ solo costos operativos conectados. El sistema genera preview, backup e historial.
+Cambiá solo costos operativos conectados. El sistema genera preview, backup e historial.
 
 [Stepper]
 1 Elegir precio -> 2 Ver impacto -> 3 Previsualizar -> 4 Confirmar
 
 [Paso 1]
 Lista de costos editables:
-- DÃ³lar
+- Dólar
 - Click color
 - Papel obra 90g
 - Multiplicador general
@@ -551,7 +551,7 @@ Previsualizar impacto
 
 [Paso 4]
 Resumen final
-Backup automÃ¡tico
+Backup automático
 Confirmar y guardar
 ```
 
@@ -559,10 +559,10 @@ Confirmar y guardar
 
 ```text
 [Header]
-De dÃ³nde sale este precio
+De dónde sale este precio
 
 [Selector]
-Usar Ãºltima cotizaciÃ³n | Buscar cotizaciÃ³n | Caso de ejemplo
+Usar última cotización | Buscar cotización | Caso de ejemplo
 
 [Resumen]
 Total final
@@ -571,38 +571,38 @@ Cantidad
 
 [Componentes]
 Material
-ImpresiÃ³n
+Impresión
 Rango
 Adicionales
 Urgencia
 
 [Acciones]
 Ver grafo avanzado
-Ver Ã¡rbol tÃ©cnico
-Ver fuente PDF/fÃ³rmula
+Ver árbol técnico
+Ver fuente PDF/fórmula
 ```
 
 ### Pantalla: Ver impacto de cambios
 
 ```text
 [Header]
-QuÃ© afecta este cambio
+Qué afecta este cambio
 
 [Selector]
-ElegÃ­ un costo base
+Elegí un costo base
 
 [Resumen]
-Impacta hoy / preparado para futuro / referencia histÃ³rica
+Impacta hoy / preparado para futuro / referencia histórica
 
-[SimulaciÃ³n]
+[Simulación]
 Valor actual
-Valor hipotÃ©tico
+Valor hipotético
 Diferencia
 
 [Ejemplos]
-Producto | Antes | DespuÃ©s | Diferencia | Estado
+Producto | Antes | Después | Diferencia | Estado
 
-[AcciÃ³n]
+[Acción]
 Usar este valor en Modificar precios
 ```
 
@@ -619,7 +619,7 @@ Fecha | Variable | Producto afectado | Tipo de cambio
 Fecha
 Cambio
 Antes
-DespuÃ©s
+Después
 Backup
 Estado
 
@@ -637,7 +637,7 @@ Acciones disponibles
 Exportar soporte Excel
 
 [Aviso]
-El Excel maestro es soporte de auditorÃ­a y revisiÃ³n. No modifica precios del sistema.
+El Excel maestro es soporte de auditoría y revisión. No modifica precios del sistema.
 
 [Contenido]
 Variables
@@ -645,37 +645,37 @@ Tablas finales
 Trazabilidad
 Bloqueados
 
-[AcciÃ³n]
+[Acción]
 Generar Excel maestro
-Descargar Ãºltimo Excel
+Descargar último Excel
 ```
 
-### Pantalla: ConfiguraciÃ³n avanzada
+### Pantalla: Configuración avanzada
 
 ```text
 [Header]
-ConfiguraciÃ³n avanzada
+Configuración avanzada
 
 [Aviso]
-SecciÃ³n tÃ©cnica. Usar solo para auditorÃ­a, soporte o mantenimiento.
+Sección técnica. Usar solo para auditoría, soporte o mantenimiento.
 
 [Opciones]
-Variables principales tÃ©cnicas
+Variables principales técnicas
 Importador preview
-DiagnÃ³sticos
-ConfiguraciÃ³n interna
+Diagnósticos
+Configuración interna
 ```
 
-## 14. ImplementaciÃ³n recomendada por etapas
+## 14. Implementación recomendada por etapas
 
-### Etapa 1: Renombrado y agrupaciÃ³n de navegaciÃ³n
+### Etapa 1: Renombrado y agrupación de navegación
 
-Objetivo: reducir confusiÃ³n sin reescribir flujos.
+Objetivo: reducir confusión sin reescribir flujos.
 
 Cambios:
 
 - renombrar tabs principales
-- ocultar vistas tÃ©cnicas bajo `ConfiguraciÃ³n avanzada`
+- ocultar vistas técnicas bajo `Configuración avanzada`
 - agregar texto explicativo corto por pantalla
 - mantener rutas/componentes actuales internamente
 
@@ -688,11 +688,18 @@ Objetivo: transformar el administrador actual en flujo paso a paso.
 Cambios:
 
 - dividir en pasos
-- mostrar una sola decisiÃ³n por vez
+- mostrar una sola decisión por vez
 - bloquear guardado hasta preview
 - mostrar historial posterior al guardado
 
-Riesgo medio, porque toca UX operativa de ediciÃ³n.
+Riesgo medio, porque toca UX operativa de edición.
+
+Estado implementado:
+
+- `Modificar precios` muestra un stepper de seis pasos: elegir variable, revisar impacto, nuevo valor, previsualizar, confirmar e historial.
+- El guardado queda deshabilitado hasta que exista un preview válido para el valor ingresado.
+- La pantalla conserva los endpoints existentes y no convierte el Excel maestro en fuente de escritura.
+- El historial reciente queda visible como cierre del flujo, sin rollback en esta etapa.
 
 ### Etapa 3: Entender un precio en modo simple
 
@@ -700,13 +707,13 @@ Objetivo: crear lectura comercial antes del grafo.
 
 Cambios:
 
-- resumen simple de la Ãºltima cotizaciÃ³n
+- resumen simple de la última cotización
 - componentes principales
-- botones a grafo y Ã¡rbol avanzado
+- botones a grafo y árbol avanzado
 
 Riesgo bajo/medio.
 
-### Etapa 4: Impacto de cambios mÃ¡s comercial
+### Etapa 4: Impacto de cambios más comercial
 
 Objetivo: convertir `Impacto de variables` en simulador entendible.
 
@@ -714,8 +721,8 @@ Cambios:
 
 - renombrar conceptos
 - mostrar productos por estado
-- agregar simulaciÃ³n antes/despuÃ©s
-- conectar con wizard de modificaciÃ³n
+- agregar simulación antes/después
+- conectar con wizard de modificación
 
 Riesgo medio.
 
@@ -731,42 +738,42 @@ Cambios:
 
 Riesgo medio/alto si se habilita rollback real. Puede implementarse primero como lectura.
 
-### Etapa 6: Exportar soporte Excel con mensaje explÃ­cito
+### Etapa 6: Exportar soporte Excel con mensaje explícito
 
-Objetivo: evitar confusiÃ³n sobre el rol del Excel.
+Objetivo: evitar confusión sobre el rol del Excel.
 
 Cambios:
 
 - pantalla propia
-- explicaciÃ³n clara
-- botÃ³n generar/descargar
-- link a documentaciÃ³n
+- explicación clara
+- botón generar/descargar
+- link a documentación
 
 Riesgo bajo.
 
-## 15. Riesgos de seguir sumando funciones sin rediseÃ±o
+## 15. Riesgos de seguir sumando funciones sin rediseño
 
-Si se sigue agregando funcionalidad con la navegaciÃ³n actual, aparecen estos riesgos:
+Si se sigue agregando funcionalidad con la navegación actual, aparecen estos riesgos:
 
-- el usuario no sabe dÃ³nde operar
-- aumenta la probabilidad de tocar pantallas tÃ©cnicas por error
+- el usuario no sabe dónde operar
+- aumenta la probabilidad de tocar pantallas técnicas por error
 - el Excel puede volver a interpretarse como fuente operativa
 - el grafo puede ser visto como obligatorio aunque sea avanzado
 - se duplican conceptos con nombres distintos
-- soporte y capacitaciÃ³n se vuelven mÃ¡s costosos
+- soporte y capacitación se vuelven más costosos
 - cada nuevo producto o variable aumenta la carga cognitiva
-- las mejoras tÃ©cnicas quedan menos visibles para el usuario real
+- las mejoras técnicas quedan menos visibles para el usuario real
 
-El riesgo principal no es que el sistema falle, sino que se vuelva difÃ­cil de usar con confianza.
+El riesgo principal no es que el sistema falle, sino que se vuelva difícil de usar con confianza.
 
 ## 16. Veredicto final
 
-La arquitectura tÃ©cnica ya permite una administraciÃ³n segura de precios. El prÃ³ximo salto debe ser de arquitectura de informaciÃ³n.
+La arquitectura técnica ya permite una administración segura de precios. El próximo salto debe ser de arquitectura de información.
 
-RecomendaciÃ³n final:
+Recomendación final:
 
-> Reorganizar el sistema alrededor de siete acciones principales: cotizar, modificar precios, entender un precio, ver impacto, consultar historial/backups, exportar soporte Excel y acceder a configuraciÃ³n avanzada.
+> Reorganizar el sistema alrededor de siete acciones principales: cotizar, modificar precios, entender un precio, ver impacto, consultar historial/backups, exportar soporte Excel y acceder a configuración avanzada.
 
-La prioridad deberÃ­a ser implementar primero el renombrado de navegaciÃ³n y convertir `Administrador de precios` en `Modificar precios` con flujo guiado. Eso ataca el punto mÃ¡s sensible: que el usuario entienda dÃ³nde se cambian precios y quÃ© estÃ¡ protegido.
+La prioridad debería ser implementar primero el renombrado de navegación y convertir `Administrador de precios` en `Modificar precios` con flujo guiado. Eso ataca el punto más sensible: que el usuario entienda dónde se cambian precios y qué está protegido.
 
-El Excel maestro debe comunicarse siempre como soporte, auditorÃ­a y exportaciÃ³n, no como lugar operativo de ediciÃ³n.
+El Excel maestro debe comunicarse siempre como soporte, auditoría y exportación, no como lugar operativo de edición.

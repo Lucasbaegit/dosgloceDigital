@@ -69,17 +69,18 @@ El sistema devuelve:
 
 ## 2.1 Modificar precios
 
-La sección `Modificar precios` permite modificar variables madre operativas de forma controlada.
+La sección `Modificar precios` permite modificar variables madre operativas de forma controlada mediante un wizard guiado.
 
 El flujo seguro es:
 
-- seleccionar una variable editable
+- elegir una variable editable
+- revisar valor actual y productos afectados
 - ingresar un nuevo valor
 - previsualizar impacto
-- revisar productos afectados y advertencias
-- guardar solo si el preview es válido
+- confirmar el cambio
+- revisar backup e historial generado
 
-Al guardar, el sistema registra backup e historial. No modifica matrices PDF ni precios finales fijos.
+El botón de guardado permanece bloqueado hasta que exista un preview válido para el valor ingresado. Al guardar, el sistema registra backup e historial. No modifica matrices PDF ni precios finales fijos.
 
 ---
 
