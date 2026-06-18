@@ -779,3 +779,22 @@ Recomendación final:
 La prioridad debería ser implementar primero el renombrado de navegación y convertir `Administrador de precios` en `Modificar precios` con flujo guiado. Eso ataca el punto más sensible: que el usuario entienda dónde se cambian precios y qué está protegido.
 
 El Excel maestro debe comunicarse siempre como soporte, auditoría y exportación, no como lugar operativo de edición.
+
+---
+
+## Implementación: modo simple / modo avanzado
+
+El rediseño UX se materializa con un selector global visible en la barra superior:
+
+- `Modo simple`: lectura operativa, por defecto.
+- `Modo avanzado`: lectura técnica y de auditoría.
+
+Criterios aplicados:
+
+- El modo simple nunca elimina funciones críticas; reduce ruido visual y técnico.
+- El modo avanzado conserva grafos, árboles, fuentes, endpoints, claves internas, configuración y metadatos.
+- `Configuración avanzada` queda protegida en modo simple con una explicación y un botón para activar avanzado.
+- `Entender un precio` muestra primero un resumen simple y reserva la trazabilidad visual para avanzado.
+- `Ver impacto de cambios` muestra productos afectados en simple y rutas técnicas en avanzado.
+
+El objetivo es que el sistema sirva a dos públicos sin duplicar pantallas: operación diaria y mantenimiento técnico.

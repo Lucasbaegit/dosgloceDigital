@@ -570,3 +570,26 @@ Regla importante:
 - En Bajadas, A3 es la base proporcional de click.
 - XL y A4 derivan desde A3.
 - XL y A4 no son variables madre editables.
+
+---
+
+## Capa de presentación simple/avanzada
+
+El frontend incorpora una capa de visualización global con dos modos:
+
+- `simple`: oculta claves internas, endpoints, fuentes técnicas, grafos y configuración avanzada. Es el modo por defecto.
+- `advanced`: habilita trazabilidad visual completa, árbol técnico del precio, metadatos de impacto, historial detallado y configuración interna.
+
+La preferencia se guarda con la clave `cotizador_view_mode` en `localStorage`.
+
+Esta capa es exclusivamente de UX/presentación. No modifica payloads de cotización, motores backend, matrices PDF, variables comerciales ni endpoints. Las validaciones de seguridad siguen viviendo en backend y en los flujos existentes.
+
+Pantallas afectadas:
+
+- `Cotizar`: resumen claro en simple; detalle completo en avanzado.
+- `Modificar precios`: wizard operativo en simple; claves técnicas y metadatos en avanzado.
+- `Entender un precio`: resumen simple por defecto; grafo y árbol completo solo en avanzado.
+- `Ver impacto de cambios`: productos y nivel de impacto en simple; componentes, fuentes y rutas de cálculo en avanzado.
+- `Historial y backups`: estado y acciones principales en simple; IDs, fuentes y backups en avanzado.
+- `Exportar soporte Excel`: explicación de uso en simple; detalle técnico del soporte en avanzado.
+- `Configuración avanzada`: protegida en simple y desplegada únicamente al activar avanzado.

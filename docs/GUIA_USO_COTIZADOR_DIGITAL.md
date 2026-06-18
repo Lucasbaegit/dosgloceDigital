@@ -358,3 +358,21 @@ Colores:
 - Violeta: factor o multiplicador.
 
 La vista es informativa. No cambia precios ni aplica modificaciones.
+
+---
+
+## Modo simple y modo avanzado
+
+La interfaz tiene dos modos de lectura:
+
+- `Modo simple`: es el modo por defecto. Muestra solo lo necesario para operar, cotizar, revisar un resumen de precio, modificar variables seguras y exportar soportes.
+- `Modo avanzado`: muestra claves técnicas, fuentes, endpoints, grafos de trazabilidad, árbol completo del cálculo, configuración interna y metadatos de auditoría.
+
+El modo elegido queda guardado en el navegador con `localStorage`, por lo que al recargar se conserva la preferencia del usuario.
+
+Recomendación operativa:
+
+- Usar `Modo simple` para trabajo diario y atención comercial.
+- Usar `Modo avanzado` para auditoría, soporte, diagnóstico técnico y mantenimiento.
+
+Esta separación no cambia precios, matrices, endpoints ni reglas de cálculo: solo cambia cuánta información técnica se muestra.

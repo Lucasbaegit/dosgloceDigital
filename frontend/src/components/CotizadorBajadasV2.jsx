@@ -69,6 +69,17 @@ const NAV_TEST_IDS = {
   "Exportar soporte Excel": "tab-export-support-excel",
   "Configuración avanzada": "tab-advanced-config",
 };
+const VIEW_MODE_STORAGE_KEY = "cotizador_view_mode";
+const VIEW_MODES = {
+  simple: {
+    label: "Modo simple",
+    description: "Modo simple: muestra solo lo necesario para operar el sistema.",
+  },
+  advanced: {
+    label: "Modo avanzado",
+    description: "Modo avanzado: muestra detalles técnicos, trazabilidad, claves internas y fuentes de cálculo.",
+  },
+};
 const ADMIN_PRICE_STEPS = [
   { id: 1, label: "Elegir variable" },
   { id: 2, label: "Revisar impacto" },
@@ -662,6 +673,14 @@ async function copyToClipboard(text) {
 
 export default function CotizadorBajadasV2() {
   const [activeTab, setActiveTab] = useState("Cotizar");
+  const [viewMode, setViewMode] = useState(() => {
+    try {
+      const stored = window.localStorage.getItem(VIEW_MODE_STORAGE_KEY);
+      return stored === "advanced" ? "advanced" : "simple";
+    } catch {
+      return "simple";
+    }
+  });
   const [understandMode, setUnderstandMode] = useState("detalle");
   const [form, setForm] = useState(INITIAL_FORM);
   const [result, setResult] = useState(null);
@@ -716,6 +735,8 @@ export default function CotizadorBajadasV2() {
   const [adminWizardStep, setAdminWizardStep] = useState(1);
   const [adminRollbackPreview, setAdminRollbackPreview] = useState(null);
   const [adminRollbackTargetId, setAdminRollbackTargetId] = useState(null);
+  const isAdvancedMode = viewMode === "advanced";
+  const isSimpleMode = viewMode === "simple";
 
   const inferred = useMemo(() => inferQuoteContext(form), [form]);
   const isAutoadhesivas = inferred.categoria === "Bajadas Autoadhesivas";
@@ -1278,6 +1299,17 @@ export default function CotizadorBajadasV2() {
   }, []);
 
   useEffect(() => {
+    try {
+      window.localStorage.setItem(VIEW_MODE_STORAGE_KEY, viewMode);
+    } catch {
+      // Persistencia best-effort: el modo visual no debe bloquear la app.
+    }
+    if (viewMode === "simple" && understandMode === "trazabilidad") {
+      setUnderstandMode("detalle");
+    }
+  }, [viewMode, understandMode]);
+
+  useEffect(() => {
     setForm((prev) => {
       const next = { ...prev };
       if (next.categoria_ui === "Bajadas Autoadhesivas") {
@@ -1663,6 +1695,35 @@ export default function CotizadorBajadasV2() {
     }
   };
 
+  const renderViewModeToggle = () => (
+    <section className="view-mode-toggle" data-testid="view-mode-toggle" aria-label="Selector de modo de vista">
+      <div>
+        <strong>{VIEW_MODES[viewMode].label}</strong>
+        <span>{VIEW_MODES[viewMode].description}</span>
+      </div>
+      <div className="view-mode-buttons" role="group" aria-label="Modo de visualización">
+        <button
+          type="button"
+          data-testid="view-mode-simple"
+          className={isSimpleMode ? "active" : ""}
+          aria-pressed={isSimpleMode}
+          onClick={() => setViewMode("simple")}
+        >
+          Modo simple
+        </button>
+        <button
+          type="button"
+          data-testid="view-mode-advanced"
+          className={isAdvancedMode ? "active" : ""}
+          aria-pressed={isAdvancedMode}
+          onClick={() => setViewMode("advanced")}
+        >
+          Modo avanzado
+        </button>
+      </div>
+    </section>
+  );
+
   useEffect(() => {
     if (activeTab !== "Entender un precio" || understandMode !== "trazabilidad" || traceGraph || traceLoading) return;
     if (traceMode === "casos_generales") {
@@ -1997,6 +2058,31 @@ export default function CotizadorBajadasV2() {
         </section>
       );
     }
+    if (isSimpleMode) {
+      return (
+        <section className="card result-card" data-testid="understand-simple-summary">
+          <div className="card-head">
+            <div>
+              <h3>Resumen simple del precio</h3>
+              <p>Primero ves un resumen simple. Activá modo avanzado para ver grafo, árbol y fuentes de cálculo.</p>
+            </div>
+            <span>Modo simple</span>
+          </div>
+          <div className="simple-summary-card">
+            <div className="detail-list compact-detail-list">
+              <div><strong>Material</strong><span>{lastPayload.material ?? lastPayload.papel ?? "-"}</span></div>
+              <div><strong>Impresión / click</strong><span>{lastPayload.caras ?? "-"}</span></div>
+              <div><strong>Cantidad</strong><span>{lastPayload.cantidad_unidades ?? "-"}</span></div>
+              <div><strong>Rango o cantidad</strong><span>{result.cantidad_rango_aplicado ?? result.cantidad_unidades ?? "-"}</span></div>
+              <div><strong>Adicionales</strong><span>{result.adicional_troquelado ? "Troquelado incluido" : (result.adicional_laminado ?? "sin_adicional")}</span></div>
+              <div><strong>Urgencia</strong><span>{lastPayload.urgencia ?? "normal"}</span></div>
+              <div><strong>Total final</strong><span>{formatMoney(result.total_con_urgencia ?? result.total_sin_iva)}</span></div>
+            </div>
+            <p>El total combina entrada del usuario, cantidad/rango, adicionales y urgencia. El modo avanzado muestra reglas, árbol completo, grafo y fuentes.</p>
+          </div>
+        </section>
+      );
+    }
     return (
       <section className="card result-card">
         <div className="card-head"><h3>Detalle del cálculo</h3><span>Último cálculo</span></div>
@@ -2189,33 +2275,35 @@ export default function CotizadorBajadasV2() {
         <div className="card-head">
           <div>
             <h3>Entender un precio</h3>
-            <p>Usá esta sección para ver de dónde salió un precio: material, impresión, cantidad, adicionales, urgencia y total final.</p>
+            <p>{isSimpleMode ? "Primero ves un resumen simple. Activá modo avanzado para ver grafo, árbol y fuentes de cálculo." : "Usá esta sección para ver de dónde salió un precio: material, impresión, cantidad, adicionales, urgencia y total final."}</p>
           </div>
-          <span>Modo simple + avanzado</span>
+          <span>{isSimpleMode ? "Modo simple" : "Modo avanzado"}</span>
         </div>
         <div className="ux-mode-note">
           <strong>Modo simple:</strong> resumen comercial del cálculo. <strong>Modo avanzado:</strong> grafo, árbol técnico, variables y origen PDF/fórmula.
         </div>
-        <div className="trace-mode-options ux-subnav" role="group" aria-label="Vista para entender precio">
-          <button
-            type="button"
-            data-testid="understand-detail-button"
-            className={understandMode === "detalle" ? "trace-mode-pill active" : "trace-mode-pill"}
-            onClick={() => setUnderstandMode("detalle")}
-          >
-            Resumen / Detalle del cálculo
-          </button>
-          <button
-            type="button"
-            data-testid="understand-trace-button"
-            className={understandMode === "trazabilidad" ? "trace-mode-pill active" : "trace-mode-pill"}
-            onClick={() => setUnderstandMode("trazabilidad")}
-          >
-            Trazabilidad visual avanzada
-          </button>
-        </div>
+        {isAdvancedMode ? (
+          <div className="trace-mode-options ux-subnav" role="group" aria-label="Vista para entender precio">
+            <button
+              type="button"
+              data-testid="understand-detail-button"
+              className={understandMode === "detalle" ? "trace-mode-pill active" : "trace-mode-pill"}
+              onClick={() => setUnderstandMode("detalle")}
+            >
+              Resumen / Detalle del cálculo
+            </button>
+            <button
+              type="button"
+              data-testid="understand-trace-button"
+              className={understandMode === "trazabilidad" ? "trace-mode-pill active" : "trace-mode-pill"}
+              onClick={() => setUnderstandMode("trazabilidad")}
+            >
+              Trazabilidad visual avanzada
+            </button>
+          </div>
+        ) : null}
       </section>
-      {understandMode === "detalle" ? renderTreeTab() : renderTraceVisualTab()}
+      {isAdvancedMode && understandMode === "trazabilidad" ? renderTraceVisualTab() : renderTreeTab()}
     </div>
   );
 
@@ -2299,12 +2387,18 @@ export default function CotizadorBajadasV2() {
                 <span>{formatHistoryValue(item.valor_anterior)} → {formatHistoryValue(item.valor_nuevo)}</span>
               </div>
               <p className="range-hint">{item.descripcion || `${item.fuente || "sistema"} · ${historyId}`}</p>
-              <div className="history-event-meta">
-                <span>Fuente: {item.fuente || "sistema"}</span>
-                <span>Backup: {(item.backup || []).length ? item.backup.join(", ") : "-"}</span>
-                <span>ID: {historyId}</span>
-                {isRollback ? <span>Rollback de: {item.rollback_de || "-"}</span> : null}
-              </div>
+              {isAdvancedMode ? (
+                <div className="history-event-meta" data-testid="history-advanced-meta">
+                  <span>Fuente: {item.fuente || "sistema"}</span>
+                  <span>Backup: {(item.backup || []).length ? item.backup.join(", ") : "-"}</span>
+                  <span>ID: {historyId}</span>
+                  {isRollback ? <span>Rollback de: {item.rollback_de || "-"}</span> : null}
+                </div>
+              ) : (
+                <div className="history-event-meta simple-history-meta">
+                  <span>Estado: {isRollback ? "Restauración registrada" : "Restaurable con preview"}</span>
+                </div>
+              )}
               <div className="history-event-actions">
                 {isRollback ? (
                   <button type="button" className="secondary-btn" disabled>Evento rollback no restaurable</button>
@@ -2367,13 +2461,29 @@ export default function CotizadorBajadasV2() {
       <div className="card-head">
         <div>
           <h3>Exportar soporte Excel</h3>
-          <p>El Excel maestro es un soporte de visualización y auditoría. No es el lugar principal para modificar precios.</p>
+          <p>
+            {isSimpleMode
+              ? "Generá archivos de consulta para revisar precios, compartirlos o respaldar información."
+              : "El Excel maestro es un soporte de visualización y auditoría. No es el lugar principal para modificar precios."}
+          </p>
         </div>
-        <span>Soporte / auditoría</span>
+        <span>{isSimpleMode ? "Modo simple" : "Soporte / auditoría"}</span>
       </div>
       <div className="warning-box">
         Los cambios reales se hacen desde Modificar precios. Este export sirve para revisar, compartir, auditar y respaldar información.
       </div>
+      {isSimpleMode ? (
+        <div className="mode-note-card" data-testid="export-simple-summary">
+          <strong>Qué contiene</strong>
+          <p>Variables principales, rangos, tablas finales, productos bloqueados y trazabilidad resumida para auditoría.</p>
+          <span>Los detalles técnicos de hojas, fuentes internas y trazabilidad completa están disponibles en modo avanzado.</span>
+        </div>
+      ) : (
+        <div className="mode-note-card advanced-note" data-testid="export-advanced-summary">
+          <strong>Vista técnica</strong>
+          <p>Incluye hojas de variables madre, matrices PDF, bloqueados, fuentes, endpoints y trazabilidad operativa para mantenimiento.</p>
+        </div>
+      )}
       {principalMsg ? <div className="info-box" data-testid="export-support-message">{principalMsg}</div> : null}
       <div className="ux-export-grid">
         <article className="range-control-card">
@@ -2400,16 +2510,27 @@ export default function CotizadorBajadasV2() {
         <div className="card-head">
           <div>
             <h3>Configuración avanzada</h3>
-            <p>Sección técnica para costos base, variables principales, importador preview y configuración interna. No es el flujo diario para modificar precios.</p>
+            <p>{isSimpleMode ? "Esta sección contiene configuración técnica y herramientas de mantenimiento." : "Sección técnica para costos base, variables principales, importador preview y configuración interna. No es el flujo diario para modificar precios."}</p>
           </div>
-          <span>Modo avanzado</span>
+          <span>{isSimpleMode ? "Protegido" : "Modo avanzado"}</span>
         </div>
         <div className="warning-box">
-          Si querés cambiar un precio operativo, usá Modificar precios. Esta sección conserva las vistas técnicas existentes para auditoría y mantenimiento.
+          {isSimpleMode
+            ? "Para evitar cambios accidentales, el detalle técnico se muestra solo en modo avanzado."
+            : "Si querés cambiar un precio operativo, usá Modificar precios. Esta sección conserva las vistas técnicas existentes para auditoría y mantenimiento."}
         </div>
+        {isSimpleMode ? (
+          <div className="mode-note-card" data-testid="advanced-config-simple-guard">
+            <strong>Configuración técnica oculta en modo simple</strong>
+            <p>Activá modo avanzado para ver variables principales, importador preview, backups de configuración y edición interna.</p>
+            <button type="button" className="secondary-btn" data-testid="advanced-config-enable-advanced" onClick={() => setViewMode("advanced")}>
+              Activar modo avanzado
+            </button>
+          </div>
+        ) : null}
       </section>
-      {renderPrincipalVariablesTab()}
-      {renderConfigTab()}
+      {isAdvancedMode ? renderPrincipalVariablesTab() : null}
+      {isAdvancedMode ? renderConfigTab() : null}
     </div>
   );
 
@@ -2657,9 +2778,9 @@ export default function CotizadorBajadasV2() {
         <div className="card-head">
           <div>
             <h3 data-testid="variable-impact-title">Ver impacto de cambios</h3>
-            <p>Usá esta sección para saber qué productos se afectan antes de modificar una variable o costo. Es una vista de prevención: no guarda cambios.</p>
+            <p>{isSimpleMode ? "Usá esta sección para saber qué productos se afectan y evitar cambios riesgosos." : "Usá esta sección para saber qué productos se afectan antes de modificar una variable o costo. Es una vista de prevención: no guarda cambios."}</p>
           </div>
-          <span>Mapa preventivo</span>
+          <span>{isSimpleMode ? "Impacto claro" : "Mapa preventivo"}</span>
         </div>
 
         {impactError ? <div className="error-box" data-testid="impact-error">{impactError}</div> : null}
@@ -2670,12 +2791,12 @@ export default function CotizadorBajadasV2() {
             <div className="impact-summary-grid" data-testid="impact-summary">
               <article><strong>{summary.variables_editables ?? 0}</strong><span>Variables editables</span></article>
               <article><strong>{summary.relaciones_conectadas ?? 0}</strong><span>Relaciones conectadas</span></article>
-              <article><strong>{summary.relaciones_documentadas_no_conectadas ?? 0}</strong><span>Documentadas no conectadas</span></article>
-              <article><strong>{summary.productos_bloqueados ?? 0}</strong><span>Productos bloqueados</span></article>
+              {isAdvancedMode ? <article><strong>{summary.relaciones_documentadas_no_conectadas ?? 0}</strong><span>Documentadas no conectadas</span></article> : null}
+              {isAdvancedMode ? <article><strong>{summary.productos_bloqueados ?? 0}</strong><span>Productos bloqueados</span></article> : null}
             </div>
 
             <div className="impact-explainer">
-              <p><strong>Impacta hoy</strong> significa que cambiar esa variable modifica precios actuales. <strong>Documentado no conectado</strong> existe como logica historica o futura, pero hoy no recalcula. <strong>Tabla PDF fija</strong> viene de precio publicado. <strong>Bloqueado</strong> no tiene datos confiables.</p>
+              <p>{isSimpleMode ? "Revisá productos afectados y nivel de impacto antes de cambiar un precio. Activá modo avanzado para ver claves técnicas, componentes y relaciones internas." : <><strong>Impacta hoy</strong> significa que cambiar esa variable modifica precios actuales. <strong>Documentado no conectado</strong> existe como logica historica o futura, pero hoy no recalcula. <strong>Tabla PDF fija</strong> viene de precio publicado. <strong>Bloqueado</strong> no tiene datos confiables.</>}</p>
             </div>
 
             <div className="impact-toolbar">
@@ -2717,10 +2838,10 @@ export default function CotizadorBajadasV2() {
             <div className="impact-focus-card">
               <span>{impactMode === "variable" ? "Variable seleccionada" : "Producto seleccionado"}</span>
               <strong>{selectedMeta?.label || selectedMeta?.key || "Sin seleccion"}</strong>
-              <small>{impactMode === "variable" ? selectedMeta?.descripcion : `${selectedMeta?.modo_precio || "-"} · ${selectedMeta?.endpoint || "-"}`}</small>
+              <small>{impactMode === "variable" ? selectedMeta?.descripcion : (isAdvancedMode ? `${selectedMeta?.modo_precio || "-"} · ${selectedMeta?.endpoint || "-"}` : "Productos afectados por la selección.")}</small>
             </div>
 
-            {firstRelation ? (
+            {isAdvancedMode && firstRelation ? (
               <div className="impact-chain" data-testid="impact-visual-chain">
                 {(firstRelation.ruta_calculo || []).map((step, index) => (
                   <span key={`${step}-${index}`}>{step}</span>
@@ -2734,18 +2855,20 @@ export default function CotizadorBajadasV2() {
                   <div className="impact-relation-head">
                     <div>
                       <strong>{impactMode === "variable" ? relation.producto : relation.variable_label}</strong>
-                      <span>{relation.componente}</span>
+                      <span>{isAdvancedMode ? relation.componente : relation.nivel_impacto}</span>
                     </div>
                     <em>{statusLabel(relation)}</em>
                   </div>
-                  <div className="impact-meta-grid">
-                    <div><span>Editable</span><strong>{relation.editable ? "si" : "no"}</strong></div>
-                    <div><span>Nivel</span><strong>{relation.nivel_impacto}</strong></div>
-                    <div><span>Estado</span><strong>{relation.estado}</strong></div>
-                    <div><span>Modo precio</span><strong>{relation.modo_precio}</strong></div>
-                  </div>
+                  {isAdvancedMode ? (
+                    <div className="impact-meta-grid" data-testid="impact-advanced-meta">
+                      <div><span>Editable</span><strong>{relation.editable ? "si" : "no"}</strong></div>
+                      <div><span>Nivel</span><strong>{relation.nivel_impacto}</strong></div>
+                      <div><span>Estado</span><strong>{relation.estado}</strong></div>
+                      <div><span>Modo precio</span><strong>{relation.modo_precio}</strong></div>
+                    </div>
+                  ) : null}
                   <p>{relation.detalle}</p>
-                  <small>Fuente: {relation.fuente}</small>
+                  {isAdvancedMode ? <small>Fuente: {relation.fuente}</small> : null}
                 </article>
               )) : <div className="placeholder"><p>No hay relaciones para esta seleccion.</p></div>}
             </div>
@@ -2822,7 +2945,11 @@ export default function CotizadorBajadasV2() {
         <div className="admin-wizard-panel-head">
           <span>Paso 1</span>
           <h4>Eleg? qu? variable quer?s modificar</h4>
-          <p>Solo aparecen variables habilitadas para edici?n segura desde el sistema.</p>
+          <p>
+            {isSimpleMode
+              ? "Solo aparecen variables habilitadas para edición segura. Los detalles técnicos están disponibles en modo avanzado."
+              : "Solo aparecen variables habilitadas para edici?n segura desde el sistema."}
+          </p>
         </div>
         <div className="admin-variable-list wizard-list">
           {variables.map((item) => (
@@ -2834,12 +2961,13 @@ export default function CotizadorBajadasV2() {
               data-testid={`admin-variable-${item.key}`}
             >
               <strong>{item.label}</strong>
-              <span>{item.key}</span>
+              {isAdvancedMode ? <span>{item.key}</span> : null}
               <small>{item.description}</small>
               <div className="admin-variable-meta">
                 <em>{item.value} {item.unit || ""}</em>
-                <em>{item.impacta_hoy ? "Impacta hoy" : "Preparada"}</em>
-                <em>{item.editable ? "Editable" : "Solo lectura"}</em>
+                {isSimpleMode ? <em>{(item.productos_afectados || []).length} productos</em> : null}
+                {isAdvancedMode ? <em>{item.impacta_hoy ? "Impacta hoy" : "Preparada"}</em> : null}
+                {isAdvancedMode ? <em>{item.editable ? "Editable" : "Solo lectura"}</em> : null}
               </div>
             </button>
           ))}
@@ -2852,21 +2980,22 @@ export default function CotizadorBajadasV2() {
         <div className="admin-wizard-panel-head">
           <span>Paso 2</span>
           <h4>Revis? el impacto actual</h4>
-          <p>Antes de cambiar un n?mero, mir? d?nde interviene esta variable y qu? partes est?n protegidas por tabla fija PDF.</p>
+          <p>{isSimpleMode ? "Antes de cambiar un número, revisá qué productos se podrían afectar." : "Antes de cambiar un n?mero, mir? d?nde interviene esta variable y qu? partes est?n protegidas por tabla fija PDF."}</p>
         </div>
         <div className="admin-editor-head">
           <div>
             <span>Variable seleccionada</span>
             <strong>{selected?.label || adminVariable}</strong>
-            <small>Clave t?cnica: {selected?.key || adminVariable}</small>
+            {isAdvancedMode ? <small>Clave técnica: {selected?.key || adminVariable}</small> : null}
           </div>
-          <em>{selected?.impacta_hoy ? "Impacta hoy" : "Preparada"}</em>
+          {isAdvancedMode ? <em>{selected?.impacta_hoy ? "Impacta hoy" : "Preparada"}</em> : null}
         </div>
         <div className="admin-current-grid">
           <div><span>Valor actual</span><strong>{selected?.value ?? "-"}</strong></div>
           <div><span>Unidad</span><strong>{selected?.unit || "-"}</strong></div>
-          <div><span>Estado editable</span><strong>{selected?.editable ? "Editable en sistema" : "No editable"}</strong></div>
-          <div><span>Estado operativo</span><strong>{selected?.estado || selected?.estado_operativo || "-"}</strong></div>
+          {isSimpleMode ? <div><span>Productos afectados</span><strong>{productosAfectados.length}</strong></div> : null}
+          {isAdvancedMode ? <div><span>Estado editable</span><strong>{selected?.editable ? "Editable en sistema" : "No editable"}</strong></div> : null}
+          {isAdvancedMode ? <div><span>Estado operativo</span><strong>{selected?.estado || selected?.estado_operativo || "-"}</strong></div> : null}
         </div>
         <h4>Productos afectados</h4>
         {productosAfectados.length ? (
@@ -2875,7 +3004,9 @@ export default function CotizadorBajadasV2() {
           </div>
         ) : <p className="range-hint">No hay productos afectados informados para esta variable.</p>}
         <div className="warning-box">
-          Los precios finales fijos PDF y factores calibrados no se editan directamente desde ac?. Si una tabla est? protegida, el preview lo informa antes de guardar.
+          {isSimpleMode
+            ? "Los precios finales protegidos no se editan directamente. El preview avisa antes de guardar."
+            : "Los precios finales fijos PDF y factores calibrados no se editan directamente desde ac?. Si una tabla est? protegida, el preview lo informa antes de guardar."}
         </div>
         {renderStepActions({ back: 1, next: 3 })}
       </div>
@@ -2958,12 +3089,12 @@ export default function CotizadorBajadasV2() {
               <div className="impact-relation-head">
                 <div>
                   <strong>{impact.producto}</strong>
-                  <span>{impact.componente}</span>
+                  <span>{isAdvancedMode ? impact.componente : "Producto afectado"}</span>
                 </div>
                 <em>{impact.impacta_hoy ? "Impacta hoy" : "Documentado"}</em>
               </div>
               <p>{impact.detalle}</p>
-              <small>Fuente: {impact.fuente}</small>
+              {isAdvancedMode ? <small>Fuente: {impact.fuente}</small> : null}
             </article>
           ))}
         </div>
@@ -3498,29 +3629,44 @@ export default function CotizadorBajadasV2() {
               <div className="unit-panel"><h4>Precio unitario</h4><div className="unit-values"><p><span>Sin IVA</span><strong>{formatMoney(result.precio_unitario_sin_iva ?? result.precio_sin_iva)}</strong></p><p><span>Con urgencia</span><strong>{formatMoney(result.precio_unitario_con_urgencia ?? result.precio_con_recargo_urgencia)}</strong></p></div></div>
               <div className="total-panel"><p>Total final con urgencia</p><h3>{formatMoney(result.total_con_urgencia ?? result.precio_con_recargo_urgencia)}</h3><small>Total sin IVA: {formatMoney(result.total_sin_iva ?? result.precio_sin_iva)}</small></div>
             </div>
-            <div className="detail-list">
-              <div><strong>Precio base unitario</strong><span>{formatMoney(result.precio_unitario_base_sin_iva ?? result.precio_unitario_sin_iva ?? result.precio_sin_iva)}</span></div>
-              <div><strong>Adicional seleccionado</strong><span>{result.adicional_laminado ?? "sin_adicional"}</span></div>
-              <div><strong>Caras adicional laminado/laca</strong><span>{result.caras_adicional_laminado ?? 1}</span></div>
-              <div><strong>Laminado por lado</strong><span>{result.adicional_laminado_por_lado ?? "sin_adicional"}</span></div>
-              <div><strong>Plastificado</strong><span>{result.adicional_plastificado ? "sí" : "no"}</span></div>
-              <div><strong>Adicional unitario sin IVA</strong><span>{formatMoney(result.adicional_unitario_sin_iva ?? 0)}</span></div>
-              <div><strong>Adicional hoja 4 unitario</strong><span>{formatMoney(result.adicional_hoja4_unitario_sin_iva ?? 0)}</span></div>
-              <div><strong>Troquelado adicional</strong><span>{result.adicional_troquelado ? `sí (${result.complejidad_troquelado ?? "-"})` : "no"}</span></div>
-              <div><strong>Troquelado unitario</strong><span>{formatMoney(result.adicional_troquelado_unitario_sin_iva ?? 0)}</span></div>
-              <div><strong>Precio unitario con adicional</strong><span>{formatMoney(result.precio_unitario_con_adicional_sin_iva ?? result.precio_unitario_sin_iva ?? result.precio_sin_iva)}</span></div>
-              <div><strong>Cantidad ingresada</strong><span>{result.cantidad_unidades ?? form.cantidad_unidades}</span></div>
-              {isMatrixProduct ? (
-                <div><strong>Cantidad de matriz</strong><span>{result.cantidad_unidades ?? form.cantidad_unidades}</span></div>
-              ) : (
-                <div><strong>Rango aplicado</strong><span>{result.cantidad_rango_aplicado ?? derivedRange ?? "-"}</span></div>
-              )}
-              <div><strong>Regla aplicada</strong><span>{result.regla_aplicada}</span></div>
-              <div><strong>Fuente</strong><span>{result.fuente}</span></div>
-              <div><strong>Regla adicional aplicada</strong><span>{result.regla_adicional_aplicada ?? "-"}</span></div>
-              <div><strong>Fuente adicional</strong><span>{result.fuente_adicional ?? "-"}</span></div>
-              <div><strong>Recargo aplicado</strong><span>{result.trazabilidad?.recargo_urgencia_aplicado ?? "-"}</span></div>
-            </div>
+            {isSimpleMode ? (
+              <div className="simple-summary-card" data-testid="quote-simple-summary">
+                <strong>Resumen simple del cálculo</strong>
+                <div className="detail-list compact-detail-list">
+                  <div><strong>Material / papel</strong><span>{lastPayload?.material ?? lastPayload?.papel ?? form.material ?? "-"}</span></div>
+                  <div><strong>Impresión</strong><span>{lastPayload?.caras ?? inferred.caras}</span></div>
+                  <div><strong>Cantidad</strong><span>{result.cantidad_unidades ?? form.cantidad_unidades}</span></div>
+                  <div><strong>{isMatrixProduct ? "Cantidad de matriz" : "Rango aplicado"}</strong><span>{isMatrixProduct ? (result.cantidad_unidades ?? form.cantidad_unidades) : (result.cantidad_rango_aplicado ?? derivedRange ?? "-")}</span></div>
+                  <div><strong>Adicionales</strong><span>{result.adicional_troquelado ? "Incluye troquelado" : (result.adicional_laminado && result.adicional_laminado !== "sin_adicional" ? result.adicional_laminado : "Sin adicional")}</span></div>
+                  <div><strong>Total final</strong><span>{formatMoney(result.total_con_urgencia ?? result.total_sin_iva)}</span></div>
+                </div>
+                <p>Activá modo avanzado para ver reglas, fuentes, payload y trazabilidad técnica.</p>
+              </div>
+            ) : (
+              <div className="detail-list advanced-detail" data-testid="quote-advanced-details">
+                <div><strong>Precio base unitario</strong><span>{formatMoney(result.precio_unitario_base_sin_iva ?? result.precio_unitario_sin_iva ?? result.precio_sin_iva)}</span></div>
+                <div><strong>Adicional seleccionado</strong><span>{result.adicional_laminado ?? "sin_adicional"}</span></div>
+                <div><strong>Caras adicional laminado/laca</strong><span>{result.caras_adicional_laminado ?? 1}</span></div>
+                <div><strong>Laminado por lado</strong><span>{result.adicional_laminado_por_lado ?? "sin_adicional"}</span></div>
+                <div><strong>Plastificado</strong><span>{result.adicional_plastificado ? "sí" : "no"}</span></div>
+                <div><strong>Adicional unitario sin IVA</strong><span>{formatMoney(result.adicional_unitario_sin_iva ?? 0)}</span></div>
+                <div><strong>Adicional hoja 4 unitario</strong><span>{formatMoney(result.adicional_hoja4_unitario_sin_iva ?? 0)}</span></div>
+                <div><strong>Troquelado adicional</strong><span>{result.adicional_troquelado ? `sí (${result.complejidad_troquelado ?? "-"})` : "no"}</span></div>
+                <div><strong>Troquelado unitario</strong><span>{formatMoney(result.adicional_troquelado_unitario_sin_iva ?? 0)}</span></div>
+                <div><strong>Precio unitario con adicional</strong><span>{formatMoney(result.precio_unitario_con_adicional_sin_iva ?? result.precio_unitario_sin_iva ?? result.precio_sin_iva)}</span></div>
+                <div><strong>Cantidad ingresada</strong><span>{result.cantidad_unidades ?? form.cantidad_unidades}</span></div>
+                {isMatrixProduct ? (
+                  <div><strong>Cantidad de matriz</strong><span>{result.cantidad_unidades ?? form.cantidad_unidades}</span></div>
+                ) : (
+                  <div><strong>Rango aplicado</strong><span>{result.cantidad_rango_aplicado ?? derivedRange ?? "-"}</span></div>
+                )}
+                <div><strong>Regla aplicada</strong><span>{result.regla_aplicada}</span></div>
+                <div><strong>Fuente</strong><span>{result.fuente}</span></div>
+                <div><strong>Regla adicional aplicada</strong><span>{result.regla_adicional_aplicada ?? "-"}</span></div>
+                <div><strong>Fuente adicional</strong><span>{result.fuente_adicional ?? "-"}</span></div>
+                <div><strong>Recargo aplicado</strong><span>{result.trazabilidad?.recargo_urgencia_aplicado ?? "-"}</span></div>
+              </div>
+            )}
           </>
         )}
       </section>
@@ -3549,7 +3695,11 @@ export default function CotizadorBajadasV2() {
       <main className="main">
         <header className="topbar">
           <div><h2>{activeTab}</h2><p>Sistema de precios organizado por tareas operativas</p></div>
-          <div className="topbar-right"><div className={apiConnected ? "api-status ok" : "api-status down"}>{apiConnected ? "API conectada" : "API no disponible"}</div><div className="metrics-chip">{metrics ? `OK ${metrics.OK} · Alta ${metrics.DIFERENCIA_ALTA}` : "Métricas no disponibles"}</div></div>
+          <div className="topbar-right">
+            {renderViewModeToggle()}
+            <div className={apiConnected ? "api-status ok" : "api-status down"}>{apiConnected ? "API conectada" : "API no disponible"}</div>
+            <div className="metrics-chip">{metrics ? `OK ${metrics.OK} · Alta ${metrics.DIFERENCIA_ALTA}` : "Métricas no disponibles"}</div>
+          </div>
         </header>
 
         <section className="content-grid content-grid-tabs">

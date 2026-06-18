@@ -20,6 +20,9 @@ test("UI muestra tabs nuevas y controles base", async ({ page }) => {
   await expect(page.getByRole("button", { name: "Historial y backups" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Exportar soporte Excel" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Configuración avanzada" })).toBeVisible();
+  await expect(page.getByTestId("view-mode-toggle")).toBeVisible();
+  await expect(page.getByTestId("view-mode-simple")).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByTestId("view-mode-advanced")).toHaveAttribute("aria-pressed", "false");
   await expect(page.locator('img[src="/logoPromo.jpg"]')).toBeVisible();
   await expect(page.getByText(/API (conectada|no disponible)/)).toBeVisible();
   await expect(page.getByLabel("Adicional")).toBeVisible();
@@ -27,6 +30,18 @@ test("UI muestra tabs nuevas y controles base", async ({ page }) => {
   await page.getByTestId("print-option-1-0").click();
   await expect(page.getByTestId("formato-select")).toBeVisible();
   await expect(page.getByTestId("result-panel")).toBeVisible();
+});
+
+test("modo simple es default y modo avanzado persiste", async ({ page }) => {
+  await page.goto("/", { waitUntil: "domcontentloaded" });
+  await expect(page.getByTestId("view-mode-simple")).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByTestId("view-mode-advanced")).toHaveAttribute("aria-pressed", "false");
+  await page.getByTestId("view-mode-advanced").click();
+  await expect(page.getByTestId("view-mode-advanced")).toHaveAttribute("aria-pressed", "true");
+  await page.reload({ waitUntil: "domcontentloaded" });
+  await expect(page.getByTestId("view-mode-advanced")).toHaveAttribute("aria-pressed", "true");
+  await page.getByTestId("view-mode-simple").click();
+  await expect(page.getByTestId("view-mode-simple")).toHaveAttribute("aria-pressed", "true");
 });
 
 test("Entender un precio muestra trazabilidad avanzada, selector, leyenda y grafo", async ({ page }) => {
@@ -56,6 +71,7 @@ test("Entender un precio muestra trazabilidad avanzada, selector, leyenda y graf
     });
   });
   await page.goto("/", { waitUntil: "domcontentloaded" });
+  await page.getByTestId("view-mode-advanced").click();
   await page.getByTestId("tab-understand-price").click();
   await page.getByTestId("understand-trace-button").click();
   await expect(page.getByTestId("trace-visual-title")).toBeVisible();
@@ -102,6 +118,7 @@ test("Trazabilidad visual de cotización actual usa material real cotizado", asy
   await expect(page.getByText("Total final con urgencia")).toBeVisible();
 
   await page.getByTestId("tab-understand-price").click();
+  await page.getByTestId("view-mode-advanced").click();
   await page.getByTestId("understand-trace-button").click();
   await page.getByTestId("trace-mode-cotizacion_actual").click();
   await page.getByTestId("trace-current-load-button").click();
@@ -190,6 +207,7 @@ test("Impacto de variables muestra relaciones por variable y producto", async ({
   });
 
   await page.goto("/", { waitUntil: "domcontentloaded" });
+  await page.getByTestId("view-mode-advanced").click();
   await expect(page.getByTestId("tab-variable-impact")).toBeVisible();
   await page.getByTestId("tab-variable-impact").click();
   await expect(page.getByTestId("variable-impact-title")).toBeVisible();
@@ -343,6 +361,7 @@ test("Modificar precios exige preview antes de guardar y muestra historial", asy
 
   page.on("dialog", (dialog) => dialog.accept());
   await page.goto("/", { waitUntil: "domcontentloaded" });
+  await page.getByTestId("view-mode-advanced").click();
   await page.getByTestId("tab-admin-prices").click();
   await expect(page.getByTestId("admin-prices-title")).toBeVisible();
   await expect(page.getByText(/variables habilitadas desde el sistema/i)).toBeVisible();
@@ -461,7 +480,8 @@ test("Historial y backups y Exportar soporte Excel quedan accesibles", async ({ 
   await expect(page.getByText(/Rollback aplicado/i)).toBeVisible();
 
   await page.getByTestId("tab-export-support-excel").click();
-  await expect(page.getByTestId("export-support-excel-screen")).toContainText("El Excel maestro es un soporte de visualización y auditoría");
+  await expect(page.getByTestId("export-support-excel-screen")).toContainText("Generá archivos de consulta");
+  await expect(page.getByTestId("export-simple-summary")).toContainText("Qué contiene");
   await page.getByTestId("export-support-excel-button").click();
   await expect(page.getByTestId("export-support-message")).toContainText("Excel maestro exportado correctamente");
 });
@@ -560,6 +580,7 @@ test("autoadhesivas papel y especial envían payload válido", async ({ page }) 
 
 test("cotizacion muestra rango aplicado y total destacado", async ({ page }) => {
   await page.goto("/", { waitUntil: "networkidle" });
+  await page.getByTestId("view-mode-advanced").click();
   await page.getByLabel("Medida / formato").selectOption("A3+");
   await page.getByLabel("Tipo de papel").selectOption("liviano");
   await page.getByLabel("Material").selectOption("Ilustracion");
@@ -638,6 +659,7 @@ test("Entender un precio muestra detalle del cálculo del último cálculo", asy
 
   await page.getByRole("button", { name: "Calcular" }).click();
   await page.getByTestId("tab-understand-price").click();
+  await page.getByTestId("view-mode-advanced").click();
   await page.getByTestId("understand-detail-button").click();
   await expect(page.getByText("Entrada del usuario")).toBeVisible();
   await expect(page.getByText("Rango aplicado")).toBeVisible();
@@ -647,6 +669,7 @@ test("Entender un precio muestra detalle del cálculo del último cálculo", asy
 
 test("Configuración avanzada carga y permite ver historial", async ({ page }) => {
   await page.goto("/", { waitUntil: "networkidle" });
+  await page.getByTestId("view-mode-advanced").click();
   await page.getByTestId("tab-advanced-config").click();
   await expect(page.getByTestId("config-editable-title")).toBeVisible();
   await expect(page.getByText("Escalas de cantidad")).toBeVisible();
@@ -703,6 +726,7 @@ test("Variables principales expone solo valores seguros y permite guardar y reca
   });
 
   await page.goto("/", { waitUntil: "networkidle" });
+  await page.getByTestId("view-mode-advanced").click();
   await page.getByTestId("tab-advanced-config").click();
   await expect(page.getByTestId("principal-variables-title")).toBeVisible();
   await expect(page.getByTestId("principal-impact-today")).toContainText("Variables madre que impactan hoy");
@@ -780,6 +804,7 @@ test("botón Limpiar y Copiar resultado", async ({ page }) => {
 
 test("autoadhesivas especial + laca UV calcula y muestra regla adicional", async ({ page }) => {
   await page.goto("/", { waitUntil: "networkidle" });
+  await page.getByTestId("view-mode-advanced").click();
   await page.getByTestId("categoria-select").selectOption("Bajadas Autoadhesivas");
   await page.getByTestId("autoadh-tipo-select").selectOption("especial");
   await page.getByLabel("Cantidad").fill("30");
@@ -874,6 +899,7 @@ test("XA3 muestra trazabilidad de derivación 1.10", async ({ page }) => {
 
   await page.getByRole("button", { name: "Calcular" }).click();
   await page.getByTestId("tab-understand-price").click();
+  await page.getByTestId("view-mode-advanced").click();
   await page.getByTestId("understand-detail-button").click();
   await expect(page.getByText("base_formato: A3+")).toBeVisible();
   await expect(page.getByText("factor_aplicado: 1.1")).toBeVisible();

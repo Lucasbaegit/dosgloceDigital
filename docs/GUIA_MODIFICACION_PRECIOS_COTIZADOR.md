@@ -407,3 +407,16 @@ En este caso, XL y A4 no se editan como variables madre: derivan desde A3.
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\qa\run_qa_precios.ps1
 ```
+
+---
+
+## Modo simple y avanzado al modificar precios
+
+`Modificar precios` está disponible en ambos modos, pero la cantidad de detalle cambia:
+
+- En `Modo simple`, el wizard muestra variable, valor actual, unidad, productos afectados y mensajes de seguridad en lenguaje operativo.
+- En `Modo avanzado`, además se muestran claves técnicas, estado operativo, fuente, componentes internos y metadatos de trazabilidad.
+
+La regla de seguridad no cambia entre modos: para guardar siempre se requiere preview válido, backup automático e historial.
+
+Si una persona solo necesita cambiar una variable operativa, debería usar `Modo simple`. Si necesita auditar de dónde viene cada dato o revisar impacto técnico, debe activar `Modo avanzado`.
