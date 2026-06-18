@@ -1,6 +1,7 @@
 ﻿import { useEffect, useMemo, useState } from "react";
 import {
   applyAdminPrecio,
+  applyAdminPrecioRollback,
   approveBajadasConfigCandidate,
   cotizarBajadaV2,
   cotizarFolletos,
@@ -35,6 +36,7 @@ import {
   exportPricesExcel,
   exportPricesPdf,
   previewAdminPrecio,
+  previewAdminPrecioRollback,
   previewExcelMaestro,
   promoteBajadasConfigCandidate,
   rejectBajadasConfigCandidate,
@@ -712,6 +714,8 @@ export default function CotizadorBajadasV2() {
   const [adminMsg, setAdminMsg] = useState("");
   const [adminError, setAdminError] = useState("");
   const [adminWizardStep, setAdminWizardStep] = useState(1);
+  const [adminRollbackPreview, setAdminRollbackPreview] = useState(null);
+  const [adminRollbackTargetId, setAdminRollbackTargetId] = useState(null);
 
   const inferred = useMemo(() => inferQuoteContext(form), [form]);
   const isAutoadhesivas = inferred.categoria === "Bajadas Autoadhesivas";
@@ -959,12 +963,61 @@ export default function CotizadorBajadasV2() {
       const applied = await applyAdminPrecio({ variable: adminVariable, nuevo_valor: Number(adminNewValue), confirmado: true });
       setAdminMsg(`Cambio guardado. Backup: ${(applied.backup || []).join(", ") || "-"}`);
       setAdminPreview(null);
+      setAdminRollbackPreview(null);
+      setAdminRollbackTargetId(null);
       setAdminWizardStep(6);
       await loadAdminPrices();
       await loadPrincipalVariables();
       setImpactData(null);
     } catch (err) {
       setAdminError(err.message || "No se pudo guardar el cambio.");
+    } finally {
+      setAdminLoading(false);
+    }
+  };
+
+  const handleAdminRollbackPreview = async (historialId) => {
+    try {
+      setAdminLoading(true);
+      setAdminError("");
+      setAdminMsg("");
+      const preview = await previewAdminPrecioRollback({ historial_id: historialId });
+      setAdminRollbackPreview(preview);
+      setAdminRollbackTargetId(historialId);
+      setAdminMsg("Preview de restauración listo. Revisá antes de restaurar.");
+      setAdminWizardStep(6);
+    } catch (err) {
+      setAdminRollbackPreview(null);
+      setAdminRollbackTargetId(null);
+      setAdminError(err.message || "No se pudo previsualizar la restauración.");
+    } finally {
+      setAdminLoading(false);
+    }
+  };
+
+  const handleAdminRollbackApply = async () => {
+    if (!adminRollbackPreview || !adminRollbackTargetId) {
+      setAdminError("Primero previsualizá la restauración.");
+      return;
+    }
+    const confirmed = window.confirm(
+      `Vas a restaurar ${adminRollbackPreview.variable} de ${adminRollbackPreview.valor_actual} a ${adminRollbackPreview.valor_rollback}. Se creará un nuevo backup y se registrará el rollback.`
+    );
+    if (!confirmed) return;
+    try {
+      setAdminLoading(true);
+      setAdminError("");
+      const applied = await applyAdminPrecioRollback({ historial_id: adminRollbackTargetId, confirmado: true });
+      setAdminMsg(`Rollback aplicado. Backup: ${(applied.backup || []).join(", ") || "-"}`);
+      setAdminRollbackPreview(null);
+      setAdminRollbackTargetId(null);
+      setAdminPreview(null);
+      await loadAdminPrices();
+      await loadPrincipalVariables();
+      setImpactData(null);
+      setAdminWizardStep(6);
+    } catch (err) {
+      setAdminError(err.message || "No se pudo aplicar el rollback.");
     } finally {
       setAdminLoading(false);
     }
@@ -2166,30 +2219,132 @@ export default function CotizadorBajadasV2() {
     </div>
   );
 
+  const formatHistoryValue = (value) => {
+    if (value === null || value === undefined || value === "") return "-";
+    return String(value);
+  };
+
+  const renderRollbackPreviewPanel = () => (
+    <section className="rollback-preview-panel" data-testid="admin-rollback-preview">
+      <div className="rollback-preview-head">
+        <div>
+          <strong>Preview de restauración</strong>
+          <p>
+            {adminRollbackPreview
+              ? `Vas a restaurar ${adminRollbackPreview.variable} de ${adminRollbackPreview.valor_actual} a ${adminRollbackPreview.valor_rollback}.`
+              : "Elegí un cambio y previsualizá antes de restaurar."}
+          </p>
+        </div>
+        <span>{adminRollbackPreview ? "Listo para confirmar" : "Requiere preview"}</span>
+      </div>
+      {adminRollbackPreview ? (
+        <>
+          <div className="rollback-preview-grid">
+            <div>
+              <span>Valor actual</span>
+              <strong>{formatHistoryValue(adminRollbackPreview.valor_actual)} {adminRollbackPreview.unidad || ""}</strong>
+            </div>
+            <div>
+              <span>Valor a restaurar</span>
+              <strong>{formatHistoryValue(adminRollbackPreview.valor_rollback)} {adminRollbackPreview.unidad || ""}</strong>
+            </div>
+            <div>
+              <span>Productos afectados</span>
+              <strong>{(adminRollbackPreview.impactos || []).length || "Sin impactos directos"}</strong>
+            </div>
+          </div>
+          {(adminRollbackPreview.advertencias || []).length ? (
+            <ul className="rollback-warning-list">
+              {adminRollbackPreview.advertencias.map((warning) => <li key={warning}>{warning}</li>)}
+            </ul>
+          ) : null}
+        </>
+      ) : (
+        <p className="range-hint">El botón Restaurar queda deshabilitado hasta tener un preview válido.</p>
+      )}
+      <div className="principal-actions">
+        <button
+          type="button"
+          className="calculate-btn compact-calculate-btn"
+          data-testid="admin-rollback-apply-button"
+          onClick={handleAdminRollbackApply}
+          disabled={!adminRollbackPreview || !adminRollbackTargetId || adminLoading}
+        >
+          Restaurar este cambio
+        </button>
+      </div>
+    </section>
+  );
+
+  const renderAdminHistoryEntries = ({ limit = 10 } = {}) => {
+    const entries = adminHistory.slice().reverse().slice(0, limit);
+    if (!entries.length) {
+      return <p className="range-hint">Sin cambios registrados todavía.</p>;
+    }
+    return (
+      <div className="history-list rollback-history-list">
+        {entries.map((item, index) => {
+          const historyId = item.id || `${item.timestamp}-${item.variable}-${index}`;
+          const isRollback = item.tipo === "rollback";
+          return (
+            <article className="history-event-card" key={historyId} data-testid={`history-event-${historyId}`}>
+              <div className="history-event-head">
+                <span className={isRollback ? "history-event-badge rollback" : "history-event-badge"}>
+                  {isRollback ? "Rollback" : "Cambio"}
+                </span>
+                <span>{item.timestamp || "-"}</span>
+              </div>
+              <div className="history-event-main">
+                <strong>{item.variable || "-"}</strong>
+                <span>{formatHistoryValue(item.valor_anterior)} → {formatHistoryValue(item.valor_nuevo)}</span>
+              </div>
+              <p className="range-hint">{item.descripcion || `${item.fuente || "sistema"} · ${historyId}`}</p>
+              <div className="history-event-meta">
+                <span>Fuente: {item.fuente || "sistema"}</span>
+                <span>Backup: {(item.backup || []).length ? item.backup.join(", ") : "-"}</span>
+                <span>ID: {historyId}</span>
+                {isRollback ? <span>Rollback de: {item.rollback_de || "-"}</span> : null}
+              </div>
+              <div className="history-event-actions">
+                {isRollback ? (
+                  <button type="button" className="secondary-btn" disabled>Evento rollback no restaurable</button>
+                ) : (
+                  <button
+                    type="button"
+                    className="secondary-btn"
+                    data-testid="admin-rollback-preview-button"
+                    onClick={() => handleAdminRollbackPreview(historyId)}
+                    disabled={adminLoading}
+                  >
+                    Previsualizar restauración
+                  </button>
+                )}
+              </div>
+            </article>
+          );
+        })}
+      </div>
+    );
+  };
+
   const renderHistoryBackupsTab = () => (
     <section className="card result-card ux-section" data-testid="history-backups-screen">
       <div className="card-head">
         <div>
           <h3>Historial y backups</h3>
-          <p>Cada cambio guardado desde Modificar precios genera backup e historial. Esta pantalla reúne la bitácora operativa y los respaldos disponibles.</p>
+          <p>Cada cambio de precios queda registrado. Podés restaurar un valor anterior con preview y backup automático.</p>
         </div>
         <span>Auditoría operativa</span>
       </div>
       {adminError ? <div className="error-box">{adminError}</div> : null}
+      {adminMsg ? <div className="info-box">{adminMsg}</div> : null}
       {adminLoading && !adminPrices ? <div className="placeholder"><p>Cargando historial...</p></div> : null}
       <div className="ux-history-grid">
         <section className="principal-group" data-testid="history-backups-admin-history">
           <h4>Cambios de precios</h4>
-          <p className="range-hint">Registro de variables modificadas desde Modificar precios. El rollback automático todavía no está habilitado desde esta pantalla.</p>
-          {adminHistory.length ? (
-            <div className="history-list">
-              {adminHistory.slice().reverse().slice(0, 20).map((item, index) => (
-                <div key={`${item.timestamp}-${index}`}>
-                  <strong>{item.variable}</strong> · {item.valor_anterior} → {item.valor_nuevo} · {item.fuente || "sistema"} · {item.timestamp || "-"}
-                </div>
-              ))}
-            </div>
-          ) : <p className="range-hint">Sin cambios registrados todavía.</p>}
+          <p className="range-hint">Restaurar crea un backup nuevo y registra otro evento en historial. No restaura matrices PDF ni tablas fijas.</p>
+          {renderAdminHistoryEntries({ limit: 20 })}
+          {renderRollbackPreviewPanel()}
         </section>
         <section className="principal-group" data-testid="history-backups-config">
           <h4>Backups técnicos disponibles</h4>
@@ -2861,17 +3016,10 @@ export default function CotizadorBajadasV2() {
         <div className="admin-wizard-panel-head">
           <span>Paso 6</span>
           <h4>Historial reciente y backups</h4>
-          <p>Registro de cambios aplicados desde el sistema. El rollback no se implementa en esta etapa.</p>
+          <p>Registro de cambios aplicados desde el sistema. Podés previsualizar y restaurar una variable editable con backup automático.</p>
         </div>
-        {adminHistory.length ? (
-          <div className="history-list">
-            {adminHistory.slice().reverse().slice(0, 10).map((item, index) => (
-              <div key={`${item.timestamp}-${index}`}>
-                <strong>{item.variable}</strong> ? {item.valor_anterior} ? {item.valor_nuevo} ? {item.fuente || "sistema"} ? {item.timestamp || "-"}
-              </div>
-            ))}
-          </div>
-        ) : <p className="range-hint">Sin cambios registrados todav?a.</p>}
+        {renderAdminHistoryEntries({ limit: 10 })}
+        {renderRollbackPreviewPanel()}
         {renderStepActions({ back: 5 })}
       </section>
     );

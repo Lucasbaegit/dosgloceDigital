@@ -244,6 +244,8 @@ class ApiHandler(BaseHTTPRequestHandler):
             "/variables-principales/reset",
             "/admin-precios/preview",
             "/admin-precios/aplicar",
+            "/admin-precios/rollback/preview",
+            "/admin-precios/rollback/aplicar",
         }
         is_candidate_reject = path.startswith("/bajadas-v2/config/candidate/") and path.endswith("/reject")
         is_candidate_approve = path.startswith("/bajadas-v2/config/candidate/") and path.endswith("/approve")
@@ -326,6 +328,10 @@ class ApiHandler(BaseHTTPRequestHandler):
             status, response = self.service.admin_precios_preview(payload)
         elif path == "/admin-precios/aplicar":
             status, response = self.service.admin_precios_aplicar(payload)
+        elif path == "/admin-precios/rollback/preview":
+            status, response = self.service.admin_precios_rollback_preview(payload)
+        elif path == "/admin-precios/rollback/aplicar":
+            status, response = self.service.admin_precios_rollback_aplicar(payload)
         elif path == "/bajadas-v2/config/update":
             status, response = self.service.update_config(payload)
         elif path == "/bajadas-v2/config/validate":

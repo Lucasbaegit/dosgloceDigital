@@ -167,6 +167,15 @@ class BajadasV2ApiService:
             self._reload_engines_after_principal_variables_update()
         return status, result
 
+    def admin_precios_rollback_preview(self, payload: dict[str, Any]) -> tuple[int, dict[str, Any]]:
+        return self.admin_prices.rollback_preview(payload)
+
+    def admin_precios_rollback_aplicar(self, payload: dict[str, Any]) -> tuple[int, dict[str, Any]]:
+        status, result = self.admin_prices.rollback_apply(payload)
+        if status == 200:
+            self._reload_engines_after_principal_variables_update()
+        return status, result
+
     def admin_precios_historial(self) -> tuple[int, dict[str, Any]]:
         return 200, self.admin_prices.history()
 

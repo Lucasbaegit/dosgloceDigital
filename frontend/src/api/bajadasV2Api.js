@@ -373,6 +373,38 @@ export async function applyAdminPrecio(payload) {
   return body;
 }
 
+export async function previewAdminPrecioRollback(payload) {
+  const response = await fetch(`${API_BASE}/admin-precios/rollback/preview`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const error = new Error(body?.detail || "No se pudo previsualizar la restauración.");
+    error.status = response.status;
+    error.code = body?.error || "api_error";
+    throw error;
+  }
+  return body;
+}
+
+export async function applyAdminPrecioRollback(payload) {
+  const response = await fetch(`${API_BASE}/admin-precios/rollback/aplicar`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const error = new Error(body?.detail || "No se pudo restaurar el cambio.");
+    error.status = response.status;
+    error.code = body?.error || "api_error";
+    throw error;
+  }
+  return body;
+}
+
 export async function fetchAdminPreciosHistorial() {
   const response = await fetch(`${API_BASE}/admin-precios/historial`);
   const body = await response.json().catch(() => ({}));

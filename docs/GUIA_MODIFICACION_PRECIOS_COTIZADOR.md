@@ -65,6 +65,17 @@ Flujo obligatorio del wizard:
 
 El wizard permite volver a pasos anteriores sin perder contexto. El guardado se mantiene deshabilitado si el valor está vacío, no es numérico, está fuera de rango, es negativo cuando no corresponde o no cambió respecto del valor actual.
 
+### Restaurar un valor anterior
+
+Cuando un cambio operativo quedó mal, no se debe editar el archivo manualmente ni recuperar un backup viejo a mano. El camino seguro es:
+
+1. Abrir `Historial y backups` o el paso `Historial` del wizard.
+2. Elegir un evento de tipo `Cambio`.
+3. Usar `Previsualizar restauración`.
+4. Confirmar `Restaurar este cambio`.
+
+El rollback solo aplica sobre variables editables del administrador de precios. Antes de restaurar crea un backup nuevo, escribe el valor anterior como una operación nueva y agrega un evento `Rollback` con referencia al cambio original. No restaura matrices PDF, tablas fijas, productos completos, usuarios ni permisos.
+
 ---
 
 ## 3. Qué NO se debe modificar manualmente

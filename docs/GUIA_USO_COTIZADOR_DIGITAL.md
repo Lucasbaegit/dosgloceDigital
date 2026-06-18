@@ -82,6 +82,17 @@ El flujo seguro es:
 
 El botón de guardado permanece bloqueado hasta que exista un preview válido para el valor ingresado. Al guardar, el sistema registra backup e historial. No modifica matrices PDF ni precios finales fijos.
 
+### Restaurar un cambio desde historial
+
+La sección `Historial y backups` y el paso final de `Modificar precios` permiten restaurar cambios de variables editables con un flujo seguro:
+
+- elegir un registro de tipo `Cambio`;
+- presionar `Previsualizar restauración`;
+- revisar valor actual, valor a restaurar, productos afectados y advertencias;
+- confirmar `Restaurar este cambio`.
+
+La restauración crea un backup nuevo antes de escribir, registra un evento de tipo `Rollback` y refresca las variables del sistema. No restaura matrices PDF, tablas finales, productos completos ni archivos del Excel maestro.
+
 ---
 
 ## 3. Productos implementados

@@ -58,9 +58,13 @@ El wizard usa los endpoints existentes de administración:
 - `GET /admin-precios/variables-editables`
 - `POST /admin-precios/preview`
 - `POST /admin-precios/aplicar`
+- `POST /admin-precios/rollback/preview`
+- `POST /admin-precios/rollback/aplicar`
 - `GET /admin-precios/historial`
 
-La mejora es de flujo y seguridad visual: elegir variable, revisar impacto, ingresar valor, previsualizar, confirmar y ver historial.
+El flujo de modificación es: elegir variable, revisar impacto, ingresar valor, previsualizar, confirmar y ver historial.
+
+El flujo de rollback restaura exclusivamente variables editables. Lee un evento del historial, calcula un preview de volver al `valor_anterior`, exige `confirmado=true`, crea un backup nuevo antes de escribir y registra otro evento de historial con `tipo = rollback` y `rollback_de` apuntando al cambio original. No copia backups antiguos silenciosamente y no restaura matrices PDF, tablas finales ni productos completos.
 
 ### Navegación UX por tareas
 

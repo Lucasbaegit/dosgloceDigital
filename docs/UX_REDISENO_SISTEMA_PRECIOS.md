@@ -415,7 +415,7 @@ Al abrir un cambio:
 
 ### Rollback
 
-Si se implementa restauración:
+Restauración implementada para variables editables:
 
 1. elegir cambio
 2. ver backup
@@ -424,6 +424,8 @@ Si se implementa restauración:
 5. guardar nuevo historial de rollback
 
 Nunca restaurar silenciosamente.
+
+La vista principal muestra un badge `Cambio` o `Rollback`. Los eventos `Rollback` son informativos y no se restauran directamente. El botón `Restaurar este cambio` queda deshabilitado hasta que exista un preview válido; al confirmar se crea un backup nuevo y se registra el rollback.
 
 ## 10. Qué información va en modo simple
 
@@ -699,7 +701,7 @@ Estado implementado:
 - `Modificar precios` muestra un stepper de seis pasos: elegir variable, revisar impacto, nuevo valor, previsualizar, confirmar e historial.
 - El guardado queda deshabilitado hasta que exista un preview válido para el valor ingresado.
 - La pantalla conserva los endpoints existentes y no convierte el Excel maestro en fuente de escritura.
-- El historial reciente queda visible como cierre del flujo, sin rollback en esta etapa.
+- El historial reciente queda visible como cierre del flujo e incluye rollback con preview, backup nuevo e historial propio.
 
 ### Etapa 3: Entender un precio en modo simple
 

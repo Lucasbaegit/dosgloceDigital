@@ -241,7 +241,17 @@ test("Modificar precios exige preview antes de guardar y muestra historial", asy
       body: JSON.stringify({
         ok: true,
         historial: [
-          { timestamp: "2026-06-17T00:00:00Z", variable: "click_color", valor_anterior: 38, valor_nuevo: 39, fuente: "sistema" },
+          {
+            id: "hist_click_1",
+            tipo: "cambio",
+            timestamp: "2026-06-17T00:00:00Z",
+            variable: "click_color",
+            valor_anterior: 38,
+            valor_nuevo: 39,
+            fuente: "sistema",
+            backup: ["data/backups/variables_principales/mock-before.json"],
+            descripcion: "Cambio operativo de click_color: 38 → 39",
+          },
         ],
       }),
     });
@@ -275,6 +285,45 @@ test("Modificar precios exige preview antes de guardar y muestra historial", asy
         precios_ejemplo: [],
         advertencias: [],
         requiere_confirmacion: true,
+      }),
+    });
+  });
+  await page.route("**/admin-precios/rollback/preview", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        ok: true,
+        accion: "rollback_preview",
+        historial_id: "hist_click_1",
+        variable: "click_color",
+        label: "Click color base",
+        valor_actual: 39,
+        valor_rollback: 38,
+        unidad: "ARS",
+        cambio_original: { id: "hist_click_1", valor_anterior: 38, valor_nuevo: 39 },
+        impactos: [{ producto: "Stickers Circulares", impacta_hoy: true }],
+        advertencias: [
+          "Se creará un nuevo backup antes de restaurar.",
+          "Este rollback quedará registrado en historial.",
+        ],
+        requiere_confirmacion: true,
+      }),
+    });
+  });
+  await page.route("**/admin-precios/rollback/aplicar", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        ok: true,
+        aplicado: true,
+        accion: "rollback",
+        variable: "click_color",
+        valor_anterior: 39,
+        valor_nuevo: 38,
+        backup: ["data/backups/variables_principales/mock-rollback.json"],
+        historial: { id: "hist_rollback_1", tipo: "rollback", rollback_de: "hist_click_1" },
       }),
     });
   });
@@ -319,6 +368,11 @@ test("Modificar precios exige preview antes de guardar y muestra historial", asy
   await page.getByTestId("admin-apply-button").click();
   await expect(page.getByTestId("admin-prices-message")).toContainText("Cambio guardado");
   await expect(page.getByTestId("admin-history")).toContainText("click_color");
+  await expect(page.getByTestId("admin-rollback-apply-button")).toBeDisabled();
+  await page.getByTestId("admin-rollback-preview-button").click();
+  await expect(page.getByTestId("admin-rollback-preview")).toContainText("39");
+  await expect(page.getByTestId("admin-rollback-preview")).toContainText("38");
+  await expect(page.getByTestId("admin-rollback-apply-button")).toBeEnabled();
 });
 
 test("Historial y backups y Exportar soporte Excel quedan accesibles", async ({ page }) => {
@@ -336,8 +390,54 @@ test("Historial y backups y Exportar soporte Excel quedan accesibles", async ({ 
       body: JSON.stringify({
         ok: true,
         historial: [
-          { timestamp: "2026-06-18T00:00:00Z", variable: "click_color", valor_anterior: 39, valor_nuevo: 40, fuente: "sistema" },
+          {
+            id: "hist_click_2",
+            tipo: "cambio",
+            timestamp: "2026-06-18T00:00:00Z",
+            variable: "click_color",
+            valor_anterior: 39,
+            valor_nuevo: 40,
+            fuente: "sistema",
+            backup: ["data/backups/variables_principales/mock.json"],
+            descripcion: "Cambio operativo de click_color: 39 → 40",
+          },
         ],
+      }),
+    });
+  });
+  await page.route("**/admin-precios/rollback/preview", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        ok: true,
+        accion: "rollback_preview",
+        historial_id: "hist_click_2",
+        variable: "click_color",
+        label: "Click color base",
+        valor_actual: 40,
+        valor_rollback: 39,
+        unidad: "ARS",
+        cambio_original: { id: "hist_click_2", valor_anterior: 39, valor_nuevo: 40 },
+        impactos: [{ producto: "Stickers Circulares", impacta_hoy: true }],
+        advertencias: ["Se creará un nuevo backup antes de restaurar."],
+        requiere_confirmacion: true,
+      }),
+    });
+  });
+  await page.route("**/admin-precios/rollback/aplicar", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        ok: true,
+        accion: "rollback",
+        aplicado: true,
+        variable: "click_color",
+        valor_anterior: 40,
+        valor_nuevo: 39,
+        backup: ["data/backups/variables_principales/mock-rollback.json"],
+        historial: { id: "hist_rollback_2", tipo: "rollback", rollback_de: "hist_click_2" },
       }),
     });
   });
@@ -349,9 +449,16 @@ test("Historial y backups y Exportar soporte Excel quedan accesibles", async ({ 
   }));
 
   await page.goto("/", { waitUntil: "domcontentloaded" });
+  page.on("dialog", (dialog) => dialog.accept());
   await page.getByTestId("tab-history-backups").click();
-  await expect(page.getByTestId("history-backups-screen")).toContainText("Cada cambio guardado desde Modificar precios genera backup e historial");
+  await expect(page.getByTestId("history-backups-screen")).toContainText("Podés restaurar un valor anterior");
   await expect(page.getByTestId("history-backups-admin-history")).toContainText("click_color");
+  await expect(page.getByTestId("admin-rollback-apply-button")).toBeDisabled();
+  await page.getByTestId("admin-rollback-preview-button").click();
+  await expect(page.getByTestId("admin-rollback-preview")).toContainText("40");
+  await expect(page.getByTestId("admin-rollback-preview")).toContainText("39");
+  await page.getByTestId("admin-rollback-apply-button").click();
+  await expect(page.getByText(/Rollback aplicado/i)).toBeVisible();
 
   await page.getByTestId("tab-export-support-excel").click();
   await expect(page.getByTestId("export-support-excel-screen")).toContainText("El Excel maestro es un soporte de visualización y auditoría");
