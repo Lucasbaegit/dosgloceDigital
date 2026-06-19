@@ -36,13 +36,13 @@ class PrincipalVariablesService:
                 "applies_today": False,
                 "confiabilidad": "alta",
                 "productos_afectados": ["Fórmulas variables futuras"],
-                "impact": "Impacta costos expresados en USD cuando el producto usa f?rmula variable; precios PDF fijos no cambian.",
+                "impact": "Impacta costos expresados en USD cuando el producto usa fórmula variable; precios PDF fijos no cambian.",
             },
             "click_color": {
                 "group": "clicks",
                 "label": "Click color base",
                 "unit": "ARS",
-                "description": "Click color base usado en f?rmulas variables calibradas.",
+                "description": "Click color base usado en fórmulas variables calibradas.",
                 "tipo": "variable_madre",
                 "min": 0.01,
                 "max": 100000,
@@ -57,9 +57,9 @@ class PrincipalVariablesService:
             },
             "obra_90g": {
                 "group": "papeles",
-                "label": "Papel obra/ilustraci?n 90g",
+                "label": "Papel obra/ilustración 90g (Stickers Circulares)",
                 "unit": "USD",
-                "description": "Costo base real del material usado en f?rmula editable de Stickers Circulares.",
+                "description": "Costo base real del material usado en fórmula editable de Stickers Circulares. No está conectado a Bajadas Autoadhesivas.",
                 "tipo": "variable_madre",
                 "min": 0.01,
                 "max": 1000000,
@@ -76,7 +76,7 @@ class PrincipalVariablesService:
                 "group": "multiplicadores",
                 "label": "Multiplicador comercial general",
                 "unit": "factor",
-                "description": "Multiplicador comercial general de f?rmulas variables calibradas.",
+                "description": "Multiplicador comercial general de fórmulas variables calibradas.",
                 "tipo": "variable_madre",
                 "min": 0.01,
                 "max": 100,
@@ -123,6 +123,9 @@ class PrincipalVariablesService:
             "multiplicador_tarjetas",
         ]
         self.detected_papers = {
+            "Papeles Stickers Circulares": [
+                "obra_90g",
+            ],
             "Papeles Bajadas": [
                 "obra_80g", "obra_90g", "ilustracion_90g", "ilustracion_115g", "ilustracion_150g",
                 "ilustracion_200g", "ilustracion_250g", "ilustracion_300g", "ilustracion_350g",
@@ -135,6 +138,9 @@ class PrincipalVariablesService:
             "Papeles Productos": [
                 "papel_300g_ilustracion", "papel_150g_ilustracion", "papel_80g_ilustracion", "papel_63g_sobres",
             ],
+        }
+        self.detected_paper_variable_links = {
+            ("Papeles Stickers Circulares", "obra_90g"): "obra_90g",
         }
         self._load_prepared_variables()
 
@@ -174,12 +180,12 @@ class PrincipalVariablesService:
                 {"grupo": "Bajadas Fullcolor / Kraft", "rangos": standard, "editable": False, "tipo": "rango_fijo", "motivo": reason, "fuente": "data/bajadas_v2/precios_pdf_objetivo_limpio.json"},
                 {"grupo": "Bajadas Blanco y Negro", "rangos": ["1", "2 a 50", "51 a 100", "101 a 500", "501 a 1000", "1001 a 5000"], "editable": False, "tipo": "rango_fijo", "motivo": reason, "fuente": "data/bajadas_v2/precios_pdf_objetivo_limpio.json"},
                 {"grupo": "Autoadhesivas", "rangos": standard, "editable": False, "tipo": "rango_fijo", "motivo": reason, "fuente": "data/bajadas_autoadhesivas/autoadhesivas_v1_config.json"},
-                {"grupo": "Troquelado Digital", "rangos": ["1 a 2", "3 a 9", "10 a 25", "26 a 50", "51 a 100", "m?s de 100"], "editable": False, "tipo": "rango_fijo", "motivo": reason, "fuente": "data/troquelado_digital/precios_pdf_objetivo_troquelado_digital.json"},
+                {"grupo": "Troquelado Digital", "rangos": ["1 a 2", "3 a 9", "10 a 25", "26 a 50", "51 a 100", "más de 100"], "editable": False, "tipo": "rango_fijo", "motivo": reason, "fuente": "data/troquelado_digital/precios_pdf_objetivo_troquelado_digital.json"},
                 {"grupo": "Tarjetas / Postales / Folletos / Stickers / Imanes", "rangos": package, "editable": False, "tipo": "rango_fijo", "motivo": reason, "fuente": "matrices PDF por producto"},
                 {"grupo": "Carpetas", "rangos": standard, "editable": False, "tipo": "rango_fijo", "motivo": reason, "fuente": "data/carpetas/precios_pdf_objetivo_carpetas.json"},
                 {"grupo": "Sobres", "rangos": package, "editable": False, "tipo": "rango_fijo", "motivo": reason, "fuente": "data/sobres/precios_pdf_objetivo_sobres.json"},
-                {"grupo": "Plancha Im?n", "rangos": ["1", "2 a 25", "26 a 50", "51 a 100", "101 a 300", "301 a 500"], "editable": False, "tipo": "rango_fijo", "motivo": reason, "fuente": "data/plancha_iman_impreso/precios_pdf_objetivo_plancha_iman_impreso.json"},
-                {"grupo": "Agendas / Cuadernos", "rangos": ["desde 2 unidades", "m?nimos seg?n producto"], "editable": False, "tipo": "rango_fijo", "motivo": "Los m?nimos pertenecen a matrices PDF cerradas", "fuente": "data/agendas_cuadernos/precios_pdf_objetivo_agendas_cuadernos.json"},
+                {"grupo": "Plancha Imán", "rangos": ["1", "2 a 25", "26 a 50", "51 a 100", "101 a 300", "301 a 500"], "editable": False, "tipo": "rango_fijo", "motivo": reason, "fuente": "data/plancha_iman_impreso/precios_pdf_objetivo_plancha_iman_impreso.json"},
+                {"grupo": "Agendas / Cuadernos", "rangos": ["desde 2 unidades", "mínimos según producto"], "editable": False, "tipo": "rango_fijo", "motivo": "Los mínimos pertenecen a matrices PDF cerradas", "fuente": "data/agendas_cuadernos/precios_pdf_objetivo_agendas_cuadernos.json"},
             ],
             "warning": "Rangos fijos de matrices. No son editables en esta etapa.",
         }
@@ -213,31 +219,34 @@ class PrincipalVariablesService:
             "papeles_detectados_no_editables": self._detected_papers_status(),
             "papeles_detectados_solo_pdf": self._detected_papers_status(),
             "advertencias": [
-                "No se exponen matrices PDF, factores de ajuste PDF ni coeficientes t?cnicos internos.",
+                "No se exponen matrices PDF, factores de ajuste PDF ni coeficientes técnicos internos.",
                 "Los precios finales PDF fijos permanecen sin cambios.",
                 "Las variables de confiabilidad media se guardan en JSON preparado y no impactan el motor actual.",
             ],
         }
 
     def _detected_papers_status(self) -> dict[str, list[dict[str, Any]]]:
-        editable_keys = set(self.catalog)
         result = {}
         for family, keys in self.detected_papers.items():
-            result[family] = [
-                {
+            entries = []
+            for key in keys:
+                linked_variable = self.detected_paper_variable_links.get((family, key))
+                linked_meta = self.catalog.get(linked_variable or "")
+                is_editable_context = bool(linked_meta)
+                entries.append({
                     "key": key,
-                    "label": key.replace("_", " ").title(),
-                    "editable": key in editable_keys,
-                    "tipo": "variable_madre" if key in editable_keys else "detectado_sin_costo_base",
+                    "label": linked_meta["label"] if linked_meta else key.replace("_", " ").title(),
+                    "editable": is_editable_context,
+                    "tipo": "variable_madre" if is_editable_context else "detectado_sin_costo_base",
                     "unit": "USD",
-                    "estado": "variable_madre_editable" if key in editable_keys else "detectado_sin_costo_base_confiable",
-                    "motivo_no_editable": None if key in editable_keys else "Detectado en tablas PDF, pero no existe costo base confiable en USD.",
-                    "impacta_hoy": key in editable_keys,
+                    "estado": "variable_madre_editable" if is_editable_context else "detectado_sin_costo_base_confiable",
+                    "motivo_no_editable": None if is_editable_context else "Detectado en Excel/PDF, pero no existe costo base operativo conectado para esta familia.",
+                    "impacta_hoy": is_editable_context,
                     "variables_madre_relacionadas": self._related_prepared_variables(key),
+                    "variable_operativa": linked_variable,
                     "source_file": "data/variables_comerciales/papeles.json",
-                }
-                for key in keys
-            ]
+                })
+            result[family] = entries
         return result
 
     def _load_prepared_variables(self) -> None:
@@ -301,8 +310,8 @@ class PrincipalVariablesService:
     @staticmethod
     def _derived_values_status() -> list[dict[str, Any]]:
         return [
-            {"key": "precios_finales_por_rango", "label": "Precios finales por rango", "editable": False, "tipo": "derivado", "motivo_no_editable": "Son resultado de matrices PDF o f?rmulas controladas.", "impacta_hoy": False},
-            {"key": "recargos_urgencia", "label": "Precios con urgencia", "editable": False, "tipo": "derivado", "motivo_no_editable": "Se calculan desde la cotizaci?n base y reglas internas.", "impacta_hoy": False},
+            {"key": "precios_finales_por_rango", "label": "Precios finales por rango", "editable": False, "tipo": "derivado", "motivo_no_editable": "Son resultado de matrices PDF o fórmulas controladas.", "impacta_hoy": False},
+            {"key": "recargos_urgencia", "label": "Precios con urgencia", "editable": False, "tipo": "derivado", "motivo_no_editable": "Se calculan desde la cotización base y reglas internas.", "impacta_hoy": False},
         ]
 
     @staticmethod
@@ -315,7 +324,7 @@ class PrincipalVariablesService:
     def update(self, payload: dict[str, Any]) -> dict[str, Any]:
         updates = payload.get("updates")
         if not isinstance(updates, list) or not updates:
-            raise PrincipalVariableError("updates debe ser una lista no vac?a.")
+            raise PrincipalVariableError("updates debe ser una lista no vacía.")
 
         prepared: list[tuple[str, float, dict[str, Any], float]] = []
         for raw in updates:

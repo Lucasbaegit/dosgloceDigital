@@ -97,7 +97,10 @@ const CATEGORIAS = [
   "Plancha de Imán Impreso",
   "Agendas / Cuadernos",
 ];
-const AUTOADH_COLUMNAS = ["papel", "especial"];
+const AUTOADH_COLUMNAS = [
+  { value: "papel", label: "Papel autoadhesivo" },
+  { value: "especial", label: "OPP blanco / especial" },
+];
 const AUTOADH_FORMATOS = ["A3+", "XA3"];
 const AUTOADH_RANGOS = ["1", "2 a 25", "26 a 50", "51 a 100", "101 a 300", "301 a 500", "501 a 1000"];
 const KRAFT_FORMATOS = ["A3"];
@@ -3125,7 +3128,13 @@ export default function CotizadorBajadasV2() {
           ) : isAutoadhesivas ? (
             <>
               <label><span>Medida / formato</span><select data-testid="formato-select" value={form.formato} onChange={updateField("formato")}>{AUTOADH_FORMATOS.map((v) => <option key={v} value={v}>{v}</option>)}</select></label>
-              <label><span>Tipo</span><select data-testid="autoadh-tipo-select" value={form.columna_precio} onChange={updateField("columna_precio")}>{AUTOADH_COLUMNAS.map((v) => <option key={v} value={v}>{v}</option>)}</select></label>
+              <label>
+                <span>Tipo de autoadhesivo</span>
+                <select data-testid="autoadh-tipo-select" value={form.columna_precio} onChange={updateField("columna_precio")}>
+                  {AUTOADH_COLUMNAS.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
+                </select>
+                <small className="range-hint">Campo propio de Autoadhesivas; no edita la variable obra_90g de Stickers Circulares.</small>
+              </label>
               <label><span>Modo color</span><input value="fullcolor" readOnly /></label>
               <label><span>Impresión</span><input value="4/0" readOnly /></label>
             </>

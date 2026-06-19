@@ -81,6 +81,22 @@ class TestVariablesImpactoApi(unittest.TestCase):
         self.assertTrue(any(rel["impacta_hoy"] for rel in body["relaciones"]))
         self.assertTrue(any(rel["estado"] == "preparado_no_conectado" for rel in body["relaciones"]))
 
+    def test_obra_90g_no_sobregeneraliza_autoadhesivas(self):
+        status, body = self._get_json("/variables-impacto/variable/obra_90g")
+        self.assertEqual(status, 200)
+        productos = {rel["producto_key"] for rel in body["relaciones"]}
+        self.assertIn("stickers_circulares", productos)
+        self.assertNotIn("bajadas_autoadhesivas", productos)
+        self.assertTrue(all(rel["producto_key"] != "bajadas_autoadhesivas" for rel in body["relaciones"]))
+        self.assertTrue(any(rel["impacta_hoy"] and rel["producto_key"] == "stickers_circulares" for rel in body["relaciones"]))
+
+    def test_tinta_blanca_es_variable_operativa_autoadhesivas(self):
+        status, body = self._get_json("/variables-impacto/variable/adicional_tinta_blanca_base_1_copia")
+        self.assertEqual(status, 200)
+        productos = {rel["producto_key"] for rel in body["relaciones"]}
+        self.assertIn("bajadas_autoadhesivas", productos)
+        self.assertTrue(any(rel["impacta_hoy"] and rel["producto_key"] == "bajadas_autoadhesivas" for rel in body["relaciones"]))
+
     def test_variable_desconocida_devuelve_404_controlado(self):
         status, body = self._get_json("/variables-impacto/variable/no_existe")
         self.assertEqual(status, 404)
