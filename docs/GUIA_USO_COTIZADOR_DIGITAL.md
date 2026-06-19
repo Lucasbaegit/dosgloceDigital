@@ -386,3 +386,19 @@ La interfaz mantiene las mismas tareas visibles, pero internamente está separad
 Esto no cambia cómo se usa el sistema: Cotizar, Modificar precios, Entender un precio, Ver impacto, Historial, Exportar soporte Excel y Configuración avanzada siguen en la misma navegación.
 
 La separación mejora mantenimiento y reduce riesgo de cambios accidentales en precios.
+
+---
+
+## Uso local diario
+
+Para usar el cotizador en esta computadora, consultar `docs/USO_LOCAL_COTIZADOR_DIGITAL.md`.
+
+Comandos principales:
+
+- Prender: `powershell -ExecutionPolicy Bypass -File .\scripts\local\iniciar_cotizador_local.ps1`
+- Apagar: `powershell -ExecutionPolicy Bypass -File .\scripts\local\apagar_cotizador_local.ps1`
+- Verificar: `powershell -ExecutionPolicy Bypass -File .\scripts\local\verificar_cotizador_local.ps1`
+- Backup manual: `powershell -ExecutionPolicy Bypass -File .\scripts\local\backup_local.ps1`
+- Limpiar temporales: `powershell -ExecutionPolicy Bypass -File .\scripts\local\limpiar_temporales_local.ps1`
+
+URL diaria: `http://127.0.0.1:5174`.

@@ -45,3 +45,7 @@ frontend/src/components/
 ## Garantía del refactor
 
 Este refactor no cambia precios, matrices PDF, endpoints ni lógica productiva. Solo separa responsabilidades visuales y reduce el tamaño del archivo principal.
+
+## Relación con uso local
+
+El refactor de componentes no cambia la forma de iniciar la aplicación. Para operación diaria local, usar los scripts documentados en `docs/USO_LOCAL_COTIZADOR_DIGITAL.md`.

@@ -612,3 +612,13 @@ Componentes extraídos:
 - `ModificarPreciosWizard.jsx`: layout del wizard seguro.
 
 La separación no cambia lógica de precios, endpoints, matrices ni Excel maestro. Es una mejora de mantenibilidad para que futuras pantallas se creen como componentes separados.
+
+---
+
+## Uso local estable
+
+La etapa de uso local estable agrega scripts operativos bajo `scripts/local/` para iniciar, apagar, verificar, respaldar y limpiar temporales del cotizador sin depender de comandos largos.
+
+Estos scripts son wrappers operativos: no cambian motores de precios, endpoints, matrices PDF ni reglas comerciales. El backend sigue exponiendo la API local en `127.0.0.1:8000` y el frontend Vite en `127.0.0.1:5174`.
+
+No forman parte de esta etapa dominio fijo, VPS, usuarios/permisos ni túneles Cloudflare.
