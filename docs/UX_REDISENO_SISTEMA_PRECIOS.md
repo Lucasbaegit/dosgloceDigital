@@ -798,3 +798,18 @@ Criterios aplicados:
 - `Ver impacto de cambios` muestra productos afectados en simple y rutas técnicas en avanzado.
 
 El objetivo es que el sistema sirva a dos públicos sin duplicar pantallas: operación diaria y mantenimiento técnico.
+
+---
+
+## Refactor de componentes
+
+El rediseño UX ahora está respaldado por una separación técnica de componentes. La navegación, el selector simple/avanzado y varios paneles principales viven en `frontend/src/components/cotizador/`.
+
+Criterio aplicado:
+
+- preservar comportamiento productivo,
+- extraer primero componentes visuales,
+- dejar estado y APIs en el contenedor cuando moverlos aumenta riesgo,
+- mantener modo simple y avanzado sin rediseño visual grande.
+
+Este patrón debe mantenerse en futuras etapas para que cada pantalla nueva tenga un componente propio.

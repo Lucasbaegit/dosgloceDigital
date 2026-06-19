@@ -49,37 +49,16 @@ import {
   validateBajadasConfig,
 } from "../api/bajadasV2Api";
 import optionRows from "../data/bajadasOptions.json";
+import ConfiguracionAvanzadaPanel from "./cotizador/ConfiguracionAvanzadaPanel";
+import EntenderPrecioPanel from "./cotizador/EntenderPrecioPanel";
+import ExportarSoporteExcelPanel from "./cotizador/ExportarSoporteExcelPanel";
+import HistorialBackupsPanel from "./cotizador/HistorialBackupsPanel";
+import ImpactoCambiosPanel from "./cotizador/ImpactoCambiosPanel";
+import ModificarPreciosWizard from "./cotizador/ModificarPreciosWizard";
+import NavigationTabs from "./cotizador/NavigationTabs";
+import ViewModeToggle from "./cotizador/ViewModeToggle";
 
-const NAV_ITEMS = [
-  "Cotizar",
-  "Modificar precios",
-  "Entender un precio",
-  "Ver impacto de cambios",
-  "Historial y backups",
-  "Exportar soporte Excel",
-  "Configuración avanzada",
-];
-const TAB_KEYS = new Set(NAV_ITEMS);
-const NAV_TEST_IDS = {
-  "Cotizar": "tab-quote",
-  "Modificar precios": "tab-admin-prices",
-  "Entender un precio": "tab-understand-price",
-  "Ver impacto de cambios": "tab-variable-impact",
-  "Historial y backups": "tab-history-backups",
-  "Exportar soporte Excel": "tab-export-support-excel",
-  "Configuración avanzada": "tab-advanced-config",
-};
 const VIEW_MODE_STORAGE_KEY = "cotizador_view_mode";
-const VIEW_MODES = {
-  simple: {
-    label: "Modo simple",
-    description: "Modo simple: muestra solo lo necesario para operar el sistema.",
-  },
-  advanced: {
-    label: "Modo avanzado",
-    description: "Modo avanzado: muestra detalles técnicos, trazabilidad, claves internas y fuentes de cálculo.",
-  },
-};
 const ADMIN_PRICE_STEPS = [
   { id: 1, label: "Elegir variable" },
   { id: 2, label: "Revisar impacto" },
@@ -1695,35 +1674,6 @@ export default function CotizadorBajadasV2() {
     }
   };
 
-  const renderViewModeToggle = () => (
-    <section className="view-mode-toggle" data-testid="view-mode-toggle" aria-label="Selector de modo de vista">
-      <div>
-        <strong>{VIEW_MODES[viewMode].label}</strong>
-        <span>{VIEW_MODES[viewMode].description}</span>
-      </div>
-      <div className="view-mode-buttons" role="group" aria-label="Modo de visualización">
-        <button
-          type="button"
-          data-testid="view-mode-simple"
-          className={isSimpleMode ? "active" : ""}
-          aria-pressed={isSimpleMode}
-          onClick={() => setViewMode("simple")}
-        >
-          Modo simple
-        </button>
-        <button
-          type="button"
-          data-testid="view-mode-advanced"
-          className={isAdvancedMode ? "active" : ""}
-          aria-pressed={isAdvancedMode}
-          onClick={() => setViewMode("advanced")}
-        >
-          Modo avanzado
-        </button>
-      </div>
-    </section>
-  );
-
   useEffect(() => {
     if (activeTab !== "Entender un precio" || understandMode !== "trazabilidad" || traceGraph || traceLoading) return;
     if (traceMode === "casos_generales") {
@@ -2270,43 +2220,15 @@ export default function CotizadorBajadasV2() {
   };
 
   const renderUnderstandPriceTab = () => (
-    <div className="ux-section" data-testid="understand-price-screen">
-      <section className="card result-card ux-intro-card">
-        <div className="card-head">
-          <div>
-            <h3>Entender un precio</h3>
-            <p>{isSimpleMode ? "Primero ves un resumen simple. Activá modo avanzado para ver grafo, árbol y fuentes de cálculo." : "Usá esta sección para ver de dónde salió un precio: material, impresión, cantidad, adicionales, urgencia y total final."}</p>
-          </div>
-          <span>{isSimpleMode ? "Modo simple" : "Modo avanzado"}</span>
-        </div>
-        <div className="ux-mode-note">
-          <strong>Modo simple:</strong> resumen comercial del cálculo. <strong>Modo avanzado:</strong> grafo, árbol técnico, variables y origen PDF/fórmula.
-        </div>
-        {isAdvancedMode ? (
-          <div className="trace-mode-options ux-subnav" role="group" aria-label="Vista para entender precio">
-            <button
-              type="button"
-              data-testid="understand-detail-button"
-              className={understandMode === "detalle" ? "trace-mode-pill active" : "trace-mode-pill"}
-              onClick={() => setUnderstandMode("detalle")}
-            >
-              Resumen / Detalle del cálculo
-            </button>
-            <button
-              type="button"
-              data-testid="understand-trace-button"
-              className={understandMode === "trazabilidad" ? "trace-mode-pill active" : "trace-mode-pill"}
-              onClick={() => setUnderstandMode("trazabilidad")}
-            >
-              Trazabilidad visual avanzada
-            </button>
-          </div>
-        ) : null}
-      </section>
-      {isAdvancedMode && understandMode === "trazabilidad" ? renderTraceVisualTab() : renderTreeTab()}
-    </div>
+    <EntenderPrecioPanel
+      isSimpleMode={isSimpleMode}
+      isAdvancedMode={isAdvancedMode}
+      understandMode={understandMode}
+      setUnderstandMode={setUnderstandMode}
+      renderTreeTab={renderTreeTab}
+      renderTraceVisualTab={renderTraceVisualTab}
+    />
   );
-
   const formatHistoryValue = (value) => {
     if (value === null || value === undefined || value === "") return "-";
     return String(value);
@@ -2422,118 +2344,35 @@ export default function CotizadorBajadasV2() {
   };
 
   const renderHistoryBackupsTab = () => (
-    <section className="card result-card ux-section" data-testid="history-backups-screen">
-      <div className="card-head">
-        <div>
-          <h3>Historial y backups</h3>
-          <p>Cada cambio de precios queda registrado. Podés restaurar un valor anterior con preview y backup automático.</p>
-        </div>
-        <span>Auditoría operativa</span>
-      </div>
-      {adminError ? <div className="error-box">{adminError}</div> : null}
-      {adminMsg ? <div className="info-box">{adminMsg}</div> : null}
-      {adminLoading && !adminPrices ? <div className="placeholder"><p>Cargando historial...</p></div> : null}
-      <div className="ux-history-grid">
-        <section className="principal-group" data-testid="history-backups-admin-history">
-          <h4>Cambios de precios</h4>
-          <p className="range-hint">Restaurar crea un backup nuevo y registra otro evento en historial. No restaura matrices PDF ni tablas fijas.</p>
-          {renderAdminHistoryEntries({ limit: 20 })}
-          {renderRollbackPreviewPanel()}
-        </section>
-        <section className="principal-group" data-testid="history-backups-config">
-          <h4>Backups técnicos disponibles</h4>
-          <p className="range-hint">Backups de configuración productiva. Restaurar sigue siendo una acción avanzada y requiere previsualización.</p>
-          <div className="history-list">
-            {(cfgBackups || []).slice(0, 10).map((backup) => (
-              <div key={backup.archivo}>
-                <strong>{backup.archivo}</strong> · {backup.fecha || "-"} · {backup.tamano_bytes ?? "-"} bytes
-              </div>
-            ))}
-            {!(cfgBackups || []).length ? <p className="range-hint">Sin backups listados.</p> : null}
-          </div>
-        </section>
-      </div>
-    </section>
+    <HistorialBackupsPanel
+      renderAdminHistoryEntries={renderAdminHistoryEntries}
+      renderRollbackPreviewPanel={renderRollbackPreviewPanel}
+      cfgBackups={cfgBackups}
+      adminError={adminError}
+      adminMsg={adminMsg}
+      adminLoading={adminLoading}
+      adminPrices={adminPrices}
+    />
   );
 
   const renderExportSupportExcelTab = () => (
-    <section className="card result-card ux-section" data-testid="export-support-excel-screen">
-      <div className="card-head">
-        <div>
-          <h3>Exportar soporte Excel</h3>
-          <p>
-            {isSimpleMode
-              ? "Generá archivos de consulta para revisar precios, compartirlos o respaldar información."
-              : "El Excel maestro es un soporte de visualización y auditoría. No es el lugar principal para modificar precios."}
-          </p>
-        </div>
-        <span>{isSimpleMode ? "Modo simple" : "Soporte / auditoría"}</span>
-      </div>
-      <div className="warning-box">
-        Los cambios reales se hacen desde Modificar precios. Este export sirve para revisar, compartir, auditar y respaldar información.
-      </div>
-      {isSimpleMode ? (
-        <div className="mode-note-card" data-testid="export-simple-summary">
-          <strong>Qué contiene</strong>
-          <p>Variables principales, rangos, tablas finales, productos bloqueados y trazabilidad resumida para auditoría.</p>
-          <span>Los detalles técnicos de hojas, fuentes internas y trazabilidad completa están disponibles en modo avanzado.</span>
-        </div>
-      ) : (
-        <div className="mode-note-card advanced-note" data-testid="export-advanced-summary">
-          <strong>Vista técnica</strong>
-          <p>Incluye hojas de variables madre, matrices PDF, bloqueados, fuentes, endpoints y trazabilidad operativa para mantenimiento.</p>
-        </div>
-      )}
-      {principalMsg ? <div className="info-box" data-testid="export-support-message">{principalMsg}</div> : null}
-      <div className="ux-export-grid">
-        <article className="range-control-card">
-          <strong>Excel maestro</strong>
-          <span>Variables, rangos, tablas finales, bloqueados y trazabilidad.</span>
-          <button type="button" className="calculate-btn compact-calculate-btn" data-testid="export-support-excel-button" onClick={downloadPricesExcel}>
-            Generar Excel maestro
-          </button>
-        </article>
-        <article className="range-control-card">
-          <strong>PDF de tablas finales</strong>
-          <span>Salida comercial de consulta. No implica edición de matrices.</span>
-          <button type="button" className="secondary-btn" data-testid="export-support-pdf-button" onClick={downloadPricesPdf}>
-            Exportar tablas PDF
-          </button>
-        </article>
-      </div>
-    </section>
+    <ExportarSoporteExcelPanel
+      isSimpleMode={isSimpleMode}
+      principalMsg={principalMsg}
+      downloadPricesExcel={downloadPricesExcel}
+      downloadPricesPdf={downloadPricesPdf}
+    />
   );
 
   const renderAdvancedConfigTab = () => (
-    <div className="ux-section" data-testid="advanced-config-screen">
-      <section className="card result-card ux-intro-card">
-        <div className="card-head">
-          <div>
-            <h3>Configuración avanzada</h3>
-            <p>{isSimpleMode ? "Esta sección contiene configuración técnica y herramientas de mantenimiento." : "Sección técnica para costos base, variables principales, importador preview y configuración interna. No es el flujo diario para modificar precios."}</p>
-          </div>
-          <span>{isSimpleMode ? "Protegido" : "Modo avanzado"}</span>
-        </div>
-        <div className="warning-box">
-          {isSimpleMode
-            ? "Para evitar cambios accidentales, el detalle técnico se muestra solo en modo avanzado."
-            : "Si querés cambiar un precio operativo, usá Modificar precios. Esta sección conserva las vistas técnicas existentes para auditoría y mantenimiento."}
-        </div>
-        {isSimpleMode ? (
-          <div className="mode-note-card" data-testid="advanced-config-simple-guard">
-            <strong>Configuración técnica oculta en modo simple</strong>
-            <p>Activá modo avanzado para ver variables principales, importador preview, backups de configuración y edición interna.</p>
-            <button type="button" className="secondary-btn" data-testid="advanced-config-enable-advanced" onClick={() => setViewMode("advanced")}>
-              Activar modo avanzado
-            </button>
-          </div>
-        ) : null}
-      </section>
-      {isAdvancedMode ? renderPrincipalVariablesTab() : null}
-      {isAdvancedMode ? renderConfigTab() : null}
-    </div>
+    <ConfiguracionAvanzadaPanel
+      isSimpleMode={isSimpleMode}
+      isAdvancedMode={isAdvancedMode}
+      setViewMode={setViewMode}
+      renderPrincipalVariablesTab={renderPrincipalVariablesTab}
+      renderConfigTab={renderConfigTab}
+    />
   );
-
   const renderConfigTab = () => {
     if (!cfg) return <section className="card result-card"><div className="placeholder"><p>Cargando configuración...</p></div></section>;
 
@@ -2744,140 +2583,21 @@ export default function CotizadorBajadasV2() {
     );
   };
 
-  const renderVariableImpactTab = () => {
-    const variables = impactData?.variables || [];
-    const products = impactData?.productos || [];
-    const relations = impactData?.relaciones || [];
-    const selectedRelations =
-      impactMode === "variable"
-        ? relations.filter((item) => item.variable === impactVariable)
-        : relations.filter((item) => item.producto_key === impactProduct);
-    const selectedMeta =
-      impactMode === "variable"
-        ? variables.find((item) => item.key === impactVariable)
-        : products.find((item) => item.key === impactProduct);
-    const summary = impactData?.resumen || {};
-    const firstRelation = selectedRelations[0];
-
-    const statusLabel = (relation) => {
-      if (relation.estado === "bloqueado") return "Bloqueado";
-      if (relation.impacta_hoy) return "Impacta hoy";
-      return "Documentado no conectado";
-    };
-
-    const statusClass = (relation) => {
-      if (relation.estado === "bloqueado") return "bloqueado";
-      if (relation.tipo === "tabla_pdf" || relation.tipo === "matriz_pdf") return "tabla_pdf";
-      if (relation.tipo === "factor") return "factor";
-      if (relation.impacta_hoy) return "variable_madre";
-      return "preparada";
-    };
-
-    return (
-      <section className="card result-card impact-card">
-        <div className="card-head">
-          <div>
-            <h3 data-testid="variable-impact-title">Ver impacto de cambios</h3>
-            <p>{isSimpleMode ? "Usá esta sección para saber qué productos se afectan y evitar cambios riesgosos." : "Usá esta sección para saber qué productos se afectan antes de modificar una variable o costo. Es una vista de prevención: no guarda cambios."}</p>
-          </div>
-          <span>{isSimpleMode ? "Impacto claro" : "Mapa preventivo"}</span>
-        </div>
-
-        {impactError ? <div className="error-box" data-testid="impact-error">{impactError}</div> : null}
-        {impactLoading && !impactData ? <div className="placeholder"><p>Cargando mapa de impacto...</p></div> : null}
-
-        {impactData ? (
-          <>
-            <div className="impact-summary-grid" data-testid="impact-summary">
-              <article><strong>{summary.variables_editables ?? 0}</strong><span>Variables editables</span></article>
-              <article><strong>{summary.relaciones_conectadas ?? 0}</strong><span>Relaciones conectadas</span></article>
-              {isAdvancedMode ? <article><strong>{summary.relaciones_documentadas_no_conectadas ?? 0}</strong><span>Documentadas no conectadas</span></article> : null}
-              {isAdvancedMode ? <article><strong>{summary.productos_bloqueados ?? 0}</strong><span>Productos bloqueados</span></article> : null}
-            </div>
-
-            <div className="impact-explainer">
-              <p>{isSimpleMode ? "Revisá productos afectados y nivel de impacto antes de cambiar un precio. Activá modo avanzado para ver claves técnicas, componentes y relaciones internas." : <><strong>Impacta hoy</strong> significa que cambiar esa variable modifica precios actuales. <strong>Documentado no conectado</strong> existe como logica historica o futura, pero hoy no recalcula. <strong>Tabla PDF fija</strong> viene de precio publicado. <strong>Bloqueado</strong> no tiene datos confiables.</>}</p>
-            </div>
-
-            <div className="impact-toolbar">
-              <div className="trace-mode-options" role="group" aria-label="Modo impacto">
-                <button
-                  type="button"
-                  data-testid="impact-mode-variable"
-                  className={impactMode === "variable" ? "trace-mode-pill active" : "trace-mode-pill"}
-                  onClick={() => setImpactMode("variable")}
-                >
-                  Variable → Productos
-                </button>
-                <button
-                  type="button"
-                  data-testid="impact-mode-producto"
-                  className={impactMode === "producto" ? "trace-mode-pill active" : "trace-mode-pill"}
-                  onClick={() => setImpactMode("producto")}
-                >
-                  Producto → Variables
-                </button>
-              </div>
-              {impactMode === "variable" ? (
-                <label>
-                  <span>Variable</span>
-                  <select data-testid="impact-variable-select" value={impactVariable} onChange={(event) => setImpactVariable(event.target.value)}>
-                    {variables.map((item) => <option key={item.key} value={item.key}>{item.label} · {item.key}</option>)}
-                  </select>
-                </label>
-              ) : (
-                <label>
-                  <span>Producto</span>
-                  <select data-testid="impact-product-select" value={impactProduct} onChange={(event) => setImpactProduct(event.target.value)}>
-                    {products.map((item) => <option key={item.key} value={item.key}>{item.label}</option>)}
-                  </select>
-                </label>
-              )}
-            </div>
-
-            <div className="impact-focus-card">
-              <span>{impactMode === "variable" ? "Variable seleccionada" : "Producto seleccionado"}</span>
-              <strong>{selectedMeta?.label || selectedMeta?.key || "Sin seleccion"}</strong>
-              <small>{impactMode === "variable" ? selectedMeta?.descripcion : (isAdvancedMode ? `${selectedMeta?.modo_precio || "-"} · ${selectedMeta?.endpoint || "-"}` : "Productos afectados por la selección.")}</small>
-            </div>
-
-            {isAdvancedMode && firstRelation ? (
-              <div className="impact-chain" data-testid="impact-visual-chain">
-                {(firstRelation.ruta_calculo || []).map((step, index) => (
-                  <span key={`${step}-${index}`}>{step}</span>
-                ))}
-              </div>
-            ) : null}
-
-            <div className="impact-results" data-testid="impact-results">
-              {selectedRelations.length ? selectedRelations.map((relation) => (
-                <article className={`impact-relation-card ${statusClass(relation)}`} key={`${relation.variable}-${relation.producto_key}-${relation.componente}`}>
-                  <div className="impact-relation-head">
-                    <div>
-                      <strong>{impactMode === "variable" ? relation.producto : relation.variable_label}</strong>
-                      <span>{isAdvancedMode ? relation.componente : relation.nivel_impacto}</span>
-                    </div>
-                    <em>{statusLabel(relation)}</em>
-                  </div>
-                  {isAdvancedMode ? (
-                    <div className="impact-meta-grid" data-testid="impact-advanced-meta">
-                      <div><span>Editable</span><strong>{relation.editable ? "si" : "no"}</strong></div>
-                      <div><span>Nivel</span><strong>{relation.nivel_impacto}</strong></div>
-                      <div><span>Estado</span><strong>{relation.estado}</strong></div>
-                      <div><span>Modo precio</span><strong>{relation.modo_precio}</strong></div>
-                    </div>
-                  ) : null}
-                  <p>{relation.detalle}</p>
-                  {isAdvancedMode ? <small>Fuente: {relation.fuente}</small> : null}
-                </article>
-              )) : <div className="placeholder"><p>No hay relaciones para esta seleccion.</p></div>}
-            </div>
-          </>
-        ) : null}
-      </section>
-    );
-  };
-
+  const renderVariableImpactTab = () => (
+    <ImpactoCambiosPanel
+      isSimpleMode={isSimpleMode}
+      isAdvancedMode={isAdvancedMode}
+      impactData={impactData}
+      impactError={impactError}
+      impactLoading={impactLoading}
+      impactMode={impactMode}
+      setImpactMode={setImpactMode}
+      impactVariable={impactVariable}
+      setImpactVariable={setImpactVariable}
+      impactProduct={impactProduct}
+      setImpactProduct={setImpactProduct}
+    />
+  );
   const renderAdminPricesTab = () => {
     const variables = adminPrices?.variables || [];
     const selected = variables.find((item) => item.key === adminVariable);
@@ -3156,39 +2876,22 @@ export default function CotizadorBajadasV2() {
     );
 
     return (
-      <section className="card result-card admin-prices-card">
-        <div className="card-head">
-          <div>
-            <h3 data-testid="admin-prices-title">Modificar precios</h3>
-            <p>Cambi? variables habilitadas desde el sistema. Antes de guardar, revis? el impacto. El sistema crea backup e historial autom?ticamente.</p>
-          </div>
-          <span>Wizard seguro</span>
-        </div>
-
-        <div className="warning-box">
-          El Excel maestro es solo soporte de visualizaci?n y auditor?a. Los cambios reales se hacen desde esta pantalla.
-        </div>
-        {adminError ? <div className="error-box" data-testid="admin-prices-error">{adminError}</div> : null}
-        {adminMsg ? <div className="info-box" data-testid="admin-prices-message">{adminMsg}</div> : null}
-        {adminLoading && !adminPrices ? <div className="placeholder"><p>Cargando wizard de precios...</p></div> : null}
-
-        {adminPrices ? (
-          <>
-            {renderAdminStepper()}
-            <div className="admin-wizard-shell">
-              {adminWizardStep === 1 ? renderVariableList() : null}
-              {adminWizardStep === 2 ? renderImpactStep() : null}
-              {adminWizardStep === 3 ? renderValueStep() : null}
-              {adminWizardStep === 4 ? renderPreviewStep() : null}
-              {adminWizardStep === 5 ? renderConfirmStep() : null}
-              {adminWizardStep === 6 ? renderHistoryStep() : null}
-            </div>
-          </>
-        ) : null}
-      </section>
+      <ModificarPreciosWizard
+        adminError={adminError}
+        adminMsg={adminMsg}
+        adminLoading={adminLoading}
+        adminPrices={adminPrices}
+        renderAdminStepper={renderAdminStepper}
+        adminWizardStep={adminWizardStep}
+        renderVariableList={renderVariableList}
+        renderImpactStep={renderImpactStep}
+        renderValueStep={renderValueStep}
+        renderPreviewStep={renderPreviewStep}
+        renderConfirmStep={renderConfirmStep}
+        renderHistoryStep={renderHistoryStep}
+      />
     );
   };
-
   const renderPrincipalVariablesTab = () => {
     const groups = [
       ["tipo_cambio", "Variables madre editables - Tipo de cambio"],
@@ -3677,26 +3380,19 @@ export default function CotizadorBajadasV2() {
     <div className="app-shell">
       <aside className="sidebar">
         <div className="brand"><img src="/logoPromo.jpg" alt="Promo" /><div><h1>Promo</h1><p>Cotizador Bajadas</p></div></div>
-        <nav>
-          {NAV_ITEMS.map((item) => (
-            <button
-              key={item}
-              type="button"
-              data-testid={NAV_TEST_IDS[item]}
-              className={activeTab === item ? "nav-item active" : "nav-item"}
-              onClick={() => TAB_KEYS.has(item) && setActiveTab(item)}
-            >
-              {item}
-            </button>
-          ))}
-        </nav>
+        <NavigationTabs activeTab={activeTab} setActiveTab={setActiveTab} />
       </aside>
 
       <main className="main">
         <header className="topbar">
           <div><h2>{activeTab}</h2><p>Sistema de precios organizado por tareas operativas</p></div>
           <div className="topbar-right">
-            {renderViewModeToggle()}
+            <ViewModeToggle
+              viewMode={viewMode}
+              setViewMode={setViewMode}
+              isSimpleMode={isSimpleMode}
+              isAdvancedMode={isAdvancedMode}
+            />
             <div className={apiConnected ? "api-status ok" : "api-status down"}>{apiConnected ? "API conectada" : "API no disponible"}</div>
             <div className="metrics-chip">{metrics ? `OK ${metrics.OK} · Alta ${metrics.DIFERENCIA_ALTA}` : "Métricas no disponibles"}</div>
           </div>
@@ -3715,5 +3411,4 @@ export default function CotizadorBajadasV2() {
     </div>
   );
 }
-
 

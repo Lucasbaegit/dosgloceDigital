@@ -376,3 +376,13 @@ Recomendación operativa:
 - Usar `Modo avanzado` para auditoría, soporte, diagnóstico técnico y mantenimiento.
 
 Esta separación no cambia precios, matrices, endpoints ni reglas de cálculo: solo cambia cuánta información técnica se muestra.
+
+---
+
+## Organización interna del frontend
+
+La interfaz mantiene las mismas tareas visibles, pero internamente está separada en componentes para evitar que una sola pantalla concentre toda la lógica visual.
+
+Esto no cambia cómo se usa el sistema: Cotizar, Modificar precios, Entender un precio, Ver impacto, Historial, Exportar soporte Excel y Configuración avanzada siguen en la misma navegación.
+
+La separación mejora mantenimiento y reduce riesgo de cambios accidentales en precios.

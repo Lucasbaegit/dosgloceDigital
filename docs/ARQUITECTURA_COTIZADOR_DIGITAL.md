@@ -593,3 +593,22 @@ Pantallas afectadas:
 - `Historial y backups`: estado y acciones principales en simple; IDs, fuentes y backups en avanzado.
 - `Exportar soporte Excel`: explicación de uso en simple; detalle técnico del soporte en avanzado.
 - `Configuración avanzada`: protegida en simple y desplegada únicamente al activar avanzado.
+
+---
+
+## Estructura frontend por componentes
+
+El frontend del cotizador fue separado progresivamente para reducir riesgo técnico. El contenedor `frontend/src/components/CotizadorBajadasV2.jsx` conserva estado principal, payloads y llamadas API, mientras que piezas visuales y paneles por tarea viven en `frontend/src/components/cotizador/`.
+
+Componentes extraídos:
+
+- `NavigationTabs.jsx`: navegación por tareas.
+- `ViewModeToggle.jsx`: selector modo simple / avanzado.
+- `EntenderPrecioPanel.jsx`: resumen, detalle y trazabilidad visual.
+- `ImpactoCambiosPanel.jsx`: mapa de impacto de variables/productos.
+- `HistorialBackupsPanel.jsx`: historial operativo y backups.
+- `ExportarSoporteExcelPanel.jsx`: exportación Excel/PDF de soporte.
+- `ConfiguracionAvanzadaPanel.jsx`: guard y composición de configuración técnica.
+- `ModificarPreciosWizard.jsx`: layout del wizard seguro.
+
+La separación no cambia lógica de precios, endpoints, matrices ni Excel maestro. Es una mejora de mantenibilidad para que futuras pantallas se creen como componentes separados.
