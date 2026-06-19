@@ -97,6 +97,27 @@ const CATEGORIAS = [
   "Plancha de Imán Impreso",
   "Agendas / Cuadernos",
 ];
+
+const PRODUCT_KEY_BY_CATEGORY = {
+  "Bajadas Fullcolor": "bajadas_fullcolor_byn",
+  "Bajadas ByN": "bajadas_fullcolor_byn",
+  "Bajadas Fullcolor/ByN": "bajadas_fullcolor_byn",
+  "Bajadas Autoadhesivas": "bajadas_autoadhesivas",
+  "Bajadas Kraft": "bajadas_kraft",
+  "Tarjetas Personales": "tarjetas_9x5",
+  "Tarjetas Personales 9x5": "tarjetas_9x5",
+  "Tarjetas Postales": "tarjetas_postales",
+  "Folletos": "folletos",
+  "Carpetas": "carpetas",
+  "Sobres": "sobres",
+  "Stickers Corte Recto": "stickers_corte_recto",
+  "Imanes Corte Recto": "imanes_corte_recto",
+  "Stickers Circulares": "stickers_circulares",
+  "Tarjetas Troqueladas Circulares": "tarjetas_troqueladas_circulares",
+  "Plancha de Imán Impreso": "plancha_iman_impreso",
+  "Agendas / Cuadernos": "agendas_cuadernos",
+  "Agendas/Cuadernos": "agendas_cuadernos",
+};
 const AUTOADH_COLUMNAS = [
   { value: "papel", label: "Papel autoadhesivo" },
   { value: "especial", label: "OPP blanco / especial" },
@@ -403,6 +424,31 @@ function describeCurrentQuoteMaterial(payload) {
   const material = payload?.material || payload?.papel || payload?.tipo_papel || "Material no informado";
   const gramaje = payload?.gramaje && payload.gramaje !== "N/A" ? ` ${payload.gramaje}` : "";
   return `${material}${gramaje}`.trim();
+}
+
+function getQuoteProductKey(payload) {
+  if (!payload) return null;
+  if (payload.producto_key) return payload.producto_key;
+  if (payload.categoria && PRODUCT_KEY_BY_CATEGORY[payload.categoria]) return PRODUCT_KEY_BY_CATEGORY[payload.categoria];
+  if (payload.categoria_ui && PRODUCT_KEY_BY_CATEGORY[payload.categoria_ui]) return PRODUCT_KEY_BY_CATEGORY[payload.categoria_ui];
+  if (payload.producto === "9x5") return "tarjetas_9x5";
+  if (payload.producto === "postal") return "tarjetas_postales";
+  if (payload.producto === "folleto") return "folletos";
+  if (payload.producto === "carpeta_a4") return "carpetas";
+  if (payload.producto === "sobre") return "sobres";
+  if (payload.producto === "sticker_corte_recto") return "stickers_corte_recto";
+  if (payload.producto === "iman_corte_recto") return "imanes_corte_recto";
+  if (payload.producto === "sticker_circular") return "stickers_circulares";
+  if (payload.producto === "tarjeta_troquelada_circular") return "tarjetas_troqueladas_circulares";
+  if (payload.producto === "plancha_iman_impreso") return "plancha_iman_impreso";
+  if (payload.producto === "agenda_cuaderno") return "agendas_cuadernos";
+  return null;
+}
+
+function getQuoteProductLabel(payload, impactData) {
+  const productKey = getQuoteProductKey(payload);
+  const fromMap = (impactData?.productos || []).find((item) => item.key === productKey);
+  return fromMap?.label || payload?.categoria || payload?.categoria_ui || "Cotización actual";
 }
 
 function collectCurrentQuoteAdditions(payload, result) {
@@ -1697,6 +1743,12 @@ export default function CotizadorBajadasV2() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
 
+  useEffect(() => {
+    if (activeTab !== "Modificar precios" || impactData || impactLoading) return;
+    loadVariablesImpacto();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab]);
+
   const handleSubmit = async (event) => {
     event.preventDefault();
     setError("");
@@ -2611,9 +2663,9 @@ export default function CotizadorBajadasV2() {
     const minValue = selected?.min ?? 0;
     const maxValue = selected?.max;
     const valueValidation = (() => {
-      if (!selected) return "Eleg? una variable para continuar.";
-      if (String(adminNewValue).trim() === "") return "Ingres? un nuevo valor.";
-      if (!Number.isFinite(numericValue)) return "El valor debe ser num?rico.";
+      if (!selected) return "Elegí una variable para continuar.";
+      if (String(adminNewValue).trim() === "") return "Ingresá un nuevo valor.";
+      if (!Number.isFinite(numericValue)) return "El valor debe ser numérico.";
       if (Number.isFinite(Number(minValue)) && numericValue < Number(minValue)) return `El valor no puede ser menor que ${minValue}.`;
       if (maxValue != null && Number.isFinite(Number(maxValue)) && numericValue > Number(maxValue)) return `El valor no puede ser mayor que ${maxValue}.`;
       if (Number.isFinite(currentValue) && numericValue === currentValue) return "El nuevo valor debe ser distinto del valor actual.";
@@ -2634,6 +2686,29 @@ export default function CotizadorBajadasV2() {
     };
     const previewImpacts = adminPreview?.impactos || [];
     const previewExamples = adminPreview?.precios_ejemplo || [];
+    const currentProductKey = result && lastPayload ? getQuoteProductKey(lastPayload) : null;
+    const currentProductLabel = result && lastPayload ? getQuoteProductLabel(lastPayload, impactData) : "";
+    const impactRelations = impactData?.relaciones || [];
+    const relevantVariableKeys = new Set(
+      currentProductKey
+        ? impactRelations
+          .filter((relation) => relation.producto_key === currentProductKey && relation.impacta_hoy && relation.editable)
+          .map((relation) => relation.variable)
+        : []
+    );
+    const relationByVariable = new Map();
+    if (currentProductKey) {
+      impactRelations
+        .filter((relation) => relation.producto_key === currentProductKey)
+        .forEach((relation) => relationByVariable.set(relation.variable, relation));
+    }
+    const hasCurrentQuoteContext = Boolean(currentProductKey && result && lastPayload);
+    const contextualVariables = hasCurrentQuoteContext
+      ? variables.filter((item) => relevantVariableKeys.has(item.key))
+      : variables;
+    const secondaryVariables = hasCurrentQuoteContext
+      ? variables.filter((item) => !relevantVariableKeys.has(item.key))
+      : [];
 
     const renderAdminStepper = () => (
       <div className="admin-wizard-stepper" data-testid="admin-wizard-stepper">
@@ -2663,38 +2738,90 @@ export default function CotizadorBajadasV2() {
       </div>
     );
 
+    const renderVariableButton = (item, { affectsCurrentQuote }) => {
+      const relation = relationByVariable.get(item.key);
+      return (
+        <button
+          type="button"
+          key={item.key}
+          className={adminVariable === item.key ? "admin-variable-item active" : "admin-variable-item"}
+          onClick={() => selectAdminVariable(item)}
+          data-testid={`admin-variable-${item.key}`}
+        >
+          <div className="admin-variable-title-row">
+            <strong>{item.label}</strong>
+            {hasCurrentQuoteContext ? (
+              <em className={affectsCurrentQuote ? "context-badge affects" : "context-badge neutral"}>
+                {affectsCurrentQuote ? "Afecta esta cotización" : "No afecta esta cotización"}
+              </em>
+            ) : null}
+          </div>
+          {isAdvancedMode ? <span>{item.key}</span> : null}
+          <small>{item.description}</small>
+          {relation ? <small className="admin-context-note">{relation.detalle}</small> : null}
+          <div className="admin-variable-meta">
+            <em>{item.value} {item.unit || ""}</em>
+            {isSimpleMode ? <em>{(item.productos_afectados || []).length} productos</em> : null}
+            {isAdvancedMode ? <em>{item.impacta_hoy ? "Impacta hoy" : "Preparada"}</em> : null}
+            {isAdvancedMode ? <em>{item.editable ? "Editable" : "Solo lectura"}</em> : null}
+          </div>
+        </button>
+      );
+    };
+
     const renderVariableList = () => (
       <div className="admin-wizard-panel" data-testid="admin-variable-list">
         <div className="admin-wizard-panel-head">
           <span>Paso 1</span>
-          <h4>Eleg? qu? variable quer?s modificar</h4>
+          <h4>Elegí qué variable querés modificar</h4>
           <p>
-            {isSimpleMode
-              ? "Solo aparecen variables habilitadas para edición segura. Los detalles técnicos están disponibles en modo avanzado."
-              : "Solo aparecen variables habilitadas para edici?n segura desde el sistema."}
+            {hasCurrentQuoteContext
+              ? `Contexto actual: ${currentProductLabel}. Primero te mostramos las variables conectadas a esa cotización.`
+              : "No hay una cotización activa. Se muestran todas las variables editables del sistema."}
           </p>
         </div>
-        <div className="admin-variable-list wizard-list">
-          {variables.map((item) => (
-            <button
-              type="button"
-              key={item.key}
-              className={adminVariable === item.key ? "admin-variable-item active" : "admin-variable-item"}
-              onClick={() => selectAdminVariable(item)}
-              data-testid={`admin-variable-${item.key}`}
-            >
-              <strong>{item.label}</strong>
-              {isAdvancedMode ? <span>{item.key}</span> : null}
-              <small>{item.description}</small>
-              <div className="admin-variable-meta">
-                <em>{item.value} {item.unit || ""}</em>
-                {isSimpleMode ? <em>{(item.productos_afectados || []).length} productos</em> : null}
-                {isAdvancedMode ? <em>{item.impacta_hoy ? "Impacta hoy" : "Preparada"}</em> : null}
-                {isAdvancedMode ? <em>{item.editable ? "Editable" : "Solo lectura"}</em> : null}
-              </div>
-            </button>
-          ))}
+
+        {hasCurrentQuoteContext ? (
+          <div className="admin-context-banner" data-testid="admin-current-quote-context">
+            <strong>{currentProductLabel}</strong>
+            <span>{describeCurrentQuoteMaterial(lastPayload)} · {lastPayload?.formato || "-"} · {lastPayload?.caras || "-"} · {lastPayload?.cantidad_unidades || "-"} u.</span>
+          </div>
+        ) : null}
+
+        <div className="admin-variable-section" data-testid="admin-relevant-variable-group">
+          <div className="admin-variable-section-head">
+            <h5>{hasCurrentQuoteContext ? "Variables que afectan esta cotización" : "Variables editables del sistema"}</h5>
+            <p>
+              {hasCurrentQuoteContext
+                ? "Estas variables están conectadas al producto que estás cotizando actualmente."
+                : "Listado global completo porque todavía no hay una cotización calculada."}
+            </p>
+          </div>
+          {contextualVariables.length ? (
+            <div className="admin-variable-list wizard-list">
+              {contextualVariables.map((item) => renderVariableButton(item, { affectsCurrentQuote: hasCurrentQuoteContext }))}
+            </div>
+          ) : (
+            <div className="info-box" data-testid="admin-no-contextual-variables">
+              No hay variables editables específicas detectadas para esta cotización. Podés revisar otras variables del sistema en modo avanzado.
+            </div>
+          )}
         </div>
+
+        {hasCurrentQuoteContext ? (
+          <details className="admin-variable-section secondary" data-testid="admin-other-variable-group" open={isAdvancedMode}>
+            <summary>
+              <span>
+                <strong>Otras variables editables del sistema</strong>
+                <small>No afectan esta cotización actual, pero pueden afectar otros productos.</small>
+              </span>
+              <em>{secondaryVariables.length} variables</em>
+            </summary>
+            <div className="admin-variable-list wizard-list">
+              {secondaryVariables.map((item) => renderVariableButton(item, { affectsCurrentQuote: false }))}
+            </div>
+          </details>
+        ) : null}
       </div>
     );
 
@@ -2702,8 +2829,8 @@ export default function CotizadorBajadasV2() {
       <div className="admin-wizard-panel" data-testid="admin-impact-step">
         <div className="admin-wizard-panel-head">
           <span>Paso 2</span>
-          <h4>Revis? el impacto actual</h4>
-          <p>{isSimpleMode ? "Antes de cambiar un número, revisá qué productos se podrían afectar." : "Antes de cambiar un n?mero, mir? d?nde interviene esta variable y qu? partes est?n protegidas por tabla fija PDF."}</p>
+          <h4>Revisá el impacto actual</h4>
+          <p>{isSimpleMode ? "Antes de cambiar un número, revisá qué productos se podrían afectar." : "Antes de cambiar un número, mirá dónde interviene esta variable y qué partes están protegidas por tabla fija PDF."}</p>
         </div>
         <div className="admin-editor-head">
           <div>
@@ -2729,7 +2856,7 @@ export default function CotizadorBajadasV2() {
         <div className="warning-box">
           {isSimpleMode
             ? "Los precios finales protegidos no se editan directamente. El preview avisa antes de guardar."
-            : "Los precios finales fijos PDF y factores calibrados no se editan directamente desde ac?. Si una tabla est? protegida, el preview lo informa antes de guardar."}
+            : "Los precios finales fijos PDF y factores calibrados no se editan directamente desde acá. Si una tabla está protegida, el preview lo informa antes de guardar."}
         </div>
         {renderStepActions({ back: 1, next: 3 })}
       </div>
@@ -2739,8 +2866,8 @@ export default function CotizadorBajadasV2() {
       <div className="admin-wizard-panel" data-testid="admin-new-value-step">
         <div className="admin-wizard-panel-head">
           <span>Paso 3</span>
-          <h4>Ingres? el nuevo valor</h4>
-          <p>El sistema valida que sea num?rico, permitido, distinto al valor actual y dentro de rango.</p>
+          <h4>Ingresá el nuevo valor</h4>
+          <p>El sistema valida que sea numérico, permitido, distinto al valor actual y dentro de rango.</p>
         </div>
         <div className="admin-current-grid">
           <div><span>Valor actual</span><strong>{selected?.value ?? "-"}</strong></div>
@@ -2766,7 +2893,7 @@ export default function CotizadorBajadasV2() {
             }}
           />
         </label>
-        {valueValidation ? <div className="error-box" data-testid="admin-value-validation">{valueValidation}</div> : <div className="info-box">Valor v?lido para previsualizar.</div>}
+        {valueValidation ? <div className="error-box" data-testid="admin-value-validation">{valueValidation}</div> : <div className="info-box">Valor válido para previsualizar.</div>}
         {renderStepActions({ back: 2, next: 4, nextDisabled: Boolean(valueValidation) })}
       </div>
     );
@@ -2775,7 +2902,7 @@ export default function CotizadorBajadasV2() {
       <div className="admin-wizard-panel" data-testid="admin-preview-step">
         <div className="admin-wizard-panel-head">
           <span>Paso 4</span>
-          <h4>Previsualiz? el impacto</h4>
+          <h4>Previsualizá el impacto</h4>
           <p>El preview no guarda cambios. Sirve para revisar diferencias, advertencias y productos afectados.</p>
         </div>
         <div className="principal-actions">
@@ -2791,7 +2918,7 @@ export default function CotizadorBajadasV2() {
           <button type="button" className="secondary-btn" onClick={() => goToAdminStep(3)}>Volver a editar valor</button>
         </div>
         {valueValidation ? <div className="error-box">{valueValidation}</div> : null}
-        {adminPreview ? renderPreviewPanel() : <div className="placeholder"><p>Gener? un preview para habilitar la confirmaci?n.</p></div>}
+        {adminPreview ? renderPreviewPanel() : <div className="placeholder"><p>Generá un preview para habilitar la confirmación.</p></div>}
       </div>
     );
 
@@ -2829,7 +2956,7 @@ export default function CotizadorBajadasV2() {
                 <article key={example.nombre}>
                   <strong>{example.nombre}</strong>
                   <span>Antes: {example.antes == null ? "-" : formatMoney(example.antes)}</span>
-                  <span>Despu?s: {example.despues == null ? "-" : formatMoney(example.despues)}</span>
+                  <span>Después: {example.despues == null ? "-" : formatMoney(example.despues)}</span>
                   <small>{example.detalle}</small>
                 </article>
               ))}
@@ -2843,13 +2970,13 @@ export default function CotizadorBajadasV2() {
       <div className="admin-wizard-panel" data-testid="admin-confirm-step">
         <div className="admin-wizard-panel-head">
           <span>Paso 5</span>
-          <h4>Confirm? y guard?</h4>
-          <p>Este cambio modifica una variable operativa. Revis? el impacto antes de guardar.</p>
+          <h4>Confirmá y guardá</h4>
+          <p>Este cambio modifica una variable operativa. Revisá el impacto antes de guardar.</p>
         </div>
         <div className="warning-box" data-testid="admin-confirmation-copy">
-          Vas a cambiar {selected?.label || adminVariable} de {selected?.value ?? adminPreview?.valor_actual ?? "-"} a {adminNewValue}. Se crear? backup e historial. ?Confirm?s?
+          Vas a cambiar {selected?.label || adminVariable} de {selected?.value ?? adminPreview?.valor_actual ?? "-"} a {adminNewValue}. Se creará backup e historial. ¿Confirmás?
         </div>
-        {adminPreview ? renderPreviewPanel() : <div className="placeholder"><p>Primero gener? un preview v?lido para este valor.</p></div>}
+        {adminPreview ? renderPreviewPanel() : <div className="placeholder"><p>Primero generá un preview válido para este valor.</p></div>}
         <div className="principal-actions">
           <button type="button" className="secondary-btn" onClick={() => goToAdminStep(4)}>Volver al preview</button>
           <button

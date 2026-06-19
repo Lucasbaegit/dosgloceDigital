@@ -394,6 +394,150 @@ test("Modificar precios exige preview antes de guardar y muestra historial", asy
   await expect(page.getByTestId("admin-rollback-apply-button")).toBeEnabled();
 });
 
+test("Modificar precios separa variables por cotización actual de Tarjetas 9x5", async ({ page }) => {
+  const adminVariables = [
+    {
+      key: "click_color",
+      label: "Click color base",
+      value: 39,
+      unit: "ARS",
+      description: "Click operativo de Stickers Circulares",
+      impacta_hoy: true,
+      editable: true,
+      estado: "editable",
+      productos_afectados: ["Stickers Circulares"],
+      min: 0.01,
+      max: 100000,
+      step: 0.01,
+    },
+    {
+      key: "obra_90g",
+      label: "Papel obra/ilustración 90g",
+      value: 14,
+      unit: "USD",
+      description: "Material base de Stickers Circulares",
+      impacta_hoy: true,
+      editable: true,
+      estado: "editable",
+      productos_afectados: ["Stickers Circulares"],
+      min: 0.01,
+      max: 100000,
+      step: 0.01,
+    },
+    {
+      key: "adicional_tinta_blanca_base_1_copia",
+      label: "Tinta blanca Autoadhesivas",
+      value: 603,
+      unit: "ARS/unidad",
+      description: "Adicional propio de Autoadhesivas",
+      impacta_hoy: true,
+      editable: true,
+      estado: "editable",
+      productos_afectados: ["Autoadhesivas"],
+      min: 0.01,
+      max: 100000,
+      step: 0.01,
+    },
+  ];
+
+  const impactMock = {
+    ok: true,
+    version: "variables_impacto_v1",
+    variables: [
+      { key: "click_color", label: "Click color base", editable: true, impacta_hoy: true, estado: "conectado" },
+      { key: "obra_90g", label: "Papel obra/ilustración 90g", editable: true, impacta_hoy: true, estado: "conectado" },
+      { key: "adicional_tinta_blanca_base_1_copia", label: "Tinta blanca Autoadhesivas", editable: true, impacta_hoy: true, estado: "conectado" },
+      { key: "matriz_pdf", label: "Matriz PDF", editable: false, impacta_hoy: true, estado: "conectado" },
+    ],
+    productos: [
+      { key: "tarjetas_9x5", label: "Tarjetas 9x5", estado: "activo", endpoint: "/tarjetas-9x5/cotizar", modo_precio: "matriz_pdf" },
+      { key: "stickers_circulares", label: "Stickers Circulares", estado: "activo", endpoint: "/stickers-circulares/cotizar", modo_precio: "formula_editable_calibrada" },
+      { key: "bajadas_autoadhesivas", label: "Bajadas Autoadhesivas", estado: "activo", endpoint: "/bajadas-v2/cotizar", modo_precio: "formula_adicional" },
+    ],
+    relaciones: [
+      {
+        variable: "matriz_pdf",
+        variable_label: "Matriz PDF",
+        producto_key: "tarjetas_9x5",
+        producto: "Tarjetas 9x5",
+        componente: "precios finales por paquete",
+        impacta_hoy: true,
+        editable: false,
+        estado: "conectado",
+        detalle: "Tarjetas 9x5 cotiza con matriz PDF fija.",
+      },
+      {
+        variable: "obra_90g",
+        variable_label: "Papel obra/ilustración 90g",
+        producto_key: "stickers_circulares",
+        producto: "Stickers Circulares",
+        componente: "material base",
+        impacta_hoy: true,
+        editable: true,
+        estado: "conectado",
+        detalle: "Costo base de Stickers Circulares.",
+      },
+      {
+        variable: "adicional_tinta_blanca_base_1_copia",
+        variable_label: "Tinta blanca Autoadhesivas",
+        producto_key: "bajadas_autoadhesivas",
+        producto: "Bajadas Autoadhesivas",
+        componente: "adicional tinta blanca",
+        impacta_hoy: true,
+        editable: true,
+        estado: "conectado",
+        detalle: "Adicional proporcional de Autoadhesivas.",
+      },
+    ],
+    resumen: { variables_editables: 3, productos_afectados: 3, relaciones_conectadas: 3 },
+  };
+
+  await page.route("**/tarjetas-9x5/cotizar", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        ok: true,
+        total_sin_iva: 5139,
+        total_con_urgencia: 5139,
+        precio_unitario_derivado_sin_iva: 51.39,
+        cantidad_unidades: 100,
+        fuente: "PDF página 12",
+        trazabilidad: { modo_calculo: "matriz_pdf_con_variables_detectadas" },
+      }),
+    });
+  });
+  await page.route("**/admin-precios/variables-editables", async (route) => {
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, variables: adminVariables }) });
+  });
+  await page.route("**/admin-precios/historial", async (route) => {
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, historial: [] }) });
+  });
+  await page.route("**/variables-impacto", async (route) => {
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(impactMock) });
+  });
+
+  await page.goto("/", { waitUntil: "domcontentloaded" });
+  await page.getByTestId("categoria-select").selectOption("Tarjetas Personales 9x5");
+  await page.getByLabel("Cantidad").fill("100");
+  await page.getByRole("button", { name: "Calcular" }).click();
+  await expect(page.getByText("Total final con urgencia")).toBeVisible();
+
+  await page.getByTestId("tab-admin-prices").click();
+  await expect(page.getByTestId("admin-current-quote-context")).toContainText("Tarjetas 9x5");
+  await expect(page.getByTestId("admin-relevant-variable-group")).toContainText("Variables que afectan esta cotización");
+  await expect(page.getByTestId("admin-no-contextual-variables")).toContainText("No hay variables editables específicas");
+  await expect(page.getByTestId("admin-relevant-variable-group")).not.toContainText("Papel obra/ilustración 90g");
+  await expect(page.getByTestId("admin-relevant-variable-group")).not.toContainText("Tinta blanca Autoadhesivas");
+
+  await page.getByTestId("admin-other-variable-group").locator("summary").click();
+  await expect(page.getByTestId("admin-other-variable-group")).toContainText("Otras variables editables del sistema");
+  await expect(page.getByTestId("admin-other-variable-group")).toContainText("Papel obra/ilustración 90g");
+  await expect(page.getByTestId("admin-other-variable-group")).toContainText("Tinta blanca Autoadhesivas");
+  await expect(page.getByTestId("admin-variable-obra_90g")).toContainText("No afecta esta cotización");
+  await expect(page.getByTestId("admin-variable-adicional_tinta_blanca_base_1_copia")).toContainText("No afecta esta cotización");
+});
+
 test("Historial y backups y Exportar soporte Excel quedan accesibles", async ({ page }) => {
   await page.route("**/admin-precios/variables-editables", async (route) => {
     await route.fulfill({
