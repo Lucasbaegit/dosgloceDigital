@@ -169,7 +169,17 @@ class ExcelMaestroImporter:
         return result
 
     def _system_importable(self, item: dict[str, Any]) -> bool:
-        return item.get("key") in IMPORTABLE_KEYS and (bool(item.get("impacta_hoy")) or item.get("key") == "tipo_cambio_usd")
+        key = str(item.get("key") or "")
+        return (
+            key in IMPORTABLE_KEYS
+            or key in {
+                "laca_uv_factor_stickers_circulares",
+                "corte_circular_factor_stickers_circulares",
+                "multiplicador_comercial_stickers_circulares",
+            }
+            or key.startswith("coeficiente_tamano_stickers_circulares_")
+            or key.startswith("coeficiente_cantidad_stickers_circulares_")
+        ) and (bool(item.get("impacta_hoy")) or key == "tipo_cambio_usd")
 
     def _blocked_payload(
         self,

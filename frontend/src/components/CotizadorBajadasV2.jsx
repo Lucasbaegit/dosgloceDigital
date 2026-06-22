@@ -458,6 +458,31 @@ function getQuoteProductLabel(payload, impactData) {
   return fromMap?.label || payload?.categoria || payload?.categoria_ui || "Cotización actual";
 }
 
+function relationAppliesToCurrentQuote(relation, payload) {
+  const applies = relation?.aplica_a || {};
+  if (!payload || !applies || !Object.keys(applies).length) return true;
+  if (Array.isArray(applies.formatos) && applies.formatos.length && !applies.formatos.includes(payload.formato)) {
+    return false;
+  }
+  if (Array.isArray(applies.cantidades) && applies.cantidades.length) {
+    const quantity = Number(payload.cantidad_unidades);
+    if (!applies.cantidades.some((item) => Number(item) === quantity || String(item) === String(payload.cantidad_unidades))) {
+      return false;
+    }
+  }
+  if (Array.isArray(applies.terminaciones) && applies.terminaciones.length) {
+    const terminacion =
+      payload.terminacion_stickers_circulares ||
+      payload.terminacion ||
+      payload.adicional_laminado ||
+      "sin_laca_uv";
+    if (!applies.terminaciones.includes(terminacion)) {
+      return false;
+    }
+  }
+  return true;
+}
+
 function collectCurrentQuoteAdditions(payload, result) {
   const additions = [];
   if (result?.adicional_laminado && result.adicional_laminado !== "sin_adicional") {
@@ -2804,14 +2829,19 @@ export default function CotizadorBajadasV2() {
     const relevantVariableKeys = new Set(
       currentProductKey
         ? impactRelations
-          .filter((relation) => relation.producto_key === currentProductKey && relation.impacta_hoy && relation.editable)
+          .filter((relation) => (
+            relation.producto_key === currentProductKey &&
+            relation.impacta_hoy &&
+            relation.editable &&
+            relationAppliesToCurrentQuote(relation, lastPayload)
+          ))
           .map((relation) => relation.variable)
         : []
     );
     const relationByVariable = new Map();
     if (currentProductKey) {
       impactRelations
-        .filter((relation) => relation.producto_key === currentProductKey)
+        .filter((relation) => relation.producto_key === currentProductKey && relationAppliesToCurrentQuote(relation, lastPayload))
         .forEach((relation) => relationByVariable.set(relation.variable, relation));
     }
     const hasCurrentQuoteContext = Boolean(currentProductKey && result && lastPayload);

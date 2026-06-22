@@ -8,6 +8,7 @@ connected to each product today.
 from __future__ import annotations
 
 from copy import deepcopy
+import json
 from pathlib import Path
 from typing import Any
 
@@ -158,6 +159,7 @@ class VariableImpactMap:
         endpoint: str,
         modo_precio: str,
         producto_estado: str = "activo",
+        aplica_a: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         return {
             "variable": variable,
@@ -176,6 +178,7 @@ class VariableImpactMap:
             "endpoint": endpoint,
             "modo_precio": modo_precio,
             "producto_estado": producto_estado,
+            "aplica_a": aplica_a or {},
         }
 
     def _relations(self) -> list[dict[str, Any]]:
@@ -575,4 +578,86 @@ class VariableImpactMap:
                 producto_estado="bloqueado",
             ),
         ]
+        relations.extend(self._stickers_circulares_editable_relations())
+        return relations
+
+    def _stickers_circulares_editable_relations(self) -> list[dict[str, Any]]:
+        config_path = self.project_root / "data" / "stickers_circulares" / "formula_editable_config.json"
+        if not config_path.exists():
+            return []
+        try:
+            payload = json.loads(config_path.read_text(encoding="utf-8-sig"))
+        except (OSError, json.JSONDecodeError):
+            return []
+        variables = payload.get("variables", {})
+        if not isinstance(variables, dict):
+            return []
+
+        rel = self._rel
+        common = {
+            "producto_key": "stickers_circulares",
+            "producto": "Stickers Circulares",
+            "impacta_hoy": True,
+            "editable": True,
+            "tipo": "variable_madre",
+            "nivel_impacto": "alto",
+            "estado": "conectado",
+            "fuente": "data/stickers_circulares/formula_editable_config.json",
+            "endpoint": "/stickers-circulares/cotizar",
+            "modo_precio": "formula_editable_calibrada",
+        }
+        relations = [
+            rel(
+                "laca_uv_factor_stickers_circulares",
+                "Factor Laca UV Stickers Circulares",
+                componente="laca UV",
+                detalle="Factor editable usado cuando Stickers Circulares cotiza con Laca UV; el precio final queda calibrado contra PDF.",
+                ruta_calculo=["laca_uv_factor", "subtotal_formula_excel", "factor_ajuste_pdf", "precio_final"],
+                aplica_a={"terminaciones": ["con_laca_uv", "con_laca_uv_brillo"]},
+                **common,
+            ),
+            rel(
+                "corte_circular_factor_stickers_circulares",
+                "Factor corte circular Stickers Circulares",
+                componente="corte circular",
+                detalle="Factor editable del corte circular para la familia Stickers Circulares.",
+                ruta_calculo=["corte_circular_factor", "subtotal_formula_excel", "factor_ajuste_pdf", "precio_final"],
+                **common,
+            ),
+            rel(
+                "multiplicador_comercial_stickers_circulares",
+                "Multiplicador comercial Stickers Circulares",
+                componente="multiplicador comercial",
+                detalle="Multiplicador editable propio de Stickers Circulares antes de la calibración PDF.",
+                ruta_calculo=["multiplicador_comercial", "subtotal_formula_excel", "factor_ajuste_pdf", "precio_final"],
+                **common,
+            ),
+        ]
+
+        coef_tamano = variables.get("coeficiente_tamano", {})
+        if isinstance(coef_tamano, dict):
+            for formato in sorted(coef_tamano, key=str):
+                safe = str(formato).replace("-", "_").replace("/", "_")
+                relations.append(rel(
+                    f"coeficiente_tamano_stickers_circulares_{safe}",
+                    f"Coeficiente tamaño Stickers Circulares {formato}",
+                    componente=f"coeficiente tamaño {formato}",
+                    detalle=f"Coeficiente editable que aplica solo al formato {formato} de Stickers Circulares.",
+                    ruta_calculo=[f"coeficiente_tamano.{formato}", "subtotal_formula_excel", "factor_ajuste_pdf", "precio_final"],
+                    aplica_a={"formatos": [str(formato)]},
+                    **common,
+                ))
+
+        coef_cantidad = variables.get("coeficiente_cantidad", {})
+        if isinstance(coef_cantidad, dict):
+            for cantidad in sorted(coef_cantidad, key=lambda value: int(value) if str(value).isdigit() else str(value)):
+                relations.append(rel(
+                    f"coeficiente_cantidad_stickers_circulares_{cantidad}",
+                    f"Coeficiente cantidad Stickers Circulares {cantidad}",
+                    componente=f"coeficiente cantidad {cantidad}",
+                    detalle=f"Coeficiente editable que aplica solo a cantidad {cantidad} de Stickers Circulares.",
+                    ruta_calculo=[f"coeficiente_cantidad.{cantidad}", "subtotal_formula_excel", "factor_ajuste_pdf", "precio_final"],
+                    aplica_a={"cantidades": [int(cantidad) if str(cantidad).isdigit() else str(cantidad)]},
+                    **common,
+                ))
         return relations

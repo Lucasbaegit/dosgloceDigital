@@ -681,6 +681,108 @@ test("Modificar precios separa variables por cotización actual de Tarjetas 9x5"
   await expect(page.getByTestId("admin-variable-adicional_tinta_blanca_base_1_copia")).toContainText("No afecta esta cotización");
 });
 
+test("Modificar precios muestra variables específicas de Stickers Circulares según formato y cantidad", async ({ page }) => {
+  const adminVariables = [
+    { key: "laca_uv_factor_stickers_circulares", label: "Factor Laca UV Stickers Circulares", value: 1.176, unit: "factor", description: "Laca circular", impacta_hoy: true, editable: true, estado: "editable", productos_afectados: ["Stickers Circulares"], min: 0.01, max: 100, step: 0.001 },
+    { key: "corte_circular_factor_stickers_circulares", label: "Factor corte circular Stickers Circulares", value: 1, unit: "factor", description: "Corte circular", impacta_hoy: true, editable: true, estado: "editable", productos_afectados: ["Stickers Circulares"], min: 0.01, max: 100, step: 0.001 },
+    { key: "multiplicador_comercial_stickers_circulares", label: "Multiplicador comercial Stickers Circulares", value: 1, unit: "factor", description: "Multiplicador circular", impacta_hoy: true, editable: true, estado: "editable", productos_afectados: ["Stickers Circulares"], min: 0.01, max: 100, step: 0.001 },
+    { key: "coeficiente_tamano_stickers_circulares_10cm", label: "Coeficiente tamaño Stickers Circulares 10cm", value: 3.19, unit: "factor", description: "Tamaño 10cm", impacta_hoy: true, editable: true, estado: "editable", productos_afectados: ["Stickers Circulares"], min: 0.0001, max: 1000000, step: 0.0001 },
+    { key: "coeficiente_tamano_stickers_circulares_9cm", label: "Coeficiente tamaño Stickers Circulares 9cm", value: 2.78, unit: "factor", description: "Tamaño 9cm", impacta_hoy: true, editable: true, estado: "editable", productos_afectados: ["Stickers Circulares"], min: 0.0001, max: 1000000, step: 0.0001 },
+    { key: "coeficiente_cantidad_stickers_circulares_1000", label: "Coeficiente cantidad Stickers Circulares 1000", value: 749, unit: "factor", description: "Cantidad 1000", impacta_hoy: true, editable: true, estado: "editable", productos_afectados: ["Stickers Circulares"], min: 0.0001, max: 1000000, step: 0.0001 },
+    { key: "coeficiente_cantidad_stickers_circulares_500", label: "Coeficiente cantidad Stickers Circulares 500", value: 390, unit: "factor", description: "Cantidad 500", impacta_hoy: true, editable: true, estado: "editable", productos_afectados: ["Stickers Circulares"], min: 0.0001, max: 1000000, step: 0.0001 },
+    { key: "adicional_tinta_blanca_base_1_copia", label: "Tinta blanca Autoadhesivas", value: 603, unit: "ARS/unidad", description: "Autoadhesivas", impacta_hoy: true, editable: true, estado: "editable", productos_afectados: ["Autoadhesivas"], min: 0.01, max: 100000, step: 0.01 },
+  ];
+
+  const rel = (variable, label, aplica_a = {}) => ({
+    variable,
+    variable_label: label,
+    producto_key: "stickers_circulares",
+    producto: "Stickers Circulares",
+    componente: label,
+    impacta_hoy: true,
+    editable: true,
+    estado: "conectado",
+    detalle: `${label} conectado a Stickers Circulares.`,
+    aplica_a,
+  });
+  const impactMock = {
+    ok: true,
+    version: "variables_impacto_v1",
+    variables: adminVariables.map((item) => ({ key: item.key, label: item.label, editable: true, impacta_hoy: true, estado: "conectado" })),
+    productos: [
+      { key: "stickers_circulares", label: "Stickers Circulares", estado: "activo", endpoint: "/stickers-circulares/cotizar", modo_precio: "formula_editable_calibrada" },
+      { key: "bajadas_autoadhesivas", label: "Bajadas Autoadhesivas", estado: "activo", endpoint: "/bajadas-v2/cotizar", modo_precio: "formula_adicional" },
+    ],
+    relaciones: [
+      rel("laca_uv_factor_stickers_circulares", "Factor Laca UV", { terminaciones: ["con_laca_uv", "con_laca_uv_brillo"] }),
+      rel("corte_circular_factor_stickers_circulares", "Factor corte circular"),
+      rel("multiplicador_comercial_stickers_circulares", "Multiplicador comercial"),
+      rel("coeficiente_tamano_stickers_circulares_10cm", "Coeficiente 10cm", { formatos: ["10cm"] }),
+      rel("coeficiente_tamano_stickers_circulares_9cm", "Coeficiente 9cm", { formatos: ["9cm"] }),
+      rel("coeficiente_cantidad_stickers_circulares_1000", "Coeficiente 1000", { cantidades: [1000] }),
+      rel("coeficiente_cantidad_stickers_circulares_500", "Coeficiente 500", { cantidades: [500] }),
+      {
+        variable: "adicional_tinta_blanca_base_1_copia",
+        variable_label: "Tinta blanca Autoadhesivas",
+        producto_key: "bajadas_autoadhesivas",
+        producto: "Bajadas Autoadhesivas",
+        componente: "tinta blanca",
+        impacta_hoy: true,
+        editable: true,
+        estado: "conectado",
+        detalle: "No corresponde a Stickers Circulares.",
+        aplica_a: {},
+      },
+    ],
+    resumen: { variables_editables: 8, productos_afectados: 2, relaciones_conectadas: 8 },
+  };
+
+  await page.route("**/stickers-circulares/cotizar", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        ok: true,
+        total_sin_iva: 85980,
+        total_con_urgencia: 85980,
+        precio_unitario_sin_iva: 85.98,
+        cantidad_unidades: 1000,
+        fuente: "stickers_circulares_pdf_hoja_8_calibrado",
+        trazabilidad: { modo_precio: "formula_editable_calibrada", modo_calculo: "formula_calibrada_con_factor_pdf" },
+      }),
+    });
+  });
+  await page.route("**/admin-precios/variables-editables", async (route) => {
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, variables: adminVariables }) });
+  });
+  await page.route("**/admin-precios/historial", async (route) => {
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, historial: [] }) });
+  });
+  await page.route("**/variables-impacto", async (route) => {
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(impactMock) });
+  });
+
+  await page.goto("/", { waitUntil: "domcontentloaded" });
+  await page.getByTestId("categoria-select").selectOption("Stickers Circulares");
+  await page.getByTestId("formato-select").selectOption("10cm");
+  await page.getByLabel("Terminación").selectOption("con_laca_uv_brillo");
+  await page.getByLabel("Cantidad").fill("1000");
+  await page.getByRole("button", { name: "Calcular" }).click();
+  await expect(page.getByText("Total final con urgencia")).toBeVisible();
+
+  await page.getByTestId("tab-admin-prices").click();
+  await expect(page.getByTestId("admin-current-quote-context")).toContainText("Stickers Circulares");
+  await expect(page.getByTestId("admin-relevant-variable-group")).toContainText("Factor Laca UV Stickers Circulares");
+  await expect(page.getByTestId("admin-relevant-variable-group")).toContainText("Coeficiente tamaño Stickers Circulares 10cm");
+  await expect(page.getByTestId("admin-relevant-variable-group")).toContainText("Coeficiente cantidad Stickers Circulares 1000");
+  await expect(page.getByTestId("admin-relevant-variable-group")).not.toContainText("Coeficiente tamaño Stickers Circulares 9cm");
+  await expect(page.getByTestId("admin-relevant-variable-group")).not.toContainText("Coeficiente cantidad Stickers Circulares 500");
+
+  await page.getByTestId("admin-other-variable-group").locator("summary").click();
+  await expect(page.getByTestId("admin-other-variable-group")).toContainText("Coeficiente tamaño Stickers Circulares 9cm");
+  await expect(page.getByTestId("admin-other-variable-group")).toContainText("Tinta blanca Autoadhesivas");
+});
+
 test("Historial y backups y Exportar soporte Excel quedan accesibles", async ({ page }) => {
   await page.route("**/admin-precios/variables-editables", async (route) => {
     await route.fulfill({

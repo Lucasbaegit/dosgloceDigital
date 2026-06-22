@@ -66,6 +66,27 @@ function buildQuoteSummary(currentQuote) {
   };
 }
 
+function relationAppliesToCurrentQuote(relation, payload) {
+  const applies = relation?.aplica_a || {};
+  if (!payload || !applies || !Object.keys(applies).length) return true;
+  if (Array.isArray(applies.formatos) && applies.formatos.length && !applies.formatos.includes(payload.formato)) {
+    return false;
+  }
+  if (Array.isArray(applies.cantidades) && applies.cantidades.length) {
+    const quantity = Number(payload.cantidad_unidades);
+    if (!applies.cantidades.some((item) => Number(item) === quantity || String(item) === String(payload.cantidad_unidades))) {
+      return false;
+    }
+  }
+  if (Array.isArray(applies.terminaciones) && applies.terminaciones.length) {
+    const terminacion = payload.terminacion_stickers_circulares || payload.terminacion || payload.adicional_laminado || "sin_laca_uv";
+    if (!applies.terminaciones.includes(terminacion)) {
+      return false;
+    }
+  }
+  return true;
+}
+
 function analyzeContext({ selectedRelations, quoteSummary, currentQuote, impactMode }) {
   if (!quoteSummary) {
     return {
@@ -77,7 +98,10 @@ function analyzeContext({ selectedRelations, quoteSummary, currentQuote, impactM
     };
   }
 
-  const currentRelations = selectedRelations.filter((item) => item.producto_key === quoteSummary.productKey);
+  const currentRelations = selectedRelations.filter((item) => (
+    item.producto_key === quoteSummary.productKey &&
+    relationAppliesToCurrentQuote(item, currentQuote.payload)
+  ));
   if (!currentRelations.length) {
     return {
       status: selectedRelations.length ? "solo_otros_productos" : "sin_evidencia",

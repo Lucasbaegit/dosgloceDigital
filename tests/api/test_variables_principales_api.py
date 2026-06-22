@@ -100,6 +100,11 @@ class TestVariablesPrincipalesApi(unittest.TestCase):
         self.assertIn("click_bn_excel", keys)
         self.assertIn("ilustracion_150g_65x95_usd", keys)
         self.assertIn("adicional_tinta_blanca_base_1_copia", keys)
+        self.assertIn("laca_uv_factor_stickers_circulares", keys)
+        self.assertIn("corte_circular_factor_stickers_circulares", keys)
+        self.assertIn("multiplicador_comercial_stickers_circulares", keys)
+        self.assertIn("coeficiente_tamano_stickers_circulares_10cm", keys)
+        self.assertIn("coeficiente_cantidad_stickers_circulares_1000", keys)
         self.assertNotIn("factor_ajuste_pdf", keys)
         editable_items = [
             item
@@ -113,6 +118,7 @@ class TestVariablesPrincipalesApi(unittest.TestCase):
         self.assertTrue(all(item.get("value") is not None for item in editable_items))
         self.assertTrue(all(item.get("confiabilidad") in {"alta", "media"} for item in editable_items))
         self.assertTrue(any(item["key"] == "click_color" and item["impacta_hoy"] for item in editable_items))
+        self.assertTrue(any(item["key"] == "laca_uv_factor_stickers_circulares" and item["impacta_hoy"] for item in editable_items))
         self.assertTrue(any(item["key"] == "click_bn_excel" and not item["impacta_hoy"] for item in editable_items))
         obra_90g = next(item for item in editable_items if item["key"] == "obra_90g")
         self.assertEqual(obra_90g["productos_afectados"], ["Stickers Circulares"])

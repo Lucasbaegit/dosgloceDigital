@@ -142,7 +142,119 @@ class PrincipalVariablesService:
         self.detected_paper_variable_links = {
             ("Papeles Stickers Circulares", "obra_90g"): "obra_90g",
         }
+        self._add_stickers_circulares_editable_variables()
         self._load_prepared_variables()
+
+    def _add_stickers_circulares_editable_variables(self) -> None:
+        """Expose calibrated Stickers Circulares formula parts as scoped variables."""
+        cfg_path = self.project_root / "data" / "stickers_circulares" / "formula_editable_config.json"
+        if not cfg_path.exists():
+            return
+        payload = self._read_json(cfg_path)
+        variables = payload.get("variables", {})
+        if not isinstance(variables, dict):
+            return
+
+        def add_variable(key: str, *, group: str, label: str, unit: str, path: list[str],
+                         source_path: str, description: str, min_value: float, max_value: float,
+                         step: float, impact: str) -> None:
+            self.catalog[key] = {
+                "group": group,
+                "label": label,
+                "unit": unit,
+                "description": description,
+                "tipo": "variable_madre",
+                "min": min_value,
+                "max": max_value,
+                "step": step,
+                "source_file": "data/stickers_circulares/formula_editable_config.json",
+                "path": path,
+                "source_path": source_path,
+                "applies_today": True,
+                "confiabilidad": "alta",
+                "productos_afectados": ["Stickers Circulares"],
+                "impact": impact,
+            }
+
+        common_note = (
+            "Variable operativa exclusiva de Stickers Circulares. Cambia el subtotal técnico "
+            "de la fórmula editable calibrada; el precio final comercial se preserva contra PDF/lista "
+            "mediante factor_ajuste_pdf por combinación."
+        )
+        add_variable(
+            "laca_uv_factor_stickers_circulares",
+            group="adicionales",
+            label="Factor Laca UV Stickers Circulares",
+            unit="factor",
+            path=["variables", "laca_uv_factor"],
+            source_path="variables.laca_uv_factor",
+            description=common_note,
+            min_value=0.01,
+            max_value=100,
+            step=0.001,
+            impact="Modifica el subtotal técnico cuando la cotización circular usa Laca UV.",
+        )
+        add_variable(
+            "corte_circular_factor_stickers_circulares",
+            group="multiplicadores",
+            label="Factor corte circular Stickers Circulares",
+            unit="factor",
+            path=["variables", "corte_circular_factor"],
+            source_path="variables.corte_circular_factor",
+            description=common_note,
+            min_value=0.01,
+            max_value=100,
+            step=0.001,
+            impact="Modifica el subtotal técnico de todos los Stickers Circulares habilitados.",
+        )
+        add_variable(
+            "multiplicador_comercial_stickers_circulares",
+            group="multiplicadores",
+            label="Multiplicador comercial Stickers Circulares",
+            unit="factor",
+            path=["variables", "multiplicador_comercial"],
+            source_path="variables.multiplicador_comercial",
+            description=common_note,
+            min_value=0.01,
+            max_value=100,
+            step=0.001,
+            impact="Modifica el subtotal técnico comercial de Stickers Circulares antes de calibrar contra PDF.",
+        )
+
+        coef_tamano = variables.get("coeficiente_tamano", {})
+        if isinstance(coef_tamano, dict):
+            for formato in sorted(coef_tamano, key=str):
+                safe = str(formato).replace("-", "_").replace("/", "_")
+                add_variable(
+                    f"coeficiente_tamano_stickers_circulares_{safe}",
+                    group="multiplicadores",
+                    label=f"Coeficiente tamaño Stickers Circulares {formato}",
+                    unit="factor",
+                    path=["variables", "coeficiente_tamano", str(formato)],
+                    source_path=f"variables.coeficiente_tamano.{formato}",
+                    description=f"{common_note} Aplica al formato {formato}.",
+                    min_value=0.0001,
+                    max_value=1000000,
+                    step=0.0001,
+                    impact=f"Modifica el subtotal técnico solo para Stickers Circulares formato {formato}.",
+                )
+
+        coef_cantidad = variables.get("coeficiente_cantidad", {})
+        if isinstance(coef_cantidad, dict):
+            for cantidad in sorted(coef_cantidad, key=lambda value: int(value) if str(value).isdigit() else str(value)):
+                add_variable(
+                    f"coeficiente_cantidad_stickers_circulares_{cantidad}",
+                    group="multiplicadores",
+                    label=f"Coeficiente cantidad Stickers Circulares {cantidad}",
+                    unit="factor",
+                    path=["variables", "coeficiente_cantidad", str(cantidad)],
+                    source_path=f"variables.coeficiente_cantidad.{cantidad}",
+                    description=f"{common_note} Aplica a cantidad {cantidad}.",
+                    min_value=0.0001,
+                    max_value=1000000,
+                    step=0.0001,
+                    impact=f"Modifica el subtotal técnico solo para Stickers Circulares cantidad {cantidad}.",
+                )
 
     def get_grouped(self) -> dict[str, Any]:
         grouped = {group: [] for group in self.GROUP_ORDER}

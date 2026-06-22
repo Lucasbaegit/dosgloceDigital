@@ -146,6 +146,36 @@ class StickersCircularesPricingEngine:
                         "value": formula_breakdown["multiplicador_comercial"],
                         "unit": "factor",
                     },
+                    {
+                        "key": "laca_uv_factor_stickers_circulares",
+                        "label": "Factor Laca UV Stickers Circulares",
+                        "value": formula_breakdown["laca_factor"],
+                        "unit": "factor",
+                    },
+                    {
+                        "key": "corte_circular_factor_stickers_circulares",
+                        "label": "Factor corte circular Stickers Circulares",
+                        "value": formula_breakdown["corte_factor"],
+                        "unit": "factor",
+                    },
+                    {
+                        "key": "multiplicador_comercial_stickers_circulares",
+                        "label": "Multiplicador comercial Stickers Circulares",
+                        "value": formula_breakdown["multiplicador_comercial"],
+                        "unit": "factor",
+                    },
+                    {
+                        "key": f"coeficiente_tamano_stickers_circulares_{str(request.formato).replace('-', '_').replace('/', '_')}",
+                        "label": f"Coeficiente tamaño Stickers Circulares {request.formato}",
+                        "value": formula_breakdown["coeficiente_tamano"],
+                        "unit": "factor",
+                    },
+                    {
+                        "key": f"coeficiente_cantidad_stickers_circulares_{request.cantidad_unidades}",
+                        "label": f"Coeficiente cantidad Stickers Circulares {request.cantidad_unidades}",
+                        "value": formula_breakdown["coeficiente_cantidad"],
+                        "unit": "factor",
+                    },
                 ],
             },
         )
@@ -222,6 +252,18 @@ class StickersCircularesPricingEngine:
             corte_circular_factor = float(overrides["corte_circular_factor"])
         if "multiplicador_comercial" in overrides:
             multiplicador_comercial = float(overrides["multiplicador_comercial"])
+        if "laca_uv_factor_stickers_circulares" in overrides:
+            laca_uv_factor = float(overrides["laca_uv_factor_stickers_circulares"])
+        if "corte_circular_factor_stickers_circulares" in overrides:
+            corte_circular_factor = float(overrides["corte_circular_factor_stickers_circulares"])
+        if "multiplicador_comercial_stickers_circulares" in overrides:
+            multiplicador_comercial = float(overrides["multiplicador_comercial_stickers_circulares"])
+        size_override_key = f"coeficiente_tamano_stickers_circulares_{str(request.formato).replace('-', '_').replace('/', '_')}"
+        quantity_override_key = f"coeficiente_cantidad_stickers_circulares_{request.cantidad_unidades}"
+        if size_override_key in overrides:
+            coeficiente_tamano = float(overrides[size_override_key])
+        if quantity_override_key in overrides:
+            coeficiente_cantidad = float(overrides[quantity_override_key])
 
         click_total = click_color_base * coeficiente_tamano
         laca_factor = laca_uv_factor if request.terminacion in {"con_laca_uv", "con_laca_uv_brillo"} else 1.0

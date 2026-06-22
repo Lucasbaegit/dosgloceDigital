@@ -15,7 +15,7 @@ from pricing_variables import PrincipalVariableError, PrincipalVariablesService
 class AdminPricesService:
     """Safe write facade for the small set of operational variables."""
 
-    EDITABLE_KEYS = {
+    BASE_EDITABLE_KEYS = {
         "tipo_cambio_usd",
         "click_color",
         "obra_90g",
@@ -32,9 +32,10 @@ class AdminPricesService:
     def variables_editables(self) -> dict[str, Any]:
         variables = []
         grouped = self.principal_variables.get_grouped()
+        editable_keys = self._editable_keys()
         for group in PrincipalVariablesService.GROUP_ORDER:
             for item in grouped.get(group, []):
-                if item["key"] not in self.EDITABLE_KEYS:
+                if item["key"] not in editable_keys:
                     continue
                 impacts = self._impacts_for_variable(item["key"])
                 variables.append({
@@ -138,7 +139,7 @@ class AdminPricesService:
         if entry.get("tipo") == "rollback":
             return 400, {"ok": False, "error": "rollback_no_restaurable", "detail": "No se restaura directamente un evento rollback."}
         variable = str(entry.get("variable", "")).strip()
-        if variable not in self.EDITABLE_KEYS:
+        if variable not in self._editable_keys():
             return 400, {"ok": False, "error": "variable_no_editable", "detail": "La variable del historial no es editable."}
         valor_rollback = entry.get("valor_anterior")
         validation = self._validate_payload({"variable": variable, "nuevo_valor": valor_rollback})
@@ -211,7 +212,7 @@ class AdminPricesService:
 
     def _validate_payload(self, payload: dict[str, Any]) -> tuple[int, dict[str, Any]]:
         variable = str(payload.get("variable", "")).strip()
-        if variable not in self.EDITABLE_KEYS:
+        if variable not in self._editable_keys():
             return 400, {
                 "ok": False,
                 "error": "variable_no_editable",
@@ -245,6 +246,13 @@ class AdminPricesService:
                     return item
         raise KeyError(variable)
 
+    def _editable_keys(self) -> set[str]:
+        return set(self.BASE_EDITABLE_KEYS) | {
+            key
+            for key, meta in self.principal_variables.catalog.items()
+            if bool(meta.get("applies_today")) and str(meta.get("tipo")) == "variable_madre"
+        }
+
     def _impacts_for_variable(self, variable: str) -> list[dict[str, Any]]:
         status, body = self.impact_map.by_variable(variable)
         if status != 200:
@@ -261,7 +269,15 @@ class AdminPricesService:
                 "despues": new * quantity,
                 "detalle": "Subtotal adicional proporcional: valor base 1 copia x cantidad.",
             }]
-        if variable in {"click_color", "obra_90g", "multiplicador_general", "tipo_cambio_usd"}:
+        if variable in {
+            "click_color",
+            "obra_90g",
+            "multiplicador_general",
+            "tipo_cambio_usd",
+            "laca_uv_factor_stickers_circulares",
+            "corte_circular_factor_stickers_circulares",
+            "multiplicador_comercial_stickers_circulares",
+        } or variable.startswith("coeficiente_tamano_stickers_circulares_") or variable.startswith("coeficiente_cantidad_stickers_circulares_"):
             return [{
                 "nombre": "Stickers Circulares formula editable calibrada",
                 "antes": None,

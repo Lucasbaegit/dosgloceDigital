@@ -54,6 +54,11 @@ class TestVariablesImpactoApi(unittest.TestCase):
             "click_color",
             "obra_90g",
             "multiplicador_general",
+            "laca_uv_factor_stickers_circulares",
+            "corte_circular_factor_stickers_circulares",
+            "multiplicador_comercial_stickers_circulares",
+            "coeficiente_tamano_stickers_circulares_10cm",
+            "coeficiente_cantidad_stickers_circulares_1000",
             "adicional_tinta_blanca_base_1_copia",
             "matriz_pdf",
             "factor_ajuste_pdf",
@@ -89,6 +94,26 @@ class TestVariablesImpactoApi(unittest.TestCase):
         self.assertNotIn("bajadas_autoadhesivas", productos)
         self.assertTrue(all(rel["producto_key"] != "bajadas_autoadhesivas" for rel in body["relaciones"]))
         self.assertTrue(any(rel["impacta_hoy"] and rel["producto_key"] == "stickers_circulares" for rel in body["relaciones"]))
+
+    def test_variables_editables_stickers_circulares_tienen_scope_contextual(self):
+        status, body = self._get_json("/variables-impacto/variable/coeficiente_tamano_stickers_circulares_10cm")
+        self.assertEqual(status, 200)
+        self.assertEqual(body["variable"], "coeficiente_tamano_stickers_circulares_10cm")
+        rel = body["relaciones"][0]
+        self.assertEqual(rel["producto_key"], "stickers_circulares")
+        self.assertTrue(rel["editable"])
+        self.assertTrue(rel["impacta_hoy"])
+        self.assertEqual(rel["aplica_a"], {"formatos": ["10cm"]})
+
+        status, body = self._get_json("/variables-impacto/variable/coeficiente_cantidad_stickers_circulares_1000")
+        self.assertEqual(status, 200)
+        rel = body["relaciones"][0]
+        self.assertEqual(rel["aplica_a"], {"cantidades": [1000]})
+
+        status, body = self._get_json("/variables-impacto/variable/laca_uv_factor_stickers_circulares")
+        self.assertEqual(status, 200)
+        rel = body["relaciones"][0]
+        self.assertEqual(rel["aplica_a"], {"terminaciones": ["con_laca_uv", "con_laca_uv_brillo"]})
 
     def test_tinta_blanca_es_variable_operativa_autoadhesivas(self):
         status, body = self._get_json("/variables-impacto/variable/adicional_tinta_blanca_base_1_copia")

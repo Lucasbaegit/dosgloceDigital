@@ -84,6 +84,20 @@ class StickersCircularesPricingEngineTests(unittest.TestCase):
             changed.trazabilidad["precio_base_estimado"],
         )
 
+    def test_override_variable_editable_calibrada_por_tamano_cambia_base_no_final(self):
+        base = self.quote(formato="10cm", terminacion="con_laca_uv", cantidad_unidades=1000)
+        changed = self.quote(
+            formato="10cm",
+            terminacion="con_laca_uv",
+            cantidad_unidades=1000,
+            variables_override={"coeficiente_tamano_stickers_circulares_10cm": 3.5},
+        )
+        self.assertEqual(base.total_sin_iva, changed.total_sin_iva)
+        self.assertNotEqual(base.trazabilidad["precio_base_estimado"], changed.trazabilidad["precio_base_estimado"])
+        keys = {item["key"] for item in changed.trazabilidad["variables_principales_usadas"]}
+        self.assertIn("coeficiente_tamano_stickers_circulares_10cm", keys)
+        self.assertIn("laca_uv_factor_stickers_circulares", keys)
+
 
 if __name__ == "__main__":
     unittest.main()
