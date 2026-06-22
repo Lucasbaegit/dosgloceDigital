@@ -1,4 +1,133 @@
-﻿export default function ImpactoCambiosPanel({
+function formatMoney(value) {
+  const number = Number(value);
+  if (!Number.isFinite(number)) return "-";
+  return new Intl.NumberFormat("es-AR", {
+    style: "currency",
+    currency: "ARS",
+    maximumFractionDigits: 2,
+  }).format(number);
+}
+
+function describeQuoteMaterial(payload) {
+  const parts = [payload?.material || payload?.papel, payload?.gramaje].filter(Boolean);
+  return parts.join(" ") || payload?.tipo_papel || "-";
+}
+
+function quoteUsesFixedPdf(payload, result, relation) {
+  const haystack = [
+    result?.modo_precio,
+    result?.modo_calculo,
+    result?.fuente,
+    result?.regla_aplicada,
+    result?.trazabilidad?.modo_precio,
+    result?.trazabilidad?.modo_calculo,
+    result?.trazabilidad?.fuente_precio_final,
+    relation?.modo_precio,
+    relation?.tipo,
+    payload?.categoria,
+  ].filter(Boolean).join(" ").toLowerCase();
+  return haystack.includes("pdf") || haystack.includes("matriz");
+}
+
+function buildQuoteSummary(currentQuote) {
+  const payload = currentQuote?.payload;
+  const result = currentQuote?.result;
+  if (!payload || !result) return null;
+  const quantity = result.cantidad_unidades ?? payload.cantidad_unidades ?? "-";
+  const total = result.total_con_urgencia ?? result.total_sin_iva ?? result.precio_con_recargo_urgencia ?? result.precio_sin_iva;
+  const addition =
+    payload.adicional_laminado && payload.adicional_laminado !== "sin_adicional"
+      ? payload.adicional_laminado
+      : payload.adicional_laca_uv
+        ? "laca_uv"
+        : payload.adicional_tinta_blanca
+          ? "tinta_blanca"
+          : "sin_adicional";
+  return {
+    productKey: currentQuote.productKey,
+    productLabel: currentQuote.productLabel || payload.categoria || "Cotización actual",
+    headline: [
+      currentQuote.productLabel || payload.categoria,
+      payload.formato,
+      describeQuoteMaterial(payload),
+      payload.caras,
+      quantity ? `${quantity} unidad${Number(quantity) === 1 ? "" : "es"}` : null,
+    ].filter(Boolean).join(" · "),
+    fields: [
+      ["Producto", currentQuote.productLabel || payload.categoria || "-"],
+      ["Formato", payload.formato || "-"],
+      ["Material", describeQuoteMaterial(payload)],
+      ["Impresión", payload.caras || "-"],
+      ["Cantidad", quantity],
+      ["Adicional", addition],
+      ["Urgencia", payload.urgencia || "normal"],
+      ["Total final", formatMoney(total)],
+    ],
+  };
+}
+
+function analyzeContext({ selectedRelations, quoteSummary, currentQuote, impactMode }) {
+  if (!quoteSummary) {
+    return {
+      status: "sin_cotizacion",
+      badge: "Mapa general",
+      title: "No hay una cotización activa",
+      message: "No hay una cotización activa. Se muestra el mapa general de impacto. Para ver impacto exacto, primero calculá una cotización.",
+      currentRelations: [],
+    };
+  }
+
+  const currentRelations = selectedRelations.filter((item) => item.producto_key === quoteSummary.productKey);
+  if (!currentRelations.length) {
+    return {
+      status: selectedRelations.length ? "solo_otros_productos" : "sin_evidencia",
+      badge: selectedRelations.length ? "Solo otros productos" : "Sin evidencia",
+      title: selectedRelations.length ? "No afecta esta cotización actual" : "Sin evidencia para esta cotización",
+      message: selectedRelations.length
+        ? "Esta variable impacta otros productos, pero no la cotización actual."
+        : "No hay una relación documentada entre la selección actual y esta cotización.",
+      currentRelations,
+    };
+  }
+
+  const connected = currentRelations.find((item) => item.impacta_hoy && item.estado !== "bloqueado");
+  if (connected && !quoteUsesFixedPdf(currentQuote.payload, currentQuote.result, connected)) {
+    return {
+      status: "afecta_cotizacion_actual",
+      badge: "Afecta esta cotización",
+      title: "Afecta esta cotización actual",
+      message: "Esta variable participa en el cálculo actual de esta cotización.",
+      currentRelations,
+    };
+  }
+
+  const documented = currentRelations.find((item) => !item.impacta_hoy || item.estado === "preparado_no_conectado" || item.estado === "documentado_no_conectado");
+  if (documented || quoteUsesFixedPdf(currentQuote.payload, currentQuote.result, connected || currentRelations[0])) {
+    return {
+      status: "documentada_no_conectada_actual",
+      badge: "Documentada, no conectada",
+      title: "No afecta esta cotización actual",
+      message: impactMode === "variable"
+        ? "Esta variable está documentada para este producto, pero esta cotización actual usa matriz PDF. Cambiarla no modifica este precio final hoy."
+        : "Este producto tiene relaciones documentadas o preparadas, pero el precio actual puede seguir viniendo de una matriz PDF fija.",
+      currentRelations,
+    };
+  }
+
+  return {
+    status: "afecta_producto_en_otros_casos",
+    badge: "Producto relacionado, no este caso",
+    title: "Afecta el producto, pero no este caso específico",
+    message: "La relación existe para el producto, pero no hay evidencia de que afecte esta combinación exacta.",
+    currentRelations,
+  };
+}
+
+function relationKey(relation) {
+  return `${relation.variable}-${relation.producto_key}-${relation.componente}`;
+}
+
+export default function ImpactoCambiosPanel({
   isSimpleMode,
   isAdvancedMode,
   impactData,
@@ -10,6 +139,7 @@
   setImpactVariable,
   impactProduct,
   setImpactProduct,
+  currentQuote,
 }) {
   const variables = impactData?.variables || [];
   const products = impactData?.productos || [];
@@ -23,6 +153,12 @@
       ? variables.find((item) => item.key === impactVariable)
       : products.find((item) => item.key === impactProduct);
   const summary = impactData?.resumen || {};
+  const quoteSummary = buildQuoteSummary(currentQuote);
+  const context = analyzeContext({ selectedRelations, quoteSummary, currentQuote, impactMode });
+  const currentRelationKeys = new Set(context.currentRelations.map(relationKey));
+  const sameProductOtherCases = selectedRelations.filter((item) => item.producto_key === quoteSummary?.productKey && !currentRelationKeys.has(relationKey(item)));
+  const otherProductRelations = selectedRelations.filter((item) => item.producto_key !== quoteSummary?.productKey && item.impacta_hoy && item.estado !== "bloqueado");
+  const documentedRelations = selectedRelations.filter((item) => item.producto_key !== quoteSummary?.productKey && (!item.impacta_hoy || item.estado === "bloqueado"));
   const firstRelation = selectedRelations[0];
 
   const statusLabel = (relation) => {
@@ -39,6 +175,28 @@
     return "preparada";
   };
 
+  const renderRelationCard = (relation, suffix = "") => (
+    <article className={`impact-relation-card ${statusClass(relation)}`} key={`${relationKey(relation)}${suffix}`}>
+      <div className="impact-relation-head">
+        <div>
+          <strong>{impactMode === "variable" ? relation.producto : relation.variable_label}</strong>
+          <span>{isAdvancedMode ? relation.componente : relation.nivel_impacto}</span>
+        </div>
+        <em>{statusLabel(relation)}</em>
+      </div>
+      {isAdvancedMode ? (
+        <div className="impact-meta-grid" data-testid="impact-advanced-meta">
+          <div><span>Editable</span><strong>{relation.editable ? "si" : "no"}</strong></div>
+          <div><span>Nivel</span><strong>{relation.nivel_impacto}</strong></div>
+          <div><span>Estado</span><strong>{relation.estado}</strong></div>
+          <div><span>Modo precio</span><strong>{relation.modo_precio}</strong></div>
+        </div>
+      ) : null}
+      <p>{relation.detalle}</p>
+      {isAdvancedMode ? <small>Fuente: {relation.fuente}</small> : null}
+    </article>
+  );
+
   return (
     <section className="card result-card impact-card">
       <div className="card-head">
@@ -46,7 +204,7 @@
           <h3 data-testid="variable-impact-title">Ver impacto de cambios</h3>
           <p>{isSimpleMode ? "Usá esta sección para saber qué productos se afectan y evitar cambios riesgosos." : "Usá esta sección para saber qué productos se afectan antes de modificar una variable o costo. Es una vista de prevención: no guarda cambios."}</p>
         </div>
-        <span>{isSimpleMode ? "Impacto claro" : "Mapa preventivo"}</span>
+        <span>{quoteSummary ? "Impacto contextual" : isSimpleMode ? "Impacto claro" : "Mapa preventivo"}</span>
       </div>
 
       {impactError ? <div className="error-box" data-testid="impact-error">{impactError}</div> : null}
@@ -62,8 +220,27 @@
           </div>
 
           <div className="impact-explainer">
-            <p>{isSimpleMode ? "Revisá productos afectados y nivel de impacto antes de cambiar un precio. Activá modo avanzado para ver claves técnicas, componentes y relaciones internas." : <><strong>Impacta hoy</strong> significa que cambiar esa variable modifica precios actuales. <strong>Documentado no conectado</strong> existe como logica historica o futura, pero hoy no recalcula. <strong>Tabla PDF fija</strong> viene de precio publicado. <strong>Bloqueado</strong> no tiene datos confiables.</>}</p>
+            <p>{quoteSummary ? "Primero se evalúa la cotización actual. Después se separan impactos del mismo producto, otros productos y relaciones documentadas." : isSimpleMode ? "No hay una cotización activa. Se muestra el mapa general de impacto." : <><strong>Impacta hoy</strong> significa que cambiar esa variable modifica precios actuales. <strong>Documentado no conectado</strong> existe como lógica histórica o futura, pero hoy no recalcula. <strong>Tabla PDF fija</strong> viene de precio publicado. <strong>Bloqueado</strong> no tiene datos confiables.</>}</p>
           </div>
+
+          {quoteSummary ? (
+            <div className="impact-current-quote" data-testid="impact-current-quote">
+              <div>
+                <span>Cotización actual analizada</span>
+                <strong>{quoteSummary.headline}</strong>
+              </div>
+              <div className="impact-current-grid">
+                {quoteSummary.fields.map(([label, value]) => (
+                  <div key={label}><span>{label}</span><strong>{value}</strong></div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="impact-current-quote neutral" data-testid="impact-no-current-quote">
+              <strong>No hay una cotización activa</strong>
+              <p>Se muestra el mapa general de impacto. Para ver impacto exacto, primero calculá una cotización.</p>
+            </div>
+          )}
 
           <div className="impact-toolbar">
             <div className="trace-mode-options" role="group" aria-label="Modo impacto">
@@ -103,8 +280,25 @@
 
           <div className="impact-focus-card">
             <span>{impactMode === "variable" ? "Variable seleccionada" : "Producto seleccionado"}</span>
-            <strong>{selectedMeta?.label || selectedMeta?.key || "Sin seleccion"}</strong>
+            <strong>{selectedMeta?.label || selectedMeta?.key || "Sin selección"}</strong>
             <small>{impactMode === "variable" ? selectedMeta?.descripcion : (isAdvancedMode ? `${selectedMeta?.modo_precio || "-"} · ${selectedMeta?.endpoint || "-"}` : "Productos afectados por la selección.")}</small>
+          </div>
+
+          <div className={`impact-context-card ${context.status}`} data-testid="impact-current-assessment">
+            <div className="impact-context-head">
+              <span>Impacto sobre esta cotización</span>
+              <em>{context.badge}</em>
+            </div>
+            <strong>{context.title}</strong>
+            <p>{context.message}</p>
+            {isAdvancedMode && quoteSummary ? (
+              <div className="impact-meta-grid">
+                <div><span>Producto actual</span><strong>{quoteSummary.productKey || "-"}</strong></div>
+                <div><span>Estado contextual</span><strong>{context.status}</strong></div>
+                <div><span>Relaciones del producto</span><strong>{context.currentRelations.length}</strong></div>
+                <div><span>Modo</span><strong>{impactMode}</strong></div>
+              </div>
+            ) : null}
           </div>
 
           {isAdvancedMode && firstRelation ? (
@@ -116,27 +310,26 @@
           ) : null}
 
           <div className="impact-results" data-testid="impact-results">
-            {selectedRelations.length ? selectedRelations.map((relation) => (
-              <article className={`impact-relation-card ${statusClass(relation)}`} key={`${relation.variable}-${relation.producto_key}-${relation.componente}`}>
-                <div className="impact-relation-head">
-                  <div>
-                    <strong>{impactMode === "variable" ? relation.producto : relation.variable_label}</strong>
-                    <span>{isAdvancedMode ? relation.componente : relation.nivel_impacto}</span>
-                  </div>
-                  <em>{statusLabel(relation)}</em>
-                </div>
-                {isAdvancedMode ? (
-                  <div className="impact-meta-grid" data-testid="impact-advanced-meta">
-                    <div><span>Editable</span><strong>{relation.editable ? "si" : "no"}</strong></div>
-                    <div><span>Nivel</span><strong>{relation.nivel_impacto}</strong></div>
-                    <div><span>Estado</span><strong>{relation.estado}</strong></div>
-                    <div><span>Modo precio</span><strong>{relation.modo_precio}</strong></div>
-                  </div>
-                ) : null}
-                <p>{relation.detalle}</p>
-                {isAdvancedMode ? <small>Fuente: {relation.fuente}</small> : null}
-              </article>
-            )) : <div className="placeholder"><p>No hay relaciones para esta seleccion.</p></div>}
+            {quoteSummary ? (
+              <>
+                <section className="impact-group" data-testid="impact-current-product-group">
+                  <h4>Esta cotización actual</h4>
+                  {context.currentRelations.length ? context.currentRelations.map((relation) => renderRelationCard(relation, "-actual")) : <div className="placeholder"><p>La selección no tiene relación directa con esta cotización.</p></div>}
+                </section>
+                <section className="impact-group" data-testid="impact-same-product-group">
+                  <h4>Este producto en otros casos</h4>
+                  {sameProductOtherCases.length ? sameProductOtherCases.map((relation) => renderRelationCard(relation, "-same")) : <div className="placeholder"><p>No hay otros casos del mismo producto para esta selección.</p></div>}
+                </section>
+                <section className="impact-group" data-testid="impact-other-products-group">
+                  <h4>Otros productos afectados</h4>
+                  {otherProductRelations.length ? otherProductRelations.map((relation) => renderRelationCard(relation, "-other")) : <div className="placeholder"><p>No hay otros productos conectados para esta selección.</p></div>}
+                </section>
+                <section className="impact-group" data-testid="impact-documented-group">
+                  <h4>Documentado / preparado / bloqueado</h4>
+                  {documentedRelations.length ? documentedRelations.map((relation) => renderRelationCard(relation, "-doc")) : <div className="placeholder"><p>No hay relaciones documentadas adicionales.</p></div>}
+                </section>
+              </>
+            ) : selectedRelations.length ? selectedRelations.map((relation) => renderRelationCard(relation)) : <div className="placeholder"><p>No hay relaciones para esta selección.</p></div>}
           </div>
         </>
       ) : null}

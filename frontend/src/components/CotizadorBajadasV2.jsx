@@ -2757,6 +2757,12 @@ export default function CotizadorBajadasV2() {
       setImpactVariable={setImpactVariable}
       impactProduct={impactProduct}
       setImpactProduct={setImpactProduct}
+      currentQuote={{
+        payload: lastPayload,
+        result,
+        productKey: getQuoteProductKey(lastPayload),
+        productLabel: lastPayload ? getQuoteProductLabel(lastPayload, impactData) : "",
+      }}
     />
   );
   const renderAdminPricesTab = () => {

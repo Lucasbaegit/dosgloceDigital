@@ -241,6 +241,134 @@ test("Impacto de variables muestra relaciones por variable y producto", async ({
   await expect(page.getByTestId("impact-visual-chain")).toBeVisible();
 });
 
+test("Impacto contextual separa cotización actual de mapa general", async ({ page }) => {
+  await page.route("http://127.0.0.1:8000/bajadas-v2/cotizar", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        precio_unitario_sin_iva: 437.93,
+        precio_unitario_con_urgencia: 437.93,
+        precio_unitario_base_sin_iva: 437.93,
+        cantidad_unidades: 1,
+        cantidad_rango_aplicado: "1",
+        total_sin_iva: 437.93,
+        total_con_urgencia: 437.93,
+        precio_sin_iva: 437.93,
+        precio_con_recargo_urgencia: 437.93,
+        adicional_laminado: "sin_adicional",
+        regla_aplicada: "matriz_pdf_bajadas",
+        fuente: "lista-low.pdf matriz PDF",
+        trazabilidad: { modo_precio: "matriz_pdf", recargo_urgencia_aplicado: 0 },
+      }),
+    });
+  });
+  await page.route("**/variables-impacto", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        ok: true,
+        variables: [
+          { key: "click_color", label: "Click color", tipo: "variable_madre", editable: true, impacta_hoy: true, estado: "conectado", descripcion: "Click operativo" },
+          { key: "adicional_tinta_blanca_base_1_copia", label: "Tinta blanca base 1 copia", tipo: "variable_madre", editable: true, impacta_hoy: true, estado: "conectado", descripcion: "Adicional autoadhesivas" },
+        ],
+        productos: [
+          { key: "bajadas_fullcolor_byn", label: "Bajadas Fullcolor/ByN", estado: "activo", endpoint: "/bajadas-v2/cotizar", modo_precio: "matriz_pdf" },
+          { key: "stickers_circulares", label: "Stickers Circulares", estado: "activo", endpoint: "/stickers-circulares/cotizar", modo_precio: "formula_editable_calibrada" },
+          { key: "bajadas_autoadhesivas", label: "Bajadas Autoadhesivas", estado: "activo", endpoint: "/bajadas-v2/cotizar", modo_precio: "matriz_pdf_con_adicionales" },
+        ],
+        relaciones: [
+          {
+            variable: "click_color",
+            variable_label: "Click color",
+            producto_key: "bajadas_fullcolor_byn",
+            producto: "Bajadas Fullcolor/ByN",
+            componente: "click / impresión documentado",
+            impacta_hoy: false,
+            editable: true,
+            tipo: "variable_madre",
+            nivel_impacto: "medio",
+            estado: "preparado_no_conectado",
+            detalle: "Documentado para fórmulas futuras; la cotización vigente usa matriz PDF.",
+            ruta_calculo: ["click_color", "referencia_tecnica", "matriz_pdf", "precio_final"],
+            fuente: "Excel histórico",
+            endpoint: "/bajadas-v2/cotizar",
+            modo_precio: "matriz_pdf",
+          },
+          {
+            variable: "click_color",
+            variable_label: "Click color",
+            producto_key: "stickers_circulares",
+            producto: "Stickers Circulares",
+            componente: "formula editable",
+            impacta_hoy: true,
+            editable: true,
+            tipo: "variable_madre",
+            nivel_impacto: "alto",
+            estado: "conectado",
+            detalle: "Participa en la fórmula calibrada de stickers circulares.",
+            ruta_calculo: ["click_color", "subtotal_formula_excel", "factor_ajuste_pdf", "precio_final"],
+            fuente: "formula_editable_config",
+            endpoint: "/stickers-circulares/cotizar",
+            modo_precio: "formula_editable_calibrada",
+          },
+          {
+            variable: "adicional_tinta_blanca_base_1_copia",
+            variable_label: "Tinta blanca base 1 copia",
+            producto_key: "bajadas_autoadhesivas",
+            producto: "Bajadas Autoadhesivas",
+            componente: "adicional tinta blanca",
+            impacta_hoy: true,
+            editable: true,
+            tipo: "variable_madre",
+            nivel_impacto: "alto",
+            estado: "conectado",
+            detalle: "Solo aplica a autoadhesivas con tinta blanca.",
+            ruta_calculo: ["tinta_blanca", "cantidad", "adicional"],
+            fuente: "autoadhesivas_v1_config",
+            endpoint: "/bajadas-v2/cotizar",
+            modo_precio: "matriz_pdf_con_adicionales",
+          },
+        ],
+        resumen: {
+          variables_editables: 2,
+          productos_afectados: 3,
+          relaciones_conectadas: 2,
+          relaciones_documentadas_no_conectadas: 1,
+          productos_bloqueados: 0,
+        },
+        leyenda: {},
+      }),
+    });
+  });
+
+  await page.goto("/", { waitUntil: "domcontentloaded" });
+  await page.getByTestId("view-mode-advanced").click();
+  await page.getByLabel("Medida / formato").selectOption("A4");
+  await page.getByLabel("Tipo de papel").selectOption("liviano");
+  await page.getByLabel("Material").selectOption("Ilustracion");
+  await page.getByLabel("Gramaje").selectOption("115g");
+  await page.getByLabel("Cantidad").fill("1");
+  await page.getByRole("button", { name: "Calcular" }).click();
+  await expect(page.getByText("Total final con urgencia")).toBeVisible();
+
+  await page.getByTestId("tab-variable-impact").click();
+  await expect(page.getByTestId("impact-current-quote")).toContainText("Cotización actual analizada");
+  await expect(page.getByTestId("impact-current-quote")).toContainText("Bajadas Fullcolor/ByN");
+  await expect(page.getByTestId("impact-current-quote")).toContainText("Ilustracion 115g");
+  await page.getByTestId("impact-variable-select").selectOption("click_color");
+  await expect(page.getByTestId("impact-current-assessment")).toContainText("No afecta esta cotización actual");
+  await expect(page.getByTestId("impact-current-assessment")).toContainText("usa matriz PDF");
+  await expect(page.getByTestId("impact-current-product-group")).toContainText("Bajadas Fullcolor/ByN");
+  await expect(page.getByTestId("impact-current-product-group")).not.toContainText("Stickers Circulares");
+  await expect(page.getByTestId("impact-other-products-group")).toContainText("Stickers Circulares");
+
+  await page.getByTestId("impact-variable-select").selectOption("adicional_tinta_blanca_base_1_copia");
+  await expect(page.getByTestId("impact-current-assessment")).toContainText("Esta variable impacta otros productos, pero no la cotización actual.");
+  await expect(page.getByTestId("impact-other-products-group")).toContainText("Bajadas Autoadhesivas");
+});
+
 test("Modificar precios exige preview antes de guardar y muestra historial", async ({ page }) => {
   await page.route("**/admin-precios/variables-editables", async (route) => {
     await route.fulfill({
