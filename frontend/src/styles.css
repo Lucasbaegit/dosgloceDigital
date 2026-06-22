@@ -766,6 +766,66 @@ select:focus {
   color: #b8c5e6;
 }
 
+.trace-zoom-toolbar {
+  position: relative;
+  z-index: 80;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 14px 0;
+  border: 1px solid rgba(56, 189, 248, 0.18);
+  border-radius: 18px;
+  padding: 12px;
+  background:
+    radial-gradient(circle at 0% 50%, rgba(56, 189, 248, 0.12), transparent 38%),
+    rgba(15, 23, 42, 0.66);
+}
+
+.trace-zoom-help {
+  color: var(--text-soft);
+  font-size: 0.9rem;
+}
+
+.trace-zoom-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.trace-zoom-controls button,
+.trace-zoom-controls strong {
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  border-radius: 999px;
+  padding: 8px 12px;
+  background: rgba(13, 18, 30, 0.74);
+  color: #e7f2ff;
+  font-size: 0.86rem;
+  font-weight: 900;
+}
+
+.trace-zoom-controls button {
+  cursor: pointer;
+}
+
+.trace-zoom-controls button:hover:not(:disabled) {
+  border-color: rgba(56, 189, 248, 0.72);
+  background: rgba(56, 189, 248, 0.18);
+}
+
+.trace-zoom-controls button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.trace-zoom-controls strong {
+  min-width: 66px;
+  text-align: center;
+  color: #7dd3fc;
+}
+
 .trace-legend {
   display: flex;
   flex-wrap: wrap;
@@ -807,6 +867,20 @@ select:focus {
   align-items: stretch;
 }
 
+.trace-layout.fullscreen {
+  position: fixed;
+  inset: 18px;
+  z-index: 60;
+  grid-template-columns: minmax(0, 1fr) minmax(330px, 390px);
+  border: 1px solid rgba(56, 189, 248, 0.24);
+  border-radius: 24px;
+  padding: 18px;
+  background:
+    radial-gradient(circle at 20% 0%, rgba(56, 189, 248, 0.16), transparent 30%),
+    linear-gradient(135deg, rgba(6, 10, 20, 0.98), rgba(11, 18, 32, 0.96));
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.42);
+}
+
 .trace-graph-card,
 .trace-detail {
   border: 1px solid var(--line);
@@ -821,26 +895,41 @@ select:focus {
   max-height: min(76vh, 880px);
   overflow: auto;
   padding: 18px;
+  cursor: grab;
+  background:
+    radial-gradient(circle at 18% 12%, rgba(56, 189, 248, 0.12), transparent 28%),
+    linear-gradient(145deg, rgba(9, 13, 24, 0.88), rgba(13, 18, 31, 0.72)),
+    repeating-linear-gradient(0deg, rgba(148, 163, 184, 0.045) 0 1px, transparent 1px 44px),
+    repeating-linear-gradient(90deg, rgba(148, 163, 184, 0.045) 0 1px, transparent 1px 44px);
   scrollbar-color: rgba(56, 189, 248, 0.45) rgba(15, 23, 42, 0.4);
 }
 
+.trace-layout.fullscreen .trace-graph-card {
+  min-height: calc(100vh - 82px);
+  max-height: calc(100vh - 82px);
+}
+
+.trace-graph-card.is-panning {
+  cursor: grabbing;
+  user-select: none;
+}
+
 .trace-svg {
-  min-width: 1120px;
-  width: max-content;
-  height: auto;
   display: block;
+  min-width: 100%;
+  transition: width 0.16s ease, height 0.16s ease;
 }
 
 .trace-edge {
   fill: none;
   stroke: rgba(138, 164, 214, 0.9);
-  stroke-width: 2.7;
+  stroke-width: 3.5;
   stroke-linecap: round;
 }
 
 .trace-edge-label {
   fill: #d5e3ff;
-  font-size: 15px;
+  font-size: 17px;
   font-weight: 900;
   letter-spacing: -0.01em;
   paint-order: stroke;
@@ -879,7 +968,7 @@ select:focus {
 
 .trace-node-title {
   fill: #eef4ff;
-  font-size: 15px;
+  font-size: 18px;
   font-weight: 900;
   letter-spacing: -0.01em;
 }
@@ -887,12 +976,12 @@ select:focus {
 .trace-node-meta,
 .trace-node-value {
   fill: #c5d0ea;
-  font-size: 12px;
+  font-size: 14px;
 }
 
 .trace-node-value {
   fill: #f8fbff;
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 800;
 }
 

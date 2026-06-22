@@ -82,6 +82,21 @@ test("Entender un precio muestra trazabilidad avanzada, selector, leyenda y graf
   await page.getByTestId("trace-load-button").click();
   await expect(page.getByTestId("trace-legend")).toBeVisible();
   await expect(page.getByTestId("trace-graph-container")).toBeVisible();
+  await expect(page.getByTestId("trace-zoom-toolbar")).toBeVisible();
+  await expect(page.getByTestId("trace-zoom-indicator")).toHaveText("100%");
+  await page.getByTestId("trace-zoom-in").click();
+  await expect(page.getByTestId("trace-zoom-indicator")).toHaveText("115%");
+  await page.getByTestId("trace-zoom-out").click();
+  await expect(page.getByTestId("trace-zoom-indicator")).toHaveText("100%");
+  await page.getByTestId("trace-zoom-in").click();
+  await page.getByTestId("trace-zoom-reset").click();
+  await expect(page.getByTestId("trace-zoom-indicator")).toHaveText("100%");
+  await page.getByTestId("trace-fit-view").click();
+  await expect(page.getByTestId("trace-graph-container")).toContainText("Click color");
+  await page.getByTestId("trace-fullscreen-toggle").click();
+  await expect(page.getByTestId("trace-fullscreen-toggle")).toHaveText("Salir de pantalla completa");
+  await page.getByTestId("trace-fullscreen-toggle").click();
+  await expect(page.getByTestId("trace-fullscreen-toggle")).toHaveText("Pantalla completa");
   await expect(page.getByTestId("trace-node-detail")).toContainText("Click color");
 });
 

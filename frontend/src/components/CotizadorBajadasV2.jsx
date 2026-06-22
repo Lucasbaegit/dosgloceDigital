@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from "react";
+﻿import { useEffect, useMemo, useRef, useState } from "react";
 import {
   applyAdminPrecio,
   applyAdminPrecioRollback,
@@ -256,8 +256,11 @@ const TRACE_TYPE_LABELS = {
   bloqueado: "Bloqueado",
   factor: "Factor / multiplicador",
 };
-const TRACE_NODE_WIDTH = 236;
-const TRACE_NODE_HEIGHT = 98;
+const TRACE_NODE_WIDTH = 286;
+const TRACE_NODE_HEIGHT = 118;
+const TRACE_MIN_ZOOM = 0.5;
+const TRACE_MAX_ZOOM = 2.5;
+const TRACE_ZOOM_STEP = 0.15;
 
 const INITIAL_FORM = {
   categoria_ui: "Bajadas Fullcolor/ByN",
@@ -303,6 +306,10 @@ function formatTraceValue(node) {
   return node.unit ? `${value} ${node.unit}` : value;
 }
 
+function clampTraceZoom(value) {
+  return Math.min(TRACE_MAX_ZOOM, Math.max(TRACE_MIN_ZOOM, Number(value) || 1));
+}
+
 function traceNodeVisualType(node) {
   if (!node) return "derivado";
   if (node.type === "variable_madre" && node.editable_en_sistema && node.impacta_hoy) return "variable_madre";
@@ -327,10 +334,10 @@ function layoutTraceGraph(graph) {
   const edges = graph?.edges || [];
   const explicitLayout = nodes.some((node) => node.column !== undefined || node.branch || node.row !== undefined);
   const positions = {};
-  const xStep = 330;
-  const yStep = 150;
-  const marginX = 42;
-  const marginY = 46;
+  const xStep = 390;
+  const yStep = 180;
+  const marginX = 56;
+  const marginY = 60;
 
   if (explicitLayout) {
     const branchOrder = ["material", "impresion", "cantidad", "adicionales", "urgencia", "entrada", "resultado"];
@@ -356,7 +363,7 @@ function layoutTraceGraph(graph) {
     });
     lanes.forEach((item) => {
       const lane = Number(item.lane ?? (branchIndex[item.branch] ?? branchIndex.entrada));
-      const rowOffset = Number(item.row ?? item.autoRow ?? 0) * (TRACE_NODE_HEIGHT + 18);
+      const rowOffset = Number(item.row ?? item.autoRow ?? 0) * (TRACE_NODE_HEIGHT + 24);
       positions[item.node.id] = {
         x: marginX + item.column * xStep,
         y: marginY + lane * yStep + rowOffset,
@@ -366,8 +373,8 @@ function layoutTraceGraph(graph) {
     const maxY = Math.max(0, ...Object.values(positions).map((pos) => pos.y));
     return {
       positions,
-      width: Math.max(1180, maxX + TRACE_NODE_WIDTH + 90),
-      height: Math.max(780, maxY + TRACE_NODE_HEIGHT + 80),
+      width: Math.max(1380, maxX + TRACE_NODE_WIDTH + 120),
+      height: Math.max(860, maxY + TRACE_NODE_HEIGHT + 100),
     };
   }
 
@@ -394,8 +401,8 @@ function layoutTraceGraph(graph) {
   const maxRows = Math.max(1, ...Object.values(groups).map((group) => group.length));
   return {
     positions,
-    width: Math.max(980, marginX + (maxDepth + 1) * xStep + TRACE_NODE_WIDTH),
-    height: Math.max(520, marginY + maxRows * yStep + TRACE_NODE_HEIGHT),
+    width: Math.max(1180, marginX + (maxDepth + 1) * xStep + TRACE_NODE_WIDTH),
+    height: Math.max(620, marginY + maxRows * yStep + TRACE_NODE_HEIGHT),
   };
 }
 
@@ -746,6 +753,10 @@ export default function CotizadorBajadasV2() {
   const [traceLoading, setTraceLoading] = useState(false);
   const [traceError, setTraceError] = useState("");
   const [selectedTraceNodeId, setSelectedTraceNodeId] = useState(null);
+  const [traceZoom, setTraceZoom] = useState(1);
+  const [traceFullscreen, setTraceFullscreen] = useState(false);
+  const traceGraphViewportRef = useRef(null);
+  const traceDragRef = useRef(null);
   const [impactData, setImpactData] = useState(null);
   const [impactLoading, setImpactLoading] = useState(false);
   const [impactError, setImpactError] = useState("");
@@ -923,6 +934,7 @@ export default function CotizadorBajadasV2() {
       const graph = await fetchTraceGraph({ caso: selectedCase });
       setTraceGraph(graph);
       setSelectedTraceNodeId(graph?.nodes?.[0]?.id || null);
+      setTraceZoom(1);
     } catch (err) {
       setTraceGraph(null);
       setSelectedTraceNodeId(null);
@@ -1094,11 +1106,74 @@ export default function CotizadorBajadasV2() {
 
       setTraceGraph(graph);
       setSelectedTraceNodeId(graph.nodes[0]?.id ?? null);
+      setTraceZoom(1);
     } catch (err) {
       setTraceGraph(null);
       setSelectedTraceNodeId(null);
       setTraceError(err.message || "No se pudo construir el grafo de la cotización actual.");
     }
+  };
+
+  const setTraceZoomLevel = (nextZoom) => {
+    setTraceZoom(clampTraceZoom(nextZoom));
+  };
+
+  const resetTraceView = () => {
+    setTraceZoom(1);
+    requestAnimationFrame(() => {
+      const viewport = traceGraphViewportRef.current;
+      if (!viewport) return;
+      viewport.scrollLeft = 0;
+      viewport.scrollTop = 0;
+    });
+  };
+
+  const fitTraceGraphToView = (graphWidth, graphHeight) => {
+    const viewport = traceGraphViewportRef.current;
+    if (!viewport || !graphWidth || !graphHeight) return;
+    const nextZoom = clampTraceZoom(Math.min(
+      (viewport.clientWidth - 48) / graphWidth,
+      (viewport.clientHeight - 48) / graphHeight
+    ));
+    setTraceZoom(nextZoom);
+    requestAnimationFrame(() => {
+      viewport.scrollLeft = Math.max(0, (graphWidth * nextZoom - viewport.clientWidth) / 2);
+      viewport.scrollTop = Math.max(0, (graphHeight * nextZoom - viewport.clientHeight) / 2);
+    });
+  };
+
+  const handleTraceWheel = (event) => {
+    if (!traceGraph?.nodes?.length) return;
+    event.preventDefault();
+    const direction = event.deltaY > 0 ? -1 : 1;
+    setTraceZoom((current) => clampTraceZoom(current + direction * TRACE_ZOOM_STEP));
+  };
+
+  const handleTracePanStart = (event) => {
+    if (event.button !== 0) return;
+    if (event.target?.closest?.(".trace-node")) return;
+    const viewport = traceGraphViewportRef.current;
+    if (!viewport) return;
+    traceDragRef.current = {
+      x: event.clientX,
+      y: event.clientY,
+      scrollLeft: viewport.scrollLeft,
+      scrollTop: viewport.scrollTop,
+    };
+    viewport.classList.add("is-panning");
+  };
+
+  const handleTracePanMove = (event) => {
+    const drag = traceDragRef.current;
+    const viewport = traceGraphViewportRef.current;
+    if (!drag || !viewport) return;
+    viewport.scrollLeft = drag.scrollLeft - (event.clientX - drag.x);
+    viewport.scrollTop = drag.scrollTop - (event.clientY - drag.y);
+  };
+
+  const stopTracePan = () => {
+    traceDragRef.current = null;
+    traceGraphViewportRef.current?.classList.remove("is-panning");
   };
 
   const downloadPricesPdf = async () => {
@@ -2139,6 +2214,7 @@ export default function CotizadorBajadasV2() {
                   setTraceMode(mode.value);
                   setTraceGraph(null);
                   setSelectedTraceNodeId(null);
+                  setTraceZoom(1);
                   setTraceError("");
                 }}
               >
@@ -2177,6 +2253,7 @@ export default function CotizadorBajadasV2() {
                     setTraceCase(nextCase);
                     setTraceGraph(null);
                     setSelectedTraceNodeId(null);
+                    setTraceZoom(1);
                   }}
                 >
                   {TRACE_GRAPH_CASES.map((item) => (
@@ -2193,16 +2270,45 @@ export default function CotizadorBajadasV2() {
 
         {traceError ? <div className="error-banner">{traceError}</div> : null}
 
+        <div className="trace-zoom-toolbar" data-testid="trace-zoom-toolbar">
+          <div className="trace-zoom-help">Usá + / - para acercar o alejar. Arrastrá el fondo para moverte por el grafo.</div>
+          <div className="trace-zoom-controls" role="group" aria-label="Controles de zoom del grafo">
+            <button type="button" data-testid="trace-zoom-out" onClick={() => setTraceZoomLevel(traceZoom - TRACE_ZOOM_STEP)} disabled={!graph.nodes.length}>-</button>
+            <strong data-testid="trace-zoom-indicator">{Math.round(traceZoom * 100)}%</strong>
+            <button type="button" data-testid="trace-zoom-in" onClick={() => setTraceZoomLevel(traceZoom + TRACE_ZOOM_STEP)} disabled={!graph.nodes.length}>+</button>
+            <button type="button" data-testid="trace-zoom-reset" onClick={resetTraceView} disabled={!graph.nodes.length}>100%</button>
+            <button type="button" data-testid="trace-fit-view" onClick={() => fitTraceGraphToView(width, height)} disabled={!graph.nodes.length}>Ajustar</button>
+            <button type="button" data-testid="trace-fullscreen-toggle" onClick={() => setTraceFullscreen((current) => !current)} disabled={!graph.nodes.length}>
+              {traceFullscreen ? "Salir de pantalla completa" : "Pantalla completa"}
+            </button>
+          </div>
+        </div>
+
         <div className="trace-legend" data-testid="trace-legend">
           {Object.entries(graph.legend || {}).map(([type, label]) => (
             <span className={`legend-chip ${type}`} key={type}><i />{TRACE_TYPE_LABELS[type] || type}: {label}</span>
           ))}
         </div>
 
-        <div className="trace-layout">
-          <div className="trace-graph-card" data-testid="trace-graph-container">
+        <div className={traceFullscreen ? "trace-layout fullscreen" : "trace-layout"}>
+          <div
+            ref={traceGraphViewportRef}
+            className="trace-graph-card"
+            data-testid="trace-graph-container"
+            onWheel={handleTraceWheel}
+            onMouseDown={handleTracePanStart}
+            onMouseMove={handleTracePanMove}
+            onMouseUp={stopTracePan}
+            onMouseLeave={stopTracePan}
+          >
             {graph.nodes.length ? (
-              <svg className="trace-svg" viewBox={`0 0 ${width} ${height}`} role="img" aria-label="Grafo de trazabilidad de precios">
+              <svg
+                className="trace-svg"
+                style={{ width: `${width * traceZoom}px`, height: `${height * traceZoom}px` }}
+                viewBox={`0 0 ${width} ${height}`}
+                role="img"
+                aria-label="Grafo de trazabilidad de precios"
+              >
                 <defs>
                   <marker id="trace-arrow" markerWidth="13" markerHeight="13" refX="11" refY="4" orient="auto" markerUnits="strokeWidth">
                     <path d="M0,0 L0,8 L11,4 z" fill="#8aa4d6" />
@@ -2230,10 +2336,10 @@ export default function CotizadorBajadasV2() {
                   const selected = selectedNode?.id === node.id;
                   return (
                     <g key={node.id} className={`trace-node ${visualType} ${selected ? "selected" : ""}`} transform={`translate(${pos.x} ${pos.y})`} onClick={() => setSelectedTraceNodeId(node.id)} tabIndex="0" role="button" aria-label={`Nodo ${node.label}`}>
-                      <rect className="trace-node-rect" width={TRACE_NODE_WIDTH} height={TRACE_NODE_HEIGHT} rx="18" />
-                      <text className="trace-node-title" x="18" y="30">{node.label}</text>
-                      <text className="trace-node-meta" x="18" y="56">{TRACE_TYPE_LABELS[visualType] || visualType}</text>
-                      <text className="trace-node-value" x="18" y="80">{formatTraceValue(node)}</text>
+                      <rect className="trace-node-rect" width={TRACE_NODE_WIDTH} height={TRACE_NODE_HEIGHT} rx="22" />
+                      <text className="trace-node-title" x="22" y="38">{node.label}</text>
+                      <text className="trace-node-meta" x="22" y="70">{TRACE_TYPE_LABELS[visualType] || visualType}</text>
+                      <text className="trace-node-value" x="22" y="98">{formatTraceValue(node)}</text>
                     </g>
                   );
                 })}
