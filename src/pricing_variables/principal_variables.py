@@ -185,6 +185,7 @@ class PrincipalVariablesService:
             coef_impresion_prefix="coeficiente_impresion_tarjetas_postales",
         )
         self._add_folletos_editable_variables()
+        self._add_productos_restantes_editable_variables()
         self._load_prepared_variables()
 
     def _add_stickers_circulares_editable_variables(self) -> None:
@@ -283,7 +284,7 @@ class PrincipalVariablesService:
 
         coef_cantidad = variables.get("coeficiente_cantidad", {})
         if isinstance(coef_cantidad, dict):
-            for cantidad in sorted(coef_cantidad, key=lambda value: int(value) if str(value).isdigit() else str(value)):
+            for cantidad in sorted(coef_cantidad, key=lambda value: (0, int(value)) if str(value).isdigit() else (1, str(value))):
                 add_variable(
                     f"coeficiente_cantidad_stickers_circulares_{cantidad}",
                     group="multiplicadores",
@@ -403,7 +404,7 @@ class PrincipalVariablesService:
 
         coef_cantidad = variables.get("coeficiente_cantidad", {})
         if isinstance(coef_cantidad, dict):
-            for cantidad in sorted(coef_cantidad, key=lambda value: int(value) if str(value).isdigit() else str(value)):
+            for cantidad in sorted(coef_cantidad, key=lambda value: (0, int(value)) if str(value).isdigit() else (1, str(value))):
                 add_variable(
                     f"{coef_cantidad_prefix}_{cantidad}",
                     group="multiplicadores",
@@ -727,7 +728,7 @@ class PrincipalVariablesService:
             values = variables.get(family, {})
             if not isinstance(values, dict):
                 continue
-            for raw_key in sorted(values, key=lambda value: int(value) if str(value).isdigit() else str(value)):
+            for raw_key in sorted(values, key=lambda value: (0, int(value)) if str(value).isdigit() else (1, str(value))):
                 safe = str(raw_key).replace("/", "_").replace("+", "plus").replace(" ", "_")
                 add_variable(
                     f"{prefix}_{safe}",
@@ -742,6 +743,134 @@ class PrincipalVariablesService:
                     step=0.0001,
                     impact=f"Variable contextual de Folletos para {raw_key}.",
                 )
+
+
+    def _add_productos_restantes_editable_variables(self) -> None:
+        """Expose contextual variables for Papeleria, Plancha Iman and Agendas/Cuadernos."""
+        product_configs = [
+            {
+                "product_label": "Carpetas",
+                "source_file": "data/carpetas/formula_editable_config.json",
+                "simple": [
+                    ("factor_solapa_carpetas", "adicionales", "Factor solapa Carpetas", "variables.factor_solapa_carpetas", "Variable contextual para solapa impresa de Carpetas."),
+                    ("factor_laca_uv_carpetas", "adicionales", "Factor Laca UV Carpetas", "variables.factor_laca_uv_carpetas", "Variable contextual para terminacion Laca UV de Carpetas."),
+                    ("factor_laminado_carpetas", "adicionales", "Factor Laminado Carpetas", "variables.factor_laminado_carpetas", "Variable contextual para laminado brillo/mate de Carpetas."),
+                    ("multiplicador_comercial_carpetas", "multiplicadores", "Multiplicador comercial Carpetas", "variables.multiplicador_comercial_carpetas", "Multiplicador contextual para futuras formulas calibradas de Carpetas."),
+                ],
+                "families": [
+                    ("coeficiente_terminacion", "coeficiente_terminacion_carpetas", "Coeficiente terminacion Carpetas", "terminaciones"),
+                    ("coeficiente_impresion", "coeficiente_impresion_carpetas", "Coeficiente impresion Carpetas", "caras"),
+                    ("coeficiente_cantidad", "coeficiente_cantidad_carpetas", "Coeficiente cantidad Carpetas", "rangos"),
+                ],
+            },
+            {
+                "product_label": "Sobres",
+                "source_file": "data/sobres/formula_editable_config.json",
+                "simple": [
+                    ("multiplicador_comercial_sobres", "multiplicadores", "Multiplicador comercial Sobres", "variables.multiplicador_comercial_sobres", "Multiplicador contextual para futuras formulas calibradas de Sobres."),
+                ],
+                "families": [
+                    ("coeficiente_tipo_sobre", "coeficiente_tipo_sobre", "Coeficiente tipo sobre", "tipos_sobre"),
+                    ("coeficiente_cantidad", "coeficiente_cantidad_sobres", "Coeficiente cantidad Sobres", "cantidades"),
+                ],
+            },
+            {
+                "product_label": "Plancha de Iman Impreso",
+                "source_file": "data/plancha_iman_impreso/formula_editable_config.json",
+                "simple": [
+                    ("base_iman_plancha", "papeles", "Base iman Plancha", "variables.base_iman_plancha", "Base tecnica contextual para Plancha de Iman Impreso."),
+                    ("papel_300g_ilustracion_plancha_iman", "papeles", "Papel 300g Ilustracion Plancha Iman", "variables.papel_300g_ilustracion_plancha_iman", "Papel contextual de la variante confiable Plancha de Iman."),
+                    ("multiplicador_comercial_plancha_iman", "multiplicadores", "Multiplicador comercial Plancha Iman", "variables.multiplicador_comercial_plancha_iman", "Multiplicador contextual para futura formula calibrada de Plancha Iman."),
+                ],
+                "families": [
+                    ("coeficiente_variante", "coeficiente_variante_plancha_iman", "Coeficiente variante Plancha Iman", "variantes"),
+                    ("coeficiente_cantidad", "coeficiente_cantidad_plancha_iman", "Coeficiente cantidad Plancha Iman", "rangos"),
+                ],
+            },
+            {
+                "product_label": "Agendas / Cuadernos",
+                "source_file": "data/agendas_cuadernos/formula_editable_config.json",
+                "simple": [
+                    ("base_agenda_2026", "papeles", "Base Agenda 2026", "variables.base_agenda_2026", "Base tecnica contextual para Agenda 2026."),
+                    ("factor_tapa_agendas", "adicionales", "Factor tapa Agendas", "variables.factor_tapa_agendas", "Factor contextual para tapa de Agendas/Cuadernos."),
+                    ("factor_anillado_agendas", "adicionales", "Factor anillado Agendas", "variables.factor_anillado_agendas", "Factor contextual para anillado/encuadernacion."),
+                    ("multiplicador_comercial_agendas", "multiplicadores", "Multiplicador comercial Agendas", "variables.multiplicador_comercial_agendas", "Multiplicador contextual para futuras formulas calibradas de Agendas/Cuadernos."),
+                ],
+                "families": [
+                    ("coeficiente_producto", "coeficiente_producto_agendas", "Coeficiente producto Agendas", "productos"),
+                    ("coeficiente_formato", "coeficiente_formato_agendas", "Coeficiente formato Agendas", "formatos"),
+                    ("coeficiente_paginas", "coeficiente_paginas_agendas", "Coeficiente paginas Agendas", "paginas"),
+                ],
+            },
+        ]
+
+        def safe_key(value: Any) -> str:
+            return str(value).replace("/", "_").replace("+", "plus").replace(" ", "_").replace(".", "_")
+
+        for config in product_configs:
+            source_file = config["source_file"]
+            cfg_path = self.project_root / source_file
+            if not cfg_path.exists():
+                continue
+            payload = self._read_json(cfg_path)
+            variables = payload.get("variables", {})
+            if not isinstance(variables, dict):
+                continue
+            product_label = config["product_label"]
+            common = (
+                f"Variable contextual de {product_label}. La cotizacion final actual permanece "
+                "validada contra PDF/lista; se usa para preview, trazabilidad y futura formula calibrada."
+            )
+
+            def add_variable(key: str, *, group: str, label: str, path_parts: list[str], source_path: str,
+                             description: str, impact: str) -> None:
+                self.catalog[key] = {
+                    "group": group,
+                    "label": label,
+                    "unit": "factor",
+                    "description": description,
+                    "tipo": "variable_madre",
+                    "min": 0.0001,
+                    "max": 1000000,
+                    "step": 0.0001,
+                    "source_file": source_file,
+                    "path": path_parts,
+                    "source_path": source_path,
+                    "applies_today": True,
+                    "confiabilidad": "media",
+                    "productos_afectados": [product_label],
+                    "impact": impact,
+                }
+
+            for key, group, label, source_path, impact in config["simple"]:
+                if key not in variables:
+                    continue
+                add_variable(
+                    key,
+                    group=group,
+                    label=label,
+                    path_parts=["variables", key],
+                    source_path=source_path,
+                    description=common,
+                    impact=impact,
+                )
+
+            for family, prefix, label_base, _scope_key in config["families"]:
+                values = variables.get(family, {})
+                if not isinstance(values, dict):
+                    continue
+                for raw_key in sorted(values, key=lambda value: (0, int(value)) if str(value).isdigit() else (1, str(value))):
+                    safe = safe_key(raw_key)
+                    add_variable(
+                        f"{prefix}_{safe}",
+                        group="multiplicadores",
+                        label=f"{label_base} {raw_key}",
+                        path_parts=["variables", family, str(raw_key)],
+                        source_path=f"variables.{family}.{raw_key}",
+                        description=f"{common} Aplica a {raw_key}.",
+                        impact=f"Variable contextual de {product_label} para {raw_key}.",
+                    )
+
 
 
     def get_grouped(self) -> dict[str, Any]:

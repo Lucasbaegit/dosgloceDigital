@@ -24,6 +24,10 @@ class TestVariablesImpactoApi(unittest.TestCase):
             ROOT / "data" / "tarjetas_9x5" / "formula_editable_config.json",
             ROOT / "data" / "tarjetas_postales" / "formula_editable_config.json",
             ROOT / "data" / "folletos" / "formula_editable_config.json",
+            ROOT / "data" / "carpetas" / "formula_editable_config.json",
+            ROOT / "data" / "sobres" / "formula_editable_config.json",
+            ROOT / "data" / "plancha_iman_impreso" / "formula_editable_config.json",
+            ROOT / "data" / "agendas_cuadernos" / "formula_editable_config.json",
         ]
         cls.before = {path: path.read_text(encoding="utf-8") for path in cls.config_paths if path.exists()}
         cls.server = create_server(host="127.0.0.1", port=0, project_root=ROOT)
@@ -84,6 +88,14 @@ class TestVariablesImpactoApi(unittest.TestCase):
             "multiplicador_comercial_folletos",
             "factor_formato_folletos_A4",
             "factor_papel_folletos_80g",
+            "factor_solapa_carpetas",
+            "coeficiente_cantidad_carpetas_51_a_100",
+            "multiplicador_comercial_sobres",
+            "coeficiente_tipo_sobre_sobre_bolsa_27x37",
+            "base_iman_plancha",
+            "coeficiente_cantidad_plancha_iman_301_a_500",
+            "base_agenda_2026",
+            "coeficiente_paginas_agendas_72",
             "adicional_tinta_blanca_base_1_copia",
             "matriz_pdf",
             "factor_ajuste_pdf",
@@ -205,6 +217,37 @@ class TestVariablesImpactoApi(unittest.TestCase):
         self.assertNotIn("factor_laca_uv_bajadas", variables)
         self.assertNotIn("factor_gramaje_tarjetas_9x5_350g", variables)
         self.assertNotIn("factor_formato_folletos_A4", variables)
+
+
+    def test_variables_carpetas_sobres_plancha_agendas_tienen_scope_contextual(self):
+        checks = [
+            ("factor_solapa_carpetas", "carpetas", {"adicionales": ["solapa_impresa"], "solapa_impresa": [True]}),
+            ("coeficiente_cantidad_carpetas_51_a_100", "carpetas", {"rangos": ["51 a 100"]}),
+            ("coeficiente_tipo_sobre_sobre_bolsa_27x37", "sobres", {"tipos_sobre": ["sobre_bolsa_27x37"]}),
+            ("coeficiente_cantidad_sobres_1000", "sobres", {"cantidades": [1000]}),
+            ("papel_300g_ilustracion_plancha_iman", "plancha_iman_impreso", {"variantes": ["papel_300g_ilustracion"]}),
+            ("coeficiente_cantidad_plancha_iman_301_a_500", "plancha_iman_impreso", {"rangos": ["301 a 500"]}),
+            ("base_agenda_2026", "agendas_cuadernos", {"productos": ["agenda_2026"]}),
+            ("coeficiente_paginas_agendas_72", "agendas_cuadernos", {"paginas": [72]}),
+        ]
+        for variable, product_key, scope in checks:
+            with self.subTest(variable=variable):
+                status, body = self._get_json(f"/variables-impacto/variable/{variable}")
+                self.assertEqual(status, 200)
+                rel = body["relaciones"][0]
+                self.assertEqual(rel["producto_key"], product_key)
+                self.assertEqual(rel["aplica_a"], scope)
+                self.assertTrue(rel["editable"])
+                self.assertTrue(rel["impacta_hoy"])
+
+    def test_variables_productos_restantes_no_contaminan_bajadas(self):
+        status, body = self._get_json("/variables-impacto/producto/bajadas_fullcolor_byn")
+        self.assertEqual(status, 200)
+        variables = {rel["variable"] for rel in body["relaciones"]}
+        self.assertNotIn("factor_solapa_carpetas", variables)
+        self.assertNotIn("multiplicador_comercial_sobres", variables)
+        self.assertNotIn("base_iman_plancha", variables)
+        self.assertNotIn("base_agenda_2026", variables)
 
     def test_variable_desconocida_devuelve_404_controlado(self):
         status, body = self._get_json("/variables-impacto/variable/no_existe")

@@ -1,0 +1,28 @@
+﻿{
+  "version": "agendas_cuadernos_formula_editable_contextual_v1",
+  "modo_precio": "matriz_pdf_con_variables_contextuales",
+  "fuente_final": "data/agendas_cuadernos/precios_pdf_objetivo_agendas_cuadernos.json",
+  "nota": "Variables contextuales para preview, trazabilidad y futura formula calibrada. La matriz PDF/lista sigue siendo fuente final.",
+  "variables": {
+    "base_agenda_2026": 1,
+    "factor_tapa_agendas": 1,
+    "factor_anillado_agendas": 1,
+    "multiplicador_comercial_agendas": 1,
+    "coeficiente_producto": {
+      "cuaderno_escolar_abrochado": 1,
+      "cuaderno_universitario_ringwire": 1,
+      "agenda_2026": 1
+    },
+    "coeficiente_formato": {
+      "A5": 1,
+      "A4": 1
+    },
+    "coeficiente_paginas": {
+      "24": 1,
+      "48": 1,
+      "72": 1,
+      "100": 1,
+      "160": 1
+    }
+  }
+}

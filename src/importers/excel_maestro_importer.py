@@ -219,6 +219,30 @@ class ExcelMaestroImporter:
             or key.startswith("factor_color_folletos_")
             or key.startswith("factor_impresion_folletos_")
             or key.startswith("coeficiente_cantidad_folletos_")
+            or key in {
+                "factor_solapa_carpetas",
+                "factor_laca_uv_carpetas",
+                "factor_laminado_carpetas",
+                "multiplicador_comercial_carpetas",
+                "multiplicador_comercial_sobres",
+                "base_iman_plancha",
+                "papel_300g_ilustracion_plancha_iman",
+                "multiplicador_comercial_plancha_iman",
+                "base_agenda_2026",
+                "factor_tapa_agendas",
+                "factor_anillado_agendas",
+                "multiplicador_comercial_agendas",
+            }
+            or key.startswith("coeficiente_terminacion_carpetas_")
+            or key.startswith("coeficiente_impresion_carpetas_")
+            or key.startswith("coeficiente_cantidad_carpetas_")
+            or key.startswith("coeficiente_tipo_sobre_")
+            or key.startswith("coeficiente_cantidad_sobres_")
+            or key.startswith("coeficiente_variante_plancha_iman_")
+            or key.startswith("coeficiente_cantidad_plancha_iman_")
+            or key.startswith("coeficiente_producto_agendas_")
+            or key.startswith("coeficiente_formato_agendas_")
+            or key.startswith("coeficiente_paginas_agendas_")
         ) and (bool(item.get("impacta_hoy")) or key == "tipo_cambio_usd")
 
     def _blocked_payload(

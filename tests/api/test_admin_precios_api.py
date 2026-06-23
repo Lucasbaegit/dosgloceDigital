@@ -23,6 +23,10 @@ class TestAdminPreciosApi(unittest.TestCase):
             ROOT / "data" / "tarjetas_9x5" / "formula_editable_config.json",
             ROOT / "data" / "tarjetas_postales" / "formula_editable_config.json",
             ROOT / "data" / "folletos" / "formula_editable_config.json",
+            ROOT / "data" / "carpetas" / "formula_editable_config.json",
+            ROOT / "data" / "sobres" / "formula_editable_config.json",
+            ROOT / "data" / "plancha_iman_impreso" / "formula_editable_config.json",
+            ROOT / "data" / "agendas_cuadernos" / "formula_editable_config.json",
             ROOT / "data" / "bajadas_autoadhesivas" / "autoadhesivas_v1_config.json",
             ROOT / "data" / "variables_principales" / "variables_madre.json",
         ]
@@ -99,6 +103,10 @@ class TestAdminPreciosApi(unittest.TestCase):
         self.assertIn("factor_gramaje_tarjetas_9x5_350g", keys)
         self.assertIn("factor_gramaje_tarjetas_postales_350g", keys)
         self.assertIn("factor_formato_folletos_A4", keys)
+        self.assertIn("factor_solapa_carpetas", keys)
+        self.assertIn("coeficiente_tipo_sobre_sobre_bolsa_27x37", keys)
+        self.assertIn("papel_300g_ilustracion_plancha_iman", keys)
+        self.assertIn("coeficiente_paginas_agendas_72", keys)
         self.assertNotIn("tabla_pdf", keys)
         self.assertTrue(all(item["editable"] for item in body["variables"]))
 
@@ -360,6 +368,96 @@ class TestAdminPreciosApi(unittest.TestCase):
                 self.assertEqual(before_quote["total_sin_iva"], expected_total)
 
                 status, variables = self.call("GET", "/admin-precios/variables-editables")
+                current = next(item for item in variables["variables"] if item["key"] == variable)
+                new_value = float(current["value"]) + 0.01
+
+                status, preview = self.call("POST", "/admin-precios/preview", {"variable": variable, "nuevo_valor": new_value})
+                self.assertEqual(status, 200)
+                self.assertTrue(preview["ok"])
+                self.assertTrue(preview["precios_ejemplo"])
+
+                status, applied = self.call(
+                    "POST",
+                    "/admin-precios/aplicar",
+                    {"variable": variable, "nuevo_valor": new_value, "confirmado": True},
+                )
+                self.assertEqual(status, 200)
+                self.assertTrue(applied["backup"])
+                self.assertIn("historial", applied)
+
+                status, after_quote = self.call("POST", endpoint, quote_payload)
+                self.assertEqual(status, 200)
+                self.assertEqual(after_quote["total_sin_iva"], expected_total)
+
+
+    def test_variables_carpetas_sobres_plancha_agendas_preview_y_preservan_precios(self):
+        cases = [
+            (
+                "factor_solapa_carpetas",
+                "/carpetas/cotizar",
+                {
+                    "categoria": "Carpetas",
+                    "producto": "carpeta_a4",
+                    "formato": "A4",
+                    "papel": "300g Ilustracion",
+                    "gramaje": "300g",
+                    "terminacion": "sin_laminar",
+                    "caras": "4/0",
+                    "cantidad_unidades": 1,
+                    "solapa_impresa": True,
+                    "urgencia": "normal",
+                },
+                2017,
+            ),
+            (
+                "coeficiente_tipo_sobre_sobre_bolsa_27x37",
+                "/sobres/cotizar",
+                {
+                    "categoria": "Sobres",
+                    "producto": "sobre",
+                    "tipo_sobre": "sobre_bolsa_27x37",
+                    "papel": "63g",
+                    "color": "blanco",
+                    "caras": "4/0",
+                    "cantidad_unidades": 1000,
+                    "urgencia": "normal",
+                },
+                536000,
+            ),
+            (
+                "papel_300g_ilustracion_plancha_iman",
+                "/plancha-iman-impreso/cotizar",
+                {
+                    "categoria": "Plancha de Im?n Impreso",
+                    "producto": "plancha_iman_impreso",
+                    "variante": "papel_300g_ilustracion",
+                    "cantidad_unidades": 500,
+                    "urgencia": "normal",
+                },
+                965500,
+            ),
+            (
+                "coeficiente_paginas_agendas_72",
+                "/agendas-cuadernos/cotizar",
+                {
+                    "categoria": "Agendas / Cuadernos",
+                    "producto": "agenda_2026",
+                    "formato": "A5",
+                    "paginas": 72,
+                    "cantidad_unidades": 2,
+                    "urgencia": "normal",
+                },
+                6000,
+            ),
+        ]
+        for variable, endpoint, quote_payload, expected_total in cases:
+            with self.subTest(variable=variable):
+                status, before_quote = self.call("POST", endpoint, quote_payload)
+                self.assertEqual(status, 200)
+                self.assertEqual(before_quote["total_sin_iva"], expected_total)
+
+                status, variables = self.call("GET", "/admin-precios/variables-editables")
+                self.assertEqual(status, 200)
                 current = next(item for item in variables["variables"] if item["key"] == variable)
                 new_value = float(current["value"]) + 0.01
 

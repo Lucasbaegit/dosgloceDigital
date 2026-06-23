@@ -78,6 +78,7 @@ Hoja `circulares`:
 
 - `circulares!O8` y `circulares!O22`: referencia a `CLICK A3+`.
 - `circulares!Q22`: referencia a `CLICK FYD`.
+
 - `circulares!P8`: referencia a `PAPEL`.
 - `circulares!C8:K20`: formulas por diametro y cantidad.
 - `circulares!O32:P37`: bloques de laminado por una y dos caras, con referencias a `Laminado`.
@@ -375,3 +376,48 @@ Documentacion especifica:
 
 - `docs/VARIABLES_EDITABLES_BAJADAS_AUTOADHESIVAS.md`
 - `docs/VARIABLES_EDITABLES_TARJETAS_FOLLETOS.md`
+
+## 12. Etapa: Carpetas, Sobres, Plancha Iman y Agendas/Cuadernos
+
+Se implemento una etapa de variables editables contextuales para productos activos que todavia dependian principalmente de matriz PDF/lista:
+
+- Carpetas.
+- Sobres.
+- Plancha de Iman Impreso.
+- Agendas / Cuadernos.
+
+La decision fue conservadora:
+
+- No se cambiaron precios finales validados contra PDF/lista.
+- No se expusieron matrices PDF ni precios finales como variables madre.
+- Las variables agregadas representan factores, coeficientes y multiplicadores tecnicos preparados para administracion, preview, trazabilidad, backup, historial y rollback.
+- El modo documentado para estos productos queda como `matriz_pdf_con_variables_contextuales`.
+
+Archivos de configuracion agregados:
+
+- `data/carpetas/formula_editable_config.json`.
+- `data/sobres/formula_editable_config.json`.
+- `data/plancha_iman_impreso/formula_editable_config.json`.
+- `data/agendas_cuadernos/formula_editable_config.json`.
+
+Documento especifico:
+
+- `docs/VARIABLES_EDITABLES_CARPETAS_SOBRES_PLANCHA_AGENDAS.md`.
+
+Variables no expuestas por seguridad:
+
+- `precio_final`.
+- `precio_pdf`.
+- `precio_objetivo_pdf`.
+- `factor_ajuste_pdf`.
+- `matriz_pdf`.
+- `total_final`.
+- rangos o tablas finales como variables madre editables.
+
+Tests agregados o ajustados:
+
+- Catalogo de variables principales.
+- Mapa de impacto contextual.
+- Admin precios: preview, backup, historial y preservacion de precios finales.
+- Import Excel maestro allowlistado.
+- E2E de Modificar precios e Impacto de cambios para Carpetas, Sobres, Plancha Iman y Agendas.

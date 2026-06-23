@@ -1,0 +1,22 @@
+﻿{
+  "version": "sobres_formula_editable_contextual_v1",
+  "modo_precio": "matriz_pdf_con_variables_contextuales",
+  "fuente_final": "data/sobres/precios_pdf_objetivo_sobres.json",
+  "nota": "Variables contextuales para preview, trazabilidad y futura formula calibrada. La matriz PDF/lista sigue siendo fuente final.",
+  "variables": {
+    "multiplicador_comercial_sobres": 1,
+    "coeficiente_tipo_sobre": {
+      "sobre_bolsa_a4_22_9x32_4": 1,
+      "sobre_bolsa_27x37": 1,
+      "sobre_bolsa_25x35_3": 1,
+      "oficio_ingles_12x23_5": 1
+    },
+    "coeficiente_cantidad": {
+      "100": 1,
+      "200": 1,
+      "300": 1,
+      "500": 1,
+      "1000": 1
+    }
+  }
+}

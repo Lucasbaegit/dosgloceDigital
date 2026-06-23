@@ -27,6 +27,10 @@ class TestImportExcelMaestroApi(unittest.TestCase):
             ROOT / "data" / "tarjetas_9x5" / "formula_editable_config.json",
             ROOT / "data" / "tarjetas_postales" / "formula_editable_config.json",
             ROOT / "data" / "folletos" / "formula_editable_config.json",
+            ROOT / "data" / "carpetas" / "formula_editable_config.json",
+            ROOT / "data" / "sobres" / "formula_editable_config.json",
+            ROOT / "data" / "plancha_iman_impreso" / "formula_editable_config.json",
+            ROOT / "data" / "agendas_cuadernos" / "formula_editable_config.json",
             ROOT / "data" / "bajadas_autoadhesivas" / "autoadhesivas_v1_config.json",
             ROOT / "data" / "variables_principales" / "variables_madre.json",
         ]
@@ -103,6 +107,10 @@ class TestImportExcelMaestroApi(unittest.TestCase):
             {"key": "factor_gramaje_tarjetas_9x5_350g", "label": "350g T9x5", "value": 1.11, "unit": "factor", "editable_en_sistema": True, "impacta_hoy": True, "estado_operativo": "operativa"},
             {"key": "factor_gramaje_tarjetas_postales_350g", "label": "350g Postales", "value": 1.11, "unit": "factor", "editable_en_sistema": True, "impacta_hoy": True, "estado_operativo": "operativa"},
             {"key": "factor_formato_folletos_A4", "label": "A4 Folletos", "value": 1.1, "unit": "factor", "editable_en_sistema": True, "impacta_hoy": True, "estado_operativo": "operativa"},
+            {"key": "factor_solapa_carpetas", "label": "Solapa Carpetas", "value": 1.1, "unit": "factor", "editable_en_sistema": True, "impacta_hoy": True, "estado_operativo": "operativa"},
+            {"key": "coeficiente_tipo_sobre_sobre_bolsa_27x37", "label": "Sobre 27x37", "value": 1.1, "unit": "factor", "editable_en_sistema": True, "impacta_hoy": True, "estado_operativo": "operativa"},
+            {"key": "papel_300g_ilustracion_plancha_iman", "label": "Plancha papel", "value": 1.1, "unit": "factor", "editable_en_sistema": True, "impacta_hoy": True, "estado_operativo": "operativa"},
+            {"key": "coeficiente_paginas_agendas_72", "label": "Agenda 72p", "value": 1.1, "unit": "factor", "editable_en_sistema": True, "impacta_hoy": True, "estado_operativo": "operativa"},
             {"key": "ilustracion_150g_65x95_usd", "label": "Ilustracion", "value": 12.3, "unit": "USD", "editable_en_sistema": False, "impacta_hoy": False, "estado_operativo": "preparada_no_conectada"},
             {"key": "variable_desconocida", "label": "Nueva", "value": 1, "unit": "ARS", "editable_en_sistema": True, "impacta_hoy": True, "estado_operativo": "operativa"},
         ])
@@ -120,6 +128,10 @@ class TestImportExcelMaestroApi(unittest.TestCase):
         self.assertIn("factor_gramaje_tarjetas_9x5_350g", changed_keys)
         self.assertIn("factor_gramaje_tarjetas_postales_350g", changed_keys)
         self.assertIn("factor_formato_folletos_A4", changed_keys)
+        self.assertIn("factor_solapa_carpetas", changed_keys)
+        self.assertIn("coeficiente_tipo_sobre_sobre_bolsa_27x37", changed_keys)
+        self.assertIn("papel_300g_ilustracion_plancha_iman", changed_keys)
+        self.assertIn("coeficiente_paginas_agendas_72", changed_keys)
         self.assertIn("ilustracion_150g_65x95_usd", {item["key"] for item in body["bloqueados"]})
         self.assertIn("variable_desconocida", {item["key"] for item in body["advertencias"]})
 

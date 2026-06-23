@@ -1011,6 +1011,11 @@ class PricesExcelExporter:
             "Tarjetas Personales",
             "Tarjetas Postales",
             "Folletos",
+            "Carpetas",
+            "Sobres",
+            "Plancha de Im?n Impreso",
+            "Plancha de Im?n Impreso",
+            "Agendas / Cuadernos",
         }:
             return "matriz_pdf_con_variables_contextuales"
         if title == "Troquelado Digital":

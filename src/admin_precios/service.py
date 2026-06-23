@@ -357,6 +357,62 @@ class AdminPricesService:
                 "despues": None,
                 "detalle": "Impacto visible en preview/trazabilidad; la matriz PDF/lista sigue siendo fuente final.",
             }]
+        if variable in {
+            "factor_solapa_carpetas",
+            "factor_laca_uv_carpetas",
+            "factor_laminado_carpetas",
+            "multiplicador_comercial_carpetas",
+        } or variable.startswith((
+            "coeficiente_terminacion_carpetas_",
+            "coeficiente_impresion_carpetas_",
+            "coeficiente_cantidad_carpetas_",
+        )):
+            return [{
+                "nombre": "Carpetas variables contextuales",
+                "antes": None,
+                "despues": None,
+                "detalle": "Impacto visible en preview/trazabilidad; la matriz PDF/lista sigue siendo fuente final.",
+            }]
+        if variable == "multiplicador_comercial_sobres" or variable.startswith((
+            "coeficiente_tipo_sobre_",
+            "coeficiente_cantidad_sobres_",
+        )):
+            return [{
+                "nombre": "Sobres variables contextuales",
+                "antes": None,
+                "despues": None,
+                "detalle": "Impacto visible en preview/trazabilidad; la matriz PDF/lista sigue siendo fuente final.",
+            }]
+        if variable in {
+            "base_iman_plancha",
+            "papel_300g_ilustracion_plancha_iman",
+            "multiplicador_comercial_plancha_iman",
+        } or variable.startswith((
+            "coeficiente_variante_plancha_iman_",
+            "coeficiente_cantidad_plancha_iman_",
+        )):
+            return [{
+                "nombre": "Plancha Iman variables contextuales",
+                "antes": None,
+                "despues": None,
+                "detalle": "Impacto visible en preview/trazabilidad; la matriz PDF/lista sigue siendo fuente final.",
+            }]
+        if variable in {
+            "base_agenda_2026",
+            "factor_tapa_agendas",
+            "factor_anillado_agendas",
+            "multiplicador_comercial_agendas",
+        } or variable.startswith((
+            "coeficiente_producto_agendas_",
+            "coeficiente_formato_agendas_",
+            "coeficiente_paginas_agendas_",
+        )):
+            return [{
+                "nombre": "Agendas/Cuadernos variables contextuales",
+                "antes": None,
+                "despues": None,
+                "detalle": "Impacto visible en preview/trazabilidad; la matriz PDF/lista sigue siendo fuente final.",
+            }]
         return []
 
     def _append_history(self, preview: dict[str, Any], update_result: dict[str, Any]) -> dict[str, Any]:

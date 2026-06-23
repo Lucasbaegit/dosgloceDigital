@@ -1032,6 +1032,132 @@ test("Modificar precios muestra variables contextuales de Bajadas Tarjetas Posta
   await expect(page.getByTestId("impact-current-assessment")).toContainText("No afecta esta cotización actual");
 });
 
+
+test("Modificar precios muestra variables contextuales de Carpetas Sobres Plancha y Agendas", async ({ page }) => {
+  const adminVariables = [
+    { key: "factor_solapa_carpetas", label: "Factor solapa Carpetas", value: 1, unit: "factor", description: "Solapa", impacta_hoy: true, editable: true, estado: "editable", productos_afectados: ["Carpetas"], min: 0.0001, max: 1000000, step: 0.0001 },
+    { key: "factor_laca_uv_carpetas", label: "Factor Laca UV Carpetas", value: 1, unit: "factor", description: "Laca", impacta_hoy: true, editable: true, estado: "editable", productos_afectados: ["Carpetas"], min: 0.0001, max: 1000000, step: 0.0001 },
+    { key: "coeficiente_impresion_carpetas_4_4", label: "Coeficiente impresion Carpetas 4/4", value: 1, unit: "factor", description: "4/4", impacta_hoy: true, editable: true, estado: "editable", productos_afectados: ["Carpetas"], min: 0.0001, max: 1000000, step: 0.0001 },
+    { key: "multiplicador_comercial_sobres", label: "Multiplicador comercial Sobres", value: 1, unit: "factor", description: "Sobres", impacta_hoy: true, editable: true, estado: "editable", productos_afectados: ["Sobres"], min: 0.0001, max: 1000000, step: 0.0001 },
+    { key: "coeficiente_tipo_sobre_sobre_bolsa_27x37", label: "Coeficiente tipo sobre 27x37", value: 1, unit: "factor", description: "27x37", impacta_hoy: true, editable: true, estado: "editable", productos_afectados: ["Sobres"], min: 0.0001, max: 1000000, step: 0.0001 },
+    { key: "papel_300g_ilustracion_plancha_iman", label: "Papel 300g Ilustracion Plancha Iman", value: 1, unit: "factor", description: "Papel", impacta_hoy: true, editable: true, estado: "editable", productos_afectados: ["Plancha Iman"], min: 0.0001, max: 1000000, step: 0.0001 },
+    { key: "coeficiente_cantidad_plancha_iman_301_a_500", label: "Coeficiente cantidad Plancha Iman 301 a 500", value: 1, unit: "factor", description: "301 a 500", impacta_hoy: true, editable: true, estado: "editable", productos_afectados: ["Plancha Iman"], min: 0.0001, max: 1000000, step: 0.0001 },
+    { key: "base_agenda_2026", label: "Base Agenda 2026", value: 1, unit: "factor", description: "Agenda", impacta_hoy: true, editable: true, estado: "editable", productos_afectados: ["Agendas/Cuadernos"], min: 0.0001, max: 1000000, step: 0.0001 },
+    { key: "coeficiente_paginas_agendas_72", label: "Coeficiente paginas Agendas 72", value: 1, unit: "factor", description: "72", impacta_hoy: true, editable: true, estado: "editable", productos_afectados: ["Agendas/Cuadernos"], min: 0.0001, max: 1000000, step: 0.0001 },
+    { key: "factor_laca_uv_bajadas", label: "Factor Laca UV Bajadas", value: 1, unit: "factor", description: "Bajadas", impacta_hoy: true, editable: true, estado: "editable", productos_afectados: ["Bajadas Fullcolor/ByN"], min: 0.0001, max: 1000000, step: 0.0001 },
+  ];
+  const rel = (variable, label, productKey, productLabel, aplica_a = {}) => ({
+    variable,
+    variable_label: label,
+    producto_key: productKey,
+    producto: productLabel,
+    componente: label,
+    impacta_hoy: true,
+    editable: true,
+    estado: "conectado",
+    detalle: `${label} conectado a ${productLabel}.`,
+    tipo: "variable_madre",
+    modo_precio: "matriz_pdf_con_variables_detectadas",
+    aplica_a,
+  });
+  const impactMock = {
+    ok: true,
+    version: "variables_impacto_v1",
+    variables: adminVariables.map((item) => ({ key: item.key, label: item.label, editable: true, impacta_hoy: true, estado: "conectado" })),
+    productos: [
+      { key: "carpetas", label: "Carpetas", estado: "activo", endpoint: "/carpetas/cotizar", modo_precio: "matriz_pdf_con_variables_detectadas" },
+      { key: "sobres", label: "Sobres", estado: "activo", endpoint: "/sobres/cotizar", modo_precio: "matriz_pdf_con_variables_detectadas" },
+      { key: "plancha_iman_impreso", label: "Plancha Iman", estado: "activo", endpoint: "/plancha-iman-impreso/cotizar", modo_precio: "matriz_pdf_con_variables_detectadas" },
+      { key: "agendas_cuadernos", label: "Agendas/Cuadernos", estado: "activo", endpoint: "/agendas-cuadernos/cotizar", modo_precio: "matriz_pdf_con_variables_detectadas" },
+      { key: "bajadas_fullcolor_byn", label: "Bajadas Fullcolor/ByN", estado: "activo", endpoint: "/bajadas-v2/cotizar", modo_precio: "matriz_pdf_con_variables_detectadas" },
+    ],
+    relaciones: [
+      rel("factor_solapa_carpetas", "Factor solapa Carpetas", "carpetas", "Carpetas", { adicionales: ["solapa_impresa"], solapa_impresa: [true] }),
+      rel("factor_laca_uv_carpetas", "Factor Laca UV Carpetas", "carpetas", "Carpetas", { terminaciones: ["laca_uv"] }),
+      rel("coeficiente_impresion_carpetas_4_4", "Coeficiente impresion Carpetas 4/4", "carpetas", "Carpetas", { caras: ["4/4"] }),
+      rel("multiplicador_comercial_sobres", "Multiplicador comercial Sobres", "sobres", "Sobres"),
+      rel("coeficiente_tipo_sobre_sobre_bolsa_27x37", "Coeficiente tipo sobre 27x37", "sobres", "Sobres", { tipos_sobre: ["sobre_bolsa_27x37"] }),
+      rel("papel_300g_ilustracion_plancha_iman", "Papel 300g Ilustracion Plancha Iman", "plancha_iman_impreso", "Plancha Iman", { variantes: ["papel_300g_ilustracion"] }),
+      rel("coeficiente_cantidad_plancha_iman_301_a_500", "Coeficiente cantidad Plancha Iman 301 a 500", "plancha_iman_impreso", "Plancha Iman", { rangos: ["301 a 500"] }),
+      rel("base_agenda_2026", "Base Agenda 2026", "agendas_cuadernos", "Agendas/Cuadernos", { productos: ["agenda_2026"] }),
+      rel("coeficiente_paginas_agendas_72", "Coeficiente paginas Agendas 72", "agendas_cuadernos", "Agendas/Cuadernos", { paginas: [72] }),
+      rel("factor_laca_uv_bajadas", "Factor Laca UV Bajadas", "bajadas_fullcolor_byn", "Bajadas Fullcolor/ByN", { adicionales: ["laca"] }),
+    ],
+    resumen: { variables_editables: adminVariables.length, productos_afectados: 5, relaciones_conectadas: 10 },
+  };
+
+  await page.route("**/carpetas/cotizar", async (route) => {
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, total_sin_iva: 187100, total_con_urgencia: 187100, cantidad_rango_aplicado: "51 a 100", trazabilidad: { modo_precio: "matriz_pdf_con_variables_detectadas" } }) });
+  });
+  await page.route("**/sobres/cotizar", async (route) => {
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, total_sin_iva: 536000, total_con_urgencia: 536000, trazabilidad: { modo_precio: "matriz_pdf_con_variables_detectadas" } }) });
+  });
+  await page.route("**/plancha-iman-impreso/cotizar", async (route) => {
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, total_sin_iva: 965500, total_con_urgencia: 965500, cantidad_rango_aplicado: "301 a 500", trazabilidad: { modo_precio: "matriz_pdf_con_variables_detectadas" } }) });
+  });
+  await page.route("**/agendas-cuadernos/cotizar", async (route) => {
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, total_sin_iva: 6000, total_con_urgencia: 6000, trazabilidad: { modo_precio: "matriz_pdf_con_variables_detectadas" } }) });
+  });
+  await page.route("**/admin-precios/variables-editables", async (route) => {
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, variables: adminVariables }) });
+  });
+  await page.route("**/admin-precios/historial", async (route) => {
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, historial: [] }) });
+  });
+  await page.route("**/variables-impacto", async (route) => {
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(impactMock) });
+  });
+
+  await page.goto("/", { waitUntil: "domcontentloaded" });
+
+  await page.getByTestId("categoria-select").selectOption("Carpetas");
+  await page.getByLabel("Cantidad").fill("100");
+  await page.getByTestId("print-option-4-4").click();
+  await page.getByLabel("Terminación").selectOption("laca_uv");
+  await page.getByRole("button", { name: "Solapa" }).click();
+  await page.getByRole("button", { name: "Calcular" }).click();
+  await page.getByTestId("tab-admin-prices").click();
+  await expect(page.getByTestId("admin-relevant-variable-group")).toContainText("Factor solapa Carpetas");
+  await expect(page.getByTestId("admin-relevant-variable-group")).toContainText("Factor Laca UV Carpetas");
+  await expect(page.getByTestId("admin-relevant-variable-group")).toContainText("Coeficiente impresion Carpetas 4/4");
+  await expect(page.getByTestId("admin-relevant-variable-group")).not.toContainText("Sobres");
+
+  await page.getByTestId("tab-quote").click();
+  await page.getByTestId("categoria-select").selectOption("Sobres");
+  await page.getByLabel("Tipo de sobre").selectOption("sobre_bolsa_27x37");
+  await page.getByLabel("Cantidad").fill("1000");
+  await page.getByRole("button", { name: "Calcular" }).click();
+  await page.getByTestId("tab-admin-prices").click();
+  await expect(page.getByTestId("admin-relevant-variable-group")).toContainText("Coeficiente tipo sobre 27x37");
+  await expect(page.getByTestId("admin-relevant-variable-group")).toContainText("Multiplicador comercial Sobres");
+  await expect(page.getByTestId("admin-relevant-variable-group")).not.toContainText("Carpetas");
+
+  await page.getByTestId("tab-quote").click();
+  await page.getByTestId("categoria-select").selectOption("Plancha de Imán Impreso");
+  await page.getByLabel("Cantidad").fill("500");
+  await page.getByRole("button", { name: "Calcular" }).click();
+  await page.getByTestId("tab-admin-prices").click();
+  await expect(page.getByTestId("admin-relevant-variable-group")).toContainText("Papel 300g Ilustracion Plancha Iman");
+  await expect(page.getByTestId("admin-relevant-variable-group")).toContainText("Coeficiente cantidad Plancha Iman 301 a 500");
+  await expect(page.getByTestId("admin-relevant-variable-group")).not.toContainText("Factor Laca UV Bajadas");
+
+  await page.getByTestId("tab-quote").click();
+  await page.getByTestId("categoria-select").selectOption("Agendas / Cuadernos");
+  await page.getByLabel("Producto").selectOption("agenda_2026");
+  await page.getByLabel("Formato").selectOption("A5");
+  await page.getByLabel("Páginas").selectOption("72");
+  await page.getByLabel("Cantidad").fill("2");
+  await page.getByRole("button", { name: "Calcular" }).click();
+  await page.getByTestId("tab-admin-prices").click();
+  await expect(page.getByTestId("admin-relevant-variable-group")).toContainText("Base Agenda 2026");
+  await expect(page.getByTestId("admin-relevant-variable-group")).toContainText("Coeficiente paginas Agendas 72");
+  await expect(page.getByTestId("admin-relevant-variable-group")).not.toContainText("Plancha Iman");
+
+  await page.getByTestId("tab-variable-impact").click();
+  await page.getByTestId("impact-variable-select").selectOption("coeficiente_paginas_agendas_72");
+  await expect(page.getByTestId("impact-current-assessment")).toContainText("Documentada, no conectada");
+});
+
 test("Historial y backups y Exportar soporte Excel quedan accesibles", async ({ page }) => {
   await page.route("**/admin-precios/variables-editables", async (route) => {
     await route.fulfill({

@@ -635,6 +635,7 @@ class VariableImpactMap:
             coef_impresion_prefix="coeficiente_impresion_tarjetas_postales",
         ))
         relations.extend(self._folletos_editable_relations())
+        relations.extend(self._productos_restantes_editable_relations())
         return relations
 
     def _stickers_circulares_editable_relations(self) -> list[dict[str, Any]]:
@@ -706,7 +707,7 @@ class VariableImpactMap:
 
         coef_cantidad = variables.get("coeficiente_cantidad", {})
         if isinstance(coef_cantidad, dict):
-            for cantidad in sorted(coef_cantidad, key=lambda value: int(value) if str(value).isdigit() else str(value)):
+            for cantidad in sorted(coef_cantidad, key=lambda value: (0, int(value)) if str(value).isdigit() else (1, str(value))):
                 relations.append(rel(
                     f"coeficiente_cantidad_stickers_circulares_{cantidad}",
                     f"Coeficiente cantidad Stickers Circulares {cantidad}",
@@ -1010,7 +1011,7 @@ class VariableImpactMap:
             values = variables.get(family, {})
             if not isinstance(values, dict):
                 continue
-            for raw_key in sorted(values, key=lambda value: int(value) if str(value).isdigit() else str(value)):
+            for raw_key in sorted(values, key=lambda value: (0, int(value)) if str(value).isdigit() else (1, str(value))):
                 safe = str(raw_key).replace("/", "_").replace("+", "plus").replace(" ", "_")
                 scope_value: Any = int(raw_key) if str(raw_key).isdigit() else str(raw_key)
                 relations.append(rel(
@@ -1023,6 +1024,133 @@ class VariableImpactMap:
                     **common,
                 ))
         return relations
+
+
+    def _productos_restantes_editable_relations(self) -> list[dict[str, Any]]:
+        product_configs = [
+            {
+                "product_key": "carpetas",
+                "product_label": "Carpetas",
+                "source_file": "data/carpetas/formula_editable_config.json",
+                "endpoint": "/carpetas/cotizar",
+                "simple": [
+                    ("factor_solapa_carpetas", "Factor solapa Carpetas", "solapa impresa", {"adicionales": ["solapa_impresa"], "solapa_impresa": [True]}),
+                    ("factor_laca_uv_carpetas", "Factor Laca UV Carpetas", "laca UV", {"terminaciones": ["laca_uv"]}),
+                    ("factor_laminado_carpetas", "Factor Laminado Carpetas", "laminado", {"terminaciones": ["laminado_brillo", "laminado_mate"]}),
+                    ("multiplicador_comercial_carpetas", "Multiplicador comercial Carpetas", "multiplicador comercial", {}),
+                ],
+                "families": [
+                    ("coeficiente_terminacion", "coeficiente_terminacion_carpetas", "Coeficiente terminacion Carpetas", "terminaciones"),
+                    ("coeficiente_impresion", "coeficiente_impresion_carpetas", "Coeficiente impresion Carpetas", "caras"),
+                    ("coeficiente_cantidad", "coeficiente_cantidad_carpetas", "Coeficiente cantidad Carpetas", "rangos"),
+                ],
+            },
+            {
+                "product_key": "sobres",
+                "product_label": "Sobres",
+                "source_file": "data/sobres/formula_editable_config.json",
+                "endpoint": "/sobres/cotizar",
+                "simple": [
+                    ("multiplicador_comercial_sobres", "Multiplicador comercial Sobres", "multiplicador comercial", {}),
+                ],
+                "families": [
+                    ("coeficiente_tipo_sobre", "coeficiente_tipo_sobre", "Coeficiente tipo sobre", "tipos_sobre"),
+                    ("coeficiente_cantidad", "coeficiente_cantidad_sobres", "Coeficiente cantidad Sobres", "cantidades"),
+                ],
+            },
+            {
+                "product_key": "plancha_iman_impreso",
+                "product_label": "Plancha Iman",
+                "source_file": "data/plancha_iman_impreso/formula_editable_config.json",
+                "endpoint": "/plancha-iman-impreso/cotizar",
+                "simple": [
+                    ("base_iman_plancha", "Base iman Plancha", "base iman", {}),
+                    ("papel_300g_ilustracion_plancha_iman", "Papel 300g Ilustracion Plancha Iman", "papel 300g", {"variantes": ["papel_300g_ilustracion"]}),
+                    ("multiplicador_comercial_plancha_iman", "Multiplicador comercial Plancha Iman", "multiplicador comercial", {}),
+                ],
+                "families": [
+                    ("coeficiente_variante", "coeficiente_variante_plancha_iman", "Coeficiente variante Plancha Iman", "variantes"),
+                    ("coeficiente_cantidad", "coeficiente_cantidad_plancha_iman", "Coeficiente cantidad Plancha Iman", "rangos"),
+                ],
+            },
+            {
+                "product_key": "agendas_cuadernos",
+                "product_label": "Agendas/Cuadernos",
+                "source_file": "data/agendas_cuadernos/formula_editable_config.json",
+                "endpoint": "/agendas-cuadernos/cotizar",
+                "simple": [
+                    ("base_agenda_2026", "Base Agenda 2026", "agenda 2026", {"productos": ["agenda_2026"]}),
+                    ("factor_tapa_agendas", "Factor tapa Agendas", "tapa", {}),
+                    ("factor_anillado_agendas", "Factor anillado Agendas", "anillado", {"productos": ["cuaderno_universitario_ringwire"]}),
+                    ("multiplicador_comercial_agendas", "Multiplicador comercial Agendas", "multiplicador comercial", {}),
+                ],
+                "families": [
+                    ("coeficiente_producto", "coeficiente_producto_agendas", "Coeficiente producto Agendas", "productos"),
+                    ("coeficiente_formato", "coeficiente_formato_agendas", "Coeficiente formato Agendas", "formatos"),
+                    ("coeficiente_paginas", "coeficiente_paginas_agendas", "Coeficiente paginas Agendas", "paginas"),
+                ],
+            },
+        ]
+
+        def safe_key(value: Any) -> str:
+            return str(value).replace("/", "_").replace("+", "plus").replace(" ", "_").replace(".", "_")
+
+        relations: list[dict[str, Any]] = []
+        rel = self._rel
+        for config in product_configs:
+            source_file = config["source_file"]
+            config_path = self.project_root / source_file
+            if not config_path.exists():
+                continue
+            try:
+                payload = json.loads(config_path.read_text(encoding="utf-8-sig"))
+            except (OSError, json.JSONDecodeError):
+                continue
+            variables = payload.get("variables", {})
+            if not isinstance(variables, dict):
+                continue
+            common = {
+                "producto_key": config["product_key"],
+                "producto": config["product_label"],
+                "impacta_hoy": True,
+                "editable": True,
+                "tipo": "variable_madre",
+                "nivel_impacto": "medio",
+                "estado": "conectado",
+                "fuente": source_file,
+                "endpoint": config["endpoint"],
+                "modo_precio": "matriz_pdf_con_variables_detectadas",
+            }
+            for key, label, component, scope in config["simple"]:
+                if key not in variables:
+                    continue
+                relations.append(rel(
+                    key,
+                    label,
+                    componente=component,
+                    detalle=f"Variable contextual de {config['product_label']}; la matriz PDF/lista sigue siendo fuente final.",
+                    ruta_calculo=[key, "base_tecnica", "matriz_pdf", "precio_final"],
+                    aplica_a=scope,
+                    **common,
+                ))
+            for family, prefix, label_base, scope_key in config["families"]:
+                values = variables.get(family, {})
+                if not isinstance(values, dict):
+                    continue
+                for raw_key in sorted(values, key=lambda value: (0, int(value)) if str(value).isdigit() else (1, str(value))):
+                    safe = safe_key(raw_key)
+                    scope_value: Any = int(raw_key) if str(raw_key).isdigit() else str(raw_key)
+                    relations.append(rel(
+                        f"{prefix}_{safe}",
+                        f"{label_base} {raw_key}",
+                        componente=f"{family} {raw_key}",
+                        detalle=f"Variable contextual de {config['product_label']} para {raw_key}; matriz PDF/lista sigue siendo fuente final.",
+                        ruta_calculo=[f"{family}.{raw_key}", "base_tecnica", "matriz_pdf", "precio_final"],
+                        aplica_a={scope_key: [scope_value]},
+                        **common,
+                    ))
+        return relations
+
 
     def _corte_recto_editable_relations(
         self,
@@ -1108,7 +1236,7 @@ class VariableImpactMap:
 
         coef_cantidad = variables.get("coeficiente_cantidad", {})
         if isinstance(coef_cantidad, dict):
-            for cantidad in sorted(coef_cantidad, key=lambda value: int(value) if str(value).isdigit() else str(value)):
+            for cantidad in sorted(coef_cantidad, key=lambda value: (0, int(value)) if str(value).isdigit() else (1, str(value))):
                 relations.append(rel(
                     f"{coef_cantidad_prefix}_{cantidad}",
                     f"Coeficiente cantidad {product_label} {cantidad}",

@@ -50,6 +50,10 @@ class TestVariablesPrincipalesApi(unittest.TestCase):
             ROOT / "data" / "tarjetas_9x5" / "formula_editable_config.json",
             ROOT / "data" / "tarjetas_postales" / "formula_editable_config.json",
             ROOT / "data" / "folletos" / "formula_editable_config.json",
+            ROOT / "data" / "carpetas" / "formula_editable_config.json",
+            ROOT / "data" / "sobres" / "formula_editable_config.json",
+            ROOT / "data" / "plancha_iman_impreso" / "formula_editable_config.json",
+            ROOT / "data" / "agendas_cuadernos" / "formula_editable_config.json",
             ROOT / "data" / "bajadas_autoadhesivas" / "autoadhesivas_v1_config.json",
             ROOT / "data" / "variables_principales" / "variables_madre.json",
         ]
@@ -130,6 +134,14 @@ class TestVariablesPrincipalesApi(unittest.TestCase):
         self.assertIn("multiplicador_comercial_folletos", keys)
         self.assertIn("factor_formato_folletos_A4", keys)
         self.assertIn("factor_papel_folletos_80g", keys)
+        self.assertIn("factor_solapa_carpetas", keys)
+        self.assertIn("coeficiente_cantidad_carpetas_51_a_100", keys)
+        self.assertIn("multiplicador_comercial_sobres", keys)
+        self.assertIn("coeficiente_tipo_sobre_sobre_bolsa_27x37", keys)
+        self.assertIn("base_iman_plancha", keys)
+        self.assertIn("coeficiente_cantidad_plancha_iman_301_a_500", keys)
+        self.assertIn("base_agenda_2026", keys)
+        self.assertIn("coeficiente_paginas_agendas_72", keys)
         self.assertNotIn("factor_ajuste_pdf", keys)
         editable_items = [
             item
@@ -228,6 +240,10 @@ class TestVariablesPrincipalesApi(unittest.TestCase):
         self.assertTrue(variable_rows["factor_laca_uv_bajadas"]["editable_en_sistema"])
         self.assertTrue(variable_rows["factor_gramaje_tarjetas_9x5_350g"]["editable_en_sistema"])
         self.assertTrue(variable_rows["factor_formato_folletos_A4"]["editable_en_sistema"])
+        self.assertTrue(variable_rows["factor_solapa_carpetas"]["editable_en_sistema"])
+        self.assertTrue(variable_rows["coeficiente_tipo_sobre_sobre_bolsa_27x37"]["editable_en_sistema"])
+        self.assertTrue(variable_rows["papel_300g_ilustracion_plancha_iman"]["editable_en_sistema"])
+        self.assertTrue(variable_rows["coeficiente_paginas_agendas_72"]["editable_en_sistema"])
         self.assertFalse(variable_rows["ilustracion_150g_65x95_usd"]["editable_en_sistema"])
         self.assertTrue(variable_rows["ilustracion_150g_65x95_usd"]["editable_en_excel_maestro"])
         self.assertEqual(variable_rows["ilustracion_150g_65x95_usd"]["estado_operativo"], "preparada_no_conectada")
