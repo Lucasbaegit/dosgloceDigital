@@ -918,6 +918,120 @@ test("Modificar precios muestra variables contextuales de Stickers e Imanes Cort
   await expect(page.getByTestId("admin-relevant-variable-group")).not.toContainText("Imanes Corte Recto");
 });
 
+test("Modificar precios muestra variables contextuales de Bajadas Tarjetas Postales y Folletos", async ({ page }) => {
+  const adminVariables = [
+    { key: "factor_laca_uv_bajadas", label: "Factor Laca UV Bajadas", value: 1, unit: "factor", description: "Laca Bajadas", impacta_hoy: true, editable: true, estado: "editable", productos_afectados: ["Bajadas Fullcolor/ByN", "Bajadas Autoadhesivas"], min: 0.01, max: 100, step: 0.001 },
+    { key: "factor_tinta_blanca_autoadhesivas", label: "Factor Tinta Blanca Autoadhesivas", value: 1, unit: "factor", description: "Tinta Blanca", impacta_hoy: true, editable: true, estado: "editable", productos_afectados: ["Bajadas Autoadhesivas"], min: 0.01, max: 100, step: 0.001 },
+    { key: "coeficiente_formato_bajadas_A3plus", label: "Coeficiente formato Bajadas A3+", value: 1, unit: "factor", description: "A3+", impacta_hoy: true, editable: true, estado: "editable", productos_afectados: ["Bajadas Fullcolor/ByN"], min: 0.0001, max: 1000000, step: 0.0001 },
+    { key: "factor_gramaje_tarjetas_9x5_350g", label: "Factor gramaje 350g Tarjetas 9x5", value: 1.1, unit: "factor", description: "350g", impacta_hoy: true, editable: true, estado: "editable", productos_afectados: ["Tarjetas 9x5"], min: 0.01, max: 100, step: 0.001 },
+    { key: "coeficiente_cantidad_tarjetas_9x5_100", label: "Coeficiente cantidad Tarjetas 9x5 100", value: 1, unit: "factor", description: "100", impacta_hoy: true, editable: true, estado: "editable", productos_afectados: ["Tarjetas 9x5"], min: 0.0001, max: 1000000, step: 0.0001 },
+    { key: "factor_gramaje_tarjetas_postales_350g", label: "Factor gramaje 350g Tarjetas Postales", value: 1.1, unit: "factor", description: "350g", impacta_hoy: true, editable: true, estado: "editable", productos_afectados: ["Tarjetas Postales"], min: 0.01, max: 100, step: 0.001 },
+    { key: "factor_formato_folletos_A4", label: "Factor formato Folletos A4", value: 1, unit: "factor", description: "A4", impacta_hoy: true, editable: true, estado: "editable", productos_afectados: ["Folletos"], min: 0.0001, max: 1000000, step: 0.0001 },
+    { key: "factor_papel_folletos_80g", label: "Factor papel Folletos 80g", value: 1, unit: "factor", description: "80g", impacta_hoy: true, editable: true, estado: "editable", productos_afectados: ["Folletos"], min: 0.0001, max: 1000000, step: 0.0001 },
+    { key: "factor_laca_uv_stickers_corte_recto", label: "Factor Laca UV Stickers Corte Recto", value: 1.18, unit: "factor", description: "Sticker", impacta_hoy: true, editable: true, estado: "editable", productos_afectados: ["Stickers Corte Recto"], min: 0.01, max: 100, step: 0.001 },
+  ];
+  const rel = (variable, label, productKey, productLabel, aplica_a = {}) => ({
+    variable,
+    variable_label: label,
+    producto_key: productKey,
+    producto: productLabel,
+    componente: label,
+    impacta_hoy: true,
+    editable: true,
+    estado: "conectado",
+    detalle: `${label} conectado a ${productLabel}.`,
+    aplica_a,
+  });
+  const impactMock = {
+    ok: true,
+    version: "variables_impacto_v1",
+    variables: adminVariables.map((item) => ({ key: item.key, label: item.label, editable: true, impacta_hoy: true, estado: "conectado" })),
+    productos: [
+      { key: "bajadas_fullcolor_byn", label: "Bajadas Fullcolor/ByN", estado: "activo", endpoint: "/bajadas-v2/cotizar", modo_precio: "matriz_pdf_con_variables_detectadas" },
+      { key: "bajadas_autoadhesivas", label: "Bajadas Autoadhesivas", estado: "activo", endpoint: "/bajadas-v2/cotizar", modo_precio: "matriz_pdf_con_variables_detectadas" },
+      { key: "tarjetas_9x5", label: "Tarjetas 9x5", estado: "activo", endpoint: "/tarjetas-9x5/cotizar", modo_precio: "matriz_pdf_con_variables_detectadas" },
+      { key: "tarjetas_postales", label: "Tarjetas Postales", estado: "activo", endpoint: "/tarjetas-postales/cotizar", modo_precio: "matriz_pdf_con_variables_detectadas" },
+      { key: "folletos", label: "Folletos", estado: "activo", endpoint: "/folletos/cotizar", modo_precio: "matriz_pdf_con_variables_detectadas" },
+      { key: "stickers_corte_recto", label: "Stickers Corte Recto", estado: "activo", endpoint: "/stickers-corte-recto/cotizar", modo_precio: "formula_editable_calibrada" },
+    ],
+    relaciones: [
+      rel("factor_laca_uv_bajadas", "Factor Laca UV Bajadas", "bajadas_fullcolor_byn", "Bajadas Fullcolor/ByN", { adicionales: ["laca"], terminaciones: ["laca"] }),
+      rel("factor_tinta_blanca_autoadhesivas", "Factor Tinta Blanca Autoadhesivas", "bajadas_autoadhesivas", "Bajadas Autoadhesivas", { adicionales: ["tinta_blanca", "adicional_tinta_blanca"] }),
+      rel("coeficiente_formato_bajadas_A3plus", "Coeficiente formato Bajadas A3+", "bajadas_fullcolor_byn", "Bajadas Fullcolor/ByN", { formatos: ["A3+"] }),
+      rel("factor_gramaje_tarjetas_9x5_350g", "Factor gramaje 350g Tarjetas 9x5", "tarjetas_9x5", "Tarjetas 9x5", { gramajes: ["350g"] }),
+      rel("coeficiente_cantidad_tarjetas_9x5_100", "Coeficiente cantidad Tarjetas 9x5 100", "tarjetas_9x5", "Tarjetas 9x5", { cantidades: [100] }),
+      rel("factor_gramaje_tarjetas_postales_350g", "Factor gramaje 350g Tarjetas Postales", "tarjetas_postales", "Tarjetas Postales", { gramajes: ["350g"] }),
+      rel("factor_formato_folletos_A4", "Factor formato Folletos A4", "folletos", "Folletos", { formatos: ["A4"] }),
+      rel("factor_papel_folletos_80g", "Factor papel Folletos 80g", "folletos", "Folletos", { gramajes: ["80g"] }),
+      rel("factor_laca_uv_stickers_corte_recto", "Factor Laca UV Stickers Corte Recto", "stickers_corte_recto", "Stickers Corte Recto", { terminaciones: ["con_laca_uv"] }),
+    ],
+    resumen: { variables_editables: adminVariables.length, productos_afectados: 6, relaciones_conectadas: 9 },
+  };
+
+  await page.route("**/bajadas-v2/cotizar", async (route) => {
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, total_sin_iva: 38584, total_con_urgencia: 38584, trazabilidad: { modo_precio: "matriz_pdf_con_variables_detectadas" } }) });
+  });
+  await page.route("**/tarjetas-9x5/cotizar", async (route) => {
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, total_sin_iva: 5652.9, total_con_urgencia: 5652.9, trazabilidad: { modo_precio: "matriz_pdf_con_variables_detectadas" } }) });
+  });
+  await page.route("**/tarjetas-postales/cotizar", async (route) => {
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, total_sin_iva: 12025.2, total_con_urgencia: 12025.2, trazabilidad: { modo_precio: "matriz_pdf_con_variables_detectadas" } }) });
+  });
+  await page.route("**/folletos/cotizar", async (route) => {
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, total_sin_iva: 119247, total_con_urgencia: 119247, trazabilidad: { modo_precio: "matriz_pdf_con_variables_detectadas" } }) });
+  });
+  await page.route("**/admin-precios/variables-editables", async (route) => {
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, variables: adminVariables }) });
+  });
+  await page.route("**/admin-precios/historial", async (route) => {
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, historial: [] }) });
+  });
+  await page.route("**/variables-impacto", async (route) => {
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(impactMock) });
+  });
+
+  await page.goto("/", { waitUntil: "domcontentloaded" });
+  await page.getByTestId("categoria-select").selectOption("Bajadas Fullcolor/ByN");
+  await page.getByLabel("Formato").selectOption("A3+");
+  await page.getByLabel("Cantidad").fill("53");
+  await page.getByLabel("Adicional").selectOption("laca");
+  await page.getByRole("button", { name: "Calcular" }).click();
+  await expect(page.getByText("Total final con urgencia")).toBeVisible();
+  await page.getByTestId("tab-admin-prices").click();
+  await expect(page.getByTestId("admin-relevant-variable-group")).toContainText("Factor Laca UV Bajadas");
+  await expect(page.getByTestId("admin-relevant-variable-group")).toContainText("Coeficiente formato Bajadas A3+");
+  await expect(page.getByTestId("admin-relevant-variable-group")).not.toContainText("Tarjetas 9x5");
+  await expect(page.getByTestId("admin-relevant-variable-group")).not.toContainText("Stickers Corte Recto");
+
+  await page.getByTestId("tab-quote").click();
+  await page.getByTestId("categoria-select").selectOption("Tarjetas Personales 9x5");
+  await page.getByLabel("Gramaje").selectOption("350g");
+  await page.getByLabel("Cantidad").fill("100");
+  await page.getByRole("button", { name: "Calcular" }).click();
+  await page.getByTestId("tab-admin-prices").click();
+  await expect(page.getByTestId("admin-relevant-variable-group")).toContainText("Factor gramaje 350g Tarjetas 9x5");
+  await expect(page.getByTestId("admin-relevant-variable-group")).toContainText("Coeficiente cantidad Tarjetas 9x5 100");
+  await expect(page.getByTestId("admin-relevant-variable-group")).not.toContainText("Tarjetas Postales");
+
+  await page.getByTestId("tab-quote").click();
+  await page.getByTestId("categoria-select").selectOption("Folletos");
+  await page.getByLabel("Formato").selectOption("A4");
+  await page.getByLabel("Papel").selectOption("80g Ilustracion");
+  await page.getByLabel("Modo color").selectOption("escala_grises");
+  await page.getByTestId("print-option-1-1").click();
+  await page.getByLabel("Cantidad").fill("1000");
+  await page.getByRole("button", { name: "Calcular" }).click();
+  await page.getByTestId("tab-admin-prices").click();
+  await expect(page.getByTestId("admin-relevant-variable-group")).toContainText("Factor formato Folletos A4");
+  await expect(page.getByTestId("admin-relevant-variable-group")).toContainText("Factor papel Folletos 80g");
+  await expect(page.getByTestId("admin-relevant-variable-group")).not.toContainText("Bajadas");
+
+  await page.getByTestId("tab-variable-impact").click();
+  await page.getByTestId("impact-variable-select").selectOption("factor_formato_folletos_A4");
+  await expect(page.getByTestId("impact-current-assessment")).toContainText("Documentada, no conectada");
+  await expect(page.getByTestId("impact-current-assessment")).toContainText("No afecta esta cotización actual");
+});
+
 test("Historial y backups y Exportar soporte Excel quedan accesibles", async ({ page }) => {
   await page.route("**/admin-precios/variables-editables", async (route) => {
     await route.fulfill({

@@ -352,3 +352,26 @@ Tests agregados/ajustados:
 - Mapa de impacto: scope por producto, formato, cantidad y terminación.
 - Importador Excel maestro: variables nuevas reconocidas como importables.
 - E2E: variables contextuales visibles solo para la cotización actual correspondiente.
+
+## 11. Etapa: Bajadas, Autoadhesivas, Tarjetas, Postales y Folletos
+
+Se agregaron variables editables contextuales para los bloques Bajadas/Autoadhesivas, Tarjetas 9x5, Tarjetas Postales y Folletos.
+
+Criterio aplicado:
+
+- Los precios finales PDF/lista no se reemplazan por formulas libres.
+- Las variables nuevas se usan para trazabilidad, preview, impacto contextual, export soporte Excel y preparacion de formula editable futura.
+- Cuando el motor actual sigue usando matriz PDF/lista, la UI debe indicar que la variable esta documentada/contextual y que no modifica el precio final de la cotizacion actual.
+- No se exponen precios finales, matrices PDF ni factores de ajuste PDF crudos como variables editables directas.
+
+Archivos de datos agregados:
+
+- `data/bajadas_v2/formula_editable_config.json`
+- `data/tarjetas_9x5/formula_editable_config.json`
+- `data/tarjetas_postales/formula_editable_config.json`
+- `data/folletos/formula_editable_config.json`
+
+Documentacion especifica:
+
+- `docs/VARIABLES_EDITABLES_BAJADAS_AUTOADHESIVAS.md`
+- `docs/VARIABLES_EDITABLES_TARJETAS_FOLLETOS.md`

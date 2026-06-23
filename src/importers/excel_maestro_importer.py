@@ -191,6 +191,34 @@ class ExcelMaestroImporter:
             or key.startswith("coeficiente_cantidad_stickers_corte_recto_")
             or key.startswith("coeficiente_formato_imanes_corte_recto_")
             or key.startswith("coeficiente_cantidad_imanes_corte_recto_")
+            or key in {
+                "factor_laca_uv_bajadas",
+                "factor_troquelado_digital_bajadas",
+                "factor_tinta_blanca_autoadhesivas",
+                "multiplicador_comercial_bajadas",
+                "factor_gramaje_tarjetas_9x5_350g",
+                "factor_laca_uv_tarjetas_9x5",
+                "factor_laminado_brillo_tarjetas_9x5",
+                "factor_laminado_mate_tarjetas_9x5",
+                "multiplicador_comercial_tarjetas_9x5",
+                "factor_gramaje_tarjetas_postales_350g",
+                "factor_laca_uv_tarjetas_postales",
+                "factor_laminado_brillo_tarjetas_postales",
+                "factor_laminado_mate_tarjetas_postales",
+                "multiplicador_comercial_tarjetas_postales",
+                "multiplicador_comercial_folletos",
+            }
+            or key.startswith("coeficiente_formato_bajadas_")
+            or key.startswith("coeficiente_rango_bajadas_")
+            or key.startswith("coeficiente_cantidad_tarjetas_9x5_")
+            or key.startswith("coeficiente_impresion_tarjetas_9x5_")
+            or key.startswith("coeficiente_cantidad_tarjetas_postales_")
+            or key.startswith("coeficiente_impresion_tarjetas_postales_")
+            or key.startswith("factor_papel_folletos_")
+            or key.startswith("factor_formato_folletos_")
+            or key.startswith("factor_color_folletos_")
+            or key.startswith("factor_impresion_folletos_")
+            or key.startswith("coeficiente_cantidad_folletos_")
         ) and (bool(item.get("impacta_hoy")) or key == "tipo_cambio_usd")
 
     def _blocked_payload(

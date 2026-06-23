@@ -1005,6 +1005,14 @@ class PricesExcelExporter:
     def _product_mode(self, title: str | None) -> str:
         if title in {"Stickers Circulares", "Stickers Corte Recto", "Imanes Corte Recto"}:
             return "formula_editable_calibrada"
+        if title in {
+            "Bajadas Fullcolor / ByN / Kraft",
+            "Bajadas Autoadhesivas",
+            "Tarjetas Personales",
+            "Tarjetas Postales",
+            "Folletos",
+        }:
+            return "matriz_pdf_con_variables_contextuales"
         if title == "Troquelado Digital":
             return "variable"
         return "tabla_fija_pdf"
@@ -1030,12 +1038,22 @@ class PricesExcelExporter:
         return sources.get(title, "lista-low.pdf")
 
     def _excel_source_for(self, title: str | None) -> str:
+        if title == "Bajadas Fullcolor / ByN / Kraft":
+            return "Excel histórico + data/bajadas_v2/formula_editable_config.json"
+        if title == "Bajadas Autoadhesivas":
+            return "Excel histórico + data/bajadas_v2/formula_editable_config.json + data/bajadas_autoadhesivas/autoadhesivas_v1_config.json"
         if title == "Stickers Circulares":
             return 'Excel hoja "circulares" + data/stickers_circulares/formula_editable_config.json'
         if title == "Stickers Corte Recto":
             return "Excel histórico + data/stickers_corte_recto/formula_editable_config.json"
         if title == "Imanes Corte Recto":
             return "Excel histórico + data/imanes_corte_recto/formula_editable_config.json"
+        if title == "Tarjetas Personales":
+            return "Excel histórico + data/tarjetas_9x5/formula_editable_config.json"
+        if title == "Tarjetas Postales":
+            return "Excel histórico + data/tarjetas_postales/formula_editable_config.json"
+        if title == "Folletos":
+            return "Excel histórico + data/folletos/formula_editable_config.json"
         return "Copia de DIGITAL sistema 2025.xlsx (lógica histórica/auditoría)"
 
     def _split_source_cell(self, raw: Any) -> tuple[str, str]:

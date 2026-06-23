@@ -20,6 +20,10 @@ class TestVariablesImpactoApi(unittest.TestCase):
             ROOT / "data" / "stickers_circulares" / "formula_editable_config.json",
             ROOT / "data" / "stickers_corte_recto" / "formula_editable_config.json",
             ROOT / "data" / "imanes_corte_recto" / "formula_editable_config.json",
+            ROOT / "data" / "bajadas_v2" / "formula_editable_config.json",
+            ROOT / "data" / "tarjetas_9x5" / "formula_editable_config.json",
+            ROOT / "data" / "tarjetas_postales" / "formula_editable_config.json",
+            ROOT / "data" / "folletos" / "formula_editable_config.json",
         ]
         cls.before = {path: path.read_text(encoding="utf-8") for path in cls.config_paths if path.exists()}
         cls.server = create_server(host="127.0.0.1", port=0, project_root=ROOT)
@@ -67,6 +71,19 @@ class TestVariablesImpactoApi(unittest.TestCase):
             "factor_laca_uv_imanes_corte_recto",
             "coeficiente_formato_imanes_corte_recto_10x7",
             "coeficiente_cantidad_imanes_corte_recto_1000",
+            "factor_laca_uv_bajadas",
+            "factor_troquelado_digital_bajadas",
+            "factor_tinta_blanca_autoadhesivas",
+            "coeficiente_formato_bajadas_A3plus",
+            "coeficiente_rango_bajadas_51_a_100",
+            "factor_gramaje_tarjetas_9x5_350g",
+            "factor_laminado_mate_tarjetas_9x5",
+            "coeficiente_cantidad_tarjetas_9x5_1000",
+            "factor_gramaje_tarjetas_postales_350g",
+            "coeficiente_cantidad_tarjetas_postales_1000",
+            "multiplicador_comercial_folletos",
+            "factor_formato_folletos_A4",
+            "factor_papel_folletos_80g",
             "adicional_tinta_blanca_base_1_copia",
             "matriz_pdf",
             "factor_ajuste_pdf",
@@ -153,6 +170,41 @@ class TestVariablesImpactoApi(unittest.TestCase):
         self.assertNotIn("factor_laca_uv_imanes_corte_recto", variables)
         self.assertFalse(any(variable.startswith("coeficiente_formato_stickers_corte_recto_") for variable in variables))
         self.assertFalse(any(variable.startswith("coeficiente_formato_imanes_corte_recto_") for variable in variables))
+
+    def test_variables_bajadas_tarjetas_folletos_tienen_scope_contextual(self):
+        status, body = self._get_json("/variables-impacto/variable/factor_laca_uv_bajadas")
+        self.assertEqual(status, 200)
+        productos = {rel["producto_key"] for rel in body["relaciones"]}
+        self.assertIn("bajadas_fullcolor_byn", productos)
+        self.assertIn("bajadas_autoadhesivas", productos)
+        self.assertTrue(any(rel["aplica_a"].get("adicionales") for rel in body["relaciones"]))
+
+        status, body = self._get_json("/variables-impacto/variable/coeficiente_formato_bajadas_A3plus")
+        self.assertEqual(status, 200)
+        self.assertTrue(all(rel["aplica_a"] == {"formatos": ["A3+"]} for rel in body["relaciones"]))
+
+        status, body = self._get_json("/variables-impacto/variable/factor_gramaje_tarjetas_9x5_350g")
+        self.assertEqual(status, 200)
+        self.assertEqual(body["relaciones"][0]["producto_key"], "tarjetas_9x5")
+        self.assertEqual(body["relaciones"][0]["aplica_a"], {"gramajes": ["350g"]})
+
+        status, body = self._get_json("/variables-impacto/variable/coeficiente_cantidad_tarjetas_postales_1000")
+        self.assertEqual(status, 200)
+        self.assertEqual(body["relaciones"][0]["producto_key"], "tarjetas_postales")
+        self.assertEqual(body["relaciones"][0]["aplica_a"], {"cantidades": [1000]})
+
+        status, body = self._get_json("/variables-impacto/variable/factor_formato_folletos_A4")
+        self.assertEqual(status, 200)
+        self.assertEqual(body["relaciones"][0]["producto_key"], "folletos")
+        self.assertEqual(body["relaciones"][0]["aplica_a"], {"formatos": ["A4"]})
+
+    def test_variables_bloque_nuevo_no_contaminan_stickers_circulares(self):
+        status, body = self._get_json("/variables-impacto/producto/stickers_circulares")
+        self.assertEqual(status, 200)
+        variables = {rel["variable"] for rel in body["relaciones"]}
+        self.assertNotIn("factor_laca_uv_bajadas", variables)
+        self.assertNotIn("factor_gramaje_tarjetas_9x5_350g", variables)
+        self.assertNotIn("factor_formato_folletos_A4", variables)
 
     def test_variable_desconocida_devuelve_404_controlado(self):
         status, body = self._get_json("/variables-impacto/variable/no_existe")

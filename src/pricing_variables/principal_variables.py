@@ -161,6 +161,30 @@ class PrincipalVariablesService:
             coef_formato_prefix="coeficiente_formato_imanes_corte_recto",
             coef_cantidad_prefix="coeficiente_cantidad_imanes_corte_recto",
         )
+        self._add_bajadas_autoadhesivas_editable_variables()
+        self._add_tarjetas_pdf_editable_variables(
+            product_label="Tarjetas 9x5",
+            source_file="data/tarjetas_9x5/formula_editable_config.json",
+            gramaje_key="factor_gramaje_tarjetas_9x5_350g",
+            laca_key="factor_laca_uv_tarjetas_9x5",
+            brillo_key="factor_laminado_brillo_tarjetas_9x5",
+            mate_key="factor_laminado_mate_tarjetas_9x5",
+            multiplicador_key="multiplicador_comercial_tarjetas_9x5",
+            coef_cantidad_prefix="coeficiente_cantidad_tarjetas_9x5",
+            coef_impresion_prefix="coeficiente_impresion_tarjetas_9x5",
+        )
+        self._add_tarjetas_pdf_editable_variables(
+            product_label="Tarjetas Postales",
+            source_file="data/tarjetas_postales/formula_editable_config.json",
+            gramaje_key="factor_gramaje_tarjetas_postales_350g",
+            laca_key="factor_laca_uv_tarjetas_postales",
+            brillo_key="factor_laminado_brillo_tarjetas_postales",
+            mate_key="factor_laminado_mate_tarjetas_postales",
+            multiplicador_key="multiplicador_comercial_tarjetas_postales",
+            coef_cantidad_prefix="coeficiente_cantidad_tarjetas_postales",
+            coef_impresion_prefix="coeficiente_impresion_tarjetas_postales",
+        )
+        self._add_folletos_editable_variables()
         self._load_prepared_variables()
 
     def _add_stickers_circulares_editable_variables(self) -> None:
@@ -392,6 +416,331 @@ class PrincipalVariablesService:
                     max_value=1000000,
                     step=0.0001,
                     impact=f"Modifica el subtotal tecnico solo para {product_label} cantidad {cantidad}.",
+                )
+
+
+    def _add_bajadas_autoadhesivas_editable_variables(self) -> None:
+        """Expose scoped technical variables for Bajadas and Autoadhesivas."""
+        source_file = "data/bajadas_v2/formula_editable_config.json"
+        cfg_path = self.project_root / source_file
+        if not cfg_path.exists():
+            return
+        payload = self._read_json(cfg_path)
+        variables = payload.get("variables", {})
+        if not isinstance(variables, dict):
+            return
+
+        def add_variable(key: str, *, group: str, label: str, unit: str, path: list[str],
+                         source_path: str, description: str, min_value: float, max_value: float,
+                         step: float, impact: str, products: list[str]) -> None:
+            self.catalog[key] = {
+                "group": group,
+                "label": label,
+                "unit": unit,
+                "description": description,
+                "tipo": "variable_madre",
+                "min": min_value,
+                "max": max_value,
+                "step": step,
+                "source_file": source_file,
+                "path": path,
+                "source_path": source_path,
+                "applies_today": True,
+                "confiabilidad": "media",
+                "productos_afectados": products,
+                "impact": impact,
+            }
+
+        common = (
+            "Variable técnica contextual de Bajadas/Autoadhesivas. Sirve para preview, "
+            "trazabilidad y futuras fórmulas calibradas; el precio final base permanece "
+            "validado contra PDF/lista salvo adicionales operativos explícitos."
+        )
+        add_variable(
+            "factor_laca_uv_bajadas",
+            group="adicionales",
+            label="Factor Laca UV Bajadas",
+            unit="factor",
+            path=["variables", "factor_laca_uv_bajadas"],
+            source_path="variables.factor_laca_uv_bajadas",
+            description=common,
+            min_value=0.01,
+            max_value=100,
+            step=0.001,
+            impact="Documenta/calibra el adicional Laca UV por rango en Bajadas y Autoadhesivas.",
+            products=["Bajadas Fullcolor/ByN", "Bajadas Autoadhesivas"],
+        )
+        add_variable(
+            "factor_troquelado_digital_bajadas",
+            group="adicionales",
+            label="Factor Troquelado Digital Bajadas",
+            unit="factor",
+            path=["variables", "factor_troquelado_digital_bajadas"],
+            source_path="variables.factor_troquelado_digital_bajadas",
+            description=common,
+            min_value=0.01,
+            max_value=100,
+            step=0.001,
+            impact="Variable contextual del adicional Troquelado Digital aplicado a Bajadas.",
+            products=["Bajadas Fullcolor/ByN", "Bajadas Kraft"],
+        )
+        add_variable(
+            "factor_tinta_blanca_autoadhesivas",
+            group="adicionales",
+            label="Factor Tinta Blanca Autoadhesivas",
+            unit="factor",
+            path=["variables", "factor_tinta_blanca_autoadhesivas"],
+            source_path="variables.factor_tinta_blanca_autoadhesivas",
+            description=common,
+            min_value=0.01,
+            max_value=100,
+            step=0.001,
+            impact="Factor técnico complementario del adicional Tinta Blanca; la base operativa real sigue siendo el valor 1 copia.",
+            products=["Bajadas Autoadhesivas"],
+        )
+        add_variable(
+            "multiplicador_comercial_bajadas",
+            group="multiplicadores",
+            label="Multiplicador comercial Bajadas",
+            unit="factor",
+            path=["variables", "multiplicador_comercial_bajadas"],
+            source_path="variables.multiplicador_comercial_bajadas",
+            description=common,
+            min_value=0.01,
+            max_value=100,
+            step=0.001,
+            impact="Multiplicador técnico preparado para fórmulas futuras de Bajadas.",
+            products=["Bajadas Fullcolor/ByN", "Bajadas Autoadhesivas", "Bajadas Kraft"],
+        )
+
+        for formato in sorted((variables.get("coeficiente_formato") or {}), key=str):
+            safe = str(formato).replace("+", "plus").replace("-", "_").replace("/", "_")
+            add_variable(
+                f"coeficiente_formato_bajadas_{safe}",
+                group="multiplicadores",
+                label=f"Coeficiente formato Bajadas {formato}",
+                unit="factor",
+                path=["variables", "coeficiente_formato", str(formato)],
+                source_path=f"variables.coeficiente_formato.{formato}",
+                description=f"{common} Aplica al formato {formato}.",
+                min_value=0.0001,
+                max_value=1000000,
+                step=0.0001,
+                impact=f"Variable contextual para Bajadas formato {formato}.",
+                products=["Bajadas Fullcolor/ByN", "Bajadas Autoadhesivas", "Bajadas Kraft"],
+            )
+
+        for rango in sorted((variables.get("coeficiente_rango") or {}), key=str):
+            safe = str(rango).replace(" ", "_").replace("+", "plus").replace("-", "_")
+            add_variable(
+                f"coeficiente_rango_bajadas_{safe}",
+                group="multiplicadores",
+                label=f"Coeficiente rango Bajadas {rango}",
+                unit="factor",
+                path=["variables", "coeficiente_rango", str(rango)],
+                source_path=f"variables.coeficiente_rango.{rango}",
+                description=f"{common} Aplica al rango {rango}.",
+                min_value=0.0001,
+                max_value=1000000,
+                step=0.0001,
+                impact=f"Variable contextual para Bajadas rango {rango}.",
+                products=["Bajadas Fullcolor/ByN", "Bajadas Autoadhesivas", "Bajadas Kraft"],
+            )
+
+    def _add_tarjetas_pdf_editable_variables(
+        self,
+        *,
+        product_label: str,
+        source_file: str,
+        gramaje_key: str,
+        laca_key: str,
+        brillo_key: str,
+        mate_key: str,
+        multiplicador_key: str,
+        coef_cantidad_prefix: str,
+        coef_impresion_prefix: str,
+    ) -> None:
+        """Expose contextual variables for card products that keep PDF totals."""
+        cfg_path = self.project_root / source_file
+        if not cfg_path.exists():
+            return
+        payload = self._read_json(cfg_path)
+        variables = payload.get("variables", {})
+        if not isinstance(variables, dict):
+            return
+
+        def add_variable(key: str, *, group: str, label: str, unit: str, path: list[str],
+                         source_path: str, description: str, min_value: float, max_value: float,
+                         step: float, impact: str) -> None:
+            self.catalog[key] = {
+                "group": group,
+                "label": label,
+                "unit": unit,
+                "description": description,
+                "tipo": "variable_madre",
+                "min": min_value,
+                "max": max_value,
+                "step": step,
+                "source_file": source_file,
+                "path": path,
+                "source_path": source_path,
+                "applies_today": True,
+                "confiabilidad": "media",
+                "productos_afectados": [product_label],
+                "impact": impact,
+            }
+
+        common = (
+            f"Variable contextual de {product_label}. Mantiene la matriz PDF/lista como "
+            "precio final validado; se usa para preview, trazabilidad y futura fórmula calibrada."
+        )
+        add_variable(
+            gramaje_key,
+            group="multiplicadores",
+            label=f"Factor gramaje 350g {product_label}",
+            unit="factor",
+            path=["variables", "factor_gramaje_350g"],
+            source_path="variables.factor_gramaje_350g",
+            description=f"{common} La regla comercial vigente para 350g es 1.10 sobre 300g.",
+            min_value=0.01,
+            max_value=100,
+            step=0.001,
+            impact="Representa la regla comercial 350g = 300g + 10%.",
+        )
+        for key, label, path_name in [
+            (laca_key, "Factor Laca UV", "factor_laca_uv"),
+            (brillo_key, "Factor Laminado Brillo", "factor_laminado_brillo"),
+            (mate_key, "Factor Laminado Mate", "factor_laminado_mate"),
+        ]:
+            add_variable(
+                key,
+                group="adicionales",
+                label=f"{label} {product_label}",
+                unit="factor",
+                path=["variables", path_name],
+                source_path=f"variables.{path_name}",
+                description=common,
+                min_value=0.01,
+                max_value=100,
+                step=0.001,
+                impact=f"Variable contextual para terminación {label.lower()} en {product_label}.",
+            )
+        add_variable(
+            multiplicador_key,
+            group="multiplicadores",
+            label=f"Multiplicador comercial {product_label}",
+            unit="factor",
+            path=["variables", next(key for key in variables if key.startswith("multiplicador_comercial"))],
+            source_path=f"variables.{next(key for key in variables if key.startswith('multiplicador_comercial'))}",
+            description=common,
+            min_value=0.01,
+            max_value=100,
+            step=0.001,
+            impact=f"Multiplicador contextual para {product_label}.",
+        )
+        for cantidad in sorted((variables.get("coeficiente_cantidad") or {}), key=lambda value: int(value)):
+            add_variable(
+                f"{coef_cantidad_prefix}_{cantidad}",
+                group="multiplicadores",
+                label=f"Coeficiente cantidad {product_label} {cantidad}",
+                unit="factor",
+                path=["variables", "coeficiente_cantidad", str(cantidad)],
+                source_path=f"variables.coeficiente_cantidad.{cantidad}",
+                description=f"{common} Aplica a cantidad {cantidad}.",
+                min_value=0.0001,
+                max_value=1000000,
+                step=0.0001,
+                impact=f"Variable contextual para {product_label} cantidad {cantidad}.",
+            )
+        for impresion in sorted((variables.get("coeficiente_impresion") or {}), key=str):
+            safe = str(impresion).replace("/", "_")
+            add_variable(
+                f"{coef_impresion_prefix}_{safe}",
+                group="multiplicadores",
+                label=f"Coeficiente impresión {product_label} {impresion}",
+                unit="factor",
+                path=["variables", "coeficiente_impresion", str(impresion)],
+                source_path=f"variables.coeficiente_impresion.{impresion}",
+                description=f"{common} Aplica a impresión {impresion}.",
+                min_value=0.0001,
+                max_value=1000000,
+                step=0.0001,
+                impact=f"Variable contextual para {product_label} impresión {impresion}.",
+            )
+
+    def _add_folletos_editable_variables(self) -> None:
+        """Expose contextual variables for Folletos PDF matrix product."""
+        source_file = "data/folletos/formula_editable_config.json"
+        cfg_path = self.project_root / source_file
+        if not cfg_path.exists():
+            return
+        payload = self._read_json(cfg_path)
+        variables = payload.get("variables", {})
+        if not isinstance(variables, dict):
+            return
+
+        def add_variable(key: str, *, group: str, label: str, unit: str, path: list[str],
+                         source_path: str, description: str, min_value: float, max_value: float,
+                         step: float, impact: str) -> None:
+            self.catalog[key] = {
+                "group": group,
+                "label": label,
+                "unit": unit,
+                "description": description,
+                "tipo": "variable_madre",
+                "min": min_value,
+                "max": max_value,
+                "step": step,
+                "source_file": source_file,
+                "path": path,
+                "source_path": source_path,
+                "applies_today": True,
+                "confiabilidad": "media",
+                "productos_afectados": ["Folletos"],
+                "impact": impact,
+            }
+
+        common = (
+            "Variable contextual de Folletos. La cotización final actual permanece "
+            "validada contra PDF/lista; se usa para preview, trazabilidad y futura fórmula calibrada."
+        )
+        add_variable(
+            "multiplicador_comercial_folletos",
+            group="multiplicadores",
+            label="Multiplicador comercial Folletos",
+            unit="factor",
+            path=["variables", "multiplicador_comercial_folletos"],
+            source_path="variables.multiplicador_comercial_folletos",
+            description=common,
+            min_value=0.01,
+            max_value=100,
+            step=0.001,
+            impact="Multiplicador contextual para Folletos.",
+        )
+        for family, prefix, label_base in [
+            ("factor_papel", "factor_papel_folletos", "Factor papel Folletos"),
+            ("factor_formato", "factor_formato_folletos", "Factor formato Folletos"),
+            ("factor_color", "factor_color_folletos", "Factor color Folletos"),
+            ("factor_impresion", "factor_impresion_folletos", "Factor impresión Folletos"),
+            ("coeficiente_cantidad", "coeficiente_cantidad_folletos", "Coeficiente cantidad Folletos"),
+        ]:
+            values = variables.get(family, {})
+            if not isinstance(values, dict):
+                continue
+            for raw_key in sorted(values, key=lambda value: int(value) if str(value).isdigit() else str(value)):
+                safe = str(raw_key).replace("/", "_").replace("+", "plus").replace(" ", "_")
+                add_variable(
+                    f"{prefix}_{safe}",
+                    group="multiplicadores",
+                    label=f"{label_base} {raw_key}",
+                    unit="factor",
+                    path=["variables", family, str(raw_key)],
+                    source_path=f"variables.{family}.{raw_key}",
+                    description=f"{common} Aplica a {raw_key}.",
+                    min_value=0.0001,
+                    max_value=1000000,
+                    step=0.0001,
+                    impact=f"Variable contextual de Folletos para {raw_key}.",
                 )
 
 

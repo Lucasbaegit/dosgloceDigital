@@ -19,6 +19,10 @@ class TestAdminPreciosApi(unittest.TestCase):
             ROOT / "data" / "stickers_circulares" / "formula_editable_config.json",
             ROOT / "data" / "stickers_corte_recto" / "formula_editable_config.json",
             ROOT / "data" / "imanes_corte_recto" / "formula_editable_config.json",
+            ROOT / "data" / "bajadas_v2" / "formula_editable_config.json",
+            ROOT / "data" / "tarjetas_9x5" / "formula_editable_config.json",
+            ROOT / "data" / "tarjetas_postales" / "formula_editable_config.json",
+            ROOT / "data" / "folletos" / "formula_editable_config.json",
             ROOT / "data" / "bajadas_autoadhesivas" / "autoadhesivas_v1_config.json",
             ROOT / "data" / "variables_principales" / "variables_madre.json",
         ]
@@ -89,6 +93,12 @@ class TestAdminPreciosApi(unittest.TestCase):
         self.assertIn("factor_laca_uv_imanes_corte_recto", keys)
         self.assertIn("coeficiente_formato_imanes_corte_recto_10x7", keys)
         self.assertIn("coeficiente_cantidad_imanes_corte_recto_1000", keys)
+        self.assertIn("factor_laca_uv_bajadas", keys)
+        self.assertIn("factor_tinta_blanca_autoadhesivas", keys)
+        self.assertIn("coeficiente_formato_bajadas_A3plus", keys)
+        self.assertIn("factor_gramaje_tarjetas_9x5_350g", keys)
+        self.assertIn("factor_gramaje_tarjetas_postales_350g", keys)
+        self.assertIn("factor_formato_folletos_A4", keys)
         self.assertNotIn("tabla_pdf", keys)
         self.assertTrue(all(item["editable"] for item in body["variables"]))
 
@@ -269,6 +279,107 @@ class TestAdminPreciosApi(unittest.TestCase):
         self.assertEqual(status, 200)
         self.assertEqual(after_quote["total_sin_iva"], 61703)
         self.assertNotEqual(after_quote["trazabilidad"]["precio_base_estimado"], before_base)
+
+    def test_variables_bajadas_tarjetas_folletos_preview_y_preservan_precios(self):
+        cases = [
+            (
+                "factor_laca_uv_bajadas",
+                "/bajadas-v2/cotizar",
+                {
+                    "categoria": "Bajadas Fullcolor",
+                    "modo_color": "fullcolor",
+                    "formato": "A3+",
+                    "tipo_papel": "liviano",
+                    "material": "Ilustracion",
+                    "gramaje": "150g",
+                    "cantidad_unidades": 53,
+                    "cantidad_rango": "51 a 100",
+                    "caras": "4/0",
+                    "urgencia": "normal",
+                    "adicional_laminado": "laca",
+                    "caras_adicional_laminado": 1,
+                    "adicional_troquelado": False,
+                },
+                38584,
+            ),
+            (
+                "factor_gramaje_tarjetas_9x5_350g",
+                "/tarjetas-9x5/cotizar",
+                {
+                    "categoria": "Tarjetas Personales",
+                    "producto": "9x5",
+                    "formato": "9x5",
+                    "papel": "350g Ilustracion",
+                    "gramaje": "350g",
+                    "terminacion": "sin_laminar",
+                    "caras": "4/0",
+                    "cantidad_unidades": 100,
+                    "terminaciones_extra": {"puntas_redondeadas": False, "agujerado": False},
+                    "urgencia": "normal",
+                },
+                5652.9,
+            ),
+            (
+                "factor_gramaje_tarjetas_postales_350g",
+                "/tarjetas-postales/cotizar",
+                {
+                    "categoria": "Tarjetas Postales",
+                    "producto": "postal",
+                    "formato": "postal",
+                    "papel": "350g Ilustracion",
+                    "gramaje": "350g",
+                    "terminacion": "sin_laminar",
+                    "caras": "4/0",
+                    "cantidad_unidades": 100,
+                    "terminaciones_extra": {"puntas_redondeadas": False, "agujerado": False},
+                    "urgencia": "normal",
+                },
+                12025.2,
+            ),
+            (
+                "factor_formato_folletos_A4",
+                "/folletos/cotizar",
+                {
+                    "categoria": "Folletos",
+                    "producto": "folleto",
+                    "formato": "A4",
+                    "papel": "80g Ilustracion",
+                    "gramaje": "80g",
+                    "modo_color": "escala_grises",
+                    "caras": "1/1",
+                    "cantidad_unidades": 1000,
+                    "urgencia": "normal",
+                },
+                119247,
+            ),
+        ]
+        for variable, endpoint, quote_payload, expected_total in cases:
+            with self.subTest(variable=variable):
+                status, before_quote = self.call("POST", endpoint, quote_payload)
+                self.assertEqual(status, 200)
+                self.assertEqual(before_quote["total_sin_iva"], expected_total)
+
+                status, variables = self.call("GET", "/admin-precios/variables-editables")
+                current = next(item for item in variables["variables"] if item["key"] == variable)
+                new_value = float(current["value"]) + 0.01
+
+                status, preview = self.call("POST", "/admin-precios/preview", {"variable": variable, "nuevo_valor": new_value})
+                self.assertEqual(status, 200)
+                self.assertTrue(preview["ok"])
+                self.assertTrue(preview["precios_ejemplo"])
+
+                status, applied = self.call(
+                    "POST",
+                    "/admin-precios/aplicar",
+                    {"variable": variable, "nuevo_valor": new_value, "confirmado": True},
+                )
+                self.assertEqual(status, 200)
+                self.assertTrue(applied["backup"])
+                self.assertIn("historial", applied)
+
+                status, after_quote = self.call("POST", endpoint, quote_payload)
+                self.assertEqual(status, 200)
+                self.assertEqual(after_quote["total_sin_iva"], expected_total)
 
     def test_variable_imanes_corte_recto_cambia_base_y_preserva_total_pdf(self):
         quote_payload = {

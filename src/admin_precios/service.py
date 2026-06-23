@@ -306,6 +306,57 @@ class AdminPricesService:
                 "despues": None,
                 "detalle": "Impacto visible en base tecnica; el precio final conserva calibracion PDF/lista por combinacion.",
             }]
+        if variable in {
+            "factor_laca_uv_bajadas",
+            "factor_troquelado_digital_bajadas",
+            "factor_tinta_blanca_autoadhesivas",
+            "multiplicador_comercial_bajadas",
+        } or variable.startswith("coeficiente_formato_bajadas_") or variable.startswith("coeficiente_rango_bajadas_"):
+            return [{
+                "nombre": "Bajadas/Autoadhesivas variables contextuales",
+                "antes": None,
+                "despues": None,
+                "detalle": "Impacto visible en preview/trazabilidad; los precios base siguen preservados contra PDF/lista salvo adicionales operativos.",
+            }]
+        if variable in {
+            "factor_gramaje_tarjetas_9x5_350g",
+            "factor_laca_uv_tarjetas_9x5",
+            "factor_laminado_brillo_tarjetas_9x5",
+            "factor_laminado_mate_tarjetas_9x5",
+            "multiplicador_comercial_tarjetas_9x5",
+        } or variable.startswith("coeficiente_cantidad_tarjetas_9x5_") or variable.startswith("coeficiente_impresion_tarjetas_9x5_"):
+            return [{
+                "nombre": "Tarjetas 9x5 variables contextuales",
+                "antes": None,
+                "despues": None,
+                "detalle": "Impacto visible en preview/trazabilidad; la matriz PDF/lista sigue siendo fuente final.",
+            }]
+        if variable in {
+            "factor_gramaje_tarjetas_postales_350g",
+            "factor_laca_uv_tarjetas_postales",
+            "factor_laminado_brillo_tarjetas_postales",
+            "factor_laminado_mate_tarjetas_postales",
+            "multiplicador_comercial_tarjetas_postales",
+        } or variable.startswith("coeficiente_cantidad_tarjetas_postales_") or variable.startswith("coeficiente_impresion_tarjetas_postales_"):
+            return [{
+                "nombre": "Tarjetas Postales variables contextuales",
+                "antes": None,
+                "despues": None,
+                "detalle": "Impacto visible en preview/trazabilidad; la matriz PDF/lista sigue siendo fuente final.",
+            }]
+        if variable == "multiplicador_comercial_folletos" or variable.startswith((
+            "factor_papel_folletos_",
+            "factor_formato_folletos_",
+            "factor_color_folletos_",
+            "factor_impresion_folletos_",
+            "coeficiente_cantidad_folletos_",
+        )):
+            return [{
+                "nombre": "Folletos variables contextuales",
+                "antes": None,
+                "despues": None,
+                "detalle": "Impacto visible en preview/trazabilidad; la matriz PDF/lista sigue siendo fuente final.",
+            }]
         return []
 
     def _append_history(self, preview: dict[str, Any], update_result: dict[str, Any]) -> dict[str, Any]:

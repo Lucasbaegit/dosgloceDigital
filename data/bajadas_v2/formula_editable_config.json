@@ -1,0 +1,35 @@
+﻿{
+  "version": "bajadas_autoadhesivas_formula_editable_v1",
+  "modo_precio_default": "matriz_pdf_con_variables_detectadas",
+  "convencion_precio": "precio_final_pdf_lista_preservado",
+  "variables": {
+    "factor_laca_uv_bajadas": 1.0,
+    "factor_troquelado_digital_bajadas": 1.0,
+    "factor_tinta_blanca_autoadhesivas": 1.0,
+    "multiplicador_comercial_bajadas": 1.0,
+    "coeficiente_formato": {
+      "A3+": 1.0,
+      "A3": 1.0,
+      "A4": 1.0,
+      "XA3": 1.1
+    },
+    "coeficiente_rango": {
+      "1": 1.0,
+      "2 a 25": 1.0,
+      "26 a 50": 1.0,
+      "51 a 100": 1.0,
+      "101 a 300": 1.0,
+      "301 a 500": 1.0,
+      "501 a 1000": 1.0
+    }
+  },
+  "fuente_excel": {
+    "archivo": "Copia de DIGITAL sistema 2025.xlsx",
+    "nota": "Variables tecnicas preparadas para Bajadas/Autoadhesivas. Precio final actual se conserva contra PDF/lista salvo adicional Tinta Blanca operativo."
+  },
+  "pendientes": [
+    "reconstruccion completa de formula historica de Bajadas",
+    "separacion documentada de click color/BN por rama",
+    "coeficientes comerciales finales por papel/material"
+  ]
+}

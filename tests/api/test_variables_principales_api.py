@@ -46,6 +46,10 @@ class TestVariablesPrincipalesApi(unittest.TestCase):
             ROOT / "data" / "stickers_circulares" / "formula_editable_config.json",
             ROOT / "data" / "stickers_corte_recto" / "formula_editable_config.json",
             ROOT / "data" / "imanes_corte_recto" / "formula_editable_config.json",
+            ROOT / "data" / "bajadas_v2" / "formula_editable_config.json",
+            ROOT / "data" / "tarjetas_9x5" / "formula_editable_config.json",
+            ROOT / "data" / "tarjetas_postales" / "formula_editable_config.json",
+            ROOT / "data" / "folletos" / "formula_editable_config.json",
             ROOT / "data" / "bajadas_autoadhesivas" / "autoadhesivas_v1_config.json",
             ROOT / "data" / "variables_principales" / "variables_madre.json",
         ]
@@ -113,6 +117,19 @@ class TestVariablesPrincipalesApi(unittest.TestCase):
         self.assertIn("factor_laca_uv_imanes_corte_recto", keys)
         self.assertIn("coeficiente_formato_imanes_corte_recto_10x7", keys)
         self.assertIn("coeficiente_cantidad_imanes_corte_recto_1000", keys)
+        self.assertIn("factor_laca_uv_bajadas", keys)
+        self.assertIn("factor_tinta_blanca_autoadhesivas", keys)
+        self.assertIn("factor_troquelado_digital_bajadas", keys)
+        self.assertIn("coeficiente_formato_bajadas_A3plus", keys)
+        self.assertIn("coeficiente_rango_bajadas_51_a_100", keys)
+        self.assertIn("factor_gramaje_tarjetas_9x5_350g", keys)
+        self.assertIn("factor_laminado_mate_tarjetas_9x5", keys)
+        self.assertIn("coeficiente_cantidad_tarjetas_9x5_1000", keys)
+        self.assertIn("factor_gramaje_tarjetas_postales_350g", keys)
+        self.assertIn("coeficiente_cantidad_tarjetas_postales_1000", keys)
+        self.assertIn("multiplicador_comercial_folletos", keys)
+        self.assertIn("factor_formato_folletos_A4", keys)
+        self.assertIn("factor_papel_folletos_80g", keys)
         self.assertNotIn("factor_ajuste_pdf", keys)
         editable_items = [
             item
@@ -208,6 +225,9 @@ class TestVariablesPrincipalesApi(unittest.TestCase):
         variable_rows = {row[0]: dict(zip(headers_row, row)) for row in variables.iter_rows(min_row=2, values_only=True) if row[0]}
         self.assertTrue(variable_rows["click_color"]["editable_en_sistema"])
         self.assertEqual(variable_rows["click_color"]["estado_operativo"], "operativa")
+        self.assertTrue(variable_rows["factor_laca_uv_bajadas"]["editable_en_sistema"])
+        self.assertTrue(variable_rows["factor_gramaje_tarjetas_9x5_350g"]["editable_en_sistema"])
+        self.assertTrue(variable_rows["factor_formato_folletos_A4"]["editable_en_sistema"])
         self.assertFalse(variable_rows["ilustracion_150g_65x95_usd"]["editable_en_sistema"])
         self.assertTrue(variable_rows["ilustracion_150g_65x95_usd"]["editable_en_excel_maestro"])
         self.assertEqual(variable_rows["ilustracion_150g_65x95_usd"]["estado_operativo"], "preparada_no_conectada")

@@ -607,6 +607,34 @@ class VariableImpactMap:
             coef_formato_prefix="coeficiente_formato_imanes_corte_recto",
             coef_cantidad_prefix="coeficiente_cantidad_imanes_corte_recto",
         ))
+        relations.extend(self._bajadas_editable_relations())
+        relations.extend(self._tarjetas_editable_relations(
+            product_key="tarjetas_9x5",
+            product_label="Tarjetas 9x5",
+            source_file="data/tarjetas_9x5/formula_editable_config.json",
+            endpoint="/tarjetas-9x5/cotizar",
+            gramaje_key="factor_gramaje_tarjetas_9x5_350g",
+            laca_key="factor_laca_uv_tarjetas_9x5",
+            brillo_key="factor_laminado_brillo_tarjetas_9x5",
+            mate_key="factor_laminado_mate_tarjetas_9x5",
+            multiplicador_key="multiplicador_comercial_tarjetas_9x5",
+            coef_cantidad_prefix="coeficiente_cantidad_tarjetas_9x5",
+            coef_impresion_prefix="coeficiente_impresion_tarjetas_9x5",
+        ))
+        relations.extend(self._tarjetas_editable_relations(
+            product_key="tarjetas_postales",
+            product_label="Tarjetas Postales",
+            source_file="data/tarjetas_postales/formula_editable_config.json",
+            endpoint="/tarjetas-postales/cotizar",
+            gramaje_key="factor_gramaje_tarjetas_postales_350g",
+            laca_key="factor_laca_uv_tarjetas_postales",
+            brillo_key="factor_laminado_brillo_tarjetas_postales",
+            mate_key="factor_laminado_mate_tarjetas_postales",
+            multiplicador_key="multiplicador_comercial_tarjetas_postales",
+            coef_cantidad_prefix="coeficiente_cantidad_tarjetas_postales",
+            coef_impresion_prefix="coeficiente_impresion_tarjetas_postales",
+        ))
+        relations.extend(self._folletos_editable_relations())
         return relations
 
     def _stickers_circulares_editable_relations(self) -> list[dict[str, Any]]:
@@ -686,6 +714,312 @@ class VariableImpactMap:
                     detalle=f"Coeficiente editable que aplica solo a cantidad {cantidad} de Stickers Circulares.",
                     ruta_calculo=[f"coeficiente_cantidad.{cantidad}", "subtotal_formula_excel", "factor_ajuste_pdf", "precio_final"],
                     aplica_a={"cantidades": [int(cantidad) if str(cantidad).isdigit() else str(cantidad)]},
+                    **common,
+                ))
+        return relations
+
+    def _bajadas_editable_relations(self) -> list[dict[str, Any]]:
+        source_file = "data/bajadas_v2/formula_editable_config.json"
+        config_path = self.project_root / source_file
+        if not config_path.exists():
+            return []
+        try:
+            payload = json.loads(config_path.read_text(encoding="utf-8-sig"))
+        except (OSError, json.JSONDecodeError):
+            return []
+        variables = payload.get("variables", {})
+        if not isinstance(variables, dict):
+            return []
+
+        rel = self._rel
+        common = {
+            "impacta_hoy": True,
+            "editable": True,
+            "tipo": "variable_madre",
+            "nivel_impacto": "medio",
+            "estado": "conectado",
+            "fuente": source_file,
+            "endpoint": "/bajadas-v2/cotizar",
+            "modo_precio": "matriz_pdf_con_variables_detectadas",
+        }
+        relations = [
+            rel(
+                "factor_laca_uv_bajadas",
+                "Factor Laca UV Bajadas",
+                "bajadas_fullcolor_byn",
+                "Bajadas Fullcolor/ByN",
+                "laca UV",
+                detalle="Factor contextual para la escala Laca UV. El precio final base sigue calibrado por PDF/lista.",
+                ruta_calculo=["factor_laca_uv_bajadas", "laca_uv", "matriz_pdf", "precio_final"],
+                aplica_a={"adicionales": ["laca"], "terminaciones": ["laca"]},
+                **common,
+            ),
+            rel(
+                "factor_laca_uv_bajadas",
+                "Factor Laca UV Bajadas",
+                "bajadas_autoadhesivas",
+                "Bajadas Autoadhesivas",
+                "laca UV",
+                detalle="Factor contextual para Laca UV en Autoadhesivas. La escala validada por rango permanece como fuente comercial.",
+                ruta_calculo=["factor_laca_uv_bajadas", "laca_uv", "matriz_pdf", "precio_final"],
+                aplica_a={"adicionales": ["laca", "adicional_laca_uv"]},
+                **common,
+            ),
+            rel(
+                "factor_troquelado_digital_bajadas",
+                "Factor Troquelado Digital Bajadas",
+                "bajadas_fullcolor_byn",
+                "Bajadas Fullcolor/ByN",
+                "troquelado digital",
+                detalle="Factor contextual del adicional Troquelado Digital.",
+                ruta_calculo=["factor_troquelado_digital_bajadas", "troquelado", "precio_final"],
+                aplica_a={"adicionales": ["troquelado_digital"]},
+                **common,
+            ),
+            rel(
+                "factor_troquelado_digital_bajadas",
+                "Factor Troquelado Digital Bajadas",
+                "bajadas_kraft",
+                "Bajadas Kraft",
+                "troquelado digital",
+                detalle="Factor contextual del adicional Troquelado Digital sobre Kraft.",
+                ruta_calculo=["factor_troquelado_digital_bajadas", "troquelado", "precio_final"],
+                aplica_a={"adicionales": ["troquelado_digital"]},
+                **common,
+            ),
+            rel(
+                "factor_tinta_blanca_autoadhesivas",
+                "Factor Tinta Blanca Autoadhesivas",
+                "bajadas_autoadhesivas",
+                "Bajadas Autoadhesivas",
+                "tinta blanca",
+                detalle="Factor técnico contextual de Tinta Blanca; la base operativa real es adicional_tinta_blanca_base_1_copia.",
+                ruta_calculo=["factor_tinta_blanca_autoadhesivas", "tinta_blanca", "precio_final"],
+                aplica_a={"adicionales": ["tinta_blanca", "adicional_tinta_blanca"]},
+                **common,
+            ),
+            rel(
+                "multiplicador_comercial_bajadas",
+                "Multiplicador comercial Bajadas",
+                "bajadas_fullcolor_byn",
+                "Bajadas Fullcolor/ByN",
+                "multiplicador comercial",
+                detalle="Multiplicador contextual preparado para futuras fórmulas de Bajadas.",
+                ruta_calculo=["multiplicador_comercial_bajadas", "base_tecnica", "matriz_pdf"],
+                **common,
+            ),
+            rel(
+                "multiplicador_comercial_bajadas",
+                "Multiplicador comercial Bajadas",
+                "bajadas_autoadhesivas",
+                "Bajadas Autoadhesivas",
+                "multiplicador comercial",
+                detalle="Multiplicador contextual preparado para futuras fórmulas de Autoadhesivas.",
+                ruta_calculo=["multiplicador_comercial_bajadas", "base_tecnica", "matriz_pdf"],
+                **common,
+            ),
+        ]
+        for formato in sorted((variables.get("coeficiente_formato") or {}), key=str):
+            safe = str(formato).replace("+", "plus").replace("-", "_").replace("/", "_")
+            for product_key, product_label in [
+                ("bajadas_fullcolor_byn", "Bajadas Fullcolor/ByN"),
+                ("bajadas_autoadhesivas", "Bajadas Autoadhesivas"),
+                ("bajadas_kraft", "Bajadas Kraft"),
+            ]:
+                relations.append(rel(
+                    f"coeficiente_formato_bajadas_{safe}",
+                    f"Coeficiente formato Bajadas {formato}",
+                    product_key,
+                    product_label,
+                    f"formato {formato}",
+                    detalle=f"Coeficiente contextual para formato {formato}.",
+                    ruta_calculo=[f"coeficiente_formato.{formato}", "base_tecnica", "matriz_pdf"],
+                    aplica_a={"formatos": [str(formato)]},
+                    **common,
+                ))
+        for rango in sorted((variables.get("coeficiente_rango") or {}), key=str):
+            safe = str(rango).replace(" ", "_").replace("+", "plus").replace("-", "_")
+            for product_key, product_label in [
+                ("bajadas_fullcolor_byn", "Bajadas Fullcolor/ByN"),
+                ("bajadas_autoadhesivas", "Bajadas Autoadhesivas"),
+                ("bajadas_kraft", "Bajadas Kraft"),
+            ]:
+                relations.append(rel(
+                    f"coeficiente_rango_bajadas_{safe}",
+                    f"Coeficiente rango Bajadas {rango}",
+                    product_key,
+                    product_label,
+                    f"rango {rango}",
+                    detalle=f"Coeficiente contextual para rango {rango}.",
+                    ruta_calculo=[f"coeficiente_rango.{rango}", "base_tecnica", "matriz_pdf"],
+                    aplica_a={"rangos": [str(rango)]},
+                    **common,
+                ))
+        return relations
+
+    def _tarjetas_editable_relations(
+        self,
+        *,
+        product_key: str,
+        product_label: str,
+        source_file: str,
+        endpoint: str,
+        gramaje_key: str,
+        laca_key: str,
+        brillo_key: str,
+        mate_key: str,
+        multiplicador_key: str,
+        coef_cantidad_prefix: str,
+        coef_impresion_prefix: str,
+    ) -> list[dict[str, Any]]:
+        config_path = self.project_root / source_file
+        if not config_path.exists():
+            return []
+        try:
+            payload = json.loads(config_path.read_text(encoding="utf-8-sig"))
+        except (OSError, json.JSONDecodeError):
+            return []
+        variables = payload.get("variables", {})
+        if not isinstance(variables, dict):
+            return []
+        rel = self._rel
+        common = {
+            "producto_key": product_key,
+            "producto": product_label,
+            "impacta_hoy": True,
+            "editable": True,
+            "tipo": "variable_madre",
+            "nivel_impacto": "medio",
+            "estado": "conectado",
+            "fuente": source_file,
+            "endpoint": endpoint,
+            "modo_precio": "matriz_pdf_con_variables_detectadas",
+        }
+        relations = [
+            rel(
+                gramaje_key,
+                f"Factor gramaje 350g {product_label}",
+                componente="gramaje 350g",
+                detalle="Regla contextual vigente 350g = 300g + 10%.",
+                ruta_calculo=["factor_gramaje_350g", "precio_300g", "precio_final"],
+                aplica_a={"gramajes": ["350g"]},
+                **common,
+            ),
+            rel(
+                laca_key,
+                f"Factor Laca UV {product_label}",
+                componente="laca UV",
+                detalle="Factor contextual para terminación Laca UV; matriz PDF sigue siendo fuente final.",
+                ruta_calculo=["factor_laca_uv", "terminacion", "matriz_pdf"],
+                aplica_a={"terminaciones": ["laca_uv"]},
+                **common,
+            ),
+            rel(
+                brillo_key,
+                f"Factor Laminado Brillo {product_label}",
+                componente="laminado brillo",
+                detalle="Factor contextual para terminación Laminado Brillo; matriz PDF sigue siendo fuente final.",
+                ruta_calculo=["factor_laminado_brillo", "terminacion", "matriz_pdf"],
+                aplica_a={"terminaciones": ["laminado_brillo"]},
+                **common,
+            ),
+            rel(
+                mate_key,
+                f"Factor Laminado Mate {product_label}",
+                componente="laminado mate",
+                detalle="Factor contextual para terminación Laminado Mate; matriz PDF sigue siendo fuente final.",
+                ruta_calculo=["factor_laminado_mate", "terminacion", "matriz_pdf"],
+                aplica_a={"terminaciones": ["laminado_mate"]},
+                **common,
+            ),
+            rel(
+                multiplicador_key,
+                f"Multiplicador comercial {product_label}",
+                componente="multiplicador comercial",
+                detalle="Multiplicador contextual para futuras fórmulas calibradas.",
+                ruta_calculo=["multiplicador_comercial", "base_tecnica", "matriz_pdf"],
+                **common,
+            ),
+        ]
+        for cantidad in sorted((variables.get("coeficiente_cantidad") or {}), key=lambda value: int(value)):
+            relations.append(rel(
+                f"{coef_cantidad_prefix}_{cantidad}",
+                f"Coeficiente cantidad {product_label} {cantidad}",
+                componente=f"cantidad {cantidad}",
+                detalle=f"Coeficiente contextual para cantidad {cantidad}.",
+                ruta_calculo=[f"coeficiente_cantidad.{cantidad}", "base_tecnica", "matriz_pdf"],
+                aplica_a={"cantidades": [int(cantidad)]},
+                **common,
+            ))
+        for impresion in sorted((variables.get("coeficiente_impresion") or {}), key=str):
+            safe = str(impresion).replace("/", "_")
+            relations.append(rel(
+                f"{coef_impresion_prefix}_{safe}",
+                f"Coeficiente impresión {product_label} {impresion}",
+                componente=f"impresión {impresion}",
+                detalle=f"Coeficiente contextual para impresión {impresion}.",
+                ruta_calculo=[f"coeficiente_impresion.{impresion}", "base_tecnica", "matriz_pdf"],
+                aplica_a={"caras": [str(impresion)]},
+                **common,
+            ))
+        return relations
+
+    def _folletos_editable_relations(self) -> list[dict[str, Any]]:
+        source_file = "data/folletos/formula_editable_config.json"
+        config_path = self.project_root / source_file
+        if not config_path.exists():
+            return []
+        try:
+            payload = json.loads(config_path.read_text(encoding="utf-8-sig"))
+        except (OSError, json.JSONDecodeError):
+            return []
+        variables = payload.get("variables", {})
+        if not isinstance(variables, dict):
+            return []
+        rel = self._rel
+        common = {
+            "producto_key": "folletos",
+            "producto": "Folletos",
+            "impacta_hoy": True,
+            "editable": True,
+            "tipo": "variable_madre",
+            "nivel_impacto": "medio",
+            "estado": "conectado",
+            "fuente": source_file,
+            "endpoint": "/folletos/cotizar",
+            "modo_precio": "matriz_pdf_con_variables_detectadas",
+        }
+        relations = [
+            rel(
+                "multiplicador_comercial_folletos",
+                "Multiplicador comercial Folletos",
+                componente="multiplicador comercial",
+                detalle="Multiplicador contextual para futuras fórmulas calibradas de Folletos.",
+                ruta_calculo=["multiplicador_comercial_folletos", "base_tecnica", "matriz_pdf"],
+                **common,
+            )
+        ]
+        family_meta = {
+            "factor_papel": ("factor_papel_folletos", "Factor papel Folletos", "gramajes"),
+            "factor_formato": ("factor_formato_folletos", "Factor formato Folletos", "formatos"),
+            "factor_color": ("factor_color_folletos", "Factor color Folletos", "modo_color"),
+            "factor_impresion": ("factor_impresion_folletos", "Factor impresión Folletos", "caras"),
+            "coeficiente_cantidad": ("coeficiente_cantidad_folletos", "Coeficiente cantidad Folletos", "cantidades"),
+        }
+        for family, (prefix, label, scope_key) in family_meta.items():
+            values = variables.get(family, {})
+            if not isinstance(values, dict):
+                continue
+            for raw_key in sorted(values, key=lambda value: int(value) if str(value).isdigit() else str(value)):
+                safe = str(raw_key).replace("/", "_").replace("+", "plus").replace(" ", "_")
+                scope_value: Any = int(raw_key) if str(raw_key).isdigit() else str(raw_key)
+                relations.append(rel(
+                    f"{prefix}_{safe}",
+                    f"{label} {raw_key}",
+                    componente=f"{family} {raw_key}",
+                    detalle=f"Variable contextual de Folletos para {raw_key}; matriz PDF sigue siendo fuente final.",
+                    ruta_calculo=[f"{family}.{raw_key}", "base_tecnica", "matriz_pdf"],
+                    aplica_a={scope_key: [scope_value]},
                     **common,
                 ))
         return relations

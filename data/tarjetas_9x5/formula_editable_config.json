@@ -1,0 +1,32 @@
+﻿{
+  "version": "tarjetas_9x5_formula_editable_v1",
+  "modo_precio_default": "matriz_pdf_con_variables_detectadas",
+  "convencion_precio": "precio_total_por_paquete",
+  "variables": {
+    "factor_gramaje_350g": 1.10,
+    "factor_laminado_mate": 1.0,
+    "factor_laminado_brillo": 1.0,
+    "factor_laca_uv": 1.0,
+    "multiplicador_comercial_tarjetas": 1.0,
+    "coeficiente_cantidad": {
+      "100": 1.0,
+      "200": 1.0,
+      "300": 1.0,
+      "500": 1.0,
+      "1000": 1.0
+    },
+    "coeficiente_impresion": {
+      "4/0": 1.0,
+      "4/4": 1.0
+    }
+  },
+  "fuente_excel": {
+    "archivo": "Copia de DIGITAL sistema 2025.xlsx",
+    "nota": "Variables tecnicas preparadas para Tarjetas 9x5. Precio base 300g se conserva desde PDF; 350g usa regla comercial +10%."
+  },
+  "pendientes": [
+    "costos confiables de puntas redondeadas",
+    "costos confiables de agujerado",
+    "formula historica completa que reproduzca PDF vigente"
+  ]
+}

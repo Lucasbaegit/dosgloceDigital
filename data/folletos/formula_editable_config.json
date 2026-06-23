@@ -1,0 +1,43 @@
+﻿{
+  "version": "folletos_formula_editable_v1",
+  "modo_precio_default": "matriz_pdf_con_variables_detectadas",
+  "convencion_precio": "precio_total_por_paquete",
+  "variables": {
+    "multiplicador_comercial_folletos": 1.0,
+    "factor_papel": {
+      "80g": 1.0,
+      "150g": 1.0
+    },
+    "factor_formato": {
+      "10x10": 1.0,
+      "10x15": 1.0,
+      "15x21": 1.0,
+      "A4": 1.0
+    },
+    "factor_color": {
+      "fullcolor": 1.0,
+      "escala_grises": 1.0
+    },
+    "factor_impresion": {
+      "4/0": 1.0,
+      "4/4": 1.0,
+      "1/0": 1.0,
+      "1/1": 1.0
+    },
+    "coeficiente_cantidad": {
+      "100": 1.0,
+      "200": 1.0,
+      "300": 1.0,
+      "500": 1.0,
+      "1000": 1.0
+    }
+  },
+  "fuente_excel": {
+    "archivo": "Copia de DIGITAL sistema 2025.xlsx",
+    "nota": "Variables tecnicas preparadas para Folletos. El precio final actual se conserva desde matriz PDF pagina 13."
+  },
+  "pendientes": [
+    "formula historica completa que reproduzca PDF vigente",
+    "costos separados de papel/click por modo color"
+  ]
+}
