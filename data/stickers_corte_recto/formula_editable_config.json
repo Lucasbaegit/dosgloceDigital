@@ -1,0 +1,36 @@
+{
+  "version": "stickers_corte_recto_formula_editable_v1",
+  "modo_precio_default": "formula_editable_calibrada",
+  "modos_soportados": ["formula_editable_calibrada", "pdf_fijo"],
+  "convencion_precio": "precio_total_por_paquete",
+  "variables": {
+    "material_base": 12.0,
+    "click_color_base": 3.0,
+    "laca_uv_factor": 1.18,
+    "corte_recto_factor": 1.0,
+    "coeficiente_tamano": {
+      "6x4": 1.0,
+      "7x5": 1.35,
+      "9x5": 1.7,
+      "10x7": 2.35
+    },
+    "coeficiente_cantidad": {
+      "100": 100.0,
+      "200": 170.0,
+      "300": 240.0,
+      "500": 380.0,
+      "1000": 720.0
+    },
+    "multiplicador_comercial": 1.0
+  },
+  "pendientes": [
+    "desglose exacto de merma por tamano",
+    "normalizacion de costo de click por sustrato",
+    "calibracion fina desde Excel historico si se reconstruye formula completa"
+  ],
+  "fuente_excel": {
+    "hoja": "Productos",
+    "referencias": ["stickers corte recto"],
+    "nota": "Formula editable base preparada y calibrada contra PDF pagina 15"
+  }
+}

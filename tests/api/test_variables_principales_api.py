@@ -44,6 +44,8 @@ class TestVariablesPrincipalesApi(unittest.TestCase):
         cls.paths = [
             ROOT / "data" / "bajadas_v2" / "bajadas_v2_config_final.json",
             ROOT / "data" / "stickers_circulares" / "formula_editable_config.json",
+            ROOT / "data" / "stickers_corte_recto" / "formula_editable_config.json",
+            ROOT / "data" / "imanes_corte_recto" / "formula_editable_config.json",
             ROOT / "data" / "bajadas_autoadhesivas" / "autoadhesivas_v1_config.json",
             ROOT / "data" / "variables_principales" / "variables_madre.json",
         ]
@@ -105,6 +107,12 @@ class TestVariablesPrincipalesApi(unittest.TestCase):
         self.assertIn("multiplicador_comercial_stickers_circulares", keys)
         self.assertIn("coeficiente_tamano_stickers_circulares_10cm", keys)
         self.assertIn("coeficiente_cantidad_stickers_circulares_1000", keys)
+        self.assertIn("factor_laca_uv_stickers_corte_recto", keys)
+        self.assertIn("coeficiente_formato_stickers_corte_recto_10x7", keys)
+        self.assertIn("coeficiente_cantidad_stickers_corte_recto_1000", keys)
+        self.assertIn("factor_laca_uv_imanes_corte_recto", keys)
+        self.assertIn("coeficiente_formato_imanes_corte_recto_10x7", keys)
+        self.assertIn("coeficiente_cantidad_imanes_corte_recto_1000", keys)
         self.assertNotIn("factor_ajuste_pdf", keys)
         editable_items = [
             item

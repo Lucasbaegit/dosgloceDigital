@@ -420,7 +420,7 @@ class VariableImpactMap:
                 ruta_calculo=["matriz_pdf", "formato", "terminacion", "cantidad", "precio_final"],
                 fuente="data/stickers_corte_recto/precios_pdf_objetivo_stickers_corte_recto.json",
                 endpoint="/stickers-corte-recto/cotizar",
-                modo_precio="matriz_pdf_con_variables_detectadas",
+                modo_precio="formula_editable_calibrada",
             ),
             rel(
                 "matriz_pdf",
@@ -437,7 +437,7 @@ class VariableImpactMap:
                 ruta_calculo=["matriz_pdf", "formato", "terminacion", "cantidad", "precio_final"],
                 fuente="data/imanes_corte_recto/precios_pdf_objetivo_imanes_corte_recto.json",
                 endpoint="/imanes-corte-recto/cotizar",
-                modo_precio="matriz_pdf_con_variables_detectadas",
+                modo_precio="formula_editable_calibrada",
             ),
             rel(
                 "matriz_pdf",
@@ -579,6 +579,34 @@ class VariableImpactMap:
             ),
         ]
         relations.extend(self._stickers_circulares_editable_relations())
+        relations.extend(self._corte_recto_editable_relations(
+            product_key="stickers_corte_recto",
+            product_label="Stickers Corte Recto",
+            source_file="data/stickers_corte_recto/formula_editable_config.json",
+            endpoint="/stickers-corte-recto/cotizar",
+            laca_key="factor_laca_uv_stickers_corte_recto",
+            laca_label="Factor Laca UV Stickers Corte Recto",
+            corte_key="corte_recto_factor_stickers_corte_recto",
+            corte_label="Factor corte recto Stickers Corte Recto",
+            multiplicador_key="multiplicador_comercial_stickers_corte_recto",
+            multiplicador_label="Multiplicador comercial Stickers Corte Recto",
+            coef_formato_prefix="coeficiente_formato_stickers_corte_recto",
+            coef_cantidad_prefix="coeficiente_cantidad_stickers_corte_recto",
+        ))
+        relations.extend(self._corte_recto_editable_relations(
+            product_key="imanes_corte_recto",
+            product_label="Imanes Corte Recto",
+            source_file="data/imanes_corte_recto/formula_editable_config.json",
+            endpoint="/imanes-corte-recto/cotizar",
+            laca_key="factor_laca_uv_imanes_corte_recto",
+            laca_label="Factor Laca UV Imanes Corte Recto",
+            corte_key="corte_recto_factor_imanes_corte_recto",
+            corte_label="Factor corte recto Imanes Corte Recto",
+            multiplicador_key="multiplicador_comercial_imanes_corte_recto",
+            multiplicador_label="Multiplicador comercial Imanes Corte Recto",
+            coef_formato_prefix="coeficiente_formato_imanes_corte_recto",
+            coef_cantidad_prefix="coeficiente_cantidad_imanes_corte_recto",
+        ))
         return relations
 
     def _stickers_circulares_editable_relations(self) -> list[dict[str, Any]]:
@@ -656,6 +684,102 @@ class VariableImpactMap:
                     f"Coeficiente cantidad Stickers Circulares {cantidad}",
                     componente=f"coeficiente cantidad {cantidad}",
                     detalle=f"Coeficiente editable que aplica solo a cantidad {cantidad} de Stickers Circulares.",
+                    ruta_calculo=[f"coeficiente_cantidad.{cantidad}", "subtotal_formula_excel", "factor_ajuste_pdf", "precio_final"],
+                    aplica_a={"cantidades": [int(cantidad) if str(cantidad).isdigit() else str(cantidad)]},
+                    **common,
+                ))
+        return relations
+
+    def _corte_recto_editable_relations(
+        self,
+        *,
+        product_key: str,
+        product_label: str,
+        source_file: str,
+        endpoint: str,
+        laca_key: str,
+        laca_label: str,
+        corte_key: str,
+        corte_label: str,
+        multiplicador_key: str,
+        multiplicador_label: str,
+        coef_formato_prefix: str,
+        coef_cantidad_prefix: str,
+    ) -> list[dict[str, Any]]:
+        config_path = self.project_root / source_file
+        if not config_path.exists():
+            return []
+        try:
+            payload = json.loads(config_path.read_text(encoding="utf-8-sig"))
+        except (OSError, json.JSONDecodeError):
+            return []
+        variables = payload.get("variables", {})
+        if not isinstance(variables, dict):
+            return []
+
+        rel = self._rel
+        common = {
+            "producto_key": product_key,
+            "producto": product_label,
+            "impacta_hoy": True,
+            "editable": True,
+            "tipo": "variable_madre",
+            "nivel_impacto": "alto",
+            "estado": "conectado",
+            "fuente": source_file,
+            "endpoint": endpoint,
+            "modo_precio": "formula_editable_calibrada",
+        }
+        relations = [
+            rel(
+                laca_key,
+                laca_label,
+                componente="laca UV",
+                detalle=f"Factor editable usado cuando {product_label} cotiza con Laca UV; el precio final queda calibrado contra PDF/lista.",
+                ruta_calculo=["laca_uv_factor", "subtotal_formula_excel", "factor_ajuste_pdf", "precio_final"],
+                aplica_a={"terminaciones": ["con_laca_uv"]},
+                **common,
+            ),
+            rel(
+                corte_key,
+                corte_label,
+                componente="corte recto",
+                detalle=f"Factor editable del corte recto para {product_label}.",
+                ruta_calculo=["corte_recto_factor", "subtotal_formula_excel", "factor_ajuste_pdf", "precio_final"],
+                **common,
+            ),
+            rel(
+                multiplicador_key,
+                multiplicador_label,
+                componente="multiplicador comercial",
+                detalle=f"Multiplicador editable propio de {product_label} antes de la calibracion PDF/lista.",
+                ruta_calculo=["multiplicador_comercial", "subtotal_formula_excel", "factor_ajuste_pdf", "precio_final"],
+                **common,
+            ),
+        ]
+
+        coef_formato = variables.get("coeficiente_tamano", {})
+        if isinstance(coef_formato, dict):
+            for formato in sorted(coef_formato, key=str):
+                safe = str(formato).replace("-", "_").replace("/", "_")
+                relations.append(rel(
+                    f"{coef_formato_prefix}_{safe}",
+                    f"Coeficiente formato {product_label} {formato}",
+                    componente=f"coeficiente formato {formato}",
+                    detalle=f"Coeficiente editable que aplica solo al formato {formato} de {product_label}.",
+                    ruta_calculo=[f"coeficiente_tamano.{formato}", "subtotal_formula_excel", "factor_ajuste_pdf", "precio_final"],
+                    aplica_a={"formatos": [str(formato)]},
+                    **common,
+                ))
+
+        coef_cantidad = variables.get("coeficiente_cantidad", {})
+        if isinstance(coef_cantidad, dict):
+            for cantidad in sorted(coef_cantidad, key=lambda value: int(value) if str(value).isdigit() else str(value)):
+                relations.append(rel(
+                    f"{coef_cantidad_prefix}_{cantidad}",
+                    f"Coeficiente cantidad {product_label} {cantidad}",
+                    componente=f"coeficiente cantidad {cantidad}",
+                    detalle=f"Coeficiente editable que aplica solo a cantidad {cantidad} de {product_label}.",
                     ruta_calculo=[f"coeficiente_cantidad.{cantidad}", "subtotal_formula_excel", "factor_ajuste_pdf", "precio_final"],
                     aplica_a={"cantidades": [int(cantidad) if str(cantidad).isdigit() else str(cantidad)]},
                     **common,

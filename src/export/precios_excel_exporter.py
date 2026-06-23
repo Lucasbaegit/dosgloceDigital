@@ -1003,7 +1003,7 @@ class PricesExcelExporter:
         return columns
 
     def _product_mode(self, title: str | None) -> str:
-        if title == "Stickers Circulares":
+        if title in {"Stickers Circulares", "Stickers Corte Recto", "Imanes Corte Recto"}:
             return "formula_editable_calibrada"
         if title == "Troquelado Digital":
             return "variable"
@@ -1032,6 +1032,10 @@ class PricesExcelExporter:
     def _excel_source_for(self, title: str | None) -> str:
         if title == "Stickers Circulares":
             return 'Excel hoja "circulares" + data/stickers_circulares/formula_editable_config.json'
+        if title == "Stickers Corte Recto":
+            return "Excel histórico + data/stickers_corte_recto/formula_editable_config.json"
+        if title == "Imanes Corte Recto":
+            return "Excel histórico + data/imanes_corte_recto/formula_editable_config.json"
         return "Copia de DIGITAL sistema 2025.xlsx (lógica histórica/auditoría)"
 
     def _split_source_cell(self, raw: Any) -> tuple[str, str]:

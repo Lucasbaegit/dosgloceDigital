@@ -179,6 +179,18 @@ class ExcelMaestroImporter:
             }
             or key.startswith("coeficiente_tamano_stickers_circulares_")
             or key.startswith("coeficiente_cantidad_stickers_circulares_")
+            or key in {
+                "factor_laca_uv_stickers_corte_recto",
+                "corte_recto_factor_stickers_corte_recto",
+                "multiplicador_comercial_stickers_corte_recto",
+                "factor_laca_uv_imanes_corte_recto",
+                "corte_recto_factor_imanes_corte_recto",
+                "multiplicador_comercial_imanes_corte_recto",
+            }
+            or key.startswith("coeficiente_formato_stickers_corte_recto_")
+            or key.startswith("coeficiente_cantidad_stickers_corte_recto_")
+            or key.startswith("coeficiente_formato_imanes_corte_recto_")
+            or key.startswith("coeficiente_cantidad_imanes_corte_recto_")
         ) and (bool(item.get("impacta_hoy")) or key == "tipo_cambio_usd")
 
     def _blocked_payload(

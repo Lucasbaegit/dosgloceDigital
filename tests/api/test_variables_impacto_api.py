@@ -18,6 +18,8 @@ class TestVariablesImpactoApi(unittest.TestCase):
             ROOT / "data" / "variables_principales" / "variables_madre.json",
             ROOT / "data" / "bajadas_autoadhesivas" / "autoadhesivas_v1_config.json",
             ROOT / "data" / "stickers_circulares" / "formula_editable_config.json",
+            ROOT / "data" / "stickers_corte_recto" / "formula_editable_config.json",
+            ROOT / "data" / "imanes_corte_recto" / "formula_editable_config.json",
         ]
         cls.before = {path: path.read_text(encoding="utf-8") for path in cls.config_paths if path.exists()}
         cls.server = create_server(host="127.0.0.1", port=0, project_root=ROOT)
@@ -59,6 +61,12 @@ class TestVariablesImpactoApi(unittest.TestCase):
             "multiplicador_comercial_stickers_circulares",
             "coeficiente_tamano_stickers_circulares_10cm",
             "coeficiente_cantidad_stickers_circulares_1000",
+            "factor_laca_uv_stickers_corte_recto",
+            "coeficiente_formato_stickers_corte_recto_10x7",
+            "coeficiente_cantidad_stickers_corte_recto_1000",
+            "factor_laca_uv_imanes_corte_recto",
+            "coeficiente_formato_imanes_corte_recto_10x7",
+            "coeficiente_cantidad_imanes_corte_recto_1000",
             "adicional_tinta_blanca_base_1_copia",
             "matriz_pdf",
             "factor_ajuste_pdf",
@@ -121,6 +129,30 @@ class TestVariablesImpactoApi(unittest.TestCase):
         productos = {rel["producto_key"] for rel in body["relaciones"]}
         self.assertIn("bajadas_autoadhesivas", productos)
         self.assertTrue(any(rel["impacta_hoy"] and rel["producto_key"] == "bajadas_autoadhesivas" for rel in body["relaciones"]))
+
+    def test_variables_corte_recto_tienen_scope_contextual(self):
+        status, body = self._get_json("/variables-impacto/variable/coeficiente_formato_stickers_corte_recto_10x7")
+        self.assertEqual(status, 200)
+        rel = body["relaciones"][0]
+        self.assertEqual(rel["producto_key"], "stickers_corte_recto")
+        self.assertEqual(rel["aplica_a"], {"formatos": ["10x7"]})
+        self.assertTrue(rel["impacta_hoy"])
+
+        status, body = self._get_json("/variables-impacto/variable/coeficiente_cantidad_imanes_corte_recto_1000")
+        self.assertEqual(status, 200)
+        rel = body["relaciones"][0]
+        self.assertEqual(rel["producto_key"], "imanes_corte_recto")
+        self.assertEqual(rel["aplica_a"], {"cantidades": [1000]})
+        self.assertTrue(rel["impacta_hoy"])
+
+    def test_variables_corte_recto_no_contaminan_bajadas(self):
+        status, body = self._get_json("/variables-impacto/producto/bajadas_fullcolor_byn")
+        self.assertEqual(status, 200)
+        variables = {rel["variable"] for rel in body["relaciones"]}
+        self.assertNotIn("factor_laca_uv_stickers_corte_recto", variables)
+        self.assertNotIn("factor_laca_uv_imanes_corte_recto", variables)
+        self.assertFalse(any(variable.startswith("coeficiente_formato_stickers_corte_recto_") for variable in variables))
+        self.assertFalse(any(variable.startswith("coeficiente_formato_imanes_corte_recto_") for variable in variables))
 
     def test_variable_desconocida_devuelve_404_controlado(self):
         status, body = self._get_json("/variables-impacto/variable/no_existe")

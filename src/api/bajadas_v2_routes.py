@@ -102,8 +102,8 @@ class BajadasV2ApiService:
         self.folletos_engine = FolletosPricingEngine(load_folletos_bundle(project_root))
         self.carpetas_engine = CarpetasPricingEngine(load_carpetas_bundle(project_root))
         self.sobres_engine = SobresPricingEngine(load_sobres_bundle(project_root))
-        self.stickers_corte_recto_engine = StickersCorteRectoPricingEngine(load_stickers_corte_recto_bundle(project_root))
-        self.imanes_corte_recto_engine = ImanesCorteRectoPricingEngine(load_imanes_corte_recto_bundle(project_root))
+        self.stickers_corte_recto_engine = StickersCorteRectoPricingEngine(load_stickers_corte_recto_bundle(project_root), project_root)
+        self.imanes_corte_recto_engine = ImanesCorteRectoPricingEngine(load_imanes_corte_recto_bundle(project_root), project_root)
         self.stickers_circulares_engine = StickersCircularesPricingEngine(
             load_stickers_circulares_bundle(project_root),
             project_root=project_root,
@@ -481,6 +481,8 @@ class BajadasV2ApiService:
                 terminacion=req.terminacion,
                 cantidad_unidades=req.cantidad_unidades,
                 urgencia=req.urgencia,
+                modo_precio=req.modo_precio,
+                variables_override=req.variables_override,
             )
             return 200, self.stickers_corte_recto_engine.quote_as_dict(quote)
         except ApiValidationError as exc:
@@ -512,6 +514,8 @@ class BajadasV2ApiService:
                 terminacion=req.terminacion,
                 cantidad_unidades=req.cantidad_unidades,
                 urgencia=req.urgencia,
+                modo_precio=req.modo_precio,
+                variables_override=req.variables_override,
             )
             return 200, self.imanes_corte_recto_engine.quote_as_dict(quote)
         except ApiValidationError as exc:

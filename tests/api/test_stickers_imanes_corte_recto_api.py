@@ -55,7 +55,31 @@ class TestStickersImanesCorteRectoApi(unittest.TestCase):
         })
         self.assertEqual(status, 200)
         self.assertAlmostEqual(body["total_sin_iva"], 61703, places=6)
-        self.assertEqual(body["trazabilidad"]["modo_precio"], "pdf_fijo")
+        self.assertEqual(body["trazabilidad"]["modo_precio"], "formula_editable_calibrada")
+        self.assertEqual(body["trazabilidad"]["modo_calculo"], "formula_calibrada_con_factor_pdf")
+        self.assertIn("arbol_calculo", body["trazabilidad"])
+
+    def test_stickers_override_preserva_total_pdf(self):
+        base_payload = {
+            "categoria": "Stickers Corte Recto",
+            "producto": "sticker_corte_recto",
+            "formato": "10x7",
+            "terminacion": "con_laca_uv",
+            "cantidad_unidades": 1000,
+            "urgencia": "normal",
+        }
+        status, before = self._post("/stickers-corte-recto/cotizar", base_payload)
+        self.assertEqual(status, 200)
+        status, after = self._post("/stickers-corte-recto/cotizar", {
+            **base_payload,
+            "variables_override": {"coeficiente_formato_stickers_corte_recto_10x7": 3.0},
+        })
+        self.assertEqual(status, 200)
+        self.assertAlmostEqual(after["total_sin_iva"], 61703, places=6)
+        self.assertNotEqual(
+            before["trazabilidad"]["precio_base_estimado"],
+            after["trazabilidad"]["precio_base_estimado"],
+        )
 
     def test_stickers_cantidad_fuera(self):
         status, body = self._post("/stickers-corte-recto/cotizar", {
@@ -82,7 +106,33 @@ class TestStickersImanesCorteRectoApi(unittest.TestCase):
         })
         self.assertEqual(status, 200)
         self.assertAlmostEqual(body["total_sin_iva"], 153680, places=6)
-        self.assertEqual(body["trazabilidad"]["modo_precio"], "pdf_fijo")
+        self.assertEqual(body["trazabilidad"]["modo_precio"], "formula_editable_calibrada")
+        self.assertEqual(body["trazabilidad"]["modo_calculo"], "formula_calibrada_con_factor_pdf")
+        self.assertIn("arbol_calculo", body["trazabilidad"])
+
+    def test_imanes_override_preserva_total_pdf(self):
+        base_payload = {
+            "categoria": "Imanes Corte Recto",
+            "producto": "iman_corte_recto",
+            "formato": "10x7",
+            "papel": "300g Ilustracion",
+            "gramaje": "300g",
+            "terminacion": "con_laca_uv",
+            "cantidad_unidades": 1000,
+            "urgencia": "normal",
+        }
+        status, before = self._post("/imanes-corte-recto/cotizar", base_payload)
+        self.assertEqual(status, 200)
+        status, after = self._post("/imanes-corte-recto/cotizar", {
+            **base_payload,
+            "variables_override": {"coeficiente_formato_imanes_corte_recto_10x7": 3.0},
+        })
+        self.assertEqual(status, 200)
+        self.assertAlmostEqual(after["total_sin_iva"], 153680, places=6)
+        self.assertNotEqual(
+            before["trazabilidad"]["precio_base_estimado"],
+            after["trazabilidad"]["precio_base_estimado"],
+        )
 
     def test_imanes_terminacion_invalida(self):
         status, body = self._post("/imanes-corte-recto/cotizar", {

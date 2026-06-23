@@ -304,3 +304,51 @@ El caso `obra_90g` vs Autoadhesivas queda resuelto asi:
 - Autoadhesivas no debe aparecer como producto afectado por `obra_90g`.
 - La conexion confirmada de `obra_90g` es con Stickers Circulares.
 
+
+## 9. Etapa implementada: Stickers e Imanes Corte Recto
+
+Fecha de implementación: 2026-06-22
+
+Se implementaron variables editables contextuales para:
+
+- Stickers Corte Recto.
+- Imanes Corte Recto.
+
+La decisión mantiene el criterio conservador de la auditoría:
+
+- La matriz PDF/lista sigue siendo el precio final publicado.
+- Las variables editables modifican la base técnica trazable.
+- El motor recalcula `precio_base_estimado` y `factor_ajuste_pdf` por combinación.
+- El total final se preserva contra PDF/lista para evitar regresiones comerciales.
+
+Variables expuestas para Stickers Corte Recto:
+
+- `factor_laca_uv_stickers_corte_recto`.
+- `corte_recto_factor_stickers_corte_recto`.
+- `multiplicador_comercial_stickers_corte_recto`.
+- `coeficiente_formato_stickers_corte_recto_<formato>`.
+- `coeficiente_cantidad_stickers_corte_recto_<cantidad>`.
+
+Variables expuestas para Imanes Corte Recto:
+
+- `factor_laca_uv_imanes_corte_recto`.
+- `corte_recto_factor_imanes_corte_recto`.
+- `multiplicador_comercial_imanes_corte_recto`.
+- `coeficiente_formato_imanes_corte_recto_<formato>`.
+- `coeficiente_cantidad_imanes_corte_recto_<cantidad>`.
+
+No se expone `factor_ajuste_pdf` como editable. Es un valor derivado de calibración, no una variable comercial directa. Exponerlo sin un flujo especial permitiría romper la relación auditada contra PDF/lista.
+
+Archivos de configuración operativa:
+
+- `data/stickers_corte_recto/formula_editable_config.json`.
+- `data/imanes_corte_recto/formula_editable_config.json`.
+
+Tests agregados/ajustados:
+
+- Motores de Stickers Corte Recto e Imanes Corte Recto: preservación de precio PDF y cambio de base técnica por override.
+- API de cotización: `modo_precio=formula_editable_calibrada` y trazabilidad enriquecida.
+- Admin precios: preview, backup, historial y cambio efectivo sin modificar precio final.
+- Mapa de impacto: scope por producto, formato, cantidad y terminación.
+- Importador Excel maestro: variables nuevas reconocidas como importables.
+- E2E: variables contextuales visibles solo para la cotización actual correspondiente.

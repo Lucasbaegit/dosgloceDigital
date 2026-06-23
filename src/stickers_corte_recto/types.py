@@ -10,6 +10,8 @@ class StickersCorteRectoQuoteInput:
     terminacion: str
     cantidad_unidades: int
     urgencia: str
+    modo_precio: str | None = None
+    variables_override: dict[str, Any] | None = None
 
 
 @dataclass(frozen=True)

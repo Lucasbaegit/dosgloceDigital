@@ -373,6 +373,8 @@ class StickersCorteRectoQuoteRequestSchema:
     terminacion: str
     cantidad_unidades: int
     urgencia: str
+    modo_precio: str | None = None
+    variables_override: dict[str, Any] | None = None
 
     @classmethod
     def from_payload(cls, payload: dict[str, Any]) -> "StickersCorteRectoQuoteRequestSchema":
@@ -391,6 +393,12 @@ class StickersCorteRectoQuoteRequestSchema:
             terminacion=str(payload["terminacion"]).strip().lower(),
             cantidad_unidades=qty,
             urgencia=str(payload["urgencia"]).strip().lower(),
+            modo_precio=(
+                None if payload.get("modo_precio") in (None, "") else str(payload.get("modo_precio")).strip().lower()
+            ),
+            variables_override=(
+                payload.get("variables_override") if isinstance(payload.get("variables_override"), dict) else None
+            ),
         )
 
 
@@ -404,6 +412,8 @@ class ImanesCorteRectoQuoteRequestSchema:
     terminacion: str
     cantidad_unidades: int
     urgencia: str
+    modo_precio: str | None = None
+    variables_override: dict[str, Any] | None = None
 
     @classmethod
     def from_payload(cls, payload: dict[str, Any]) -> "ImanesCorteRectoQuoteRequestSchema":
@@ -424,6 +434,12 @@ class ImanesCorteRectoQuoteRequestSchema:
             terminacion=str(payload["terminacion"]).strip().lower(),
             cantidad_unidades=qty,
             urgencia=str(payload["urgencia"]).strip().lower(),
+            modo_precio=(
+                None if payload.get("modo_precio") in (None, "") else str(payload.get("modo_precio")).strip().lower()
+            ),
+            variables_override=(
+                payload.get("variables_override") if isinstance(payload.get("variables_override"), dict) else None
+            ),
         )
 
 

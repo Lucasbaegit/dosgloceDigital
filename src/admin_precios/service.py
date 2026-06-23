@@ -284,6 +284,28 @@ class AdminPricesService:
                 "despues": None,
                 "detalle": "Impacto real visible en formula/base; el precio final conserva calibracion PDF por combinacion.",
             }]
+        if variable in {
+            "factor_laca_uv_stickers_corte_recto",
+            "corte_recto_factor_stickers_corte_recto",
+            "multiplicador_comercial_stickers_corte_recto",
+        } or variable.startswith("coeficiente_formato_stickers_corte_recto_") or variable.startswith("coeficiente_cantidad_stickers_corte_recto_"):
+            return [{
+                "nombre": "Stickers Corte Recto formula editable calibrada",
+                "antes": None,
+                "despues": None,
+                "detalle": "Impacto visible en base tecnica; el precio final conserva calibracion PDF/lista por combinacion.",
+            }]
+        if variable in {
+            "factor_laca_uv_imanes_corte_recto",
+            "corte_recto_factor_imanes_corte_recto",
+            "multiplicador_comercial_imanes_corte_recto",
+        } or variable.startswith("coeficiente_formato_imanes_corte_recto_") or variable.startswith("coeficiente_cantidad_imanes_corte_recto_"):
+            return [{
+                "nombre": "Imanes Corte Recto formula editable calibrada",
+                "antes": None,
+                "despues": None,
+                "detalle": "Impacto visible en base tecnica; el precio final conserva calibracion PDF/lista por combinacion.",
+            }]
         return []
 
     def _append_history(self, preview: dict[str, Any], update_result: dict[str, Any]) -> dict[str, Any]:

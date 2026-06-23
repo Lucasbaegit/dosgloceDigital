@@ -783,6 +783,141 @@ test("Modificar precios muestra variables específicas de Stickers Circulares se
   await expect(page.getByTestId("admin-other-variable-group")).toContainText("Tinta blanca Autoadhesivas");
 });
 
+test("Modificar precios muestra variables contextuales de Stickers e Imanes Corte Recto", async ({ page }) => {
+  const adminVariables = [
+    { key: "factor_laca_uv_stickers_corte_recto", label: "Factor Laca UV Stickers Corte Recto", value: 1.18, unit: "factor", description: "Laca sticker recto", impacta_hoy: true, editable: true, estado: "editable", productos_afectados: ["Stickers Corte Recto"], min: 0.01, max: 100, step: 0.001 },
+    { key: "coeficiente_formato_stickers_corte_recto_10x7", label: "Coeficiente formato Stickers Corte Recto 10x7", value: 2.4, unit: "factor", description: "Formato 10x7", impacta_hoy: true, editable: true, estado: "editable", productos_afectados: ["Stickers Corte Recto"], min: 0.0001, max: 1000000, step: 0.0001 },
+    { key: "coeficiente_formato_stickers_corte_recto_6x4", label: "Coeficiente formato Stickers Corte Recto 6x4", value: 1.0, unit: "factor", description: "Formato 6x4", impacta_hoy: true, editable: true, estado: "editable", productos_afectados: ["Stickers Corte Recto"], min: 0.0001, max: 1000000, step: 0.0001 },
+    { key: "coeficiente_cantidad_stickers_corte_recto_1000", label: "Coeficiente cantidad Stickers Corte Recto 1000", value: 500, unit: "factor", description: "Cantidad 1000", impacta_hoy: true, editable: true, estado: "editable", productos_afectados: ["Stickers Corte Recto"], min: 0.0001, max: 1000000, step: 0.0001 },
+    { key: "factor_laca_uv_imanes_corte_recto", label: "Factor Laca UV Imanes Corte Recto", value: 1.05, unit: "factor", description: "Laca iman recto", impacta_hoy: true, editable: true, estado: "editable", productos_afectados: ["Imanes Corte Recto"], min: 0.01, max: 100, step: 0.001 },
+    { key: "coeficiente_formato_imanes_corte_recto_10x7", label: "Coeficiente formato Imanes Corte Recto 10x7", value: 2.4, unit: "factor", description: "Formato 10x7", impacta_hoy: true, editable: true, estado: "editable", productos_afectados: ["Imanes Corte Recto"], min: 0.0001, max: 1000000, step: 0.0001 },
+    { key: "coeficiente_cantidad_imanes_corte_recto_1000", label: "Coeficiente cantidad Imanes Corte Recto 1000", value: 500, unit: "factor", description: "Cantidad 1000", impacta_hoy: true, editable: true, estado: "editable", productos_afectados: ["Imanes Corte Recto"], min: 0.0001, max: 1000000, step: 0.0001 },
+    { key: "click_color", label: "Click color base", value: 3, unit: "ARS", description: "Click general", impacta_hoy: true, editable: true, estado: "editable", productos_afectados: ["Stickers Circulares"], min: 0.01, max: 100000, step: 0.01 },
+  ];
+
+  const rel = (variable, label, productKey, productLabel, aplica_a = {}) => ({
+    variable,
+    variable_label: label,
+    producto_key: productKey,
+    producto: productLabel,
+    componente: label,
+    impacta_hoy: true,
+    editable: true,
+    estado: "conectado",
+    detalle: `${label} conectado a ${productLabel}.`,
+    aplica_a,
+  });
+  const impactMock = {
+    ok: true,
+    version: "variables_impacto_v1",
+    variables: adminVariables.map((item) => ({ key: item.key, label: item.label, editable: true, impacta_hoy: true, estado: "conectado" })),
+    productos: [
+      { key: "stickers_corte_recto", label: "Stickers Corte Recto", estado: "activo", endpoint: "/stickers-corte-recto/cotizar", modo_precio: "formula_editable_calibrada" },
+      { key: "imanes_corte_recto", label: "Imanes Corte Recto", estado: "activo", endpoint: "/imanes-corte-recto/cotizar", modo_precio: "formula_editable_calibrada" },
+      { key: "bajadas_fullcolor_byn", label: "Bajadas Fullcolor/ByN", estado: "activo", endpoint: "/bajadas-v2/cotizar", modo_precio: "matriz_pdf" },
+    ],
+    relaciones: [
+      rel("factor_laca_uv_stickers_corte_recto", "Factor Laca UV Stickers Corte Recto", "stickers_corte_recto", "Stickers Corte Recto", { terminaciones: ["con_laca_uv"] }),
+      rel("coeficiente_formato_stickers_corte_recto_10x7", "Coeficiente formato Stickers Corte Recto 10x7", "stickers_corte_recto", "Stickers Corte Recto", { formatos: ["10x7"] }),
+      rel("coeficiente_formato_stickers_corte_recto_6x4", "Coeficiente formato Stickers Corte Recto 6x4", "stickers_corte_recto", "Stickers Corte Recto", { formatos: ["6x4"] }),
+      rel("coeficiente_cantidad_stickers_corte_recto_1000", "Coeficiente cantidad Stickers Corte Recto 1000", "stickers_corte_recto", "Stickers Corte Recto", { cantidades: [1000] }),
+      rel("factor_laca_uv_imanes_corte_recto", "Factor Laca UV Imanes Corte Recto", "imanes_corte_recto", "Imanes Corte Recto", { terminaciones: ["con_laca_uv"] }),
+      rel("coeficiente_formato_imanes_corte_recto_10x7", "Coeficiente formato Imanes Corte Recto 10x7", "imanes_corte_recto", "Imanes Corte Recto", { formatos: ["10x7"] }),
+      rel("coeficiente_cantidad_imanes_corte_recto_1000", "Coeficiente cantidad Imanes Corte Recto 1000", "imanes_corte_recto", "Imanes Corte Recto", { cantidades: [1000] }),
+    ],
+    resumen: { variables_editables: 8, productos_afectados: 3, relaciones_conectadas: 7 },
+  };
+
+  await page.route("**/stickers-corte-recto/cotizar", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        ok: true,
+        total_sin_iva: 61703,
+        total_con_urgencia: 61703,
+        precio_unitario_sin_iva: 61.703,
+        cantidad_unidades: 1000,
+        fuente: "stickers_corte_recto_pdf_pagina_15_calibrado",
+        trazabilidad: { modo_precio: "formula_editable_calibrada", modo_calculo: "formula_calibrada_con_factor_pdf" },
+      }),
+    });
+  });
+  await page.route("**/imanes-corte-recto/cotizar", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        ok: true,
+        total_sin_iva: 153680,
+        total_con_urgencia: 153680,
+        precio_unitario_sin_iva: 153.68,
+        cantidad_unidades: 1000,
+        fuente: "imanes_corte_recto_pdf_pagina_15_calibrado",
+        trazabilidad: { modo_precio: "formula_editable_calibrada", modo_calculo: "formula_calibrada_con_factor_pdf" },
+      }),
+    });
+  });
+  await page.route("**/bajadas-v2/cotizar", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ ok: true, total_sin_iva: 38584, total_con_urgencia: 38584, trazabilidad: { modo_precio: "matriz_pdf" } }),
+    });
+  });
+  await page.route("**/admin-precios/variables-editables", async (route) => {
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, variables: adminVariables }) });
+  });
+  await page.route("**/admin-precios/historial", async (route) => {
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, historial: [] }) });
+  });
+  await page.route("**/variables-impacto", async (route) => {
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(impactMock) });
+  });
+
+  await page.goto("/", { waitUntil: "domcontentloaded" });
+  await page.getByTestId("categoria-select").selectOption("Stickers Corte Recto");
+  await page.getByLabel("Formato").selectOption("10x7");
+  await page.getByLabel("Terminación").selectOption("con_laca_uv");
+  await page.getByLabel("Cantidad").fill("1000");
+  await page.getByRole("button", { name: "Calcular" }).click();
+  await expect(page.getByText("Total final con urgencia")).toBeVisible();
+
+  await page.getByTestId("tab-admin-prices").click();
+  await expect(page.getByTestId("admin-current-quote-context")).toContainText("Stickers Corte Recto");
+  await expect(page.getByTestId("admin-relevant-variable-group")).toContainText("Factor Laca UV Stickers Corte Recto");
+  await expect(page.getByTestId("admin-relevant-variable-group")).toContainText("Coeficiente formato Stickers Corte Recto 10x7");
+  await expect(page.getByTestId("admin-relevant-variable-group")).toContainText("Coeficiente cantidad Stickers Corte Recto 1000");
+  await expect(page.getByTestId("admin-relevant-variable-group")).not.toContainText("Coeficiente formato Stickers Corte Recto 6x4");
+  await expect(page.getByTestId("admin-relevant-variable-group")).not.toContainText("Factor Laca UV Imanes Corte Recto");
+
+  await page.getByTestId("tab-variable-impact").click();
+  await page.getByTestId("impact-variable-select").selectOption("coeficiente_formato_stickers_corte_recto_10x7");
+  await expect(page.getByTestId("impact-current-assessment")).toContainText("Afecta esta cotización actual");
+  await expect(page.getByTestId("impact-current-product-group")).toContainText("Stickers Corte Recto");
+
+  await page.getByTestId("tab-quote").click();
+  await page.getByTestId("categoria-select").selectOption("Imanes Corte Recto");
+  await page.getByLabel("Formato").selectOption("10x7");
+  await page.getByLabel("Terminación").selectOption("con_laca_uv");
+  await page.getByLabel("Cantidad").fill("1000");
+  await page.getByRole("button", { name: "Calcular" }).click();
+  await expect(page.getByText("Total final con urgencia")).toBeVisible();
+
+  await page.getByTestId("tab-admin-prices").click();
+  await expect(page.getByTestId("admin-current-quote-context")).toContainText("Imanes Corte Recto");
+  await expect(page.getByTestId("admin-relevant-variable-group")).toContainText("Factor Laca UV Imanes Corte Recto");
+  await expect(page.getByTestId("admin-relevant-variable-group")).toContainText("Coeficiente formato Imanes Corte Recto 10x7");
+  await expect(page.getByTestId("admin-relevant-variable-group")).not.toContainText("Factor Laca UV Stickers Corte Recto");
+
+  await page.getByTestId("tab-quote").click();
+  await page.getByTestId("categoria-select").selectOption("Bajadas Fullcolor/ByN");
+  await page.getByRole("button", { name: "Calcular" }).click();
+  await page.getByTestId("tab-admin-prices").click();
+  await expect(page.getByTestId("admin-relevant-variable-group")).not.toContainText("Stickers Corte Recto");
+  await expect(page.getByTestId("admin-relevant-variable-group")).not.toContainText("Imanes Corte Recto");
+});
+
 test("Historial y backups y Exportar soporte Excel quedan accesibles", async ({ page }) => {
   await page.route("**/admin-precios/variables-editables", async (route) => {
     await route.fulfill({

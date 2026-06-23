@@ -17,6 +17,8 @@ class TestAdminPreciosApi(unittest.TestCase):
         cls.paths = [
             ROOT / "data" / "bajadas_v2" / "bajadas_v2_config_final.json",
             ROOT / "data" / "stickers_circulares" / "formula_editable_config.json",
+            ROOT / "data" / "stickers_corte_recto" / "formula_editable_config.json",
+            ROOT / "data" / "imanes_corte_recto" / "formula_editable_config.json",
             ROOT / "data" / "bajadas_autoadhesivas" / "autoadhesivas_v1_config.json",
             ROOT / "data" / "variables_principales" / "variables_madre.json",
         ]
@@ -81,6 +83,12 @@ class TestAdminPreciosApi(unittest.TestCase):
         self.assertIn("multiplicador_comercial_stickers_circulares", keys)
         self.assertIn("coeficiente_tamano_stickers_circulares_10cm", keys)
         self.assertIn("coeficiente_cantidad_stickers_circulares_1000", keys)
+        self.assertIn("factor_laca_uv_stickers_corte_recto", keys)
+        self.assertIn("coeficiente_formato_stickers_corte_recto_10x7", keys)
+        self.assertIn("coeficiente_cantidad_stickers_corte_recto_1000", keys)
+        self.assertIn("factor_laca_uv_imanes_corte_recto", keys)
+        self.assertIn("coeficiente_formato_imanes_corte_recto_10x7", keys)
+        self.assertIn("coeficiente_cantidad_imanes_corte_recto_1000", keys)
         self.assertNotIn("tabla_pdf", keys)
         self.assertTrue(all(item["editable"] for item in body["variables"]))
 
@@ -213,6 +221,101 @@ class TestAdminPreciosApi(unittest.TestCase):
         status, after_quote = self.call("POST", "/stickers-circulares/cotizar", quote_payload)
         self.assertEqual(status, 200)
         self.assertEqual(after_quote["total_sin_iva"], 85980)
+        self.assertNotEqual(after_quote["trazabilidad"]["precio_base_estimado"], before_base)
+
+    def test_variable_stickers_corte_recto_cambia_base_y_preserva_total_pdf(self):
+        quote_payload = {
+            "categoria": "Stickers Corte Recto",
+            "producto": "sticker_corte_recto",
+            "formato": "10x7",
+            "terminacion": "con_laca_uv",
+            "cantidad_unidades": 1000,
+            "urgencia": "normal",
+        }
+        status, before_quote = self.call("POST", "/stickers-corte-recto/cotizar", quote_payload)
+        self.assertEqual(status, 200)
+        self.assertEqual(before_quote["total_sin_iva"], 61703)
+        before_base = before_quote["trazabilidad"]["precio_base_estimado"]
+
+        status, variables = self.call("GET", "/admin-precios/variables-editables")
+        self.assertEqual(status, 200)
+        current = next(item for item in variables["variables"] if item["key"] == "coeficiente_formato_stickers_corte_recto_10x7")
+        new_value = float(current["value"]) + 0.1
+
+        status, preview = self.call(
+            "POST",
+            "/admin-precios/preview",
+            {"variable": "coeficiente_formato_stickers_corte_recto_10x7", "nuevo_valor": new_value},
+        )
+        self.assertEqual(status, 200)
+        self.assertTrue(preview["ok"])
+        self.assertTrue(any(item["producto_key"] == "stickers_corte_recto" for item in preview["impactos"]))
+        self.assertIn("precio final conserva calibracion PDF", preview["precios_ejemplo"][0]["detalle"])
+
+        status, applied = self.call(
+            "POST",
+            "/admin-precios/aplicar",
+            {
+                "variable": "coeficiente_formato_stickers_corte_recto_10x7",
+                "nuevo_valor": new_value,
+                "confirmado": True,
+            },
+        )
+        self.assertEqual(status, 200)
+        self.assertTrue(applied["backup"])
+        self.assertTrue(any("data/stickers_corte_recto/formula_editable_config.json" in path for path in applied["archivos_modificados"]))
+
+        status, after_quote = self.call("POST", "/stickers-corte-recto/cotizar", quote_payload)
+        self.assertEqual(status, 200)
+        self.assertEqual(after_quote["total_sin_iva"], 61703)
+        self.assertNotEqual(after_quote["trazabilidad"]["precio_base_estimado"], before_base)
+
+    def test_variable_imanes_corte_recto_cambia_base_y_preserva_total_pdf(self):
+        quote_payload = {
+            "categoria": "Imanes Corte Recto",
+            "producto": "iman_corte_recto",
+            "formato": "10x7",
+            "papel": "300g Ilustracion",
+            "gramaje": "300g",
+            "terminacion": "con_laca_uv",
+            "cantidad_unidades": 1000,
+            "urgencia": "normal",
+        }
+        status, before_quote = self.call("POST", "/imanes-corte-recto/cotizar", quote_payload)
+        self.assertEqual(status, 200)
+        self.assertEqual(before_quote["total_sin_iva"], 153680)
+        before_base = before_quote["trazabilidad"]["precio_base_estimado"]
+
+        status, variables = self.call("GET", "/admin-precios/variables-editables")
+        self.assertEqual(status, 200)
+        current = next(item for item in variables["variables"] if item["key"] == "coeficiente_formato_imanes_corte_recto_10x7")
+        new_value = float(current["value"]) + 0.1
+
+        status, preview = self.call(
+            "POST",
+            "/admin-precios/preview",
+            {"variable": "coeficiente_formato_imanes_corte_recto_10x7", "nuevo_valor": new_value},
+        )
+        self.assertEqual(status, 200)
+        self.assertTrue(preview["ok"])
+        self.assertTrue(any(item["producto_key"] == "imanes_corte_recto" for item in preview["impactos"]))
+
+        status, applied = self.call(
+            "POST",
+            "/admin-precios/aplicar",
+            {
+                "variable": "coeficiente_formato_imanes_corte_recto_10x7",
+                "nuevo_valor": new_value,
+                "confirmado": True,
+            },
+        )
+        self.assertEqual(status, 200)
+        self.assertTrue(applied["backup"])
+        self.assertTrue(any("data/imanes_corte_recto/formula_editable_config.json" in path for path in applied["archivos_modificados"]))
+
+        status, after_quote = self.call("POST", "/imanes-corte-recto/cotizar", quote_payload)
+        self.assertEqual(status, 200)
+        self.assertEqual(after_quote["total_sin_iva"], 153680)
         self.assertNotEqual(after_quote["trazabilidad"]["precio_base_estimado"], before_base)
 
 

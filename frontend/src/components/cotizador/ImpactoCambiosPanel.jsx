@@ -14,6 +14,16 @@ function describeQuoteMaterial(payload) {
 }
 
 function quoteUsesFixedPdf(payload, result, relation) {
+  const explicitMode = [
+    result?.modo_precio,
+    result?.modo_calculo,
+    result?.trazabilidad?.modo_precio,
+    result?.trazabilidad?.modo_calculo,
+    relation?.modo_precio,
+  ].filter(Boolean).join(" ").toLowerCase();
+  if (explicitMode.includes("formula_editable") || explicitMode.includes("formula_calibrada")) {
+    return false;
+  }
   const haystack = [
     result?.modo_precio,
     result?.modo_calculo,
