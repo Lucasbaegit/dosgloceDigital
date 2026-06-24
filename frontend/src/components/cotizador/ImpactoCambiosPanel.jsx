@@ -76,23 +76,99 @@ function buildQuoteSummary(currentQuote) {
   };
 }
 
-function relationAppliesToCurrentQuote(relation, payload) {
+function normalizeScopeValue(value) {
+  return String(value ?? "").trim().toLowerCase();
+}
+
+function scopeIncludes(scopeValues, currentValues) {
+  if (!Array.isArray(scopeValues) || !scopeValues.length) return true;
+  const normalizedScope = scopeValues.map(normalizeScopeValue);
+  const normalizedCurrent = (Array.isArray(currentValues) ? currentValues : [currentValues])
+    .filter((value) => value !== undefined && value !== null && value !== "")
+    .map(normalizeScopeValue);
+  return normalizedCurrent.some((value) => normalizedScope.includes(value));
+}
+
+function getCurrentQuoteRange(payload, result) {
+  return result?.cantidad_rango_aplicado || result?.rango_aplicado || payload?.cantidad_rango || payload?.cantidad_unidades;
+}
+
+function getCurrentQuoteTerminacion(payload) {
+  return (
+    payload?.terminacion_stickers_circulares ||
+    payload?.terminacion_stickers ||
+    payload?.terminacion_imanes ||
+    payload?.terminacion_tarjetas ||
+    payload?.terminacion_carpetas ||
+    payload?.terminacion ||
+    payload?.adicional_laminado ||
+    "sin_laca_uv"
+  );
+}
+
+function getCurrentQuoteAdditionsForScope(payload) {
+  const additions = new Set();
+  const adicional = payload?.adicional_laminado;
+  if (adicional && adicional !== "sin_adicional") additions.add(adicional);
+  if (payload?.adicional_laca_uv || adicional === "laca") {
+    additions.add("laca");
+    additions.add("adicional_laca_uv");
+  }
+  if (payload?.adicional_tinta_blanca || adicional === "tinta_blanca") {
+    additions.add("tinta_blanca");
+    additions.add("adicional_tinta_blanca");
+  }
+  if (payload?.adicional_troquelado) additions.add("troquelado_digital");
+  if (payload?.solapa_impresa) additions.add("solapa_impresa");
+  if (payload?.adicional_plastificado) additions.add("plastificado");
+  if (payload?.adicional_laminado_por_lado && payload.adicional_laminado_por_lado !== "sin_adicional") {
+    additions.add(payload.adicional_laminado_por_lado);
+  }
+  return Array.from(additions);
+}
+
+function relationAppliesToCurrentQuote(relation, payload, result = null) {
   const applies = relation?.aplica_a || {};
   if (!payload || !applies || !Object.keys(applies).length) return true;
-  if (Array.isArray(applies.formatos) && applies.formatos.length && !applies.formatos.includes(payload.formato)) {
+  if (!scopeIncludes(applies.formatos, [payload.formato, payload.formato_agendas])) {
     return false;
   }
-  if (Array.isArray(applies.cantidades) && applies.cantidades.length) {
-    const quantity = Number(payload.cantidad_unidades);
-    if (!applies.cantidades.some((item) => Number(item) === quantity || String(item) === String(payload.cantidad_unidades))) {
-      return false;
-    }
+  if (!scopeIncludes(applies.cantidades, payload.cantidad_unidades)) {
+    return false;
   }
-  if (Array.isArray(applies.terminaciones) && applies.terminaciones.length) {
-    const terminacion = payload.terminacion_stickers_circulares || payload.terminacion || payload.adicional_laminado || "sin_laca_uv";
-    if (!applies.terminaciones.includes(terminacion)) {
-      return false;
-    }
+  if (!scopeIncludes(applies.rangos, getCurrentQuoteRange(payload, result))) {
+    return false;
+  }
+  if (!scopeIncludes(applies.terminaciones, getCurrentQuoteTerminacion(payload))) {
+    return false;
+  }
+  if (!scopeIncludes(applies.adicionales, getCurrentQuoteAdditionsForScope(payload))) {
+    return false;
+  }
+  if (!scopeIncludes(applies.caras, [payload.caras, payload.caras_tarjetas_troq_circ])) {
+    return false;
+  }
+  if (!scopeIncludes(applies.gramajes, payload.gramaje)) {
+    return false;
+  }
+  if (!scopeIncludes(applies.materiales, payload.material)) {
+    return false;
+  }
+  if (!scopeIncludes(applies.tipos_sobre, payload.tipo_sobre)) {
+    return false;
+  }
+  if (!scopeIncludes(applies.variantes, payload.variante)) {
+    return false;
+  }
+  if (!scopeIncludes(applies.productos, payload.producto)) {
+    return false;
+  }
+  if (!scopeIncludes(applies.paginas, payload.paginas)) {
+    return false;
+  }
+  if (Array.isArray(applies.solapa_impresa) && applies.solapa_impresa.length) {
+    const current = Boolean(payload.solapa_impresa);
+    if (!applies.solapa_impresa.some((value) => Boolean(value) === current)) return false;
   }
   return true;
 }
@@ -110,7 +186,7 @@ function analyzeContext({ selectedRelations, quoteSummary, currentQuote, impactM
 
   const currentRelations = selectedRelations.filter((item) => (
     item.producto_key === quoteSummary.productKey &&
-    relationAppliesToCurrentQuote(item, currentQuote.payload)
+    relationAppliesToCurrentQuote(item, currentQuote.payload, currentQuote.result)
   ));
   if (!currentRelations.length) {
     return {

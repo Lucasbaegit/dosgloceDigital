@@ -458,27 +458,104 @@ function getQuoteProductLabel(payload, impactData) {
   return fromMap?.label || payload?.categoria || payload?.categoria_ui || "Cotización actual";
 }
 
-function relationAppliesToCurrentQuote(relation, payload) {
+function normalizeScopeValue(value) {
+  return String(value ?? "").trim().toLowerCase();
+}
+
+function scopeIncludes(scopeValues, currentValues) {
+  if (!Array.isArray(scopeValues) || !scopeValues.length) return true;
+  const normalizedScope = scopeValues.map(normalizeScopeValue);
+  const normalizedCurrent = (Array.isArray(currentValues) ? currentValues : [currentValues])
+    .filter((value) => value !== undefined && value !== null && value !== "")
+    .map(normalizeScopeValue);
+  return normalizedCurrent.some((value) => normalizedScope.includes(value));
+}
+
+function getCurrentQuoteRange(payload, result) {
+  return (
+    result?.cantidad_rango_aplicado ||
+    result?.rango_aplicado ||
+    payload?.cantidad_rango ||
+    payload?.cantidad_unidades
+  );
+}
+
+function getCurrentQuoteTerminacion(payload) {
+  return (
+    payload?.terminacion_stickers_circulares ||
+    payload?.terminacion_stickers ||
+    payload?.terminacion_imanes ||
+    payload?.terminacion_tarjetas ||
+    payload?.terminacion_carpetas ||
+    payload?.terminacion ||
+    payload?.adicional_laminado ||
+    "sin_laca_uv"
+  );
+}
+
+function getCurrentQuoteAdditionsForScope(payload) {
+  const additions = new Set();
+  const adicional = payload?.adicional_laminado;
+  if (adicional && adicional !== "sin_adicional") additions.add(adicional);
+  if (payload?.adicional_laca_uv || adicional === "laca") {
+    additions.add("laca");
+    additions.add("adicional_laca_uv");
+  }
+  if (payload?.adicional_tinta_blanca || adicional === "tinta_blanca") {
+    additions.add("tinta_blanca");
+    additions.add("adicional_tinta_blanca");
+  }
+  if (payload?.adicional_troquelado) additions.add("troquelado_digital");
+  if (payload?.solapa_impresa) additions.add("solapa_impresa");
+  if (payload?.adicional_plastificado) additions.add("plastificado");
+  if (payload?.adicional_laminado_por_lado && payload.adicional_laminado_por_lado !== "sin_adicional") {
+    additions.add(payload.adicional_laminado_por_lado);
+  }
+  return Array.from(additions);
+}
+
+function relationAppliesToCurrentQuote(relation, payload, result = null) {
   const applies = relation?.aplica_a || {};
   if (!payload || !applies || !Object.keys(applies).length) return true;
-  if (Array.isArray(applies.formatos) && applies.formatos.length && !applies.formatos.includes(payload.formato)) {
+  if (!scopeIncludes(applies.formatos, [payload.formato, payload.formato_agendas])) {
     return false;
   }
-  if (Array.isArray(applies.cantidades) && applies.cantidades.length) {
-    const quantity = Number(payload.cantidad_unidades);
-    if (!applies.cantidades.some((item) => Number(item) === quantity || String(item) === String(payload.cantidad_unidades))) {
-      return false;
-    }
+  if (!scopeIncludes(applies.cantidades, payload.cantidad_unidades)) {
+    return false;
   }
-  if (Array.isArray(applies.terminaciones) && applies.terminaciones.length) {
-    const terminacion =
-      payload.terminacion_stickers_circulares ||
-      payload.terminacion ||
-      payload.adicional_laminado ||
-      "sin_laca_uv";
-    if (!applies.terminaciones.includes(terminacion)) {
-      return false;
-    }
+  if (!scopeIncludes(applies.rangos, getCurrentQuoteRange(payload, result))) {
+    return false;
+  }
+  if (!scopeIncludes(applies.terminaciones, getCurrentQuoteTerminacion(payload))) {
+    return false;
+  }
+  if (!scopeIncludes(applies.adicionales, getCurrentQuoteAdditionsForScope(payload))) {
+    return false;
+  }
+  if (!scopeIncludes(applies.caras, [payload.caras, payload.caras_tarjetas_troq_circ])) {
+    return false;
+  }
+  if (!scopeIncludes(applies.gramajes, payload.gramaje)) {
+    return false;
+  }
+  if (!scopeIncludes(applies.materiales, payload.material)) {
+    return false;
+  }
+  if (!scopeIncludes(applies.tipos_sobre, payload.tipo_sobre)) {
+    return false;
+  }
+  if (!scopeIncludes(applies.variantes, payload.variante)) {
+    return false;
+  }
+  if (!scopeIncludes(applies.productos, payload.producto)) {
+    return false;
+  }
+  if (!scopeIncludes(applies.paginas, payload.paginas)) {
+    return false;
+  }
+  if (Array.isArray(applies.solapa_impresa) && applies.solapa_impresa.length) {
+    const current = Boolean(payload.solapa_impresa);
+    if (!applies.solapa_impresa.some((value) => Boolean(value) === current)) return false;
   }
   return true;
 }
@@ -2833,23 +2910,33 @@ export default function CotizadorBajadasV2() {
             relation.producto_key === currentProductKey &&
             relation.impacta_hoy &&
             relation.editable &&
-            relationAppliesToCurrentQuote(relation, lastPayload)
+            relationAppliesToCurrentQuote(relation, lastPayload, result)
           ))
+          .map((relation) => relation.variable)
+        : []
+    );
+    const productVariableKeys = new Set(
+      currentProductKey
+        ? impactRelations
+          .filter((relation) => relation.producto_key === currentProductKey && relation.editable)
           .map((relation) => relation.variable)
         : []
     );
     const relationByVariable = new Map();
     if (currentProductKey) {
       impactRelations
-        .filter((relation) => relation.producto_key === currentProductKey && relationAppliesToCurrentQuote(relation, lastPayload))
+        .filter((relation) => relation.producto_key === currentProductKey && relationAppliesToCurrentQuote(relation, lastPayload, result))
         .forEach((relation) => relationByVariable.set(relation.variable, relation));
     }
     const hasCurrentQuoteContext = Boolean(currentProductKey && result && lastPayload);
     const contextualVariables = hasCurrentQuoteContext
       ? variables.filter((item) => relevantVariableKeys.has(item.key))
       : variables;
-    const secondaryVariables = hasCurrentQuoteContext
-      ? variables.filter((item) => !relevantVariableKeys.has(item.key))
+    const sameProductOtherCaseVariables = hasCurrentQuoteContext
+      ? variables.filter((item) => productVariableKeys.has(item.key) && !relevantVariableKeys.has(item.key))
+      : [];
+    const otherSystemVariables = hasCurrentQuoteContext
+      ? variables.filter((item) => !productVariableKeys.has(item.key) && !relevantVariableKeys.has(item.key))
       : [];
 
     const renderAdminStepper = () => (
@@ -2935,7 +3022,7 @@ export default function CotizadorBajadasV2() {
             <h5>{hasCurrentQuoteContext ? "Variables que afectan esta cotización" : "Variables editables del sistema"}</h5>
             <p>
               {hasCurrentQuoteContext
-                ? "Estas variables están conectadas al producto que estás cotizando actualmente."
+                ? "Primero se muestran solo las variables que coinciden con el producto, formato, cantidad y terminación cotizados."
                 : "Listado global completo porque todavía no hay una cotización calculada."}
             </p>
           </div>
@@ -2954,13 +3041,32 @@ export default function CotizadorBajadasV2() {
           <details className="admin-variable-section secondary" data-testid="admin-other-variable-group" open={isAdvancedMode}>
             <summary>
               <span>
-                <strong>Otras variables editables del sistema</strong>
-                <small>No afectan esta cotización actual, pero pueden afectar otros productos.</small>
+                <strong>Otras variables editables de este producto</strong>
+                <small>Mismo producto, pero otro formato, rango, terminación o condición comercial.</small>
               </span>
-              <em>{secondaryVariables.length} variables</em>
+              <em>{sameProductOtherCaseVariables.length} variables</em>
             </summary>
             <div className="admin-variable-list wizard-list">
-              {secondaryVariables.map((item) => renderVariableButton(item, { affectsCurrentQuote: false }))}
+              {sameProductOtherCaseVariables.length
+                ? sameProductOtherCaseVariables.map((item) => renderVariableButton(item, { affectsCurrentQuote: false }))
+                : <div className="placeholder"><p>No hay otras variables de este producto fuera del caso actual.</p></div>}
+            </div>
+          </details>
+        ) : null}
+
+        {hasCurrentQuoteContext ? (
+          <details className="admin-variable-section secondary" data-testid="admin-system-variable-group" open={isAdvancedMode}>
+            <summary>
+              <span>
+                <strong>Otras variables editables del sistema</strong>
+                <small>Variables de otros productos. No afectan esta cotización actual.</small>
+              </span>
+              <em>{otherSystemVariables.length} variables</em>
+            </summary>
+            <div className="admin-variable-list wizard-list">
+              {otherSystemVariables.length
+                ? otherSystemVariables.map((item) => renderVariableButton(item, { affectsCurrentQuote: false }))
+                : <div className="placeholder"><p>No hay otras variables del sistema para esta selección.</p></div>}
             </div>
           </details>
         ) : null}

@@ -673,10 +673,10 @@ test("Modificar precios separa variables por cotización actual de Tarjetas 9x5"
   await expect(page.getByTestId("admin-relevant-variable-group")).not.toContainText("Papel obra/ilustración 90g");
   await expect(page.getByTestId("admin-relevant-variable-group")).not.toContainText("Tinta blanca Autoadhesivas");
 
-  await page.getByTestId("admin-other-variable-group").locator("summary").click();
-  await expect(page.getByTestId("admin-other-variable-group")).toContainText("Otras variables editables del sistema");
-  await expect(page.getByTestId("admin-other-variable-group")).toContainText("Papel obra/ilustración 90g");
-  await expect(page.getByTestId("admin-other-variable-group")).toContainText("Tinta blanca Autoadhesivas");
+  await page.getByTestId("admin-system-variable-group").locator("summary").click();
+  await expect(page.getByTestId("admin-system-variable-group")).toContainText("Otras variables editables del sistema");
+  await expect(page.getByTestId("admin-system-variable-group")).toContainText("Papel obra/ilustración 90g");
+  await expect(page.getByTestId("admin-system-variable-group")).toContainText("Tinta blanca Autoadhesivas");
   await expect(page.getByTestId("admin-variable-obra_90g")).toContainText("No afecta esta cotización");
   await expect(page.getByTestId("admin-variable-adicional_tinta_blanca_base_1_copia")).toContainText("No afecta esta cotización");
 });
@@ -780,7 +780,8 @@ test("Modificar precios muestra variables específicas de Stickers Circulares se
 
   await page.getByTestId("admin-other-variable-group").locator("summary").click();
   await expect(page.getByTestId("admin-other-variable-group")).toContainText("Coeficiente tamaño Stickers Circulares 9cm");
-  await expect(page.getByTestId("admin-other-variable-group")).toContainText("Tinta blanca Autoadhesivas");
+  await page.getByTestId("admin-system-variable-group").locator("summary").click();
+  await expect(page.getByTestId("admin-system-variable-group")).toContainText("Tinta blanca Autoadhesivas");
 });
 
 test("Modificar precios muestra variables contextuales de Stickers e Imanes Corte Recto", async ({ page }) => {
@@ -916,6 +917,103 @@ test("Modificar precios muestra variables contextuales de Stickers e Imanes Cort
   await page.getByTestId("tab-admin-prices").click();
   await expect(page.getByTestId("admin-relevant-variable-group")).not.toContainText("Stickers Corte Recto");
   await expect(page.getByTestId("admin-relevant-variable-group")).not.toContainText("Imanes Corte Recto");
+});
+
+test("Modificar precios filtra variables por scope exacto en Bajadas", async ({ page }) => {
+  const adminVariables = [
+    { key: "coeficiente_formato_bajadas_A4", label: "Coeficiente formato Bajadas A4", value: 1, unit: "factor", description: "A4", impacta_hoy: true, editable: true, estado: "editable", productos_afectados: ["Bajadas Fullcolor/ByN"], min: 0.0001, max: 1000000, step: 0.0001 },
+    { key: "coeficiente_formato_bajadas_A3plus", label: "Coeficiente formato Bajadas A3+", value: 1, unit: "factor", description: "A3+", impacta_hoy: true, editable: true, estado: "editable", productos_afectados: ["Bajadas Fullcolor/ByN"], min: 0.0001, max: 1000000, step: 0.0001 },
+    { key: "coeficiente_rango_bajadas_1", label: "Coeficiente rango Bajadas 1", value: 1, unit: "factor", description: "Rango 1", impacta_hoy: true, editable: true, estado: "editable", productos_afectados: ["Bajadas Fullcolor/ByN"], min: 0.0001, max: 1000000, step: 0.0001 },
+    { key: "coeficiente_rango_bajadas_2_a_25", label: "Coeficiente rango Bajadas 2 a 25", value: 1, unit: "factor", description: "Rango 2 a 25", impacta_hoy: true, editable: true, estado: "editable", productos_afectados: ["Bajadas Fullcolor/ByN"], min: 0.0001, max: 1000000, step: 0.0001 },
+    { key: "coeficiente_rango_bajadas_26_a_50", label: "Coeficiente rango Bajadas 26 a 50", value: 1, unit: "factor", description: "Rango 26 a 50", impacta_hoy: true, editable: true, estado: "editable", productos_afectados: ["Bajadas Fullcolor/ByN"], min: 0.0001, max: 1000000, step: 0.0001 },
+    { key: "coeficiente_rango_bajadas_101_a_300", label: "Coeficiente rango Bajadas 101 a 300", value: 1, unit: "factor", description: "Rango 101 a 300", impacta_hoy: true, editable: true, estado: "editable", productos_afectados: ["Bajadas Fullcolor/ByN"], min: 0.0001, max: 1000000, step: 0.0001 },
+    { key: "factor_laca_uv_bajadas", label: "Factor Laca UV Bajadas", value: 1, unit: "factor", description: "Laca", impacta_hoy: true, editable: true, estado: "editable", productos_afectados: ["Bajadas Fullcolor/ByN"], min: 0.01, max: 100, step: 0.001 },
+    { key: "coeficiente_formato_stickers_corte_recto_10x7", label: "Coeficiente formato Stickers Corte Recto 10x7", value: 1, unit: "factor", description: "Sticker", impacta_hoy: true, editable: true, estado: "editable", productos_afectados: ["Stickers Corte Recto"], min: 0.0001, max: 1000000, step: 0.0001 },
+  ];
+  const rel = (variable, label, productKey, productLabel, aplica_a = {}) => ({
+    variable,
+    variable_label: label,
+    producto_key: productKey,
+    producto: productLabel,
+    componente: label,
+    impacta_hoy: true,
+    editable: true,
+    estado: "conectado",
+    detalle: `${label} conectado a ${productLabel}.`,
+    aplica_a,
+  });
+  const impactMock = {
+    ok: true,
+    version: "variables_impacto_v1",
+    variables: adminVariables.map((item) => ({ key: item.key, label: item.label, editable: true, impacta_hoy: true, estado: "conectado" })),
+    productos: [
+      { key: "bajadas_fullcolor_byn", label: "Bajadas Fullcolor/ByN", estado: "activo", endpoint: "/bajadas-v2/cotizar", modo_precio: "matriz_pdf_con_variables_detectadas" },
+      { key: "stickers_corte_recto", label: "Stickers Corte Recto", estado: "activo", endpoint: "/stickers-corte-recto/cotizar", modo_precio: "formula_editable_calibrada" },
+    ],
+    relaciones: [
+      rel("coeficiente_formato_bajadas_A4", "Coeficiente formato Bajadas A4", "bajadas_fullcolor_byn", "Bajadas Fullcolor/ByN", { formatos: ["A4"] }),
+      rel("coeficiente_formato_bajadas_A3plus", "Coeficiente formato Bajadas A3+", "bajadas_fullcolor_byn", "Bajadas Fullcolor/ByN", { formatos: ["A3+"] }),
+      rel("coeficiente_rango_bajadas_1", "Coeficiente rango Bajadas 1", "bajadas_fullcolor_byn", "Bajadas Fullcolor/ByN", { rangos: ["1"] }),
+      rel("coeficiente_rango_bajadas_2_a_25", "Coeficiente rango Bajadas 2 a 25", "bajadas_fullcolor_byn", "Bajadas Fullcolor/ByN", { rangos: ["2 a 25"] }),
+      rel("coeficiente_rango_bajadas_26_a_50", "Coeficiente rango Bajadas 26 a 50", "bajadas_fullcolor_byn", "Bajadas Fullcolor/ByN", { rangos: ["26 a 50"] }),
+      rel("coeficiente_rango_bajadas_101_a_300", "Coeficiente rango Bajadas 101 a 300", "bajadas_fullcolor_byn", "Bajadas Fullcolor/ByN", { rangos: ["101 a 300"] }),
+      rel("factor_laca_uv_bajadas", "Factor Laca UV Bajadas", "bajadas_fullcolor_byn", "Bajadas Fullcolor/ByN", { adicionales: ["laca"], terminaciones: ["laca"] }),
+      rel("coeficiente_formato_stickers_corte_recto_10x7", "Coeficiente formato Stickers Corte Recto 10x7", "stickers_corte_recto", "Stickers Corte Recto", { formatos: ["10x7"] }),
+    ],
+    resumen: { variables_editables: adminVariables.length, productos_afectados: 2, relaciones_conectadas: 8 },
+  };
+
+  await page.route("**/bajadas-v2/cotizar", async (route) => {
+    const request = route.request().postDataJSON();
+    const quantity = Number(request.cantidad_unidades);
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        ok: true,
+        total_sin_iva: quantity === 30 ? 18660 : 622,
+        total_con_urgencia: quantity === 30 ? 18660 : 622,
+        cantidad_rango_aplicado: quantity === 30 ? "26 a 50" : "1",
+        trazabilidad: { modo_precio: "matriz_pdf_con_variables_detectadas" },
+      }),
+    });
+  });
+  await page.route("**/admin-precios/variables-editables", async (route) => {
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, variables: adminVariables }) });
+  });
+  await page.route("**/admin-precios/historial", async (route) => {
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, historial: [] }) });
+  });
+  await page.route("**/variables-impacto", async (route) => {
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(impactMock) });
+  });
+
+  await page.goto("/", { waitUntil: "domcontentloaded" });
+  await page.getByTestId("categoria-select").selectOption("Bajadas Fullcolor/ByN");
+  await page.getByLabel("Formato").selectOption("A4");
+  await page.getByLabel("Material").selectOption("Ilustracion");
+  await page.getByLabel("Gramaje").selectOption("115g");
+  await page.getByTestId("print-option-4-0").click();
+  await page.getByLabel("Cantidad").fill("1");
+  await page.getByLabel("Adicional").selectOption("sin_adicional");
+  await page.getByRole("button", { name: "Calcular" }).click();
+  await page.getByTestId("tab-admin-prices").click();
+
+  await expect(page.getByTestId("admin-relevant-variable-group")).toContainText("Coeficiente formato Bajadas A4");
+  await expect(page.getByTestId("admin-relevant-variable-group")).toContainText("Coeficiente rango Bajadas 1");
+  await expect(page.getByTestId("admin-relevant-variable-group")).not.toContainText("Coeficiente rango Bajadas 2 a 25");
+  await expect(page.getByTestId("admin-relevant-variable-group")).not.toContainText("Coeficiente rango Bajadas 26 a 50");
+  await expect(page.getByTestId("admin-relevant-variable-group")).not.toContainText("Coeficiente rango Bajadas 101 a 300");
+  await expect(page.getByTestId("admin-relevant-variable-group")).not.toContainText("Factor Laca UV Bajadas");
+  await expect(page.getByTestId("admin-other-variable-group")).toContainText("Coeficiente rango Bajadas 26 a 50");
+  await expect(page.getByTestId("admin-system-variable-group")).toContainText("Coeficiente formato Stickers Corte Recto 10x7");
+
+  await page.getByTestId("tab-quote").click();
+  await page.getByLabel("Cantidad").fill("30");
+  await page.getByRole("button", { name: "Calcular" }).click();
+  await page.getByTestId("tab-admin-prices").click();
+  await expect(page.getByTestId("admin-relevant-variable-group")).toContainText("Coeficiente rango Bajadas 26 a 50");
+  await expect(page.getByTestId("admin-relevant-variable-group")).not.toContainText("Coeficiente rango Bajadas 1");
 });
 
 test("Modificar precios muestra variables contextuales de Bajadas Tarjetas Postales y Folletos", async ({ page }) => {
