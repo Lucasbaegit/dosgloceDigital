@@ -1772,6 +1772,11 @@ select:focus {
   background: rgba(148, 163, 184, 0.16);
 }
 
+.admin-variable-item .admin-scope-badge {
+  color: #fde68a;
+  background: rgba(245, 158, 11, 0.16);
+}
+
 .admin-editor,
 .admin-preview-panel {
   border: 1px solid rgba(148, 163, 184, 0.22);

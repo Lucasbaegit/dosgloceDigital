@@ -89,6 +89,32 @@ function scopeIncludes(scopeValues, currentValues) {
   return normalizedCurrent.some((value) => normalizedScope.includes(value));
 }
 
+function relationScopeKeys(relation) {
+  return Object.keys(relation?.aplica_a || {}).filter((key) => {
+    const value = relation.aplica_a[key];
+    return Array.isArray(value) ? value.length > 0 : value !== undefined && value !== null;
+  });
+}
+
+function relationMatchKind(relation) {
+  const keys = relationScopeKeys(relation);
+  if (!keys.length) return "base_dependency_match";
+  const haystack = [
+    relation?.variable,
+    relation?.variable_label,
+    relation?.componente,
+    relation?.detalle,
+    ...(relation?.ruta_calculo || []),
+  ].filter(Boolean).join(" ").toLowerCase();
+  if (keys.some((key) => ["formatos", "cantidades", "rangos", "terminaciones", "adicionales", "caras", "gramajes", "materiales", "modo_color", "tipo_papel"].includes(key))) {
+    return "scope_exact_match";
+  }
+  if (haystack.includes("multiplicador") || haystack.includes("base") || haystack.includes("papel") || haystack.includes("material") || haystack.includes("click") || haystack.includes("cambio")) {
+    return "base_dependency_match";
+  }
+  return "product_dependency_match";
+}
+
 function getCurrentQuoteRange(payload, result) {
   return result?.cantidad_rango_aplicado || result?.rango_aplicado || payload?.cantidad_rango || payload?.cantidad_unidades;
 }
@@ -148,6 +174,12 @@ function relationAppliesToCurrentQuote(relation, payload, result = null) {
   if (!scopeIncludes(applies.caras, [payload.caras, payload.caras_tarjetas_troq_circ])) {
     return false;
   }
+  if (!scopeIncludes(applies.modo_color, [payload.modo_color, payload.modo_color_folleto])) {
+    return false;
+  }
+  if (!scopeIncludes(applies.tipo_papel, payload.tipo_papel)) {
+    return false;
+  }
   if (!scopeIncludes(applies.gramajes, payload.gramaje)) {
     return false;
   }
@@ -201,12 +233,16 @@ function analyzeContext({ selectedRelations, quoteSummary, currentQuote, impactM
   }
 
   const connected = currentRelations.find((item) => item.impacta_hoy && item.estado !== "bloqueado");
-  if (connected && !quoteUsesFixedPdf(currentQuote.payload, currentQuote.result, connected)) {
+  if (connected) {
+    const fixedPdf = quoteUsesFixedPdf(currentQuote.payload, currentQuote.result, connected);
+    const matchKind = relationMatchKind(connected);
     return {
       status: "afecta_cotizacion_actual",
-      badge: "Afecta esta cotización",
+      badge: fixedPdf && matchKind === "base_dependency_match" ? "Base usada" : "Afecta esta cotización",
       title: "Afecta esta cotización actual",
-      message: "Esta variable participa en el cálculo actual de esta cotización.",
+      message: fixedPdf
+        ? "Esta variable participa en la base técnica o trazabilidad del caso actual; el precio final permanece calibrado contra PDF/lista."
+        : "Esta variable participa en el cálculo actual de esta cotización.",
       currentRelations,
     };
   }

@@ -471,6 +471,55 @@ function scopeIncludes(scopeValues, currentValues) {
   return normalizedCurrent.some((value) => normalizedScope.includes(value));
 }
 
+function relationScopeKeys(relation) {
+  return Object.keys(relation?.aplica_a || {}).filter((key) => {
+    const value = relation.aplica_a[key];
+    return Array.isArray(value) ? value.length > 0 : value !== undefined && value !== null;
+  });
+}
+
+function relationMatchKind(relation) {
+  const keys = relationScopeKeys(relation);
+  if (!keys.length) return "base_dependency_match";
+  const haystack = [
+    relation?.variable,
+    relation?.variable_label,
+    relation?.componente,
+    relation?.detalle,
+    ...(relation?.ruta_calculo || []),
+  ].filter(Boolean).join(" ").toLowerCase();
+  if (keys.some((key) => ["formatos", "cantidades", "rangos", "terminaciones", "adicionales", "caras", "gramajes", "materiales", "modo_color", "tipo_papel"].includes(key))) {
+    return "scope_exact_match";
+  }
+  if (haystack.includes("multiplicador") || haystack.includes("base") || haystack.includes("papel") || haystack.includes("material") || haystack.includes("click") || haystack.includes("cambio")) {
+    return "base_dependency_match";
+  }
+  return "product_dependency_match";
+}
+
+function relationContextBadge(relation) {
+  const kind = relationMatchKind(relation);
+  const haystack = [
+    relation?.variable,
+    relation?.variable_label,
+    relation?.componente,
+    relation?.detalle,
+  ].filter(Boolean).join(" ").toLowerCase();
+  if (kind === "base_dependency_match") {
+    if (haystack.includes("papel") || haystack.includes("material") || haystack.includes("gramaje")) return "Papel / material";
+    if (haystack.includes("click") || haystack.includes("impresi")) return "Impresión";
+    if (haystack.includes("multiplicador")) return "Multiplicador";
+    if (haystack.includes("cambio") || haystack.includes("usd")) return "Global usada";
+    return "Base del cálculo";
+  }
+  if (haystack.includes("cantidad") || haystack.includes("rango")) return "Cantidad";
+  if (haystack.includes("impresi") || haystack.includes("cara")) return "Impresión";
+  if (haystack.includes("formato")) return "Formato";
+  if (haystack.includes("terminaci") || haystack.includes("laca") || haystack.includes("laminado")) return "Terminación";
+  if (haystack.includes("gramaje") || haystack.includes("papel") || haystack.includes("material")) return "Papel / material";
+  return "Scope exacto";
+}
+
 function getCurrentQuoteRange(payload, result) {
   return (
     result?.cantidad_rango_aplicado ||
@@ -533,6 +582,12 @@ function relationAppliesToCurrentQuote(relation, payload, result = null) {
     return false;
   }
   if (!scopeIncludes(applies.caras, [payload.caras, payload.caras_tarjetas_troq_circ])) {
+    return false;
+  }
+  if (!scopeIncludes(applies.modo_color, [payload.modo_color, payload.modo_color_folleto])) {
+    return false;
+  }
+  if (!scopeIncludes(applies.tipo_papel, payload.tipo_papel)) {
     return false;
   }
   if (!scopeIncludes(applies.gramajes, payload.gramaje)) {
@@ -2903,16 +2958,18 @@ export default function CotizadorBajadasV2() {
     const currentProductKey = result && lastPayload ? getQuoteProductKey(lastPayload) : null;
     const currentProductLabel = result && lastPayload ? getQuoteProductLabel(lastPayload, impactData) : "";
     const impactRelations = impactData?.relaciones || [];
+    const relevantRelations = currentProductKey
+      ? impactRelations
+        .filter((relation) => (
+          relation.producto_key === currentProductKey &&
+          relation.impacta_hoy &&
+          relation.editable &&
+          relationAppliesToCurrentQuote(relation, lastPayload, result)
+        ))
+      : [];
     const relevantVariableKeys = new Set(
       currentProductKey
-        ? impactRelations
-          .filter((relation) => (
-            relation.producto_key === currentProductKey &&
-            relation.impacta_hoy &&
-            relation.editable &&
-            relationAppliesToCurrentQuote(relation, lastPayload, result)
-          ))
-          .map((relation) => relation.variable)
+        ? relevantRelations.map((relation) => relation.variable)
         : []
     );
     const productVariableKeys = new Set(
@@ -2924,9 +2981,7 @@ export default function CotizadorBajadasV2() {
     );
     const relationByVariable = new Map();
     if (currentProductKey) {
-      impactRelations
-        .filter((relation) => relation.producto_key === currentProductKey && relationAppliesToCurrentQuote(relation, lastPayload, result))
-        .forEach((relation) => relationByVariable.set(relation.variable, relation));
+      relevantRelations.forEach((relation) => relationByVariable.set(relation.variable, relation));
     }
     const hasCurrentQuoteContext = Boolean(currentProductKey && result && lastPayload);
     const contextualVariables = hasCurrentQuoteContext
@@ -2990,6 +3045,7 @@ export default function CotizadorBajadasV2() {
           {relation ? <small className="admin-context-note">{relation.detalle}</small> : null}
           <div className="admin-variable-meta">
             <em>{item.value} {item.unit || ""}</em>
+            {relation ? <em className="admin-scope-badge">{relationContextBadge(relation)}</em> : null}
             {isSimpleMode ? <em>{(item.productos_afectados || []).length} productos</em> : null}
             {isAdvancedMode ? <em>{item.impacta_hoy ? "Impacta hoy" : "Preparada"}</em> : null}
             {isAdvancedMode ? <em>{item.editable ? "Editable" : "Solo lectura"}</em> : null}
@@ -3022,7 +3078,7 @@ export default function CotizadorBajadasV2() {
             <h5>{hasCurrentQuoteContext ? "Variables que afectan esta cotización" : "Variables editables del sistema"}</h5>
             <p>
               {hasCurrentQuoteContext
-                ? "Primero se muestran solo las variables que coinciden con el producto, formato, cantidad y terminación cotizados."
+                ? "Se muestran variables específicas del caso cotizado y variables base/globales que participan en el cálculo o trazabilidad."
                 : "Listado global completo porque todavía no hay una cotización calculada."}
             </p>
           </div>

@@ -1023,9 +1023,17 @@ test("Modificar precios muestra variables contextuales de Bajadas Tarjetas Posta
     { key: "coeficiente_formato_bajadas_A3plus", label: "Coeficiente formato Bajadas A3+", value: 1, unit: "factor", description: "A3+", impacta_hoy: true, editable: true, estado: "editable", productos_afectados: ["Bajadas Fullcolor/ByN"], min: 0.0001, max: 1000000, step: 0.0001 },
     { key: "factor_gramaje_tarjetas_9x5_350g", label: "Factor gramaje 350g Tarjetas 9x5", value: 1.1, unit: "factor", description: "350g", impacta_hoy: true, editable: true, estado: "editable", productos_afectados: ["Tarjetas 9x5"], min: 0.01, max: 100, step: 0.001 },
     { key: "coeficiente_cantidad_tarjetas_9x5_100", label: "Coeficiente cantidad Tarjetas 9x5 100", value: 1, unit: "factor", description: "100", impacta_hoy: true, editable: true, estado: "editable", productos_afectados: ["Tarjetas 9x5"], min: 0.0001, max: 1000000, step: 0.0001 },
+    { key: "coeficiente_cantidad_tarjetas_9x5_500", label: "Coeficiente cantidad Tarjetas 9x5 500", value: 1, unit: "factor", description: "500", impacta_hoy: true, editable: true, estado: "editable", productos_afectados: ["Tarjetas 9x5"], min: 0.0001, max: 1000000, step: 0.0001 },
+    { key: "coeficiente_cantidad_tarjetas_9x5_1000", label: "Coeficiente cantidad Tarjetas 9x5 1000", value: 1, unit: "factor", description: "1000", impacta_hoy: true, editable: true, estado: "editable", productos_afectados: ["Tarjetas 9x5"], min: 0.0001, max: 1000000, step: 0.0001 },
+    { key: "coeficiente_impresion_tarjetas_9x5_4_0", label: "Coeficiente impresión Tarjetas 9x5 4/0", value: 1, unit: "factor", description: "4/0", impacta_hoy: true, editable: true, estado: "editable", productos_afectados: ["Tarjetas 9x5"], min: 0.0001, max: 1000000, step: 0.0001 },
+    { key: "coeficiente_impresion_tarjetas_9x5_4_4", label: "Coeficiente impresión Tarjetas 9x5 4/4", value: 1, unit: "factor", description: "4/4", impacta_hoy: true, editable: true, estado: "editable", productos_afectados: ["Tarjetas 9x5"], min: 0.0001, max: 1000000, step: 0.0001 },
+    { key: "multiplicador_comercial_tarjetas_9x5", label: "Multiplicador comercial Tarjetas 9x5", value: 1, unit: "factor", description: "Base comercial", impacta_hoy: true, editable: true, estado: "editable", productos_afectados: ["Tarjetas 9x5"], min: 0.01, max: 100, step: 0.001 },
     { key: "factor_gramaje_tarjetas_postales_350g", label: "Factor gramaje 350g Tarjetas Postales", value: 1.1, unit: "factor", description: "350g", impacta_hoy: true, editable: true, estado: "editable", productos_afectados: ["Tarjetas Postales"], min: 0.01, max: 100, step: 0.001 },
     { key: "factor_formato_folletos_A4", label: "Factor formato Folletos A4", value: 1, unit: "factor", description: "A4", impacta_hoy: true, editable: true, estado: "editable", productos_afectados: ["Folletos"], min: 0.0001, max: 1000000, step: 0.0001 },
     { key: "factor_papel_folletos_80g", label: "Factor papel Folletos 80g", value: 1, unit: "factor", description: "80g", impacta_hoy: true, editable: true, estado: "editable", productos_afectados: ["Folletos"], min: 0.0001, max: 1000000, step: 0.0001 },
+    { key: "factor_papel_folletos_150g", label: "Factor papel Folletos 150g", value: 1, unit: "factor", description: "150g", impacta_hoy: true, editable: true, estado: "editable", productos_afectados: ["Folletos"], min: 0.0001, max: 1000000, step: 0.0001 },
+    { key: "coeficiente_cantidad_folletos_1000", label: "Coeficiente cantidad Folletos 1000", value: 1, unit: "factor", description: "1000", impacta_hoy: true, editable: true, estado: "editable", productos_afectados: ["Folletos"], min: 0.0001, max: 1000000, step: 0.0001 },
+    { key: "coeficiente_cantidad_folletos_500", label: "Coeficiente cantidad Folletos 500", value: 1, unit: "factor", description: "500", impacta_hoy: true, editable: true, estado: "editable", productos_afectados: ["Folletos"], min: 0.0001, max: 1000000, step: 0.0001 },
     { key: "factor_laca_uv_stickers_corte_recto", label: "Factor Laca UV Stickers Corte Recto", value: 1.18, unit: "factor", description: "Sticker", impacta_hoy: true, editable: true, estado: "editable", productos_afectados: ["Stickers Corte Recto"], min: 0.01, max: 100, step: 0.001 },
   ];
   const rel = (variable, label, productKey, productLabel, aplica_a = {}) => ({
@@ -1058,12 +1066,20 @@ test("Modificar precios muestra variables contextuales de Bajadas Tarjetas Posta
       rel("coeficiente_formato_bajadas_A3plus", "Coeficiente formato Bajadas A3+", "bajadas_fullcolor_byn", "Bajadas Fullcolor/ByN", { formatos: ["A3+"] }),
       rel("factor_gramaje_tarjetas_9x5_350g", "Factor gramaje 350g Tarjetas 9x5", "tarjetas_9x5", "Tarjetas 9x5", { gramajes: ["350g"] }),
       rel("coeficiente_cantidad_tarjetas_9x5_100", "Coeficiente cantidad Tarjetas 9x5 100", "tarjetas_9x5", "Tarjetas 9x5", { cantidades: [100] }),
+      rel("coeficiente_cantidad_tarjetas_9x5_500", "Coeficiente cantidad Tarjetas 9x5 500", "tarjetas_9x5", "Tarjetas 9x5", { cantidades: [500] }),
+      rel("coeficiente_cantidad_tarjetas_9x5_1000", "Coeficiente cantidad Tarjetas 9x5 1000", "tarjetas_9x5", "Tarjetas 9x5", { cantidades: [1000] }),
+      rel("coeficiente_impresion_tarjetas_9x5_4_0", "Coeficiente impresión Tarjetas 9x5 4/0", "tarjetas_9x5", "Tarjetas 9x5", { caras: ["4/0"] }),
+      rel("coeficiente_impresion_tarjetas_9x5_4_4", "Coeficiente impresión Tarjetas 9x5 4/4", "tarjetas_9x5", "Tarjetas 9x5", { caras: ["4/4"] }),
+      rel("multiplicador_comercial_tarjetas_9x5", "Multiplicador comercial Tarjetas 9x5", "tarjetas_9x5", "Tarjetas 9x5"),
       rel("factor_gramaje_tarjetas_postales_350g", "Factor gramaje 350g Tarjetas Postales", "tarjetas_postales", "Tarjetas Postales", { gramajes: ["350g"] }),
       rel("factor_formato_folletos_A4", "Factor formato Folletos A4", "folletos", "Folletos", { formatos: ["A4"] }),
       rel("factor_papel_folletos_80g", "Factor papel Folletos 80g", "folletos", "Folletos", { gramajes: ["80g"] }),
+      rel("factor_papel_folletos_150g", "Factor papel Folletos 150g", "folletos", "Folletos", { gramajes: ["150g"] }),
+      rel("coeficiente_cantidad_folletos_1000", "Coeficiente cantidad Folletos 1000", "folletos", "Folletos", { cantidades: [1000] }),
+      rel("coeficiente_cantidad_folletos_500", "Coeficiente cantidad Folletos 500", "folletos", "Folletos", { cantidades: [500] }),
       rel("factor_laca_uv_stickers_corte_recto", "Factor Laca UV Stickers Corte Recto", "stickers_corte_recto", "Stickers Corte Recto", { terminaciones: ["con_laca_uv"] }),
     ],
-    resumen: { variables_editables: adminVariables.length, productos_afectados: 6, relaciones_conectadas: 9 },
+    resumen: { variables_editables: adminVariables.length, productos_afectados: 6, relaciones_conectadas: 17 },
   };
 
   await page.route("**/bajadas-v2/cotizar", async (route) => {
@@ -1103,12 +1119,20 @@ test("Modificar precios muestra variables contextuales de Bajadas Tarjetas Posta
 
   await page.getByTestId("tab-quote").click();
   await page.getByTestId("categoria-select").selectOption("Tarjetas Personales 9x5");
-  await page.getByLabel("Gramaje").selectOption("350g");
-  await page.getByLabel("Cantidad").fill("100");
+  await page.getByLabel("Gramaje").selectOption("300g");
+  await page.getByLabel("Cantidad").fill("500");
   await page.getByRole("button", { name: "Calcular" }).click();
   await page.getByTestId("tab-admin-prices").click();
-  await expect(page.getByTestId("admin-relevant-variable-group")).toContainText("Factor gramaje 350g Tarjetas 9x5");
-  await expect(page.getByTestId("admin-relevant-variable-group")).toContainText("Coeficiente cantidad Tarjetas 9x5 100");
+  await expect(page.getByTestId("admin-relevant-variable-group")).toContainText("Coeficiente cantidad Tarjetas 9x5 500");
+  await expect(page.getByTestId("admin-relevant-variable-group")).toContainText("Coeficiente impresión Tarjetas 9x5 4/0");
+  await expect(page.getByTestId("admin-relevant-variable-group")).toContainText("Multiplicador comercial Tarjetas 9x5");
+  await expect(page.getByTestId("admin-relevant-variable-group")).toContainText("Multiplicador");
+  await expect(page.getByTestId("admin-relevant-variable-group")).not.toContainText("Coeficiente cantidad Tarjetas 9x5 1000");
+  await expect(page.getByTestId("admin-relevant-variable-group")).not.toContainText("Coeficiente impresión Tarjetas 9x5 4/4");
+  await expect(page.getByTestId("admin-relevant-variable-group")).not.toContainText("Factor gramaje 350g Tarjetas 9x5");
+  await expect(page.getByTestId("admin-other-variable-group")).toContainText("Coeficiente cantidad Tarjetas 9x5 1000");
+  await expect(page.getByTestId("admin-other-variable-group")).toContainText("Coeficiente impresión Tarjetas 9x5 4/4");
+  await expect(page.getByTestId("admin-other-variable-group")).toContainText("Factor gramaje 350g Tarjetas 9x5");
   await expect(page.getByTestId("admin-relevant-variable-group")).not.toContainText("Tarjetas Postales");
 
   await page.getByTestId("tab-quote").click();
@@ -1122,12 +1146,15 @@ test("Modificar precios muestra variables contextuales de Bajadas Tarjetas Posta
   await page.getByTestId("tab-admin-prices").click();
   await expect(page.getByTestId("admin-relevant-variable-group")).toContainText("Factor formato Folletos A4");
   await expect(page.getByTestId("admin-relevant-variable-group")).toContainText("Factor papel Folletos 80g");
+  await expect(page.getByTestId("admin-relevant-variable-group")).toContainText("Coeficiente cantidad Folletos 1000");
+  await expect(page.getByTestId("admin-relevant-variable-group")).not.toContainText("Factor papel Folletos 150g");
+  await expect(page.getByTestId("admin-relevant-variable-group")).not.toContainText("Coeficiente cantidad Folletos 500");
   await expect(page.getByTestId("admin-relevant-variable-group")).not.toContainText("Bajadas");
 
   await page.getByTestId("tab-variable-impact").click();
   await page.getByTestId("impact-variable-select").selectOption("factor_formato_folletos_A4");
-  await expect(page.getByTestId("impact-current-assessment")).toContainText("Documentada, no conectada");
-  await expect(page.getByTestId("impact-current-assessment")).toContainText("No afecta esta cotización actual");
+  await expect(page.getByTestId("impact-current-assessment")).toContainText("Afecta esta cotización");
+  await expect(page.getByTestId("impact-current-assessment")).toContainText("base técnica");
 });
 
 
@@ -1253,7 +1280,8 @@ test("Modificar precios muestra variables contextuales de Carpetas Sobres Planch
 
   await page.getByTestId("tab-variable-impact").click();
   await page.getByTestId("impact-variable-select").selectOption("coeficiente_paginas_agendas_72");
-  await expect(page.getByTestId("impact-current-assessment")).toContainText("Documentada, no conectada");
+  await expect(page.getByTestId("impact-current-assessment")).toContainText("Afecta esta cotización");
+  await expect(page.getByTestId("impact-current-assessment")).toContainText("base técnica");
 });
 
 test("Historial y backups y Exportar soporte Excel quedan accesibles", async ({ page }) => {

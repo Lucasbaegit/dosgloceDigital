@@ -210,6 +210,33 @@ class TestVariablesImpactoApi(unittest.TestCase):
         self.assertEqual(body["relaciones"][0]["producto_key"], "folletos")
         self.assertEqual(body["relaciones"][0]["aplica_a"], {"formatos": ["A4"]})
 
+    def test_variables_base_tarjetas_y_folletos_no_exigen_scope_exacto(self):
+        checks = [
+            ("multiplicador_comercial_tarjetas_9x5", "tarjetas_9x5"),
+            ("multiplicador_comercial_folletos", "folletos"),
+        ]
+        for variable, product_key in checks:
+            with self.subTest(variable=variable):
+                status, body = self._get_json(f"/variables-impacto/variable/{variable}")
+                self.assertEqual(status, 200)
+                rel = body["relaciones"][0]
+                self.assertEqual(rel["producto_key"], product_key)
+                self.assertEqual(rel["aplica_a"], {})
+                self.assertTrue(rel["editable"])
+                self.assertTrue(rel["impacta_hoy"])
+
+        status, body = self._get_json("/variables-impacto/variable/coeficiente_cantidad_tarjetas_9x5_500")
+        self.assertEqual(status, 200)
+        self.assertEqual(body["relaciones"][0]["aplica_a"], {"cantidades": [500]})
+
+        status, body = self._get_json("/variables-impacto/variable/coeficiente_impresion_tarjetas_9x5_4_0")
+        self.assertEqual(status, 200)
+        self.assertEqual(body["relaciones"][0]["aplica_a"], {"caras": ["4/0"]})
+
+        status, body = self._get_json("/variables-impacto/variable/factor_color_folletos_escala_grises")
+        self.assertEqual(status, 200)
+        self.assertEqual(body["relaciones"][0]["aplica_a"], {"modo_color": ["escala_grises"]})
+
     def test_variables_bloque_nuevo_no_contaminan_stickers_circulares(self):
         status, body = self._get_json("/variables-impacto/producto/stickers_circulares")
         self.assertEqual(status, 200)
