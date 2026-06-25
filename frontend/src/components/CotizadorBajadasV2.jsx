@@ -334,13 +334,13 @@ function layoutTraceGraph(graph) {
   const edges = graph?.edges || [];
   const explicitLayout = nodes.some((node) => node.column !== undefined || node.branch || node.row !== undefined);
   const positions = {};
-  const xStep = 390;
-  const yStep = 180;
+  const xStep = 360;
+  const yStep = 168;
   const marginX = 56;
   const marginY = 60;
 
   if (explicitLayout) {
-    const branchOrder = ["material", "impresion", "cantidad", "adicionales", "urgencia", "entrada", "resultado"];
+    const branchOrder = ["entrada", "material", "impresion", "cantidad", "adicionales", "urgencia", "resultado"];
     const branchIndex = Object.fromEntries(branchOrder.map((branch, index) => [branch, index]));
     const lanes = nodes.map((node) => ({
       node,
@@ -365,16 +365,16 @@ function layoutTraceGraph(graph) {
       const lane = Number(item.lane ?? (branchIndex[item.branch] ?? branchIndex.entrada));
       const rowOffset = Number(item.row ?? item.autoRow ?? 0) * (TRACE_NODE_HEIGHT + 24);
       positions[item.node.id] = {
-        x: marginX + item.column * xStep,
-        y: marginY + lane * yStep + rowOffset,
+        x: marginX + lane * xStep,
+        y: marginY + item.column * yStep + rowOffset,
       };
     });
     const maxX = Math.max(0, ...Object.values(positions).map((pos) => pos.x));
     const maxY = Math.max(0, ...Object.values(positions).map((pos) => pos.y));
     return {
       positions,
-      width: Math.max(1380, maxX + TRACE_NODE_WIDTH + 120),
-      height: Math.max(860, maxY + TRACE_NODE_HEIGHT + 100),
+      width: Math.max(1360, maxX + TRACE_NODE_WIDTH + 120),
+      height: Math.max(980, maxY + TRACE_NODE_HEIGHT + 120),
     };
   }
 
@@ -394,15 +394,15 @@ function layoutTraceGraph(graph) {
   Object.entries(groups).forEach(([depthKey, group]) => {
     const depth = Number(depthKey);
     group.forEach((node, index) => {
-      positions[node.id] = { x: marginX + depth * xStep, y: marginY + index * yStep };
+      positions[node.id] = { x: marginX + index * xStep, y: marginY + depth * yStep };
     });
   });
   const maxDepth = Math.max(0, ...Object.keys(groups).map(Number));
   const maxRows = Math.max(1, ...Object.values(groups).map((group) => group.length));
   return {
     positions,
-    width: Math.max(1180, marginX + (maxDepth + 1) * xStep + TRACE_NODE_WIDTH),
-    height: Math.max(620, marginY + maxRows * yStep + TRACE_NODE_HEIGHT),
+    width: Math.max(1180, marginX + maxRows * xStep + TRACE_NODE_WIDTH),
+    height: Math.max(860, marginY + (maxDepth + 1) * yStep + TRACE_NODE_HEIGHT),
   };
 }
 
@@ -731,8 +731,16 @@ function sourceKindExplanation(kind) {
   return "El precio sale del motor interno del producto. Si falta un dato de fuente, se muestra como no disponible sin inventarlo.";
 }
 
-function buildCurrentQuoteTraceGraph(payload, result) {
+function quoteUsesFixedPdf(_payload, result, relation = {}) {
+  if (!result) return false;
+  if (relation?.modo_precio === "matriz_pdf" || relation?.tipo === "matriz_pdf") return true;
+  return inferPriceSourceKind(result) === "matriz_pdf";
+}
+
+function buildCurrentQuoteTraceGraph(payload, result, context = {}) {
   if (!payload || !result) return null;
+  const editableRelations = context.editableRelations || [];
+  const variableByKey = context.variableByKey || new Map();
   const quantity = Number(payload.cantidad_unidades || result.cantidad_unidades || 0);
   const materialLabel = describeCurrentQuoteMaterial(payload);
   const range = result.cantidad_rango_aplicado || payload.cantidad_rango || "Sin rango";
@@ -753,7 +761,7 @@ function buildCurrentQuoteTraceGraph(payload, result) {
     traceNode("origen_material", "Origen papel/material", "preparada", payload.tipo_papel || payload.papel || payload.material || "material", null, "Fuente semántica del material seleccionado. Si hay variable madre conectada, aparece como origen; si no, queda como tabla/preparado.", "payload + configuración comercial", "define familia de material", "No reemplaza al material cotizado real; solo explica su origen.", { branch: "material", column: 0, lane: 0, row: 0 }),
     traceNode("material_cotizado", `Material ${materialLabel}`, "derivado", materialLabel, null, "Material real de la cotización actual.", "lastPayload.material / lastPayload.papel / lastPayload.gramaje", "selección del usuario", "Debe coincidir con lo cotizado, por ejemplo Ilustracion 115g.", { branch: "material", column: 1, lane: 0, row: 0 }),
 
-    traceNode("click_base", `Click ${modeColor}`, "variable_madre", modeColor, null, "Rama de click/impresión usada para explicar el origen del costo de impresión.", "variables comerciales / motor de cotización", "define base de impresión", "Cuando el producto usa PDF fijo, el nodo queda como referencia lógica y el precio final sigue viniendo del resultado real.", { branch: "impresion", column: 0, lane: 1, row: 0, editable_en_sistema: true, impacta_hoy: true }),
+    traceNode("click_base", `Click ${modeColor}`, "variable_madre", modeColor, null, "Rama de click/impresión usada para explicar el origen del costo de impresión.", "variables comerciales / motor de cotización", "define base de impresión", "Cuando el producto usa PDF fijo, el nodo queda como referencia lógica y el precio final sigue viniendo del resultado real.", { branch: "impresion", column: 0, lane: 1, row: 0, editable_en_sistema: false, impacta_hoy: true, editable_reason: "Nodo conceptual: si existe variable editable exacta, aparece como nodo propio en Base técnica editable." }),
     traceNode("formato", `Formato ${payload.formato || "-"}`, "derivado", payload.formato || "-", null, "Formato cotizado y posible derivación proporcional del click/base.", "lastPayload.formato", "deriva tamaño/formato", "Debe coincidir con el formulario de la cotización actual.", { branch: "impresion", column: 1, lane: 1, row: 0 }),
     traceNode("caras", `Impresión ${payload.caras || "-"}`, "derivado", payload.caras || "-", null, "Caras / impresión solicitada.", "lastPayload.caras", "define caras y modo color", "Separa visualmente la impresión de papel y cantidad.", { branch: "impresion", column: 2, lane: 1, row: 0 }),
 
@@ -779,6 +787,56 @@ function buildCurrentQuoteTraceGraph(payload, result) {
     traceEdge("e_rango_base", "rango", "precio_base_unitario", "define"),
     traceEdge("e_base_total", "precio_base_unitario", "base_total", "x cantidad"),
   ];
+
+  editableRelations.slice(0, 8).forEach((relation, index) => {
+    const variable = variableByKey.get(relation.variable);
+    const badge = relationContextBadge(relation);
+    const branch = (() => {
+      const text = `${badge} ${relation.componente || ""} ${relation.detalle || ""}`.toLowerCase();
+      if (text.includes("terminaci") || text.includes("laca") || text.includes("laminado") || text.includes("adicional")) return "adicionales";
+      if (text.includes("cantidad") || text.includes("rango")) return "cantidad";
+      if (text.includes("impresi") || text.includes("click") || text.includes("cara") || text.includes("formato")) return "impresion";
+      if (text.includes("papel") || text.includes("material") || text.includes("gramaje")) return "material";
+      return "material";
+    })();
+    const target = branch === "adicionales"
+      ? (additions.length ? "subtotal_con_adicionales" : "sin_adicional")
+      : branch === "cantidad"
+        ? "rango"
+        : branch === "impresion"
+          ? "precio_base_unitario"
+          : "material_cotizado";
+    const id = `variable_${relation.variable}`;
+    nodes.push(traceNode(
+      id,
+      relation.variable_label || variable?.label || relation.variable,
+      "variable_madre",
+      variable?.value ?? relation.valor_actual ?? null,
+      variable?.unit || "",
+      relation.detalle || variable?.description || "Variable editable conectada al caso actual.",
+      relation.fuente || variable?.source_file || "mapa de impacto",
+      badge,
+      quoteUsesFixedPdf(payload, result, relation)
+        ? "Afecta base técnica/trazabilidad; el precio final actual permanece validado por PDF/lista."
+        : "Participa en el cálculo del precio final actual.",
+      {
+        branch,
+        column: 2 + index,
+        lane: branch === "material" ? 0 : branch === "impresion" ? 1 : branch === "cantidad" ? 2 : 3,
+        row: index % 2,
+        editable_en_sistema: Boolean(relation.editable),
+        impacta_hoy: Boolean(relation.impacta_hoy),
+        variable_key: relation.variable,
+        variable_label: relation.variable_label || variable?.label,
+        variable_type: variable?.tipo || relation.tipo || "variable_madre",
+        source: relation.fuente || variable?.source_file || "mapa de impacto",
+        affects_current_quote: Boolean(relation.impacta_hoy),
+        context_badge: badge,
+        relation,
+      }
+    ));
+    edges.push(traceEdge(`e_variable_${relation.variable}`, id, target, badge));
+  });
 
   if (additions.length) {
     additions.forEach((addition, index) => {
@@ -1325,7 +1383,55 @@ export default function CotizadorBajadasV2() {
     }
   };
 
-  const handleLoadCurrentQuoteGraph = () => {
+  const getCurrentEditableRelations = (sourceImpactData = impactData) => {
+    if (!lastPayload || !result || !sourceImpactData?.relaciones?.length) return [];
+    const productKey = getQuoteProductKey(lastPayload);
+    return (sourceImpactData.relaciones || [])
+      .filter((relation) => (
+        relation.producto_key === productKey &&
+        relation.editable &&
+        relationAppliesToCurrentQuote(relation, lastPayload, result)
+      ))
+      .reduce((acc, relation) => {
+        if (!acc.some((item) => item.variable === relation.variable)) acc.push(relation);
+        return acc;
+      }, []);
+  };
+
+  const getAdminVariableByKey = (key) => (adminPrices?.variables || []).find((item) => item.key === key) || null;
+
+  const handleTraceModifyVariable = (variableKey) => {
+    if (!variableKey) return;
+    const variable = getAdminVariableByKey(variableKey);
+    setAdminVariable(variableKey);
+    if (variable) setAdminNewValue(String(variable.value));
+    setAdminPreview(null);
+    setAdminRollbackPreview(null);
+    setAdminRollbackTargetId(null);
+    setAdminMsg("");
+    setAdminError("");
+    setAdminWizardStep(2);
+    setActiveTab("Modificar precios");
+  };
+
+  const handleOpenVariableInTrace = (variableKey) => {
+    if (!variableKey || !lastPayload || !result) return;
+    if (traceMode !== "cotizacion_actual" || !traceGraph) {
+      const variableByKey = new Map((adminPrices?.variables || []).map((item) => [item.key, item]));
+      const graph = buildCurrentQuoteTraceGraph(lastPayload, result, {
+        editableRelations: getCurrentEditableRelations(),
+        variableByKey,
+      });
+      setTraceGraph(graph);
+    }
+    setTraceMode("cotizacion_actual");
+    setUnderstandMode("trazabilidad");
+    setSelectedTraceNodeId(`variable_${variableKey}`);
+    setTraceZoom(1);
+    setActiveTab("Entender un precio");
+  };
+
+  const handleLoadCurrentQuoteGraph = async () => {
     setTraceError("");
 
     if (!result || !lastPayload) {
@@ -1336,7 +1442,28 @@ export default function CotizadorBajadasV2() {
     }
 
     try {
-      const graph = buildCurrentQuoteTraceGraph(lastPayload, result);
+      setTraceLoading(true);
+      let localImpactData = impactData;
+      let localAdminPrices = adminPrices;
+      try {
+        if (!localImpactData) {
+          localImpactData = await fetchVariablesImpacto();
+          setImpactData(localImpactData);
+        }
+        if (!localAdminPrices) {
+          localAdminPrices = await fetchAdminPreciosVariables();
+          setAdminPrices(localAdminPrices);
+        }
+      } catch {
+        // El grafo base de la cotización no debe depender de metadata editable.
+        localImpactData = localImpactData || { relaciones: [] };
+        localAdminPrices = localAdminPrices || { variables: [] };
+      }
+      const variableByKey = new Map((localAdminPrices?.variables || []).map((item) => [item.key, item]));
+      const graph = buildCurrentQuoteTraceGraph(lastPayload, result, {
+        editableRelations: getCurrentEditableRelations(localImpactData),
+        variableByKey,
+      });
 
       if (!graph || !Array.isArray(graph.nodes) || graph.nodes.length === 0) {
         setTraceGraph(null);
@@ -1352,6 +1479,8 @@ export default function CotizadorBajadasV2() {
       setTraceGraph(null);
       setSelectedTraceNodeId(null);
       setTraceError(err.message || "No se pudo construir el grafo de la cotización actual.");
+    } finally {
+      setTraceLoading(false);
     }
   };
 
@@ -2336,6 +2465,12 @@ export default function CotizadorBajadasV2() {
         : await cotizarBajadaV2(payload);
       setResult(response);
       setLastPayload(payload);
+      setAdminWizardStep(1);
+      setAdminVariable("");
+      setAdminNewValue("");
+      setAdminPreview(null);
+      setAdminMsg("");
+      setAdminError("");
     } catch (err) {
       if (err.code === "cantidad_fuera_de_matriz") {
         setError("Cantidad fuera de matriz para este producto.");
@@ -2446,6 +2581,10 @@ export default function CotizadorBajadasV2() {
     const selectedNode = graph.nodes.find((node) => node.id === selectedTraceNodeId) || graph.nodes[0] || null;
     const selectedCase = TRACE_GRAPH_CASES.find((item) => item.value === traceCase);
     const isCurrentMode = traceMode === "cotizacion_actual";
+    const selectedVariableKey = selectedNode?.variable_key || (selectedNode?.editable_en_sistema ? selectedNode.id : null) || (getAdminVariableByKey(selectedNode?.id) ? selectedNode.id : null);
+    const selectedVariable = selectedVariableKey ? getAdminVariableByKey(selectedVariableKey) : null;
+    const selectedIsEditable = Boolean(selectedVariableKey && (selectedNode?.editable_en_sistema || selectedVariable?.editable));
+    const selectedFixedPdf = selectedNode ? quoteUsesFixedPdf(lastPayload, result, selectedNode.relation || selectedNode) : false;
 
     return (
       <section className="card result-card trace-visual-card">
@@ -2466,6 +2605,7 @@ export default function CotizadorBajadasV2() {
                 type="button"
                 className={traceMode === mode.value ? "trace-mode-pill active" : "trace-mode-pill"}
                 data-testid={`trace-mode-${mode.value}`}
+                aria-pressed={traceMode === mode.value ? "true" : "false"}
                 onClick={() => {
                   setTraceMode(mode.value);
                   setTraceGraph(null);
@@ -2560,6 +2700,7 @@ export default function CotizadorBajadasV2() {
             {graph.nodes.length ? (
               <svg
                 className="trace-svg"
+                data-layout="vertical"
                 style={{ width: `${width * traceZoom}px`, height: `${height * traceZoom}px` }}
                 viewBox={`0 0 ${width} ${height}`}
                 role="img"
@@ -2574,15 +2715,15 @@ export default function CotizadorBajadasV2() {
                   const from = positions[edge.source];
                   const to = positions[edge.target];
                   if (!from || !to) return null;
-                  const startX = from.x + TRACE_NODE_WIDTH;
-                  const startY = from.y + TRACE_NODE_HEIGHT / 2;
-                  const endX = to.x - 12;
-                  const endY = to.y + TRACE_NODE_HEIGHT / 2;
-                  const curve = Math.max(80, Math.abs(endX - startX) / 2);
+                  const startX = from.x + TRACE_NODE_WIDTH / 2;
+                  const startY = from.y + TRACE_NODE_HEIGHT;
+                  const endX = to.x + TRACE_NODE_WIDTH / 2;
+                  const endY = to.y - 12;
+                  const curve = Math.max(70, Math.abs(endY - startY) / 2);
                   return (
                     <g key={edge.id}>
-                      <path className="trace-edge" d={`M ${startX} ${startY} C ${startX + curve} ${startY}, ${endX - curve} ${endY}, ${endX} ${endY}`} markerEnd="url(#trace-arrow)" />
-                      <text className="trace-edge-label" x={(startX + endX) / 2} y={(startY + endY) / 2 - 6}>{edge.label}</text>
+                      <path className="trace-edge" d={`M ${startX} ${startY} C ${startX} ${startY + curve}, ${endX} ${endY - curve}, ${endX} ${endY}`} markerEnd="url(#trace-arrow)" />
+                      <text className="trace-edge-label" x={(startX + endX) / 2 + 8} y={(startY + endY) / 2}>{edge.label}</text>
                     </g>
                   );
                 })}
@@ -2591,7 +2732,7 @@ export default function CotizadorBajadasV2() {
                   const visualType = traceNodeVisualType(node);
                   const selected = selectedNode?.id === node.id;
                   return (
-                    <g key={node.id} className={`trace-node ${visualType} ${selected ? "selected" : ""}`} transform={`translate(${pos.x} ${pos.y})`} onClick={() => setSelectedTraceNodeId(node.id)} tabIndex="0" role="button" aria-label={`Nodo ${node.label}`}>
+                    <g key={node.id} data-testid={`trace-node-${node.id}`} className={`trace-node ${visualType} ${selected ? "selected" : ""}`} transform={`translate(${pos.x} ${pos.y})`} onClick={() => setSelectedTraceNodeId(node.id)} tabIndex="0" role="button" aria-label={`Nodo ${node.label}`}>
                       <rect className="trace-node-rect" width={TRACE_NODE_WIDTH} height={TRACE_NODE_HEIGHT} rx="22" />
                       <text className="trace-node-title" x="22" y="38">{node.label}</text>
                       <text className="trace-node-meta" x="22" y="70">{TRACE_TYPE_LABELS[visualType] || visualType}</text>
@@ -2616,17 +2757,39 @@ export default function CotizadorBajadasV2() {
           <aside className="trace-detail" data-testid="trace-node-detail">
             <h4>Detalle del nodo</h4>
             {selectedNode ? (
-              <div className="trace-detail-grid">
-                <div><strong>Nombre</strong><span>{selectedNode.label}</span></div>
-                <div><strong>Valor</strong><span>{formatTraceValue(selectedNode)}</span></div>
-                <div><strong>Tipo</strong><span>{TRACE_TYPE_LABELS[traceNodeVisualType(selectedNode)] || selectedNode.type}</span></div>
-                <div><strong>Editable</strong><span>{selectedNode.editable_en_sistema ? "sí" : "no"}</span></div>
-                <div><strong>Impacta hoy</strong><span>{selectedNode.impacta_hoy ? "sí" : "no"}</span></div>
-                <div><strong>Fuente</strong><span>{selectedNode.source || "-"}</span></div>
-                <div><strong>Operación</strong><span>{selectedNode.operation || "-"}</span></div>
-                <div><strong>Descripción</strong><span>{selectedNode.description || "-"}</span></div>
-                <div><strong>Observación</strong><span>{selectedNode.observation || "-"}</span></div>
-              </div>
+              <>
+                <div className="trace-detail-hero">
+                  <span>{TRACE_TYPE_LABELS[traceNodeVisualType(selectedNode)] || selectedNode.type}</span>
+                  <strong>{selectedNode.label}</strong>
+                  <p>{selectedNode.description || "Nodo de la cadena causal del precio."}</p>
+                </div>
+                <div className="trace-detail-grid">
+                  <div><strong>Valor</strong><span>{formatTraceValue(selectedNode)}</span></div>
+                  <div><strong>Clave técnica</strong><span>{selectedVariableKey || selectedNode.id}</span></div>
+                  <div><strong>Editable</strong><span>{selectedIsEditable ? "Variable editable del producto" : "No editable desde aquí"}</span></div>
+                  <div><strong>Impacto</strong><span>{selectedNode.impacta_hoy ? (selectedFixedPdf ? "Afecta base técnica / trazabilidad" : "Afecta esta cotización") : "Usada para preview y trazabilidad"}</span></div>
+                  <div><strong>Fuente</strong><span>{selectedNode.source || selectedVariable?.source_file || "-"}</span></div>
+                  <div><strong>Tipo variable</strong><span>{selectedVariable?.tipo || selectedNode.variable_type || selectedNode.type || "-"}</span></div>
+                  <div><strong>Operación</strong><span>{selectedNode.operation || "-"}</span></div>
+                  <div><strong>Observación</strong><span>{selectedNode.observation || selectedNode.editable_reason || "-"}</span></div>
+                </div>
+                <div className={selectedIsEditable ? "trace-action-box editable" : "trace-action-box"}>
+                  {selectedIsEditable ? (
+                    <>
+                      <strong>Este nodo se puede operar</strong>
+                      <p>{selectedFixedPdf ? "La variable cambia base técnica o preview; el precio final actual sigue validado por matriz PDF/lista." : "La variable participa en el cálculo actual y puede previsualizarse antes de guardar."}</p>
+                      <button type="button" className="calculate-btn compact-calculate-btn" data-testid="trace-modify-variable-button" onClick={() => handleTraceModifyVariable(selectedVariableKey)}>
+                        Modificar esta variable
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <strong>No editable desde aquí</strong>
+                      <p>{selectedNode.editable_reason || "Este nodo representa una tabla PDF fija, derivación, regla interna, dato documentado o resultado calculado."}</p>
+                    </>
+                  )}
+                </div>
+              </>
             ) : (
               <p>Seleccioná un nodo del grafo para ver fuente, operación y observación.</p>
             )}
@@ -3118,6 +3281,14 @@ export default function CotizadorBajadasV2() {
         ["Terminación", describeQuoteTerminacion(lastPayload)],
         ["Adicional operativo", describeQuoteOperationalAdditions(lastPayload, result)],
       ].filter(([, value]) => value !== undefined && value !== null && value !== "" && value !== "No aplica");
+      const compositionSteps = [
+        { label: "Entrada del caso", value: currentProductLabel, type: "entrada" },
+        { label: "Formato / cantidad", value: `${lastPayload?.formato || lastPayload?.formato_agendas || "-"} · ${rangeOrQuantity}`, type: "scope" },
+        { label: "Material e impresión", value: `${describeCurrentQuoteMaterial(lastPayload)} · ${lastPayload?.caras || lastPayload?.caras_tarjetas_troq_circ || "-"}`, type: "base" },
+        { label: "Terminación / adicional", value: `${describeQuoteTerminacion(lastPayload)} · ${describeQuoteOperationalAdditions(lastPayload, result)}`, type: "addition" },
+        { label: "Fuente / calibración", value: sourceKindLabel(sourceKind), type: "source" },
+        { label: "Total final", value: formatMoney(total), type: "final" },
+      ];
 
       return (
         <section className="price-chain-card" data-testid="current-price-chain">
@@ -3140,6 +3311,20 @@ export default function CotizadorBajadasV2() {
           <div className="price-chain-chips" aria-label="Parámetros usados">
             {chips.map(([label, value]) => <span key={label}><strong>{label}:</strong> {value}</span>)}
             {additions.map((item) => <span key={`${item.label}-${item.source}`}><strong>{item.label}:</strong> {formatMoney(Number(item.value) || 0)}</span>)}
+          </div>
+          <div className="price-composition-flow" data-testid="current-price-composition">
+            <strong>Cómo se compone</strong>
+            <div className="price-composition-steps">
+              {compositionSteps.map((step, index) => (
+                <div className={`price-composition-step ${step.type}`} key={`${step.label}-${index}`}>
+                  <span>{index + 1}</span>
+                  <div>
+                    <em>{step.label}</em>
+                    <strong>{step.value}</strong>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
           <div className="price-chain-vars">
             <strong>Variables relacionadas</strong>
@@ -3211,6 +3396,27 @@ export default function CotizadorBajadasV2() {
             {isAdvancedMode ? <em>{item.impacta_hoy ? "Impacta hoy" : "Preparada"}</em> : null}
             {isAdvancedMode ? <em>{item.editable ? "Editable" : "Solo lectura"}</em> : null}
           </div>
+          {hasCurrentQuoteContext && relation ? (
+            <span
+              role="button"
+              tabIndex={0}
+              className="admin-variable-trace-link"
+              data-testid={`admin-variable-trace-${item.key}`}
+              onClick={(event) => {
+                event.stopPropagation();
+                handleOpenVariableInTrace(item.key);
+              }}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  handleOpenVariableInTrace(item.key);
+                }
+              }}
+            >
+              Ver origen en trazabilidad
+            </span>
+          ) : null}
         </button>
       );
     };
@@ -3305,6 +3511,14 @@ export default function CotizadorBajadasV2() {
           </div>
           {isAdvancedMode ? <em>{selected?.impacta_hoy ? "Impacta hoy" : "Preparada"}</em> : null}
         </div>
+        {hasCurrentQuoteContext && selected ? (
+          <div className="admin-origin-actions">
+            <button type="button" className="secondary-btn" data-testid="admin-open-trace-origin" onClick={() => handleOpenVariableInTrace(selected.key)}>
+              Ver origen en trazabilidad
+            </button>
+            <span>Abre la cotización actual y selecciona el nodo de esta variable si participa en la cadena.</span>
+          </div>
+        ) : null}
         <div className="admin-current-grid">
           <div><span>Valor actual</span><strong>{selected?.value ?? "-"}</strong></div>
           <div><span>Unidad</span><strong>{selected?.unit || "-"}</strong></div>

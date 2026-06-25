@@ -82,6 +82,7 @@ test("Entender un precio muestra trazabilidad avanzada, selector, leyenda y graf
   await page.getByTestId("trace-load-button").click();
   await expect(page.getByTestId("trace-legend")).toBeVisible();
   await expect(page.getByTestId("trace-graph-container")).toBeVisible();
+  await expect(page.locator(".trace-svg")).toHaveAttribute("data-layout", "vertical");
   await expect(page.getByTestId("trace-zoom-toolbar")).toBeVisible();
   await expect(page.getByTestId("trace-zoom-indicator")).toHaveText("100%");
   await page.getByTestId("trace-zoom-in").click();
@@ -122,6 +123,20 @@ test("Trazabilidad visual de cotización actual usa material real cotizado", asy
       }),
     });
   });
+  await page.route("**/variables-impacto", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ ok: true, variables: [], productos: [], relaciones: [], resumen: {} }),
+    });
+  });
+  await page.route("**/admin-precios/variables-editables", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ ok: true, variables: [] }),
+    });
+  });
 
   await page.goto("/", { waitUntil: "domcontentloaded" });
   await page.getByLabel("Medida / formato").selectOption("A4");
@@ -137,6 +152,7 @@ test("Trazabilidad visual de cotización actual usa material real cotizado", asy
   await page.getByTestId("understand-trace-button").click();
   await page.getByTestId("trace-mode-cotizacion_actual").click();
   await page.getByTestId("trace-current-load-button").click();
+  await expect(page.locator(".trace-svg")).toHaveAttribute("data-layout", "vertical");
   await expect(page.getByTestId("trace-graph-container")).toContainText("Ilustracion 115g");
   await expect(page.getByTestId("trace-graph-container")).toContainText("Formato A4");
   await expect(page.getByTestId("trace-graph-container")).toContainText("Impresión 4/0");
@@ -673,6 +689,8 @@ test("Modificar precios separa variables por cotización actual de Tarjetas 9x5"
   await expect(page.getByTestId("current-price-chain")).toContainText("4/0");
   await expect(page.getByTestId("current-price-chain")).toContainText("300g");
   await expect(page.getByTestId("current-price-chain")).toContainText("Matriz PDF/lista validada");
+  await expect(page.getByTestId("current-price-composition")).toContainText("Cómo se compone");
+  await expect(page.getByTestId("current-price-composition")).toContainText("Total final");
   await expect(page.getByTestId("admin-current-quote-context")).toContainText("Tarjetas 9x5");
   await expect(page.getByTestId("admin-relevant-variable-group")).toContainText("Variables que afectan esta cotización");
   await expect(page.getByTestId("admin-no-contextual-variables")).toContainText("No hay variables editables específicas");
@@ -906,6 +924,21 @@ test("Modificar precios muestra variables contextuales de Stickers e Imanes Cort
   await page.getByTestId("impact-variable-select").selectOption("coeficiente_formato_stickers_corte_recto_10x7");
   await expect(page.getByTestId("impact-current-assessment")).toContainText("Afecta esta cotización actual");
   await expect(page.getByTestId("impact-current-product-group")).toContainText("Stickers Corte Recto");
+
+  await page.getByTestId("tab-understand-price").click();
+  await page.getByTestId("view-mode-advanced").click();
+  await page.getByTestId("understand-trace-button").click();
+  await page.getByTestId("trace-mode-cotizacion_actual").click();
+  await page.getByTestId("trace-current-load-button").click();
+  await expect(page.locator(".trace-svg")).toHaveAttribute("data-layout", "vertical");
+  await page.getByTestId("trace-node-variable_coeficiente_formato_stickers_corte_recto_10x7").click();
+  await expect(page.getByTestId("trace-node-detail")).toContainText("Coeficiente formato Stickers Corte Recto 10x7");
+  await expect(page.getByTestId("trace-node-detail")).toContainText("Variable editable del producto");
+  await page.getByTestId("trace-modify-variable-button").click();
+  await expect(page.getByTestId("admin-prices-title")).toBeVisible();
+  await expect(page.getByTestId("admin-impact-step")).toContainText("Coeficiente formato Stickers Corte Recto 10x7");
+  await page.getByTestId("admin-open-trace-origin").click();
+  await expect(page.getByTestId("trace-node-detail")).toContainText("Coeficiente formato Stickers Corte Recto 10x7");
 
   await page.getByTestId("tab-quote").click();
   await page.getByTestId("categoria-select").selectOption("Imanes Corte Recto");
