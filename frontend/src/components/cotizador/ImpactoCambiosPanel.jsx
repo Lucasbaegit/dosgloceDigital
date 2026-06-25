@@ -115,6 +115,29 @@ function relationMatchKind(relation) {
   return "product_dependency_match";
 }
 
+function relationContextBadge(relation) {
+  const kind = relationMatchKind(relation);
+  const haystack = [
+    relation?.variable,
+    relation?.variable_label,
+    relation?.componente,
+    relation?.detalle,
+  ].filter(Boolean).join(" ").toLowerCase();
+  if (kind === "base_dependency_match") {
+    if (haystack.includes("papel") || haystack.includes("material") || haystack.includes("gramaje")) return "Papel / material";
+    if (haystack.includes("click") || haystack.includes("impresi")) return "Impresión";
+    if (haystack.includes("multiplicador")) return "Multiplicador";
+    if (haystack.includes("cambio") || haystack.includes("usd")) return "Global usada";
+    return "Base del cálculo";
+  }
+  if (haystack.includes("cantidad") || haystack.includes("rango")) return "Cantidad";
+  if (haystack.includes("impresi") || haystack.includes("cara")) return "Impresión";
+  if (haystack.includes("formato")) return "Formato";
+  if (haystack.includes("terminaci") || haystack.includes("laca") || haystack.includes("laminado")) return "Terminación";
+  if (haystack.includes("gramaje") || haystack.includes("papel") || haystack.includes("material")) return "Papel / material";
+  return "Scope exacto";
+}
+
 function getCurrentQuoteRange(payload, result) {
   return result?.cantidad_rango_aplicado || result?.rango_aplicado || payload?.cantidad_rango || payload?.cantidad_unidades;
 }
@@ -306,6 +329,19 @@ export default function ImpactoCambiosPanel({
   const otherProductRelations = selectedRelations.filter((item) => item.producto_key !== quoteSummary?.productKey && item.impacta_hoy && item.estado !== "bloqueado");
   const documentedRelations = selectedRelations.filter((item) => item.producto_key !== quoteSummary?.productKey && (!item.impacta_hoy || item.estado === "bloqueado"));
   const firstRelation = selectedRelations[0];
+  const suggestedRelations = quoteSummary
+    ? relations
+      .filter((item) => (
+        item.producto_key === quoteSummary.productKey &&
+        item.impacta_hoy &&
+        item.editable &&
+        relationAppliesToCurrentQuote(item, currentQuote.payload, currentQuote.result)
+      ))
+      .reduce((acc, item) => {
+        if (!acc.some((existing) => existing.variable === item.variable)) acc.push(item);
+        return acc;
+      }, [])
+    : [];
 
   const statusLabel = (relation) => {
     if (relation.estado === "bloqueado") return "Bloqueado";
@@ -332,7 +368,7 @@ export default function ImpactoCambiosPanel({
       </div>
       {isAdvancedMode ? (
         <div className="impact-meta-grid" data-testid="impact-advanced-meta">
-          <div><span>Editable</span><strong>{relation.editable ? "si" : "no"}</strong></div>
+          <div><span>Editable</span><strong>{relation.editable ? "sí" : "no"}</strong></div>
           <div><span>Nivel</span><strong>{relation.nivel_impacto}</strong></div>
           <div><span>Estado</span><strong>{relation.estado}</strong></div>
           <div><span>Modo precio</span><strong>{relation.modo_precio}</strong></div>
@@ -387,6 +423,33 @@ export default function ImpactoCambiosPanel({
               <p>Se muestra el mapa general de impacto. Para ver impacto exacto, primero calculá una cotización.</p>
             </div>
           )}
+
+          {quoteSummary ? (
+            <div className="impact-suggestions" data-testid="impact-current-suggestions">
+              <div>
+                <strong>Variables sugeridas para esta cotización</strong>
+                <p>{suggestedRelations.length ? "Elegí una variable relevante de la cotización actual para ver su impacto." : "No hay variables editables directas para esta cotización actual. Se muestra el mapa general o relaciones documentadas."}</p>
+              </div>
+              {suggestedRelations.length ? (
+                <div className="impact-suggestion-list">
+                  {suggestedRelations.map((relation) => (
+                    <button
+                      type="button"
+                      key={relation.variable}
+                      className={impactMode === "variable" && impactVariable === relation.variable ? "active" : ""}
+                      onClick={() => {
+                        setImpactMode("variable");
+                        setImpactVariable(relation.variable);
+                      }}
+                    >
+                      <strong>{relation.variable_label}</strong>
+                      <span>{relationContextBadge(relation)}</span>
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+          ) : null}
 
           <div className="impact-toolbar">
             <div className="trace-mode-options" role="group" aria-label="Modo impacto">

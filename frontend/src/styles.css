@@ -1070,6 +1070,23 @@ select:focus {
   margin-top: 8px;
 }
 
+.backup-toggle-btn {
+  width: fit-content;
+  margin: 10px 0 12px;
+}
+
+.backup-technical-pill {
+  display: inline-flex;
+  margin-left: 8px;
+  border-radius: 999px;
+  padding: 3px 7px;
+  color: #fde68a;
+  background: rgba(245, 158, 11, 0.14);
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 800;
+}
+
 .rollback-history-list {
   gap: 12px;
 }
@@ -1223,6 +1240,7 @@ select:focus {
 }
 
 .impact-current-quote,
+.impact-suggestions,
 .impact-context-card,
 .impact-group {
   border: 1px solid rgba(56, 189, 248, 0.22);
@@ -1237,6 +1255,50 @@ select:focus {
 .impact-current-quote.neutral {
   border-color: rgba(148, 163, 184, 0.24);
   background: rgba(15, 23, 42, 0.54);
+}
+
+.impact-suggestions {
+  border-color: rgba(34, 197, 94, 0.32);
+  background:
+    radial-gradient(circle at 0% 0%, rgba(34, 197, 94, 0.12), transparent 32%),
+    rgba(15, 23, 42, 0.68);
+}
+
+.impact-suggestions strong {
+  color: #f8fbff;
+}
+
+.impact-suggestions p {
+  margin: 6px 0 0;
+  color: var(--text-soft);
+}
+
+.impact-suggestion-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.impact-suggestion-list button {
+  border: 1px solid rgba(148, 163, 184, 0.26);
+  border-radius: 16px;
+  padding: 10px 12px;
+  color: #e5f3ff;
+  background: rgba(2, 6, 23, 0.34);
+  cursor: pointer;
+}
+
+.impact-suggestion-list button.active {
+  border-color: rgba(34, 197, 94, 0.78);
+  box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.12);
+}
+
+.impact-suggestion-list button span {
+  display: block;
+  margin-top: 4px;
+  color: var(--text-soft);
+  font-size: 12px;
 }
 
 .impact-current-quote > div:first-child,
@@ -1815,6 +1877,93 @@ select:focus {
   color: #e0f7ff;
   font-style: normal;
   background: rgba(14, 165, 233, 0.1);
+}
+
+.price-chain-card {
+  border: 1px solid rgba(56, 189, 248, 0.28);
+  border-radius: 22px;
+  padding: 18px;
+  margin: 18px 0;
+  background:
+    radial-gradient(circle at 0% 0%, rgba(56, 189, 248, 0.14), transparent 35%),
+    rgba(15, 23, 42, 0.72);
+}
+
+.price-chain-card.neutral {
+  border-color: rgba(148, 163, 184, 0.24);
+  background: rgba(15, 23, 42, 0.54);
+}
+
+.price-chain-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+  margin-bottom: 14px;
+}
+
+.price-chain-head span,
+.price-chain-head p,
+.price-chain-grid span,
+.price-chain-vars p {
+  color: var(--text-soft);
+}
+
+.price-chain-head h4 {
+  margin: 3px 0 6px;
+  color: #f8fbff;
+}
+
+.price-chain-head em {
+  border-radius: 999px;
+  padding: 7px 10px;
+  color: #082f49;
+  background: #7dd3fc;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.price-chain-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 10px;
+}
+
+.price-chain-grid div {
+  display: grid;
+  gap: 4px;
+  border-radius: 14px;
+  padding: 11px;
+  background: rgba(2, 6, 23, 0.3);
+}
+
+.price-chain-grid strong,
+.price-chain-vars > strong {
+  color: #f8fbff;
+}
+
+.price-chain-chips,
+.price-chain-vars div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.price-chain-chips span,
+.price-chain-vars span {
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 999px;
+  padding: 7px 10px;
+  color: #dbeafe;
+  background: rgba(2, 6, 23, 0.28);
+  font-size: 12px;
+}
+
+.price-chain-vars {
+  margin-top: 14px;
 }
 
 .admin-current-grid {

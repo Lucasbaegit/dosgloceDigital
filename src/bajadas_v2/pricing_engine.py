@@ -31,7 +31,7 @@ class BajadasV2PricingEngine:
 
     def quote(self, request: QuoteInput) -> QuoteResult:
         if request.urgencia not in self.VALID_URGENCIA:
-            raise QuoteInputError(f"Urgencia invÃ¡lida: {request.urgencia}")
+            raise QuoteInputError(f"Urgencia inválida: {request.urgencia}")
 
         key = build_lookup_key(request)
         fixed_case = self._fixed_index.get(key)

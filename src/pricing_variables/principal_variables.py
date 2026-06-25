@@ -35,14 +35,14 @@ class PrincipalVariablesService:
                 "source_path": "dolar_actual",
                 "applies_today": False,
                 "confiabilidad": "alta",
-                "productos_afectados": ["FÃ³rmulas variables futuras"],
-                "impact": "Impacta costos expresados en USD cuando el producto usa fÃ³rmula variable; precios PDF fijos no cambian.",
+                "productos_afectados": ["Fórmulas variables futuras"],
+                "impact": "Impacta costos expresados en USD cuando el producto usa fórmula variable; precios PDF fijos no cambian.",
             },
             "click_color": {
                 "group": "clicks",
                 "label": "Click color base",
                 "unit": "ARS",
-                "description": "Click color base usado en fÃ³rmulas variables calibradas.",
+                "description": "Click color base usado en fórmulas variables calibradas.",
                 "tipo": "variable_madre",
                 "min": 0.01,
                 "max": 100000,
@@ -76,7 +76,7 @@ class PrincipalVariablesService:
                 "group": "multiplicadores",
                 "label": "Multiplicador comercial general",
                 "unit": "factor",
-                "description": "Multiplicador comercial general de fÃ³rmulas variables calibradas.",
+                "description": "Multiplicador comercial general de fórmulas variables calibradas.",
                 "tipo": "variable_madre",
                 "min": 0.01,
                 "max": 100,
@@ -220,9 +220,9 @@ class PrincipalVariablesService:
             }
 
         common_note = (
-            "Variable operativa exclusiva de Stickers Circulares. Cambia el subtotal tÃ©cnico "
-            "de la fÃ³rmula editable calibrada; el precio final comercial se preserva contra PDF/lista "
-            "mediante factor_ajuste_pdf por combinaciÃ³n."
+            "Variable operativa exclusiva de Stickers Circulares. Cambia el subtotal técnico "
+            "de la fórmula editable calibrada; el precio final comercial se preserva contra PDF/lista "
+            "mediante factor_ajuste_pdf por combinación."
         )
         add_variable(
             "laca_uv_factor_stickers_circulares",
@@ -235,7 +235,7 @@ class PrincipalVariablesService:
             min_value=0.01,
             max_value=100,
             step=0.001,
-            impact="Modifica el subtotal tÃ©cnico cuando la cotizaciÃ³n circular usa Laca UV.",
+            impact="Modifica el subtotal técnico cuando la cotización circular usa Laca UV.",
         )
         add_variable(
             "corte_circular_factor_stickers_circulares",
@@ -248,7 +248,7 @@ class PrincipalVariablesService:
             min_value=0.01,
             max_value=100,
             step=0.001,
-            impact="Modifica el subtotal tÃ©cnico de todos los Stickers Circulares habilitados.",
+            impact="Modifica el subtotal técnico de todos los Stickers Circulares habilitados.",
         )
         add_variable(
             "multiplicador_comercial_stickers_circulares",
@@ -261,7 +261,7 @@ class PrincipalVariablesService:
             min_value=0.01,
             max_value=100,
             step=0.001,
-            impact="Modifica el subtotal tÃ©cnico comercial de Stickers Circulares antes de calibrar contra PDF.",
+            impact="Modifica el subtotal técnico comercial de Stickers Circulares antes de calibrar contra PDF.",
         )
 
         coef_tamano = variables.get("coeficiente_tamano", {})
@@ -271,7 +271,7 @@ class PrincipalVariablesService:
                 add_variable(
                     f"coeficiente_tamano_stickers_circulares_{safe}",
                     group="multiplicadores",
-                    label=f"Coeficiente tamaÃ±o Stickers Circulares {formato}",
+                    label=f"Coeficiente tamaño Stickers Circulares {formato}",
                     unit="factor",
                     path=["variables", "coeficiente_tamano", str(formato)],
                     source_path=f"variables.coeficiente_tamano.{formato}",
@@ -279,7 +279,7 @@ class PrincipalVariablesService:
                     min_value=0.0001,
                     max_value=1000000,
                     step=0.0001,
-                    impact=f"Modifica el subtotal tÃ©cnico solo para Stickers Circulares formato {formato}.",
+                    impact=f"Modifica el subtotal técnico solo para Stickers Circulares formato {formato}.",
                 )
 
         coef_cantidad = variables.get("coeficiente_cantidad", {})
@@ -296,7 +296,7 @@ class PrincipalVariablesService:
                     min_value=0.0001,
                     max_value=1000000,
                     step=0.0001,
-                    impact=f"Modifica el subtotal tÃ©cnico solo para Stickers Circulares cantidad {cantidad}.",
+                    impact=f"Modifica el subtotal técnico solo para Stickers Circulares cantidad {cantidad}.",
                 )
     def _add_corte_recto_editable_variables(
         self,
@@ -909,12 +909,12 @@ class PrincipalVariablesService:
                 {"grupo": "Bajadas Fullcolor / Kraft", "rangos": standard, "editable": False, "tipo": "rango_fijo", "motivo": reason, "fuente": "data/bajadas_v2/precios_pdf_objetivo_limpio.json"},
                 {"grupo": "Bajadas Blanco y Negro", "rangos": ["1", "2 a 50", "51 a 100", "101 a 500", "501 a 1000", "1001 a 5000"], "editable": False, "tipo": "rango_fijo", "motivo": reason, "fuente": "data/bajadas_v2/precios_pdf_objetivo_limpio.json"},
                 {"grupo": "Autoadhesivas", "rangos": standard, "editable": False, "tipo": "rango_fijo", "motivo": reason, "fuente": "data/bajadas_autoadhesivas/autoadhesivas_v1_config.json"},
-                {"grupo": "Troquelado Digital", "rangos": ["1 a 2", "3 a 9", "10 a 25", "26 a 50", "51 a 100", "mÃ¡s de 100"], "editable": False, "tipo": "rango_fijo", "motivo": reason, "fuente": "data/troquelado_digital/precios_pdf_objetivo_troquelado_digital.json"},
+                {"grupo": "Troquelado Digital", "rangos": ["1 a 2", "3 a 9", "10 a 25", "26 a 50", "51 a 100", "más de 100"], "editable": False, "tipo": "rango_fijo", "motivo": reason, "fuente": "data/troquelado_digital/precios_pdf_objetivo_troquelado_digital.json"},
                 {"grupo": "Tarjetas / Postales / Folletos / Stickers / Imanes", "rangos": package, "editable": False, "tipo": "rango_fijo", "motivo": reason, "fuente": "matrices PDF por producto"},
                 {"grupo": "Carpetas", "rangos": standard, "editable": False, "tipo": "rango_fijo", "motivo": reason, "fuente": "data/carpetas/precios_pdf_objetivo_carpetas.json"},
                 {"grupo": "Sobres", "rangos": package, "editable": False, "tipo": "rango_fijo", "motivo": reason, "fuente": "data/sobres/precios_pdf_objetivo_sobres.json"},
-                {"grupo": "Plancha ImÃ¡n", "rangos": ["1", "2 a 25", "26 a 50", "51 a 100", "101 a 300", "301 a 500"], "editable": False, "tipo": "rango_fijo", "motivo": reason, "fuente": "data/plancha_iman_impreso/precios_pdf_objetivo_plancha_iman_impreso.json"},
-                {"grupo": "Agendas / Cuadernos", "rangos": ["desde 2 unidades", "mÃ­nimos segÃºn producto"], "editable": False, "tipo": "rango_fijo", "motivo": "Los mÃ­nimos pertenecen a matrices PDF cerradas", "fuente": "data/agendas_cuadernos/precios_pdf_objetivo_agendas_cuadernos.json"},
+                {"grupo": "Plancha Imán", "rangos": ["1", "2 a 25", "26 a 50", "51 a 100", "101 a 300", "301 a 500"], "editable": False, "tipo": "rango_fijo", "motivo": reason, "fuente": "data/plancha_iman_impreso/precios_pdf_objetivo_plancha_iman_impreso.json"},
+                {"grupo": "Agendas / Cuadernos", "rangos": ["desde 2 unidades", "mínimos según producto"], "editable": False, "tipo": "rango_fijo", "motivo": "Los mínimos pertenecen a matrices PDF cerradas", "fuente": "data/agendas_cuadernos/precios_pdf_objetivo_agendas_cuadernos.json"},
             ],
             "warning": "Rangos fijos de matrices. No son editables en esta etapa.",
         }
@@ -948,7 +948,7 @@ class PrincipalVariablesService:
             "papeles_detectados_no_editables": self._detected_papers_status(),
             "papeles_detectados_solo_pdf": self._detected_papers_status(),
             "advertencias": [
-                "No se exponen matrices PDF, factores de ajuste PDF ni coeficientes tÃ©cnicos internos.",
+                "No se exponen matrices PDF, factores de ajuste PDF ni coeficientes técnicos internos.",
                 "Los precios finales PDF fijos permanecen sin cambios.",
                 "Las variables de confiabilidad media se guardan en JSON preparado y no impactan el motor actual.",
             ],
@@ -998,7 +998,7 @@ class PrincipalVariablesService:
                 "group": raw.get("group", "papeles"),
                 "label": raw.get("label", key),
                 "unit": raw.get("unit", "USD"),
-                "description": raw.get("description", "Variable madre preparada desde auditorÃ­a."),
+                "description": raw.get("description", "Variable madre preparada desde auditoría."),
                 "tipo": "variable_madre",
                 "min": raw.get("min", 0.0001),
                 "max": raw.get("max", 1000000),
@@ -1011,9 +1011,9 @@ class PrincipalVariablesService:
                 "applies_today": bool(raw.get("impacta_hoy", False)),
                 "confiabilidad": raw.get("confiabilidad", "media"),
                 "productos_afectados": raw.get("productos_afectados", []),
-                "impact": "Preparada para fÃ³rmulas variables futuras; no cambia precios actuales."
+                "impact": "Preparada para fórmulas variables futuras; no cambia precios actuales."
                 if not raw.get("impacta_hoy", False)
-                else raw.get("impact", "Impacta el cÃ¡lculo actual."),
+                else raw.get("impact", "Impacta el cálculo actual."),
             }
             if meta["group"] in self.GROUP_ORDER:
                 self.catalog[key] = meta
@@ -1039,8 +1039,8 @@ class PrincipalVariablesService:
     @staticmethod
     def _derived_values_status() -> list[dict[str, Any]]:
         return [
-            {"key": "precios_finales_por_rango", "label": "Precios finales por rango", "editable": False, "tipo": "derivado", "motivo_no_editable": "Son resultado de matrices PDF o fÃ³rmulas controladas.", "impacta_hoy": False},
-            {"key": "recargos_urgencia", "label": "Precios con urgencia", "editable": False, "tipo": "derivado", "motivo_no_editable": "Se calculan desde la cotizaciÃ³n base y reglas internas.", "impacta_hoy": False},
+            {"key": "precios_finales_por_rango", "label": "Precios finales por rango", "editable": False, "tipo": "derivado", "motivo_no_editable": "Son resultado de matrices PDF o fórmulas controladas.", "impacta_hoy": False},
+            {"key": "recargos_urgencia", "label": "Precios con urgencia", "editable": False, "tipo": "derivado", "motivo_no_editable": "Se calculan desde la cotización base y reglas internas.", "impacta_hoy": False},
         ]
 
     @staticmethod
@@ -1053,7 +1053,7 @@ class PrincipalVariablesService:
     def update(self, payload: dict[str, Any]) -> dict[str, Any]:
         updates = payload.get("updates")
         if not isinstance(updates, list) or not updates:
-            raise PrincipalVariableError("updates debe ser una lista no vacÃ­a.")
+            raise PrincipalVariableError("updates debe ser una lista no vacía.")
 
         prepared: list[tuple[str, float, dict[str, Any], float]] = []
         for raw in updates:

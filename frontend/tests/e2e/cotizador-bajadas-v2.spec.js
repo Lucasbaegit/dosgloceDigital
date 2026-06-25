@@ -667,6 +667,12 @@ test("Modificar precios separa variables por cotización actual de Tarjetas 9x5"
   await expect(page.getByText("Total final con urgencia")).toBeVisible();
 
   await page.getByTestId("tab-admin-prices").click();
+  await expect(page.getByTestId("current-price-chain")).toContainText("Cadena del precio actual");
+  await expect(page.getByTestId("current-price-chain")).toContainText("Tarjetas 9x5");
+  await expect(page.getByTestId("current-price-chain")).toContainText("100");
+  await expect(page.getByTestId("current-price-chain")).toContainText("4/0");
+  await expect(page.getByTestId("current-price-chain")).toContainText("300g");
+  await expect(page.getByTestId("current-price-chain")).toContainText("Matriz PDF/lista validada");
   await expect(page.getByTestId("admin-current-quote-context")).toContainText("Tarjetas 9x5");
   await expect(page.getByTestId("admin-relevant-variable-group")).toContainText("Variables que afectan esta cotización");
   await expect(page.getByTestId("admin-no-contextual-variables")).toContainText("No hay variables editables específicas");
@@ -769,6 +775,8 @@ test("Modificar precios muestra variables específicas de Stickers Circulares se
   await page.getByLabel("Cantidad").fill("1000");
   await page.getByRole("button", { name: "Calcular" }).click();
   await expect(page.getByText("Total final con urgencia")).toBeVisible();
+  await expect(page.getByTestId("quote-simple-summary")).toContainText("Laca UV brillo");
+  await expect(page.getByTestId("quote-simple-summary")).not.toContainText("Adicional seleccionado");
 
   await page.getByTestId("tab-admin-prices").click();
   await expect(page.getByTestId("admin-current-quote-context")).toContainText("Stickers Circulares");
@@ -893,6 +901,8 @@ test("Modificar precios muestra variables contextuales de Stickers e Imanes Cort
   await expect(page.getByTestId("admin-relevant-variable-group")).not.toContainText("Factor Laca UV Imanes Corte Recto");
 
   await page.getByTestId("tab-variable-impact").click();
+  await expect(page.getByTestId("impact-current-suggestions")).toContainText("Variables sugeridas para esta cotización");
+  await expect(page.getByTestId("impact-current-suggestions")).toContainText("Coeficiente formato Stickers Corte Recto 10x7");
   await page.getByTestId("impact-variable-select").selectOption("coeficiente_formato_stickers_corte_recto_10x7");
   await expect(page.getByTestId("impact-current-assessment")).toContainText("Afecta esta cotización actual");
   await expect(page.getByTestId("impact-current-product-group")).toContainText("Stickers Corte Recto");
@@ -1350,6 +1360,18 @@ test("Historial y backups y Exportar soporte Excel quedan accesibles", async ({ 
       }),
     });
   });
+  await page.route("**/bajadas-v2/config/backups", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        backups: [
+          { archivo: "config_productiva_20260618.json", fecha: "2026-06-18T00:00:00Z", tamano_bytes: 2048 },
+          { archivo: "qa_pre_restore_test_20260618.json", fecha: "2026-06-18T00:01:00Z", tamano_bytes: 1024 },
+        ],
+      }),
+    });
+  });
   await page.route("**/export/precios/excel", (route) => route.fulfill({
     status: 200,
     contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -1362,6 +1384,10 @@ test("Historial y backups y Exportar soporte Excel quedan accesibles", async ({ 
   await page.getByTestId("tab-history-backups").click();
   await expect(page.getByTestId("history-backups-screen")).toContainText("Podés restaurar un valor anterior");
   await expect(page.getByTestId("history-backups-admin-history")).toContainText("click_color");
+  await expect(page.getByTestId("history-backups-config")).toContainText("config_productiva_20260618.json");
+  await expect(page.getByTestId("history-backups-config")).not.toContainText("qa_pre_restore_test_20260618.json");
+  await page.getByTestId("history-toggle-technical-backups").click();
+  await expect(page.getByTestId("history-backups-config")).toContainText("qa_pre_restore_test_20260618.json");
   await expect(page.getByTestId("admin-rollback-apply-button")).toBeDisabled();
   await page.getByTestId("admin-rollback-preview-button").click();
   await expect(page.getByTestId("admin-rollback-preview")).toContainText("40");

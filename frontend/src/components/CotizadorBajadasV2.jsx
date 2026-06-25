@@ -647,6 +647,90 @@ function collectCurrentQuoteAdditions(payload, result) {
   return additions;
 }
 
+function optionLabel(options, value, fallback = "No aplica") {
+  if (value === undefined || value === null || value === "") return fallback;
+  const found = (options || []).find((item) => String(item.value) === String(value));
+  return found?.label || String(value).replaceAll("_", " ");
+}
+
+function getTerminacionOptionsForQuote(payload) {
+  const productKey = getQuoteProductKey(payload);
+  if (productKey === "tarjetas_9x5") return TARJETAS_TERMINACIONES;
+  if (productKey === "tarjetas_postales") return POSTALES_TERMINACIONES;
+  if (productKey === "carpetas") return CARPETAS_TERMINACIONES;
+  if (productKey === "stickers_corte_recto") return STICKERS_TERMINACIONES;
+  if (productKey === "imanes_corte_recto") return IMANES_TERMINACIONES;
+  if (productKey === "stickers_circulares") return STICKERS_CIRCULARES_TERMINACIONES;
+  return [];
+}
+
+function describeQuoteTerminacion(payload) {
+  if (!payload) return "No disponible";
+  const productKey = getQuoteProductKey(payload);
+  if (productKey === "carpetas") {
+    const base = optionLabel(CARPETAS_TERMINACIONES, payload.terminacion, "Sin terminación");
+    return payload.solapa_impresa ? `${base} + solapa impresa` : base;
+  }
+  if (productKey === "tarjetas_troqueladas_circulares") {
+    if (!payload.adicional_laminado || payload.adicional_laminado === "sin_adicional") return "Sin laminado";
+    const caras = Number(payload.caras_adicional_laminado || 0);
+    return `${optionLabel([
+      { value: "laminado_brillo", label: "Laminado brillo" },
+      { value: "laminado_mate", label: "Laminado mate" },
+    ], payload.adicional_laminado, payload.adicional_laminado)} · ${caras === 2 ? "ambas caras" : "1 cara"}`;
+  }
+  const terminacion = payload.terminacion || getCurrentQuoteTerminacion(payload);
+  const options = getTerminacionOptionsForQuote(payload);
+  if (!options.length) return "No aplica";
+  return optionLabel(options, terminacion, "Sin terminación");
+}
+
+function describeQuoteOperationalAdditions(payload, result) {
+  const additions = collectCurrentQuoteAdditions(payload, result)
+    .map((item) => item.label)
+    .filter(Boolean);
+  if (additions.length) return additions.join(" + ");
+  const productKey = getQuoteProductKey(payload);
+  if (productKey && !String(productKey).startsWith("bajadas_")) return "No aplica";
+  return "Sin adicional";
+}
+
+function inferPriceSourceKind(result) {
+  const text = [
+    result?.modo_precio,
+    result?.modo_calculo,
+    result?.fuente,
+    result?.regla_aplicada,
+    result?.trazabilidad?.modo_precio,
+    result?.trazabilidad?.modo_calculo,
+    result?.trazabilidad?.fuente_precio_final,
+  ].filter(Boolean).join(" ").toLowerCase();
+  if (text.includes("formula_editable") || text.includes("formula_calibrada")) return "formula_editable_calibrada";
+  if (text.includes("formula") || text.includes("fórmula")) return "formula_directa";
+  if (text.includes("pdf") || text.includes("matriz") || text.includes("lista")) return "matriz_pdf";
+  return "motor_interno";
+}
+
+function sourceKindLabel(kind) {
+  if (kind === "formula_editable_calibrada") return "Fórmula editable calibrada";
+  if (kind === "formula_directa") return "Fórmula directa";
+  if (kind === "matriz_pdf") return "Matriz PDF/lista validada";
+  return "Motor interno";
+}
+
+function sourceKindExplanation(kind) {
+  if (kind === "formula_editable_calibrada") {
+    return "El precio se calcula con fórmula editable calibrada contra PDF/lista. Las variables participan en la base técnica y el factor de ajuste mantiene consistencia con la lista validada.";
+  }
+  if (kind === "formula_directa") {
+    return "El precio se calcula directamente con variables editables del sistema.";
+  }
+  if (kind === "matriz_pdf") {
+    return "El precio final actual se toma de una matriz PDF/lista validada. Las variables conectadas sirven para trazabilidad, preview y fórmulas calibradas, pero no reemplazan el precio publicado salvo que el motor lo indique.";
+  }
+  return "El precio sale del motor interno del producto. Si falta un dato de fuente, se muestra como no disponible sin inventarlo.";
+}
+
 function buildCurrentQuoteTraceGraph(payload, result) {
   if (!payload || !result) return null;
   const quantity = Number(payload.cantidad_unidades || result.cantidad_unidades || 0);
@@ -1970,6 +2054,21 @@ export default function CotizadorBajadasV2() {
   }, [activeTab]);
 
   useEffect(() => {
+    if (activeTab !== "Ver impacto de cambios" || !impactData || !lastPayload || !result) return;
+    const productKey = getQuoteProductKey(lastPayload);
+    const suggested = (impactData.relaciones || []).find((relation) => (
+      relation.producto_key === productKey &&
+      relation.impacta_hoy &&
+      relation.editable &&
+      relationAppliesToCurrentQuote(relation, lastPayload, result)
+    ));
+    if (suggested && impactVariable !== suggested.variable) {
+      setImpactMode("variable");
+      setImpactVariable(suggested.variable);
+    }
+  }, [activeTab, impactData, impactVariable, lastPayload, result]);
+
+  useEffect(() => {
     if (!["Modificar precios", "Historial y backups"].includes(activeTab) || adminPrices || adminLoading) return;
     loadAdminPrices();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -2993,6 +3092,68 @@ export default function CotizadorBajadasV2() {
     const otherSystemVariables = hasCurrentQuoteContext
       ? variables.filter((item) => !productVariableKeys.has(item.key) && !relevantVariableKeys.has(item.key))
       : [];
+    const renderCurrentPriceChain = () => {
+      if (!hasCurrentQuoteContext) {
+        return (
+          <section className="price-chain-card neutral" data-testid="current-price-chain">
+            <div className="price-chain-head">
+              <div>
+                <span>Cadena del precio actual</span>
+                <h4>Calculá un precio para ver la cadena de origen.</h4>
+              </div>
+            </div>
+          </section>
+        );
+      }
+      const sourceKind = inferPriceSourceKind(result);
+      const total = result.total_con_urgencia ?? result.total_sin_iva ?? result.precio_con_recargo_urgencia ?? result.precio_sin_iva;
+      const unit = result.precio_unitario_con_urgencia ?? result.precio_unitario_sin_iva ?? result.precio_sin_iva;
+      const rangeOrQuantity = result.cantidad_rango_aplicado ?? result.rango_aplicado ?? lastPayload?.cantidad_rango ?? result.cantidad_unidades ?? lastPayload?.cantidad_unidades ?? "No disponible";
+      const additions = collectCurrentQuoteAdditions(lastPayload, result);
+      const chips = [
+        ["Formato", lastPayload?.formato || lastPayload?.formato_agendas],
+        ["Cantidad", result.cantidad_unidades ?? lastPayload?.cantidad_unidades],
+        ["Impresión", lastPayload?.caras || lastPayload?.caras_tarjetas_troq_circ],
+        ["Material", describeCurrentQuoteMaterial(lastPayload)],
+        ["Terminación", describeQuoteTerminacion(lastPayload)],
+        ["Adicional operativo", describeQuoteOperationalAdditions(lastPayload, result)],
+      ].filter(([, value]) => value !== undefined && value !== null && value !== "" && value !== "No aplica");
+
+      return (
+        <section className="price-chain-card" data-testid="current-price-chain">
+          <div className="price-chain-head">
+            <div>
+              <span>Cadena del precio actual</span>
+              <h4>{currentProductLabel}</h4>
+              <p>{sourceKindExplanation(sourceKind)}</p>
+            </div>
+            <em>{sourceKindLabel(sourceKind)}</em>
+          </div>
+          <div className="price-chain-grid">
+            <div><span>Precio final actual</span><strong>{formatMoney(total)}</strong></div>
+            <div><span>Precio unitario</span><strong>{formatMoney(unit)}</strong></div>
+            <div><span>Fuente principal</span><strong>{result.fuente || result.trazabilidad?.fuente_precio_final || "No disponible"}</strong></div>
+            <div><span>Regla aplicada</span><strong>{result.regla_aplicada || result.trazabilidad?.modo_calculo || "No disponible"}</strong></div>
+            <div><span>Rango / cantidad</span><strong>{rangeOrQuantity}</strong></div>
+            <div><span>Urgencia</span><strong>{lastPayload?.urgencia || "normal"}</strong></div>
+          </div>
+          <div className="price-chain-chips" aria-label="Parámetros usados">
+            {chips.map(([label, value]) => <span key={label}><strong>{label}:</strong> {value}</span>)}
+            {additions.map((item) => <span key={`${item.label}-${item.source}`}><strong>{item.label}:</strong> {formatMoney(Number(item.value) || 0)}</span>)}
+          </div>
+          <div className="price-chain-vars">
+            <strong>Variables relacionadas</strong>
+            {contextualVariables.length ? (
+              <div>
+                {contextualVariables.slice(0, 8).map((item) => <span key={item.key}>{item.label}</span>)}
+              </div>
+            ) : (
+              <p>No hay variables editables específicas detectadas para esta cotización.</p>
+            )}
+          </div>
+        </section>
+      );
+    };
 
     const renderAdminStepper = () => (
       <div className="admin-wizard-stepper" data-testid="admin-wizard-stepper">
@@ -3316,6 +3477,7 @@ export default function CotizadorBajadasV2() {
         adminLoading={adminLoading}
         adminPrices={adminPrices}
         renderAdminStepper={renderAdminStepper}
+        renderCurrentPriceChain={renderCurrentPriceChain}
         adminWizardStep={adminWizardStep}
         renderVariableList={renderVariableList}
         renderImpactStep={renderImpactStep}
@@ -3780,7 +3942,7 @@ export default function CotizadorBajadasV2() {
                   <div><strong>Impresión</strong><span>{lastPayload?.caras ?? inferred.caras}</span></div>
                   <div><strong>Cantidad</strong><span>{result.cantidad_unidades ?? form.cantidad_unidades}</span></div>
                   <div><strong>{isMatrixProduct ? "Cantidad de matriz" : "Rango aplicado"}</strong><span>{isMatrixProduct ? (result.cantidad_unidades ?? form.cantidad_unidades) : (result.cantidad_rango_aplicado ?? derivedRange ?? "-")}</span></div>
-                  <div><strong>Adicionales</strong><span>{result.adicional_troquelado ? "Incluye troquelado" : (result.adicional_laminado && result.adicional_laminado !== "sin_adicional" ? result.adicional_laminado : "Sin adicional")}</span></div>
+                  <div><strong>Terminación / adicionales</strong><span>{[describeQuoteTerminacion(lastPayload), describeQuoteOperationalAdditions(lastPayload, result)].filter((item, index, arr) => item && item !== "No aplica" && arr.indexOf(item) === index).join(" · ") || "Sin adicional"}</span></div>
                   <div><strong>Total final</strong><span>{formatMoney(result.total_con_urgencia ?? result.total_sin_iva)}</span></div>
                 </div>
                 <p>Activá modo avanzado para ver reglas, fuentes, payload y trazabilidad técnica.</p>
@@ -3788,10 +3950,11 @@ export default function CotizadorBajadasV2() {
             ) : (
               <div className="detail-list advanced-detail" data-testid="quote-advanced-details">
                 <div><strong>Precio base unitario</strong><span>{formatMoney(result.precio_unitario_base_sin_iva ?? result.precio_unitario_sin_iva ?? result.precio_sin_iva)}</span></div>
-                <div><strong>Adicional seleccionado</strong><span>{result.adicional_laminado ?? "sin_adicional"}</span></div>
-                <div><strong>Caras adicional laminado/laca</strong><span>{result.caras_adicional_laminado ?? 1}</span></div>
-                <div><strong>Laminado por lado</strong><span>{result.adicional_laminado_por_lado ?? "sin_adicional"}</span></div>
-                <div><strong>Plastificado</strong><span>{result.adicional_plastificado ? "sí" : "no"}</span></div>
+                <div><strong>Terminación del producto</strong><span>{describeQuoteTerminacion(lastPayload)}</span></div>
+                <div><strong>Adicional operativo</strong><span>{describeQuoteOperationalAdditions(lastPayload, result)}</span></div>
+                {isBajadasFlow && !isAutoadhesivas ? <div><strong>Caras adicional laminado/laca</strong><span>{result.caras_adicional_laminado ?? 1}</span></div> : null}
+                {isBajadasFlow && !isAutoadhesivas ? <div><strong>Laminado por lado</strong><span>{result.adicional_laminado_por_lado && result.adicional_laminado_por_lado !== "sin_adicional" ? result.adicional_laminado_por_lado : "No aplica"}</span></div> : null}
+                {isBajadasFlow && !isAutoadhesivas ? <div><strong>Plastificado</strong><span>{result.adicional_plastificado ? "sí" : "No aplica"}</span></div> : null}
                 <div><strong>Adicional unitario sin IVA</strong><span>{formatMoney(result.adicional_unitario_sin_iva ?? 0)}</span></div>
                 <div><strong>Adicional hoja 4 unitario</strong><span>{formatMoney(result.adicional_hoja4_unitario_sin_iva ?? 0)}</span></div>
                 <div><strong>Troquelado adicional</strong><span>{result.adicional_troquelado ? `sí (${result.complejidad_troquelado ?? "-"})` : "no"}</span></div>

@@ -4,6 +4,7 @@
   adminLoading,
   adminPrices,
   renderAdminStepper,
+  renderCurrentPriceChain,
   adminWizardStep,
   renderVariableList,
   renderImpactStep,
@@ -31,6 +32,7 @@
 
       {adminPrices ? (
         <>
+          {renderCurrentPriceChain ? renderCurrentPriceChain() : null}
           {renderAdminStepper()}
           <div className="admin-wizard-shell">
             {adminWizardStep === 1 ? renderVariableList() : null}

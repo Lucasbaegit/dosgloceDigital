@@ -1,4 +1,11 @@
-﻿export default function HistorialBackupsPanel({
+import { useMemo, useState } from "react";
+
+function isTechnicalBackup(backup) {
+  const name = String(backup?.archivo || "").toLowerCase();
+  return name.includes("test") || name.includes("pre_restore") || name.includes("qa");
+}
+
+export default function HistorialBackupsPanel({
   renderAdminHistoryEntries,
   renderRollbackPreviewPanel,
   cfgBackups,
@@ -7,6 +14,16 @@
   adminLoading,
   adminPrices,
 }) {
+  const [showTechnicalBackups, setShowTechnicalBackups] = useState(false);
+  const { productiveBackups, technicalBackups } = useMemo(() => {
+    const backups = cfgBackups || [];
+    return {
+      productiveBackups: backups.filter((backup) => !isTechnicalBackup(backup)),
+      technicalBackups: backups.filter(isTechnicalBackup),
+    };
+  }, [cfgBackups]);
+  const visibleBackups = showTechnicalBackups ? [...productiveBackups, ...technicalBackups] : productiveBackups;
+
   return (
     <section className="card result-card ux-section" data-testid="history-backups-screen">
       <div className="card-head">
@@ -31,18 +48,28 @@
         <section className="principal-group" data-testid="history-backups-config">
           <h4>Backups técnicos disponibles</h4>
           <p className="range-hint">Backups de configuración productiva. Restaurar sigue siendo una acción avanzada y requiere previsualización.</p>
+          {technicalBackups.length ? (
+            <button
+              type="button"
+              className="secondary-btn backup-toggle-btn"
+              data-testid="history-toggle-technical-backups"
+              onClick={() => setShowTechnicalBackups((prev) => !prev)}
+            >
+              {showTechnicalBackups ? "Ocultar backups técnicos" : `Mostrar backups técnicos (${technicalBackups.length})`}
+            </button>
+          ) : null}
           <div className="history-list">
-            {(cfgBackups || []).slice(0, 10).map((backup) => (
+            {visibleBackups.slice(0, 10).map((backup) => (
               <div key={backup.archivo}>
                 <strong>{backup.archivo}</strong> · {backup.fecha || "-"} · {backup.tamano_bytes ?? "-"} bytes
+                {isTechnicalBackup(backup) ? <em className="backup-technical-pill"> técnico/test</em> : null}
               </div>
             ))}
             {!(cfgBackups || []).length ? <p className="range-hint">Sin backups listados.</p> : null}
+            {(cfgBackups || []).length && !visibleBackups.length ? <p className="range-hint">Solo hay backups técnicos ocultos. Usá el toggle para verlos.</p> : null}
           </div>
         </section>
       </div>
     </section>
   );
 }
-
-
