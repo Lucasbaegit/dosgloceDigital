@@ -256,11 +256,20 @@ const TRACE_TYPE_LABELS = {
   bloqueado: "Bloqueado",
   factor: "Factor / multiplicador",
 };
-const TRACE_NODE_WIDTH = 286;
-const TRACE_NODE_HEIGHT = 118;
+const TRACE_NODE_WIDTH = 320;
+const TRACE_NODE_HEIGHT = 132;
 const TRACE_MIN_ZOOM = 0.5;
 const TRACE_MAX_ZOOM = 2.5;
 const TRACE_ZOOM_STEP = 0.15;
+const TRACE_SIMPLE_INITIAL_ZOOM = 0.85;
+const TRACE_TECHNICAL_INITIAL_ZOOM = 1;
+const TRACE_STAGE_LABELS = [
+  { key: "entrada", label: "Entrada", x: 76, y: 26 },
+  { key: "parametros", label: "Parámetros", x: 436, y: 26 },
+  { key: "fuente", label: "Fuente / regla", x: 796, y: 26 },
+  { key: "calculo", label: "Cálculo", x: 1156, y: 26 },
+  { key: "total", label: "Total", x: 1516, y: 26 },
+];
 
 const INITIAL_FORM = {
   categoria_ui: "Bajadas Fullcolor/ByN",
@@ -308,6 +317,10 @@ function formatTraceValue(node) {
 
 function clampTraceZoom(value) {
   return Math.min(TRACE_MAX_ZOOM, Math.max(TRACE_MIN_ZOOM, Number(value) || 1));
+}
+
+function initialTraceZoom(showTechnicalGraph) {
+  return showTechnicalGraph ? TRACE_TECHNICAL_INITIAL_ZOOM : TRACE_SIMPLE_INITIAL_ZOOM;
 }
 
 function traceNodeVisualType(node) {
@@ -430,6 +443,7 @@ function traceEdge(id, source, target, label) {
 function describeCurrentQuoteMaterial(payload) {
   const material = payload?.material || payload?.papel || payload?.tipo_papel || "Material no informado";
   const gramaje = payload?.gramaje && payload.gramaje !== "N/A" ? ` ${payload.gramaje}` : "";
+  if (gramaje && String(material).toLowerCase().includes(String(payload.gramaje).toLowerCase())) return String(material).trim();
   return `${material}${gramaje}`.trim();
 }
 
@@ -720,13 +734,13 @@ function sourceKindLabel(kind) {
 
 function sourceKindExplanation(kind) {
   if (kind === "formula_editable_calibrada") {
-    return "El precio se calcula con fórmula editable calibrada contra PDF/lista. Las variables participan en la base técnica y el factor de ajuste mantiene consistencia con la lista validada.";
+    return "El precio se calcula con fórmula editable calibrada contra PDF/lista.";
   }
   if (kind === "formula_directa") {
     return "El precio se calcula directamente con variables editables del sistema.";
   }
   if (kind === "matriz_pdf") {
-    return "El precio final actual se toma de una matriz PDF/lista validada. Las variables conectadas sirven para trazabilidad, preview y fórmulas calibradas, pero no reemplazan el precio publicado salvo que el motor lo indique.";
+    return "El precio final sigue validado por matriz PDF/lista. Las variables editables sirven para preview, trazabilidad y futura fórmula calibrada.";
   }
   return "El precio sale del motor interno del producto. Si falta un dato de fuente, se muestra como no disponible sin inventarlo.";
 }
@@ -735,6 +749,100 @@ function quoteUsesFixedPdf(_payload, result, relation = {}) {
   if (!result) return false;
   if (relation?.modo_precio === "matriz_pdf" || relation?.tipo === "matriz_pdf") return true;
   return inferPriceSourceKind(result) === "matriz_pdf";
+}
+
+function readableTraceText(value) {
+  return String(value || "")
+    .replace(/_/g, " ")
+    .replace(/\b(\d+g)\s+Ilustracion\b/g, "Ilustración $1")
+    .replace(/\b(\d+g)\s+Ilustración\b/g, "Ilustración $1")
+    .replace(/\bIlustracion\b/g, "Ilustración")
+    .replace(/\bimpresion\b/g, "impresión")
+    .replace(/\blaminado brillo\b/g, "laminado brillo")
+    .trim();
+}
+
+function shortTraceLabel(node) {
+  const id = String(node?.id || "");
+  if (id === "entrada_usuario") return "Entrada";
+  if (id === "material_cotizado") return "Material";
+  if (id === "formato") return "Formato";
+  if (id === "caras") return "Impresión";
+  if (id === "cantidad") return "Cantidad";
+  if (id === "rango") return readableTraceText(node.label).replace(/^Rango aplicado\s*/i, "Rango ");
+  if (id === "precio_base_unitario") return "Precio base";
+  if (id === "base_total") return "Base x cantidad";
+  if (id === "sin_adicional") return "Sin adicional";
+  if (id === "subtotal_con_adicionales") return "Subtotal";
+  if (id === "urgencia") return "Urgencia";
+  if (id === "total_final") return "Total final";
+  if (id.startsWith("adicional_")) return "Adicional";
+  if (id.startsWith("variable_")) {
+    const rango = node.relation?.aplica_a?.rangos?.[0];
+    if (rango) return `Rango ${readableTraceText(rango)}`;
+    const badge = node.context_badge || node.operation || "";
+    if (/rango|cantidad/i.test(badge)) return readableTraceText(badge).replace(/^Cantidad\s*/i, "Rango ");
+    if (/terminaci/i.test(badge)) return "Terminación";
+    if (/formato/i.test(badge)) return "Formato";
+    if (/impresi|cara/i.test(badge)) return "Impresión";
+    if (/papel|material|gramaje/i.test(badge)) return "Material";
+    return "Variable editable";
+  }
+  return readableTraceText(node?.label || "Nodo");
+}
+
+function shortTraceValue(node) {
+  const id = String(node?.id || "");
+  if (id === "entrada_usuario") return readableTraceText(node.value || "Cotización actual");
+  if (id === "material_cotizado") return readableTraceText(node.value || node.label);
+  if (id === "formato" || id === "caras" || id === "cantidad" || id === "rango") return formatTraceValue(node);
+  if (id === "sin_adicional") return "No suma";
+  if (id === "urgencia" && String(node.value || "").toLowerCase() === "normal") return "Normal";
+  if (id.startsWith("variable_") && node?.editable_en_sistema) return "Editable";
+  if (id.startsWith("variable_")) return node.context_badge || formatTraceValue(node);
+  return formatTraceValue(node);
+}
+
+function traceNodeBadge(node, visualType) {
+  if (node?.editable_en_sistema && node?.impacta_hoy) return "Editable";
+  if (node?.id === "total_final") return "Final";
+  if (node?.type === "tabla_pdf") return "PDF/lista";
+  if (visualType === "factor") return "Regla";
+  if (node?.id === "sin_adicional" || node?.id === "urgencia") return "Neutro";
+  return TRACE_TYPE_LABELS[visualType] || visualType;
+}
+
+function traceNodeSize(node) {
+  if (node?.id === "total_final") return { width: TRACE_NODE_WIDTH + 54, height: TRACE_NODE_HEIGHT + 24 };
+  if (node?.id === "sin_adicional" || node?.id === "urgencia") return { width: TRACE_NODE_WIDTH - 36, height: TRACE_NODE_HEIGHT - 24 };
+  return { width: TRACE_NODE_WIDTH, height: TRACE_NODE_HEIGHT };
+}
+
+function buildCurrentQuoteSummary(payload, result) {
+  if (!payload || !result) return null;
+  const product = payload.categoria || payload.producto || "Cotización";
+  const format = payload.formato || "formato no disponible";
+  const material = describeCurrentQuoteMaterial(payload);
+  const print = payload.caras || payload.caras_tarjetas_troq_circ || "impresión no disponible";
+  const quantity = payload.cantidad_unidades || result.cantidad_unidades || "cantidad no disponible";
+  const range = result.cantidad_rango_aplicado || payload.cantidad_rango || result.cantidad_unidades || "no disponible";
+  const addition = describeQuoteOperationalAdditions(payload, result);
+  const terminacion = describeQuoteTerminacion(payload);
+  const parts = [
+    readableTraceText(product),
+    readableTraceText(format),
+    readableTraceText(material),
+    `impresión ${print}`,
+    `cantidad ${quantity}`,
+    `rango ${range}`,
+    addition && addition !== "No aplica" ? addition : terminacion,
+  ].filter(Boolean);
+  const sourceKind = inferPriceSourceKind(result);
+  return {
+    sentence: `Esta cotización usa ${parts.join(", ")}.`,
+    source: sourceKindExplanation(sourceKind),
+    total: formatMoney(result.total_con_urgencia ?? result.total_sin_iva),
+  };
 }
 
 function simplifyCurrentQuoteGraph(graph) {
@@ -756,16 +864,56 @@ function simplifyCurrentQuoteGraph(graph) {
     "total_final",
   ]);
 
+  const stageById = {
+    entrada_usuario: ["entrada", 0, 0],
+    cantidad: ["entrada", 0, 1],
+    material_cotizado: ["parametros", 1, 0],
+    formato: ["parametros", 1, 1],
+    caras: ["parametros", 1, 2],
+    sin_adicional: ["parametros", 1, 3],
+    rango: ["fuente", 2, 0],
+    precio_base_unitario: ["fuente", 2, 1],
+    base_total: ["calculo", 3, 0],
+    subtotal_con_adicionales: ["calculo", 3, 1],
+    urgencia: ["calculo", 3, 2],
+    total_final: ["total", 4, 0],
+  };
+
+  let simpleVariableRow = 0;
   const visibleNodes = graph.nodes.filter((node) => (
     mainPathIds.has(node.id) ||
     String(node.id || "").startsWith("adicional_") ||
     (String(node.id || "").startsWith("variable_") && node.affects_current_quote !== false)
-  ));
+  )).map((node) => {
+    const isVariable = String(node.id || "").startsWith("variable_");
+    const isAddition = String(node.id || "").startsWith("adicional_");
+    const [stage, lane, row] = stageById[node.id] || (isVariable
+      ? ["fuente", 2, 2]
+      : isAddition
+        ? ["parametros", 1, 3]
+        : [inferTraceBranch(node), 2, 0]);
+    const simpleColumn = isVariable ? 2 + simpleVariableRow : row;
+    if (isVariable) simpleVariableRow += 1;
+    return {
+      ...node,
+      branch: stage,
+      lane,
+      column: simpleColumn,
+      row: 0,
+      simple_stage: stage,
+      simple_label: shortTraceLabel(node),
+      simple_value: shortTraceValue(node),
+      simple_badge: traceNodeBadge(node, traceNodeVisualType(node)),
+      simple_weight: node.id === "total_final" ? "final" : (node.id === "sin_adicional" || node.id === "urgencia" ? "secondary" : "primary"),
+    };
+  });
   const visibleIds = new Set(visibleNodes.map((node) => node.id));
   return {
     ...graph,
     nodes: visibleNodes,
     edges: (graph.edges || []).filter((edge) => visibleIds.has(edge.source) && visibleIds.has(edge.target)),
+    simple: true,
+    stages: TRACE_STAGE_LABELS,
     legend: {
       entrada: graph.legend?.entrada || TRACE_DEFAULT_LEGEND.entrada,
       derivado: graph.legend?.derivado || TRACE_DEFAULT_LEGEND.derivado,
@@ -1274,7 +1422,7 @@ export default function CotizadorBajadasV2() {
       const graph = await fetchTraceGraph({ caso: selectedCase });
       setTraceGraph(graph);
       setSelectedTraceNodeId(graph?.nodes?.[0]?.id || null);
-      setTraceZoom(1);
+      setTraceZoom(initialTraceZoom(true));
       setTraceShowTechnicalGraph(false);
     } catch (err) {
       setTraceGraph(null);
@@ -1516,7 +1664,7 @@ export default function CotizadorBajadasV2() {
 
       setTraceGraph(graph);
       setSelectedTraceNodeId(graph.nodes[0]?.id ?? null);
-      setTraceZoom(1);
+      setTraceZoom(initialTraceZoom(false));
       setTraceShowTechnicalGraph(false);
     } catch (err) {
       setTraceGraph(null);
@@ -1532,7 +1680,7 @@ export default function CotizadorBajadasV2() {
   };
 
   const resetTraceView = () => {
-    setTraceZoom(1);
+    setTraceZoom(initialTraceZoom(traceShowTechnicalGraph || traceMode !== "cotizacion_actual"));
     requestAnimationFrame(() => {
       const viewport = traceGraphViewportRef.current;
       if (!viewport) return;
@@ -2631,6 +2779,7 @@ export default function CotizadorBajadasV2() {
     const selectedVariable = selectedVariableKey ? getAdminVariableByKey(selectedVariableKey) : null;
     const selectedIsEditable = Boolean(selectedVariableKey && (selectedNode?.editable_en_sistema || selectedVariable?.editable));
     const selectedFixedPdf = selectedNode ? quoteUsesFixedPdf(lastPayload, result, selectedNode.relation || selectedNode) : false;
+    const quoteSummary = isCurrentMode ? buildCurrentQuoteSummary(lastPayload, result) : null;
 
     return (
       <section className="card result-card trace-visual-card">
@@ -2714,6 +2863,20 @@ export default function CotizadorBajadasV2() {
 
         {traceError ? <div className="error-banner">{traceError}</div> : null}
 
+        {quoteSummary && !traceShowTechnicalGraph ? (
+          <section className="trace-quote-summary-card" data-testid="trace-quote-summary-card">
+            <div>
+              <span>Resumen de esta cotización</span>
+              <strong>{quoteSummary.sentence}</strong>
+              <p>{quoteSummary.source}</p>
+            </div>
+            <aside>
+              <small>Total final</small>
+              <b>{quoteSummary.total}</b>
+            </aside>
+          </section>
+        ) : null}
+
         <div className="trace-zoom-toolbar" data-testid="trace-zoom-toolbar">
           <div className="trace-zoom-help">
             {traceShowTechnicalGraph
@@ -2726,9 +2889,10 @@ export default function CotizadorBajadasV2() {
               data-testid="trace-toggle-technical-graph"
               aria-pressed={traceShowTechnicalGraph ? "true" : "false"}
               onClick={() => {
-                setTraceShowTechnicalGraph((current) => !current);
+                const next = !traceShowTechnicalGraph;
+                setTraceShowTechnicalGraph(next);
                 setSelectedTraceNodeId(null);
-                setTraceZoom(1);
+                setTraceZoom(initialTraceZoom(next));
               }}
               disabled={!baseGraph.nodes.length}
             >
@@ -2776,13 +2940,27 @@ export default function CotizadorBajadasV2() {
                     <path d="M0,0 L0,8 L11,4 z" fill="#8aa4d6" />
                   </marker>
                 </defs>
+                {graph.simple && graph.stages?.length ? (
+                  <g className="trace-stage-layer" data-testid="trace-stage-labels">
+                    {graph.stages.map((stage) => (
+                      <g key={stage.key} className="trace-stage-label" transform={`translate(${stage.x} ${stage.y})`}>
+                        <rect width="214" height="38" rx="19" />
+                        <text x="18" y="25">{stage.label}</text>
+                      </g>
+                    ))}
+                  </g>
+                ) : null}
                 {graph.edges.map((edge) => {
                   const from = positions[edge.source];
                   const to = positions[edge.target];
                   if (!from || !to) return null;
-                  const startX = from.x + TRACE_NODE_WIDTH / 2;
-                  const startY = from.y + TRACE_NODE_HEIGHT;
-                  const endX = to.x + TRACE_NODE_WIDTH / 2;
+                  const sourceNode = graph.nodes.find((node) => node.id === edge.source);
+                  const targetNode = graph.nodes.find((node) => node.id === edge.target);
+                  const sourceSize = traceNodeSize(sourceNode);
+                  const targetSize = traceNodeSize(targetNode);
+                  const startX = from.x + sourceSize.width / 2;
+                  const startY = from.y + sourceSize.height;
+                  const endX = to.x + targetSize.width / 2;
                   const endY = to.y - 12;
                   const curve = Math.max(70, Math.abs(endY - startY) / 2);
                   return (
@@ -2796,12 +2974,21 @@ export default function CotizadorBajadasV2() {
                   const pos = positions[node.id] || { x: 0, y: 0 };
                   const visualType = traceNodeVisualType(node);
                   const selected = selectedNode?.id === node.id;
+                  const size = traceNodeSize(node);
+                  const title = node.simple_label || node.label;
+                  const value = node.simple_value || formatTraceValue(node);
+                  const badge = node.simple_badge || TRACE_TYPE_LABELS[visualType] || visualType;
+                  const isFinal = node.id === "total_final";
+                  const badgeWidth = Math.min(210, Math.max(78, String(badge).length * 7 + 28));
                   return (
-                    <g key={node.id} data-testid={`trace-node-${node.id}`} className={`trace-node ${visualType} ${selected ? "selected" : ""}`} transform={`translate(${pos.x} ${pos.y})`} onClick={() => setSelectedTraceNodeId(node.id)} tabIndex="0" role="button" aria-label={`Nodo ${node.label}`}>
-                      <rect className="trace-node-rect" width={TRACE_NODE_WIDTH} height={TRACE_NODE_HEIGHT} rx="22" />
-                      <text className="trace-node-title" x="22" y="38">{node.label}</text>
-                      <text className="trace-node-meta" x="22" y="70">{TRACE_TYPE_LABELS[visualType] || visualType}</text>
-                      <text className="trace-node-value" x="22" y="98">{formatTraceValue(node)}</text>
+                    <g key={node.id} data-testid={`trace-node-${node.id}`} className={`trace-node ${visualType} ${node.simple_weight || ""} ${selected ? "selected" : ""}`} transform={`translate(${pos.x} ${pos.y})`} onClick={() => setSelectedTraceNodeId(node.id)} tabIndex="0" role="button" aria-label={`Nodo ${node.label}`}>
+                      <rect className="trace-node-rect" width={size.width} height={size.height} rx={isFinal ? "28" : "22"} />
+                      <text className="trace-node-title" x="22" y={isFinal ? "44" : "40"}>{title}</text>
+                      <text className="trace-node-value" x="22" y={isFinal ? "84" : "78"}>{value}</text>
+                      <g className="trace-node-badge" transform={`translate(22 ${isFinal ? 108 : 98})`}>
+                        <rect width={badgeWidth} height="24" rx="12" />
+                        <text x="14" y="16">{badge}</text>
+                      </g>
                     </g>
                   );
                 })}
@@ -2827,10 +3014,10 @@ export default function CotizadorBajadasV2() {
                   <span>{TRACE_TYPE_LABELS[traceNodeVisualType(selectedNode)] || selectedNode.type}</span>
                   <strong>{selectedNode.label}</strong>
                   <p><b>Qué es:</b> {selectedNode.description || "Nodo de la cadena causal del precio."}</p>
-                  <p><b>Por qué aparece:</b> {selectedNode.context_badge || selectedNode.operation || "Forma parte del camino del precio actual."}</p>
                 </div>
                 <div className="trace-detail-grid">
                   <div><strong>Valor</strong><span>{formatTraceValue(selectedNode)}</span></div>
+                  <div><strong>Por qué aparece</strong><span>{selectedNode.context_badge || selectedNode.operation || "Forma parte del camino del precio actual."}</span></div>
                   <div><strong>Afecta esta cotización</strong><span>{selectedNode.impacta_hoy ? (selectedFixedPdf ? "Base técnica / preview" : "Sí, en el cálculo actual") : "No directamente"}</span></div>
                   <div><strong>Se puede modificar</strong><span>{selectedIsEditable ? "Sí, con preview y backup" : "No desde este nodo"}</span></div>
                   <div><strong>Si se modifica</strong><span>{selectedIsEditable ? (selectedFixedPdf ? "Cambia trazabilidad o preview; el precio final sigue PDF/lista." : "Cambia el cálculo previsualizado antes de guardar.") : "No aplica."}</span></div>

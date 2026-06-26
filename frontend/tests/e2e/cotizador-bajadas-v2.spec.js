@@ -153,9 +153,11 @@ test("Trazabilidad visual de cotización actual usa material real cotizado", asy
   await page.getByTestId("trace-mode-cotizacion_actual").click();
   await page.getByTestId("trace-current-load-button").click();
   await expect(page.locator(".trace-svg")).toHaveAttribute("data-layout", "vertical");
-  await expect(page.getByTestId("trace-graph-container")).toContainText("Ilustracion 115g");
-  await expect(page.getByTestId("trace-graph-container")).toContainText("Formato A4");
-  await expect(page.getByTestId("trace-graph-container")).toContainText("Impresión 4/0");
+  await expect(page.getByTestId("trace-graph-container")).toContainText("Ilustración 115g");
+  await expect(page.getByTestId("trace-graph-container")).toContainText("Formato");
+  await expect(page.getByTestId("trace-graph-container")).toContainText("A4");
+  await expect(page.getByTestId("trace-graph-container")).toContainText("Impresión");
+  await expect(page.getByTestId("trace-graph-container")).toContainText("4/0");
   await expect(page.getByTestId("trace-graph-container")).toContainText("Total final");
 });
 
@@ -1388,11 +1390,11 @@ test("Modificar precios y trazabilidad simple muestran solo variables relevantes
       contentType: "application/json",
       body: JSON.stringify({
         ok: true,
-        total_sin_iva: 551500,
-        total_con_urgencia: 551500,
+        total_sin_iva: 738000,
+        total_con_urgencia: 738000,
         cantidad_unidades: 500,
         cantidad_rango_aplicado: "301 a 500",
-        precio_unitario_sin_iva: 1103,
+        precio_unitario_sin_iva: 1476,
         trazabilidad: { modo_precio: "matriz_pdf_con_variables_detectadas" },
       }),
     });
@@ -1410,7 +1412,7 @@ test("Modificar precios y trazabilidad simple muestran solo variables relevantes
   await page.goto("/", { waitUntil: "domcontentloaded" });
   await page.getByTestId("categoria-select").selectOption("Carpetas");
   await page.getByLabel("Cantidad").fill("500");
-  await page.getByTestId("print-option-4-0").click();
+  await page.getByTestId("print-option-4-4").click();
   await page.getByLabel("Terminación").selectOption("sin_laminar");
   await page.getByRole("button", { name: "Calcular" }).click();
 
@@ -1439,13 +1441,27 @@ test("Modificar precios y trazabilidad simple muestran solo variables relevantes
   await page.getByTestId("trace-mode-cotizacion_actual").click();
   await page.getByTestId("trace-current-load-button").click();
   await expect(page.locator(".trace-svg")).toHaveAttribute("data-layout", "vertical");
-  await expect(page.getByTestId("trace-graph-container")).toContainText("Coeficiente cantidad Carpetas 301 a 500");
+  await expect(page.getByTestId("trace-quote-summary-card")).toContainText("Resumen de esta cotización");
+  await expect(page.getByTestId("trace-quote-summary-card")).toContainText("Carpetas");
+  await expect(page.getByTestId("trace-quote-summary-card")).toContainText("A4");
+  await expect(page.getByTestId("trace-quote-summary-card")).toContainText("Ilustración 300g");
+  await expect(page.getByTestId("trace-quote-summary-card")).toContainText("4/4");
+  await expect(page.getByTestId("trace-quote-summary-card")).toContainText("500");
+  await expect(page.getByTestId("trace-quote-summary-card")).toContainText("301 a 500");
+  await expect(page.getByTestId("trace-stage-labels")).toContainText("Entrada");
+  await expect(page.getByTestId("trace-stage-labels")).toContainText("Total");
+  await expect(page.getByTestId("trace-node-total_final")).toHaveClass(/final/);
+  await expect(page.getByTestId("trace-node-variable_coeficiente_cantidad_carpetas_301_a_500")).toContainText("Rango 301 a 500");
+  await expect(page.getByTestId("trace-node-variable_coeficiente_cantidad_carpetas_301_a_500")).not.toContainText("Coeficiente cantidad Carpetas 301 a 500");
   await expect(page.getByTestId("trace-graph-container")).not.toContainText("Origen papel/material");
+  await page.getByTestId("trace-node-variable_coeficiente_cantidad_carpetas_301_a_500").click();
   await expect(page.getByTestId("trace-node-detail")).toContainText("Qué es");
+  await expect(page.getByTestId("trace-node-detail")).toContainText("Modificar esta variable");
 
   await page.getByTestId("trace-toggle-technical-graph").click();
   await expect(page.getByTestId("trace-toggle-technical-graph")).toHaveAttribute("aria-pressed", "true");
   await expect(page.getByTestId("trace-graph-container")).toContainText("Origen papel/material");
+  await expect(page.getByTestId("trace-graph-container")).toContainText("Coeficiente cantidad Carpetas 301 a 500");
 });
 
 test("Historial y backups y Exportar soporte Excel quedan accesibles", async ({ page }) => {
