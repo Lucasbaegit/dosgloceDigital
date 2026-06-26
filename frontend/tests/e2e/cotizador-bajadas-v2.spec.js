@@ -696,7 +696,9 @@ test("Modificar precios separa variables por cotización actual de Tarjetas 9x5"
   await expect(page.getByTestId("admin-no-contextual-variables")).toContainText("No hay variables editables específicas");
   await expect(page.getByTestId("admin-relevant-variable-group")).not.toContainText("Papel obra/ilustración 90g");
   await expect(page.getByTestId("admin-relevant-variable-group")).not.toContainText("Tinta blanca Autoadhesivas");
+  await expect(page.getByTestId("admin-system-variable-group")).toHaveCount(0);
 
+  await page.getByTestId("admin-toggle-advanced-variables").click();
   await page.getByTestId("admin-system-variable-group").locator("summary").click();
   await expect(page.getByTestId("admin-system-variable-group")).toContainText("Otras variables editables del sistema");
   await expect(page.getByTestId("admin-system-variable-group")).toContainText("Papel obra/ilustración 90g");
@@ -803,7 +805,9 @@ test("Modificar precios muestra variables específicas de Stickers Circulares se
   await expect(page.getByTestId("admin-relevant-variable-group")).toContainText("Coeficiente cantidad Stickers Circulares 1000");
   await expect(page.getByTestId("admin-relevant-variable-group")).not.toContainText("Coeficiente tamaño Stickers Circulares 9cm");
   await expect(page.getByTestId("admin-relevant-variable-group")).not.toContainText("Coeficiente cantidad Stickers Circulares 500");
+  await expect(page.getByTestId("admin-other-variable-group")).toHaveCount(0);
 
+  await page.getByTestId("admin-toggle-advanced-variables").click();
   await page.getByTestId("admin-other-variable-group").locator("summary").click();
   await expect(page.getByTestId("admin-other-variable-group")).toContainText("Coeficiente tamaño Stickers Circulares 9cm");
   await page.getByTestId("admin-system-variable-group").locator("summary").click();
@@ -933,7 +937,8 @@ test("Modificar precios muestra variables contextuales de Stickers e Imanes Cort
   await expect(page.locator(".trace-svg")).toHaveAttribute("data-layout", "vertical");
   await page.getByTestId("trace-node-variable_coeficiente_formato_stickers_corte_recto_10x7").click();
   await expect(page.getByTestId("trace-node-detail")).toContainText("Coeficiente formato Stickers Corte Recto 10x7");
-  await expect(page.getByTestId("trace-node-detail")).toContainText("Variable editable del producto");
+  await expect(page.getByTestId("trace-node-detail")).toContainText("Se puede modificar");
+  await expect(page.getByTestId("trace-node-detail")).toContainText("Sí, con preview y backup");
   await page.getByTestId("trace-modify-variable-button").click();
   await expect(page.getByTestId("admin-prices-title")).toBeVisible();
   await expect(page.getByTestId("admin-impact-step")).toContainText("Coeficiente formato Stickers Corte Recto 10x7");
@@ -1048,6 +1053,12 @@ test("Modificar precios filtra variables por scope exacto en Bajadas", async ({ 
   await expect(page.getByTestId("admin-relevant-variable-group")).not.toContainText("Coeficiente rango Bajadas 26 a 50");
   await expect(page.getByTestId("admin-relevant-variable-group")).not.toContainText("Coeficiente rango Bajadas 101 a 300");
   await expect(page.getByTestId("admin-relevant-variable-group")).not.toContainText("Factor Laca UV Bajadas");
+  await expect(page.getByTestId("admin-other-variable-group")).toHaveCount(0);
+  await expect(page.getByTestId("admin-system-variable-group")).toHaveCount(0);
+
+  await page.getByTestId("admin-toggle-advanced-variables").click();
+  await page.getByTestId("admin-other-variable-group").locator("summary").click();
+  await page.getByTestId("admin-system-variable-group").locator("summary").click();
   await expect(page.getByTestId("admin-other-variable-group")).toContainText("Coeficiente rango Bajadas 26 a 50");
   await expect(page.getByTestId("admin-system-variable-group")).toContainText("Coeficiente formato Stickers Corte Recto 10x7");
 
@@ -1173,6 +1184,10 @@ test("Modificar precios muestra variables contextuales de Bajadas Tarjetas Posta
   await expect(page.getByTestId("admin-relevant-variable-group")).not.toContainText("Coeficiente cantidad Tarjetas 9x5 1000");
   await expect(page.getByTestId("admin-relevant-variable-group")).not.toContainText("Coeficiente impresión Tarjetas 9x5 4/4");
   await expect(page.getByTestId("admin-relevant-variable-group")).not.toContainText("Factor gramaje 350g Tarjetas 9x5");
+  await expect(page.getByTestId("admin-other-variable-group")).toHaveCount(0);
+
+  await page.getByTestId("admin-toggle-advanced-variables").click();
+  await page.getByTestId("admin-other-variable-group").locator("summary").click();
   await expect(page.getByTestId("admin-other-variable-group")).toContainText("Coeficiente cantidad Tarjetas 9x5 1000");
   await expect(page.getByTestId("admin-other-variable-group")).toContainText("Coeficiente impresión Tarjetas 9x5 4/4");
   await expect(page.getByTestId("admin-other-variable-group")).toContainText("Factor gramaje 350g Tarjetas 9x5");
@@ -1325,6 +1340,112 @@ test("Modificar precios muestra variables contextuales de Carpetas Sobres Planch
   await page.getByTestId("impact-variable-select").selectOption("coeficiente_paginas_agendas_72");
   await expect(page.getByTestId("impact-current-assessment")).toContainText("Afecta esta cotización");
   await expect(page.getByTestId("impact-current-assessment")).toContainText("base técnica");
+});
+
+test("Modificar precios y trazabilidad simple muestran solo variables relevantes de Carpetas 500", async ({ page }) => {
+  const adminVariables = [
+    { key: "coeficiente_cantidad_carpetas_1", label: "Coeficiente cantidad Carpetas 1", value: 1, unit: "factor", description: "Rango 1", impacta_hoy: true, editable: true, estado: "editable", productos_afectados: ["Carpetas"], min: 0.0001, max: 1000000, step: 0.0001 },
+    { key: "coeficiente_cantidad_carpetas_101_a_300", label: "Coeficiente cantidad Carpetas 101 a 300", value: 1, unit: "factor", description: "Rango 101 a 300", impacta_hoy: true, editable: true, estado: "editable", productos_afectados: ["Carpetas"], min: 0.0001, max: 1000000, step: 0.0001 },
+    { key: "coeficiente_cantidad_carpetas_301_a_500", label: "Coeficiente cantidad Carpetas 301 a 500", value: 1, unit: "factor", description: "Rango 301 a 500", impacta_hoy: true, editable: true, estado: "editable", productos_afectados: ["Carpetas"], min: 0.0001, max: 1000000, step: 0.0001 },
+    { key: "coeficiente_cantidad_carpetas_501_a_1000", label: "Coeficiente cantidad Carpetas 501 a 1000", value: 1, unit: "factor", description: "Rango 501 a 1000", impacta_hoy: true, editable: true, estado: "editable", productos_afectados: ["Carpetas"], min: 0.0001, max: 1000000, step: 0.0001 },
+    { key: "factor_laca_uv_stickers_corte_recto", label: "Factor Laca UV Stickers Corte Recto", value: 1.18, unit: "factor", description: "Sticker", impacta_hoy: true, editable: true, estado: "editable", productos_afectados: ["Stickers Corte Recto"], min: 0.0001, max: 1000000, step: 0.0001 },
+  ];
+  const rel = (variable, label, productKey, productLabel, aplica_a = {}) => ({
+    variable,
+    variable_label: label,
+    producto_key: productKey,
+    producto: productLabel,
+    componente: label,
+    impacta_hoy: true,
+    editable: true,
+    estado: "conectado",
+    detalle: `${label} conectado a ${productLabel}.`,
+    tipo: "variable_madre",
+    modo_precio: "matriz_pdf_con_variables_detectadas",
+    aplica_a,
+  });
+  const impactMock = {
+    ok: true,
+    version: "variables_impacto_v1",
+    variables: adminVariables.map((item) => ({ key: item.key, label: item.label, editable: true, impacta_hoy: true, estado: "conectado" })),
+    productos: [
+      { key: "carpetas", label: "Carpetas", estado: "activo", endpoint: "/carpetas/cotizar", modo_precio: "matriz_pdf_con_variables_detectadas" },
+      { key: "stickers_corte_recto", label: "Stickers Corte Recto", estado: "activo", endpoint: "/stickers-corte-recto/cotizar", modo_precio: "formula_editable_calibrada" },
+    ],
+    relaciones: [
+      rel("coeficiente_cantidad_carpetas_1", "Coeficiente cantidad Carpetas 1", "carpetas", "Carpetas", { rangos: ["1"] }),
+      rel("coeficiente_cantidad_carpetas_101_a_300", "Coeficiente cantidad Carpetas 101 a 300", "carpetas", "Carpetas", { rangos: ["101 a 300"] }),
+      rel("coeficiente_cantidad_carpetas_301_a_500", "Coeficiente cantidad Carpetas 301 a 500", "carpetas", "Carpetas", { rangos: ["301 a 500"] }),
+      rel("coeficiente_cantidad_carpetas_501_a_1000", "Coeficiente cantidad Carpetas 501 a 1000", "carpetas", "Carpetas", { rangos: ["501 a 1000"] }),
+      rel("factor_laca_uv_stickers_corte_recto", "Factor Laca UV Stickers Corte Recto", "stickers_corte_recto", "Stickers Corte Recto", { terminaciones: ["con_laca_uv"] }),
+    ],
+    resumen: { variables_editables: adminVariables.length, productos_afectados: 2, relaciones_conectadas: 5 },
+  };
+
+  await page.route("**/carpetas/cotizar", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        ok: true,
+        total_sin_iva: 551500,
+        total_con_urgencia: 551500,
+        cantidad_unidades: 500,
+        cantidad_rango_aplicado: "301 a 500",
+        precio_unitario_sin_iva: 1103,
+        trazabilidad: { modo_precio: "matriz_pdf_con_variables_detectadas" },
+      }),
+    });
+  });
+  await page.route("**/admin-precios/variables-editables", async (route) => {
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, variables: adminVariables }) });
+  });
+  await page.route("**/admin-precios/historial", async (route) => {
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, historial: [] }) });
+  });
+  await page.route("**/variables-impacto", async (route) => {
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(impactMock) });
+  });
+
+  await page.goto("/", { waitUntil: "domcontentloaded" });
+  await page.getByTestId("categoria-select").selectOption("Carpetas");
+  await page.getByLabel("Cantidad").fill("500");
+  await page.getByTestId("print-option-4-0").click();
+  await page.getByLabel("Terminación").selectOption("sin_laminar");
+  await page.getByRole("button", { name: "Calcular" }).click();
+
+  await page.getByTestId("tab-admin-prices").click();
+  await expect(page.getByTestId("admin-relevance-toolbar")).toContainText("Modo simple de variables");
+  await expect(page.getByTestId("admin-relevant-variable-group")).toContainText("Coeficiente cantidad Carpetas 301 a 500");
+  await expect(page.getByTestId("admin-relevant-variable-group")).not.toContainText("Coeficiente cantidad Carpetas 1");
+  await expect(page.getByTestId("admin-relevant-variable-group")).not.toContainText("Coeficiente cantidad Carpetas 101 a 300");
+  await expect(page.getByTestId("admin-relevant-variable-group")).not.toContainText("Coeficiente cantidad Carpetas 501 a 1000");
+  await expect(page.getByText("No afecta esta cotización")).toHaveCount(0);
+  await expect(page.getByTestId("admin-other-variable-group")).toHaveCount(0);
+  await expect(page.getByTestId("admin-system-variable-group")).toHaveCount(0);
+
+  await page.getByTestId("admin-toggle-advanced-variables").click();
+  await expect(page.getByTestId("admin-relevance-toolbar")).toContainText("Modo avanzado de variables");
+  await page.getByTestId("admin-other-variable-group").locator("summary").click();
+  await page.getByTestId("admin-system-variable-group").locator("summary").click();
+  await expect(page.getByTestId("admin-other-variable-group")).toContainText("Coeficiente cantidad Carpetas 1");
+  await expect(page.getByTestId("admin-other-variable-group")).toContainText("Coeficiente cantidad Carpetas 101 a 300");
+  await expect(page.getByTestId("admin-other-variable-group")).toContainText("Coeficiente cantidad Carpetas 501 a 1000");
+  await expect(page.getByTestId("admin-system-variable-group")).toContainText("Factor Laca UV Stickers Corte Recto");
+
+  await page.getByTestId("view-mode-advanced").click();
+  await page.getByTestId("tab-understand-price").click();
+  await page.getByTestId("understand-trace-button").click();
+  await page.getByTestId("trace-mode-cotizacion_actual").click();
+  await page.getByTestId("trace-current-load-button").click();
+  await expect(page.locator(".trace-svg")).toHaveAttribute("data-layout", "vertical");
+  await expect(page.getByTestId("trace-graph-container")).toContainText("Coeficiente cantidad Carpetas 301 a 500");
+  await expect(page.getByTestId("trace-graph-container")).not.toContainText("Origen papel/material");
+  await expect(page.getByTestId("trace-node-detail")).toContainText("Qué es");
+
+  await page.getByTestId("trace-toggle-technical-graph").click();
+  await expect(page.getByTestId("trace-toggle-technical-graph")).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByTestId("trace-graph-container")).toContainText("Origen papel/material");
 });
 
 test("Historial y backups y Exportar soporte Excel quedan accesibles", async ({ page }) => {

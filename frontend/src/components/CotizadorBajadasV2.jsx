@@ -737,6 +737,45 @@ function quoteUsesFixedPdf(_payload, result, relation = {}) {
   return inferPriceSourceKind(result) === "matriz_pdf";
 }
 
+function simplifyCurrentQuoteGraph(graph) {
+  if (!graph?.nodes?.length) return graph || { nodes: [], edges: [], legend: {} };
+  if (!graph.nodes.some((node) => node.id === "entrada_usuario")) return graph;
+
+  const mainPathIds = new Set([
+    "entrada_usuario",
+    "material_cotizado",
+    "formato",
+    "caras",
+    "cantidad",
+    "rango",
+    "precio_base_unitario",
+    "base_total",
+    "sin_adicional",
+    "subtotal_con_adicionales",
+    "urgencia",
+    "total_final",
+  ]);
+
+  const visibleNodes = graph.nodes.filter((node) => (
+    mainPathIds.has(node.id) ||
+    String(node.id || "").startsWith("adicional_") ||
+    (String(node.id || "").startsWith("variable_") && node.affects_current_quote !== false)
+  ));
+  const visibleIds = new Set(visibleNodes.map((node) => node.id));
+  return {
+    ...graph,
+    nodes: visibleNodes,
+    edges: (graph.edges || []).filter((edge) => visibleIds.has(edge.source) && visibleIds.has(edge.target)),
+    legend: {
+      entrada: graph.legend?.entrada || TRACE_DEFAULT_LEGEND.entrada,
+      derivado: graph.legend?.derivado || TRACE_DEFAULT_LEGEND.derivado,
+      factor: graph.legend?.factor || TRACE_DEFAULT_LEGEND.factor,
+      tabla_pdf: graph.legend?.tabla_pdf || TRACE_DEFAULT_LEGEND.tabla_pdf,
+      variable_madre: graph.legend?.variable_madre || TRACE_DEFAULT_LEGEND.variable_madre,
+    },
+  };
+}
+
 function buildCurrentQuoteTraceGraph(payload, result, context = {}) {
   if (!payload || !result) return null;
   const editableRelations = context.editableRelations || [];
@@ -1054,6 +1093,7 @@ export default function CotizadorBajadasV2() {
   const [selectedTraceNodeId, setSelectedTraceNodeId] = useState(null);
   const [traceZoom, setTraceZoom] = useState(1);
   const [traceFullscreen, setTraceFullscreen] = useState(false);
+  const [traceShowTechnicalGraph, setTraceShowTechnicalGraph] = useState(false);
   const traceGraphViewportRef = useRef(null);
   const traceDragRef = useRef(null);
   const [impactData, setImpactData] = useState(null);
@@ -1071,6 +1111,7 @@ export default function CotizadorBajadasV2() {
   const [adminMsg, setAdminMsg] = useState("");
   const [adminError, setAdminError] = useState("");
   const [adminWizardStep, setAdminWizardStep] = useState(1);
+  const [adminShowAdvancedVariables, setAdminShowAdvancedVariables] = useState(false);
   const [adminRollbackPreview, setAdminRollbackPreview] = useState(null);
   const [adminRollbackTargetId, setAdminRollbackTargetId] = useState(null);
   const isAdvancedMode = viewMode === "advanced";
@@ -1234,6 +1275,7 @@ export default function CotizadorBajadasV2() {
       setTraceGraph(graph);
       setSelectedTraceNodeId(graph?.nodes?.[0]?.id || null);
       setTraceZoom(1);
+      setTraceShowTechnicalGraph(false);
     } catch (err) {
       setTraceGraph(null);
       setSelectedTraceNodeId(null);
@@ -1475,6 +1517,7 @@ export default function CotizadorBajadasV2() {
       setTraceGraph(graph);
       setSelectedTraceNodeId(graph.nodes[0]?.id ?? null);
       setTraceZoom(1);
+      setTraceShowTechnicalGraph(false);
     } catch (err) {
       setTraceGraph(null);
       setSelectedTraceNodeId(null);
@@ -2471,6 +2514,8 @@ export default function CotizadorBajadasV2() {
       setAdminPreview(null);
       setAdminMsg("");
       setAdminError("");
+      setAdminShowAdvancedVariables(false);
+      setTraceShowTechnicalGraph(false);
     } catch (err) {
       if (err.code === "cantidad_fuera_de_matriz") {
         setError("Cantidad fuera de matriz para este producto.");
@@ -2576,7 +2621,8 @@ export default function CotizadorBajadasV2() {
   };
 
   const renderTraceVisualTab = () => {
-    const graph = traceGraph || { nodes: [], edges: [], legend: {} };
+    const baseGraph = traceGraph || { nodes: [], edges: [], legend: {} };
+    const graph = traceShowTechnicalGraph ? baseGraph : simplifyCurrentQuoteGraph(baseGraph);
     const { positions, width, height } = layoutTraceGraph(graph);
     const selectedNode = graph.nodes.find((node) => node.id === selectedTraceNodeId) || graph.nodes[0] || null;
     const selectedCase = TRACE_GRAPH_CASES.find((item) => item.value === traceCase);
@@ -2611,6 +2657,7 @@ export default function CotizadorBajadasV2() {
                   setTraceGraph(null);
                   setSelectedTraceNodeId(null);
                   setTraceZoom(1);
+                  setTraceShowTechnicalGraph(false);
                   setTraceError("");
                 }}
               >
@@ -2650,6 +2697,7 @@ export default function CotizadorBajadasV2() {
                     setTraceGraph(null);
                     setSelectedTraceNodeId(null);
                     setTraceZoom(1);
+                    setTraceShowTechnicalGraph(false);
                   }}
                 >
                   {TRACE_GRAPH_CASES.map((item) => (
@@ -2667,8 +2715,25 @@ export default function CotizadorBajadasV2() {
         {traceError ? <div className="error-banner">{traceError}</div> : null}
 
         <div className="trace-zoom-toolbar" data-testid="trace-zoom-toolbar">
-          <div className="trace-zoom-help">Usá + / - para acercar o alejar. Arrastrá el fondo para moverte por el grafo.</div>
+          <div className="trace-zoom-help">
+            {traceShowTechnicalGraph
+              ? "Grafo técnico completo: muestra nodos de apoyo, ramas y variables auxiliares."
+              : "Grafo simple: camino principal del precio actual, de la entrada al total final."}
+          </div>
           <div className="trace-zoom-controls" role="group" aria-label="Controles de zoom del grafo">
+            <button
+              type="button"
+              data-testid="trace-toggle-technical-graph"
+              aria-pressed={traceShowTechnicalGraph ? "true" : "false"}
+              onClick={() => {
+                setTraceShowTechnicalGraph((current) => !current);
+                setSelectedTraceNodeId(null);
+                setTraceZoom(1);
+              }}
+              disabled={!baseGraph.nodes.length}
+            >
+              {traceShowTechnicalGraph ? "Ver grafo simple" : "Ver grafo técnico completo"}
+            </button>
             <button type="button" data-testid="trace-zoom-out" onClick={() => setTraceZoomLevel(traceZoom - TRACE_ZOOM_STEP)} disabled={!graph.nodes.length}>-</button>
             <strong data-testid="trace-zoom-indicator">{Math.round(traceZoom * 100)}%</strong>
             <button type="button" data-testid="trace-zoom-in" onClick={() => setTraceZoomLevel(traceZoom + TRACE_ZOOM_STEP)} disabled={!graph.nodes.length}>+</button>
@@ -2761,18 +2826,25 @@ export default function CotizadorBajadasV2() {
                 <div className="trace-detail-hero">
                   <span>{TRACE_TYPE_LABELS[traceNodeVisualType(selectedNode)] || selectedNode.type}</span>
                   <strong>{selectedNode.label}</strong>
-                  <p>{selectedNode.description || "Nodo de la cadena causal del precio."}</p>
+                  <p><b>Qué es:</b> {selectedNode.description || "Nodo de la cadena causal del precio."}</p>
+                  <p><b>Por qué aparece:</b> {selectedNode.context_badge || selectedNode.operation || "Forma parte del camino del precio actual."}</p>
                 </div>
                 <div className="trace-detail-grid">
                   <div><strong>Valor</strong><span>{formatTraceValue(selectedNode)}</span></div>
-                  <div><strong>Clave técnica</strong><span>{selectedVariableKey || selectedNode.id}</span></div>
-                  <div><strong>Editable</strong><span>{selectedIsEditable ? "Variable editable del producto" : "No editable desde aquí"}</span></div>
-                  <div><strong>Impacto</strong><span>{selectedNode.impacta_hoy ? (selectedFixedPdf ? "Afecta base técnica / trazabilidad" : "Afecta esta cotización") : "Usada para preview y trazabilidad"}</span></div>
+                  <div><strong>Afecta esta cotización</strong><span>{selectedNode.impacta_hoy ? (selectedFixedPdf ? "Base técnica / preview" : "Sí, en el cálculo actual") : "No directamente"}</span></div>
+                  <div><strong>Se puede modificar</strong><span>{selectedIsEditable ? "Sí, con preview y backup" : "No desde este nodo"}</span></div>
+                  <div><strong>Si se modifica</strong><span>{selectedIsEditable ? (selectedFixedPdf ? "Cambia trazabilidad o preview; el precio final sigue PDF/lista." : "Cambia el cálculo previsualizado antes de guardar.") : "No aplica."}</span></div>
                   <div><strong>Fuente</strong><span>{selectedNode.source || selectedVariable?.source_file || "-"}</span></div>
-                  <div><strong>Tipo variable</strong><span>{selectedVariable?.tipo || selectedNode.variable_type || selectedNode.type || "-"}</span></div>
-                  <div><strong>Operación</strong><span>{selectedNode.operation || "-"}</span></div>
-                  <div><strong>Observación</strong><span>{selectedNode.observation || selectedNode.editable_reason || "-"}</span></div>
                 </div>
+                <details className="trace-technical-detail">
+                  <summary>Ver detalle técnico</summary>
+                  <div className="trace-detail-grid">
+                    <div><strong>Clave técnica</strong><span>{selectedVariableKey || selectedNode.id}</span></div>
+                    <div><strong>Tipo variable</strong><span>{selectedVariable?.tipo || selectedNode.variable_type || selectedNode.type || "-"}</span></div>
+                    <div><strong>Operación</strong><span>{selectedNode.operation || "-"}</span></div>
+                    <div><strong>Observación</strong><span>{selectedNode.observation || selectedNode.editable_reason || "-"}</span></div>
+                  </div>
+                </details>
                 <div className={selectedIsEditable ? "trace-action-box editable" : "trace-action-box"}>
                   {selectedIsEditable ? (
                     <>
@@ -3370,6 +3442,7 @@ export default function CotizadorBajadasV2() {
 
     const renderVariableButton = (item, { affectsCurrentQuote }) => {
       const relation = relationByVariable.get(item.key);
+      const showTechnicalCopy = !hasCurrentQuoteContext || adminShowAdvancedVariables;
       return (
         <button
           type="button"
@@ -3386,15 +3459,15 @@ export default function CotizadorBajadasV2() {
               </em>
             ) : null}
           </div>
-          {isAdvancedMode ? <span>{item.key}</span> : null}
-          <small>{item.description}</small>
+          {showTechnicalCopy ? <span>{item.key}</span> : null}
+          {showTechnicalCopy ? <small>{item.description}</small> : null}
           {relation ? <small className="admin-context-note">{relation.detalle}</small> : null}
           <div className="admin-variable-meta">
             <em>{item.value} {item.unit || ""}</em>
             {relation ? <em className="admin-scope-badge">{relationContextBadge(relation)}</em> : null}
-            {isSimpleMode ? <em>{(item.productos_afectados || []).length} productos</em> : null}
-            {isAdvancedMode ? <em>{item.impacta_hoy ? "Impacta hoy" : "Preparada"}</em> : null}
-            {isAdvancedMode ? <em>{item.editable ? "Editable" : "Solo lectura"}</em> : null}
+            {showTechnicalCopy && isSimpleMode ? <em>{(item.productos_afectados || []).length} productos</em> : null}
+            {showTechnicalCopy ? <em>{item.impacta_hoy ? "Impacta hoy" : "Preparada"}</em> : null}
+            {showTechnicalCopy ? <em>{item.editable ? "Editable" : "Solo lectura"}</em> : null}
           </div>
           {hasCurrentQuoteContext && relation ? (
             <span
@@ -3440,6 +3513,28 @@ export default function CotizadorBajadasV2() {
           </div>
         ) : null}
 
+        {hasCurrentQuoteContext ? (
+          <div className="admin-relevance-toolbar" data-testid="admin-relevance-toolbar">
+            <div>
+              <strong>{adminShowAdvancedVariables ? "Modo avanzado de variables" : "Modo simple de variables"}</strong>
+              <span>
+                {adminShowAdvancedVariables
+                  ? "Mostrando variables del producto y del sistema que no afectan esta cotización actual."
+                  : "Solo se muestran variables conectadas a esta cotización."}
+              </span>
+            </div>
+            <button
+              type="button"
+              className="secondary-btn"
+              data-testid="admin-toggle-advanced-variables"
+              aria-pressed={adminShowAdvancedVariables ? "true" : "false"}
+              onClick={() => setAdminShowAdvancedVariables((current) => !current)}
+            >
+              {adminShowAdvancedVariables ? "Ocultar variables avanzadas" : "Mostrar variables avanzadas"}
+            </button>
+          </div>
+        ) : null}
+
         <div className="admin-variable-section" data-testid="admin-relevant-variable-group">
           <div className="admin-variable-section-head">
             <h5>{hasCurrentQuoteContext ? "Variables que afectan esta cotización" : "Variables editables del sistema"}</h5>
@@ -3460,8 +3555,8 @@ export default function CotizadorBajadasV2() {
           )}
         </div>
 
-        {hasCurrentQuoteContext ? (
-          <details className="admin-variable-section secondary" data-testid="admin-other-variable-group" open={isAdvancedMode}>
+        {hasCurrentQuoteContext && adminShowAdvancedVariables ? (
+          <details className="admin-variable-section secondary" data-testid="admin-other-variable-group">
             <summary>
               <span>
                 <strong>Otras variables editables de este producto</strong>
@@ -3477,8 +3572,8 @@ export default function CotizadorBajadasV2() {
           </details>
         ) : null}
 
-        {hasCurrentQuoteContext ? (
-          <details className="admin-variable-section secondary" data-testid="admin-system-variable-group" open={isAdvancedMode}>
+        {hasCurrentQuoteContext && adminShowAdvancedVariables ? (
+          <details className="admin-variable-section secondary" data-testid="admin-system-variable-group">
             <summary>
               <span>
                 <strong>Otras variables editables del sistema</strong>
