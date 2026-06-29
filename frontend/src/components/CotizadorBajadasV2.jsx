@@ -1,54 +1,4 @@
-﻿import { useEffect, useMemo, useRef, useState } from "react";
-import {
-  applyAdminPrecio,
-  applyAdminPrecioRollback,
-  approveBajadasConfigCandidate,
-  cotizarBajadaV2,
-  cotizarFolletos,
-  cotizarTarjetasTroqueladasCirculares,
-  cotizarPlanchaImanImpreso,
-  cotizarAgendasCuadernos,
-  cotizarImanesCorteRecto,
-  cotizarStickersCirculares,
-  cotizarCarpetas,
-  cotizarStickersCorteRecto,
-  cotizarSobres,
-  cotizarTarjetas9x5,
-  cotizarTarjetasPostales,
-  createBajadasConfigCandidate,
-  fetchBajadasActiveVersion,
-  fetchBajadasBackupDetail,
-  fetchBajadasBackups,
-  previewRestoreBajadasBackup,
-  fetchBajadasConfig,
-  fetchBajadasConfigCandidates,
-  fetchBajadasConfigDiff,
-  fetchBajadasConfigHistory,
-  fetchBajadasHealth,
-  fetchBajadasMetrics,
-  fetchAdminPreciosHistorial,
-  fetchAdminPreciosVariables,
-  fetchPrincipalVariables,
-  fetchPrincipalVariablesAudit,
-  fetchPrincipalVariablesRanges,
-  fetchTraceGraph,
-  fetchVariablesImpacto,
-  exportPricesExcel,
-  exportPricesPdf,
-  previewAdminPrecio,
-  previewAdminPrecioRollback,
-  previewExcelMaestro,
-  promoteBajadasConfigCandidate,
-  rejectBajadasConfigCandidate,
-  restoreBajadasConfig,
-  restoreBajadasBackup,
-  simulateRestoreBajadasBackup,
-  simulateBajadasConfig,
-  updateBajadasConfig,
-  updatePrincipalVariables,
-  validateBajadasConfig,
-} from "../api/bajadasV2Api";
-import optionRows from "../data/bajadasOptions.json";
+import { useEffect, useMemo, useState } from "react";
 import ConfiguracionAvanzadaPanel from "./cotizador/ConfiguracionAvanzadaPanel";
 import EntenderPrecioPanel from "./cotizador/EntenderPrecioPanel";
 import ExportarSoporteExcelPanel from "./cotizador/ExportarSoporteExcelPanel";
@@ -57,6 +7,40 @@ import ImpactoCambiosPanel from "./cotizador/ImpactoCambiosPanel";
 import ModificarPreciosWizard from "./cotizador/ModificarPreciosWizard";
 import NavigationTabs from "./cotizador/NavigationTabs";
 import ViewModeToggle from "./cotizador/ViewModeToggle";
+import useConfigManager from "../hooks/useConfigManager";
+import useAdminPrices from "../hooks/useAdminPrices";
+import useTraceGraph from "../hooks/useTraceGraph";
+import useImpactMap from "../hooks/useImpactMap";
+import useCotizacionForm from "../hooks/useCotizacionForm";
+import useCotizacionSubmit from "../hooks/useCotizacionSubmit";
+import {
+  buildCurrentQuoteTraceGraph,
+  clampTraceZoom,
+  formatTraceValue,
+  initialTraceZoom,
+  layoutTraceGraph,
+  readableTraceText,
+  simplifyCurrentQuoteGraph,
+  traceNodeSize,
+  traceNodeVisualType,
+} from "../lib/traceGraphEngine";
+import {
+  buildCurrentQuoteSummary,
+  collectCurrentQuoteAdditions,
+  describeCurrentQuoteMaterial,
+  describeQuoteOperationalAdditions,
+  describeQuoteTerminacion,
+  formatMoney,
+  getQuoteProductKey,
+  getQuoteProductLabel,
+  inferPriceSourceKind,
+  inferQuoteContext,
+  quoteUsesFixedPdf,
+  relationAppliesToCurrentQuote,
+  relationContextBadge,
+  sourceKindExplanation,
+  sourceKindLabel,
+} from "../lib/cotizacionLogic";
 
 const VIEW_MODE_STORAGE_KEY = "cotizador_view_mode";
 const ADMIN_PRICE_STEPS = [
@@ -309,889 +293,6 @@ const INITIAL_FORM = {
   paginas_agendas: "24",
 };
 
-function formatTraceValue(node) {
-  if (!node || node.value === null || node.value === undefined || node.value === "") return "-";
-  const value = typeof node.value === "number" ? Number(node.value.toFixed(4)).toLocaleString("es-AR") : String(node.value);
-  return node.unit ? `${value} ${node.unit}` : value;
-}
-
-function clampTraceZoom(value) {
-  return Math.min(TRACE_MAX_ZOOM, Math.max(TRACE_MIN_ZOOM, Number(value) || 1));
-}
-
-function initialTraceZoom(showTechnicalGraph) {
-  return showTechnicalGraph ? TRACE_TECHNICAL_INITIAL_ZOOM : TRACE_SIMPLE_INITIAL_ZOOM;
-}
-
-function traceNodeVisualType(node) {
-  if (!node) return "derivado";
-  if (node.type === "variable_madre" && node.editable_en_sistema && node.impacta_hoy) return "variable_madre";
-  if (node.type === "factor" || String(node.id || "").includes("factor") || String(node.id || "").includes("multiplicador")) return "factor";
-  return node.type || "derivado";
-}
-
-function inferTraceBranch(node) {
-  const id = String(node?.id || "");
-  if (node?.branch) return node.branch;
-  if (id.includes("material") || id.includes("papel")) return "material";
-  if (id.includes("click") || id.includes("formato") || id.includes("caras") || id.includes("impresion")) return "impresion";
-  if (id.includes("cantidad") || id.includes("rango")) return "cantidad";
-  if (id.includes("adicional") || id.includes("troquel") || id.includes("laca") || id.includes("laminado")) return "adicionales";
-  if (id.includes("urgencia")) return "urgencia";
-  if (id.includes("total") || id.includes("precio") || id.includes("subtotal")) return "resultado";
-  return "entrada";
-}
-
-function layoutTraceGraph(graph) {
-  const nodes = graph?.nodes || [];
-  const edges = graph?.edges || [];
-  const explicitLayout = nodes.some((node) => node.column !== undefined || node.branch || node.row !== undefined);
-  const positions = {};
-  const xStep = 360;
-  const yStep = 168;
-  const marginX = 56;
-  const marginY = 60;
-
-  if (explicitLayout) {
-    const branchOrder = ["entrada", "material", "impresion", "cantidad", "adicionales", "urgencia", "resultado"];
-    const branchIndex = Object.fromEntries(branchOrder.map((branch, index) => [branch, index]));
-    const lanes = nodes.map((node) => ({
-      node,
-      column: Number(node.column ?? 0),
-      branch: inferTraceBranch(node),
-      row: node.row,
-      lane: node.lane,
-    }));
-    const grouped = lanes.reduce((acc, item) => {
-      const key = `${item.column}:${item.branch}`;
-      acc[key] = acc[key] || [];
-      acc[key].push(item);
-      return acc;
-    }, {});
-    Object.values(grouped).forEach((items) => {
-      items.sort((a, b) => Number(a.row ?? 999) - Number(b.row ?? 999));
-      items.forEach((item, index) => {
-        if (item.row === undefined) item.autoRow = index;
-      });
-    });
-    lanes.forEach((item) => {
-      const lane = Number(item.lane ?? (branchIndex[item.branch] ?? branchIndex.entrada));
-      const rowOffset = Number(item.row ?? item.autoRow ?? 0) * (TRACE_NODE_HEIGHT + 24);
-      positions[item.node.id] = {
-        x: marginX + lane * xStep,
-        y: marginY + item.column * yStep + rowOffset,
-      };
-    });
-    const maxX = Math.max(0, ...Object.values(positions).map((pos) => pos.x));
-    const maxY = Math.max(0, ...Object.values(positions).map((pos) => pos.y));
-    return {
-      positions,
-      width: Math.max(1360, maxX + TRACE_NODE_WIDTH + 120),
-      height: Math.max(980, maxY + TRACE_NODE_HEIGHT + 120),
-    };
-  }
-
-  const depths = Object.fromEntries(nodes.map((node) => [node.id, 0]));
-  for (let pass = 0; pass < nodes.length; pass += 1) {
-    edges.forEach((edge) => {
-      if (depths[edge.source] === undefined || depths[edge.target] === undefined) return;
-      depths[edge.target] = Math.max(depths[edge.target], depths[edge.source] + 1);
-    });
-  }
-  const groups = nodes.reduce((acc, node) => {
-    const depth = depths[node.id] || 0;
-    acc[depth] = acc[depth] || [];
-    acc[depth].push(node);
-    return acc;
-  }, {});
-  Object.entries(groups).forEach(([depthKey, group]) => {
-    const depth = Number(depthKey);
-    group.forEach((node, index) => {
-      positions[node.id] = { x: marginX + index * xStep, y: marginY + depth * yStep };
-    });
-  });
-  const maxDepth = Math.max(0, ...Object.keys(groups).map(Number));
-  const maxRows = Math.max(1, ...Object.values(groups).map((group) => group.length));
-  return {
-    positions,
-    width: Math.max(1180, marginX + maxRows * xStep + TRACE_NODE_WIDTH),
-    height: Math.max(860, marginY + (maxDepth + 1) * yStep + TRACE_NODE_HEIGHT),
-  };
-}
-
-function traceNode(id, label, type, value, unit, description, source, operation, observation, meta = {}) {
-  return {
-    id,
-    label,
-    type,
-    value,
-    unit,
-    editable_en_sistema: false,
-    impacta_hoy: type !== "tabla_pdf",
-    description,
-    source,
-    operation,
-    observation,
-    ...meta,
-  };
-}
-
-function traceEdge(id, source, target, label) {
-  return { id, source, target, label };
-}
-
-function describeCurrentQuoteMaterial(payload) {
-  const material = payload?.material || payload?.papel || payload?.tipo_papel || "Material no informado";
-  const gramaje = payload?.gramaje && payload.gramaje !== "N/A" ? ` ${payload.gramaje}` : "";
-  if (gramaje && String(material).toLowerCase().includes(String(payload.gramaje).toLowerCase())) return String(material).trim();
-  return `${material}${gramaje}`.trim();
-}
-
-function getQuoteProductKey(payload) {
-  if (!payload) return null;
-  if (payload.producto_key) return payload.producto_key;
-  if (payload.categoria && PRODUCT_KEY_BY_CATEGORY[payload.categoria]) return PRODUCT_KEY_BY_CATEGORY[payload.categoria];
-  if (payload.categoria_ui && PRODUCT_KEY_BY_CATEGORY[payload.categoria_ui]) return PRODUCT_KEY_BY_CATEGORY[payload.categoria_ui];
-  if (payload.producto === "9x5") return "tarjetas_9x5";
-  if (payload.producto === "postal") return "tarjetas_postales";
-  if (payload.producto === "folleto") return "folletos";
-  if (payload.producto === "carpeta_a4") return "carpetas";
-  if (payload.producto === "sobre") return "sobres";
-  if (payload.producto === "sticker_corte_recto") return "stickers_corte_recto";
-  if (payload.producto === "iman_corte_recto") return "imanes_corte_recto";
-  if (payload.producto === "sticker_circular") return "stickers_circulares";
-  if (payload.producto === "tarjeta_troquelada_circular") return "tarjetas_troqueladas_circulares";
-  if (payload.producto === "plancha_iman_impreso") return "plancha_iman_impreso";
-  if (payload.producto === "agenda_cuaderno") return "agendas_cuadernos";
-  return null;
-}
-
-function getQuoteProductLabel(payload, impactData) {
-  const productKey = getQuoteProductKey(payload);
-  const fromMap = (impactData?.productos || []).find((item) => item.key === productKey);
-  return fromMap?.label || payload?.categoria || payload?.categoria_ui || "Cotización actual";
-}
-
-function normalizeScopeValue(value) {
-  return String(value ?? "").trim().toLowerCase();
-}
-
-function scopeIncludes(scopeValues, currentValues) {
-  if (!Array.isArray(scopeValues) || !scopeValues.length) return true;
-  const normalizedScope = scopeValues.map(normalizeScopeValue);
-  const normalizedCurrent = (Array.isArray(currentValues) ? currentValues : [currentValues])
-    .filter((value) => value !== undefined && value !== null && value !== "")
-    .map(normalizeScopeValue);
-  return normalizedCurrent.some((value) => normalizedScope.includes(value));
-}
-
-function relationScopeKeys(relation) {
-  return Object.keys(relation?.aplica_a || {}).filter((key) => {
-    const value = relation.aplica_a[key];
-    return Array.isArray(value) ? value.length > 0 : value !== undefined && value !== null;
-  });
-}
-
-function relationMatchKind(relation) {
-  const keys = relationScopeKeys(relation);
-  if (!keys.length) return "base_dependency_match";
-  const haystack = [
-    relation?.variable,
-    relation?.variable_label,
-    relation?.componente,
-    relation?.detalle,
-    ...(relation?.ruta_calculo || []),
-  ].filter(Boolean).join(" ").toLowerCase();
-  if (keys.some((key) => ["formatos", "cantidades", "rangos", "terminaciones", "adicionales", "caras", "gramajes", "materiales", "modo_color", "tipo_papel"].includes(key))) {
-    return "scope_exact_match";
-  }
-  if (haystack.includes("multiplicador") || haystack.includes("base") || haystack.includes("papel") || haystack.includes("material") || haystack.includes("click") || haystack.includes("cambio")) {
-    return "base_dependency_match";
-  }
-  return "product_dependency_match";
-}
-
-function relationContextBadge(relation) {
-  const kind = relationMatchKind(relation);
-  const haystack = [
-    relation?.variable,
-    relation?.variable_label,
-    relation?.componente,
-    relation?.detalle,
-  ].filter(Boolean).join(" ").toLowerCase();
-  if (kind === "base_dependency_match") {
-    if (haystack.includes("papel") || haystack.includes("material") || haystack.includes("gramaje")) return "Papel / material";
-    if (haystack.includes("click") || haystack.includes("impresi")) return "Impresión";
-    if (haystack.includes("multiplicador")) return "Multiplicador";
-    if (haystack.includes("cambio") || haystack.includes("usd")) return "Global usada";
-    return "Base del cálculo";
-  }
-  if (haystack.includes("cantidad") || haystack.includes("rango")) return "Cantidad";
-  if (haystack.includes("impresi") || haystack.includes("cara")) return "Impresión";
-  if (haystack.includes("formato")) return "Formato";
-  if (haystack.includes("terminaci") || haystack.includes("laca") || haystack.includes("laminado")) return "Terminación";
-  if (haystack.includes("gramaje") || haystack.includes("papel") || haystack.includes("material")) return "Papel / material";
-  return "Scope exacto";
-}
-
-function getCurrentQuoteRange(payload, result) {
-  return (
-    result?.cantidad_rango_aplicado ||
-    result?.rango_aplicado ||
-    payload?.cantidad_rango ||
-    payload?.cantidad_unidades
-  );
-}
-
-function getCurrentQuoteTerminacion(payload) {
-  return (
-    payload?.terminacion_stickers_circulares ||
-    payload?.terminacion_stickers ||
-    payload?.terminacion_imanes ||
-    payload?.terminacion_tarjetas ||
-    payload?.terminacion_carpetas ||
-    payload?.terminacion ||
-    payload?.adicional_laminado ||
-    "sin_laca_uv"
-  );
-}
-
-function getCurrentQuoteAdditionsForScope(payload) {
-  const additions = new Set();
-  const adicional = payload?.adicional_laminado;
-  if (adicional && adicional !== "sin_adicional") additions.add(adicional);
-  if (payload?.adicional_laca_uv || adicional === "laca") {
-    additions.add("laca");
-    additions.add("adicional_laca_uv");
-  }
-  if (payload?.adicional_tinta_blanca || adicional === "tinta_blanca") {
-    additions.add("tinta_blanca");
-    additions.add("adicional_tinta_blanca");
-  }
-  if (payload?.adicional_troquelado) additions.add("troquelado_digital");
-  if (payload?.solapa_impresa) additions.add("solapa_impresa");
-  if (payload?.adicional_plastificado) additions.add("plastificado");
-  if (payload?.adicional_laminado_por_lado && payload.adicional_laminado_por_lado !== "sin_adicional") {
-    additions.add(payload.adicional_laminado_por_lado);
-  }
-  return Array.from(additions);
-}
-
-function relationAppliesToCurrentQuote(relation, payload, result = null) {
-  const applies = relation?.aplica_a || {};
-  if (!payload || !applies || !Object.keys(applies).length) return true;
-  if (!scopeIncludes(applies.formatos, [payload.formato, payload.formato_agendas])) {
-    return false;
-  }
-  if (!scopeIncludes(applies.cantidades, payload.cantidad_unidades)) {
-    return false;
-  }
-  if (!scopeIncludes(applies.rangos, getCurrentQuoteRange(payload, result))) {
-    return false;
-  }
-  if (!scopeIncludes(applies.terminaciones, getCurrentQuoteTerminacion(payload))) {
-    return false;
-  }
-  if (!scopeIncludes(applies.adicionales, getCurrentQuoteAdditionsForScope(payload))) {
-    return false;
-  }
-  if (!scopeIncludes(applies.caras, [payload.caras, payload.caras_tarjetas_troq_circ])) {
-    return false;
-  }
-  if (!scopeIncludes(applies.modo_color, [payload.modo_color, payload.modo_color_folleto])) {
-    return false;
-  }
-  if (!scopeIncludes(applies.tipo_papel, payload.tipo_papel)) {
-    return false;
-  }
-  if (!scopeIncludes(applies.gramajes, payload.gramaje)) {
-    return false;
-  }
-  if (!scopeIncludes(applies.materiales, payload.material)) {
-    return false;
-  }
-  if (!scopeIncludes(applies.tipos_sobre, payload.tipo_sobre)) {
-    return false;
-  }
-  if (!scopeIncludes(applies.variantes, payload.variante)) {
-    return false;
-  }
-  if (!scopeIncludes(applies.productos, payload.producto)) {
-    return false;
-  }
-  if (!scopeIncludes(applies.paginas, payload.paginas)) {
-    return false;
-  }
-  if (Array.isArray(applies.solapa_impresa) && applies.solapa_impresa.length) {
-    const current = Boolean(payload.solapa_impresa);
-    if (!applies.solapa_impresa.some((value) => Boolean(value) === current)) return false;
-  }
-  return true;
-}
-
-function collectCurrentQuoteAdditions(payload, result) {
-  const additions = [];
-  if (result?.adicional_laminado && result.adicional_laminado !== "sin_adicional") {
-    additions.push({
-      label: result.adicional_laminado,
-      value: result.total_adicional_sin_iva ?? result.adicional_unitario_sin_iva,
-      detail: `Unitario ${formatMoney(result.adicional_unitario_sin_iva ?? 0)} x ${result.caras_adicional_laminado ?? payload?.caras_adicional_laminado ?? 1} cara(s)`,
-      source: result.fuente_adicional || result.trazabilidad?.adicional_laminado?.fuente || "motor de adicionales",
-    });
-  }
-  const autoadh = result?.trazabilidad?.adicionales_autoadhesiva || {};
-  if (autoadh.laca_uv) {
-    additions.push({ label: "Laca UV", value: autoadh.laca_uv.subtotal_laca_uv, detail: "Adicional autoadhesiva", source: autoadh.laca_uv.fuente || "matriz_laca_uv_bajadas" });
-  }
-  if (autoadh.tinta_blanca) {
-    additions.push({ label: "Tinta blanca", value: autoadh.tinta_blanca.subtotal_tinta_blanca, detail: "Proporcional por cantidad", source: autoadh.tinta_blanca.fuente_config || "config autoadhesivas" });
-  }
-  const hoja4 = result?.trazabilidad?.adicionales_hoja4?.detalle || {};
-  Object.entries(hoja4).forEach(([key, value]) => {
-    if (value && value.subtotal) additions.push({ label: key, value: value.subtotal, detail: value.regla || "Adicional hoja 4", source: value.fuente || "PDF hoja 4 / Excel" });
-  });
-  if (result?.adicional_troquelado) {
-    additions.push({
-      label: `Troquelado ${result.complejidad_troquelado || payload?.complejidad_troquelado || ""}`.trim(),
-      value: result.total_adicional_troquelado_sin_iva,
-      detail: `Unitario ${formatMoney(result.adicional_troquelado_unitario_sin_iva ?? 0)}`,
-      source: result.fuente_troquelado || "PDF Troqueles digitales",
-    });
-  }
-  return additions;
-}
-
-function optionLabel(options, value, fallback = "No aplica") {
-  if (value === undefined || value === null || value === "") return fallback;
-  const found = (options || []).find((item) => String(item.value) === String(value));
-  return found?.label || String(value).replaceAll("_", " ");
-}
-
-function getTerminacionOptionsForQuote(payload) {
-  const productKey = getQuoteProductKey(payload);
-  if (productKey === "tarjetas_9x5") return TARJETAS_TERMINACIONES;
-  if (productKey === "tarjetas_postales") return POSTALES_TERMINACIONES;
-  if (productKey === "carpetas") return CARPETAS_TERMINACIONES;
-  if (productKey === "stickers_corte_recto") return STICKERS_TERMINACIONES;
-  if (productKey === "imanes_corte_recto") return IMANES_TERMINACIONES;
-  if (productKey === "stickers_circulares") return STICKERS_CIRCULARES_TERMINACIONES;
-  return [];
-}
-
-function describeQuoteTerminacion(payload) {
-  if (!payload) return "No disponible";
-  const productKey = getQuoteProductKey(payload);
-  if (productKey === "carpetas") {
-    const base = optionLabel(CARPETAS_TERMINACIONES, payload.terminacion, "Sin terminación");
-    return payload.solapa_impresa ? `${base} + solapa impresa` : base;
-  }
-  if (productKey === "tarjetas_troqueladas_circulares") {
-    if (!payload.adicional_laminado || payload.adicional_laminado === "sin_adicional") return "Sin laminado";
-    const caras = Number(payload.caras_adicional_laminado || 0);
-    return `${optionLabel([
-      { value: "laminado_brillo", label: "Laminado brillo" },
-      { value: "laminado_mate", label: "Laminado mate" },
-    ], payload.adicional_laminado, payload.adicional_laminado)} · ${caras === 2 ? "ambas caras" : "1 cara"}`;
-  }
-  const terminacion = payload.terminacion || getCurrentQuoteTerminacion(payload);
-  const options = getTerminacionOptionsForQuote(payload);
-  if (!options.length) return "No aplica";
-  return optionLabel(options, terminacion, "Sin terminación");
-}
-
-function describeQuoteOperationalAdditions(payload, result) {
-  const additions = collectCurrentQuoteAdditions(payload, result)
-    .map((item) => item.label)
-    .filter(Boolean);
-  if (additions.length) return additions.join(" + ");
-  const productKey = getQuoteProductKey(payload);
-  if (productKey && !String(productKey).startsWith("bajadas_")) return "No aplica";
-  return "Sin adicional";
-}
-
-function inferPriceSourceKind(result) {
-  const text = [
-    result?.modo_precio,
-    result?.modo_calculo,
-    result?.fuente,
-    result?.regla_aplicada,
-    result?.trazabilidad?.modo_precio,
-    result?.trazabilidad?.modo_calculo,
-    result?.trazabilidad?.fuente_precio_final,
-  ].filter(Boolean).join(" ").toLowerCase();
-  if (text.includes("formula_editable") || text.includes("formula_calibrada")) return "formula_editable_calibrada";
-  if (text.includes("formula") || text.includes("fórmula")) return "formula_directa";
-  if (text.includes("pdf") || text.includes("matriz") || text.includes("lista")) return "matriz_pdf";
-  return "motor_interno";
-}
-
-function sourceKindLabel(kind) {
-  if (kind === "formula_editable_calibrada") return "Fórmula editable calibrada";
-  if (kind === "formula_directa") return "Fórmula directa";
-  if (kind === "matriz_pdf") return "Matriz PDF/lista validada";
-  return "Motor interno";
-}
-
-function sourceKindExplanation(kind) {
-  if (kind === "formula_editable_calibrada") {
-    return "El precio se calcula con fórmula editable calibrada contra PDF/lista.";
-  }
-  if (kind === "formula_directa") {
-    return "El precio se calcula directamente con variables editables del sistema.";
-  }
-  if (kind === "matriz_pdf") {
-    return "El precio final sigue validado por matriz PDF/lista. Las variables editables sirven para preview, trazabilidad y futura fórmula calibrada.";
-  }
-  return "El precio sale del motor interno del producto. Si falta un dato de fuente, se muestra como no disponible sin inventarlo.";
-}
-
-function quoteUsesFixedPdf(_payload, result, relation = {}) {
-  if (!result) return false;
-  if (relation?.modo_precio === "matriz_pdf" || relation?.tipo === "matriz_pdf") return true;
-  return inferPriceSourceKind(result) === "matriz_pdf";
-}
-
-function readableTraceText(value) {
-  return String(value || "")
-    .replace(/_/g, " ")
-    .replace(/\b(\d+g)\s+Ilustracion\b/g, "Ilustración $1")
-    .replace(/\b(\d+g)\s+Ilustración\b/g, "Ilustración $1")
-    .replace(/\bIlustracion\b/g, "Ilustración")
-    .replace(/\bimpresion\b/g, "impresión")
-    .replace(/\blaminado brillo\b/g, "laminado brillo")
-    .trim();
-}
-
-function shortTraceLabel(node) {
-  const id = String(node?.id || "");
-  if (id === "entrada_usuario") return "Entrada";
-  if (id === "material_cotizado") return "Material";
-  if (id === "formato") return "Formato";
-  if (id === "caras") return "Impresión";
-  if (id === "cantidad") return "Cantidad";
-  if (id === "rango") return readableTraceText(node.label).replace(/^Rango aplicado\s*/i, "Rango ");
-  if (id === "precio_base_unitario") return "Precio base";
-  if (id === "base_total") return "Base x cantidad";
-  if (id === "sin_adicional") return "Sin adicional";
-  if (id === "subtotal_con_adicionales") return "Subtotal";
-  if (id === "urgencia") return "Urgencia";
-  if (id === "total_final") return "Total final";
-  if (id.startsWith("adicional_")) return "Adicional";
-  if (id.startsWith("variable_")) {
-    const rango = node.relation?.aplica_a?.rangos?.[0];
-    if (rango) return `Rango ${readableTraceText(rango)}`;
-    const badge = node.context_badge || node.operation || "";
-    if (/rango|cantidad/i.test(badge)) return readableTraceText(badge).replace(/^Cantidad\s*/i, "Rango ");
-    if (/terminaci/i.test(badge)) return "Terminación";
-    if (/formato/i.test(badge)) return "Formato";
-    if (/impresi|cara/i.test(badge)) return "Impresión";
-    if (/papel|material|gramaje/i.test(badge)) return "Material";
-    return "Variable editable";
-  }
-  return readableTraceText(node?.label || "Nodo");
-}
-
-function shortTraceValue(node) {
-  const id = String(node?.id || "");
-  if (id === "entrada_usuario") return readableTraceText(node.value || "Cotización actual");
-  if (id === "material_cotizado") return readableTraceText(node.value || node.label);
-  if (id === "formato" || id === "caras" || id === "cantidad" || id === "rango") return formatTraceValue(node);
-  if (id === "sin_adicional") return "No suma";
-  if (id === "urgencia" && String(node.value || "").toLowerCase() === "normal") return "Normal";
-  if (id.startsWith("variable_") && node?.editable_en_sistema) return "Editable";
-  if (id.startsWith("variable_")) return node.context_badge || formatTraceValue(node);
-  return formatTraceValue(node);
-}
-
-function traceNodeBadge(node, visualType) {
-  if (node?.editable_en_sistema && node?.impacta_hoy) return "Editable";
-  if (node?.id === "total_final") return "Final";
-  if (node?.type === "tabla_pdf") return "PDF/lista";
-  if (visualType === "factor") return "Regla";
-  if (node?.id === "sin_adicional" || node?.id === "urgencia") return "Neutro";
-  return TRACE_TYPE_LABELS[visualType] || visualType;
-}
-
-function traceNodeSize(node) {
-  if (node?.id === "total_final") return { width: TRACE_NODE_WIDTH + 54, height: TRACE_NODE_HEIGHT + 24 };
-  if (node?.id === "sin_adicional" || node?.id === "urgencia") return { width: TRACE_NODE_WIDTH - 36, height: TRACE_NODE_HEIGHT - 24 };
-  return { width: TRACE_NODE_WIDTH, height: TRACE_NODE_HEIGHT };
-}
-
-function buildCurrentQuoteSummary(payload, result) {
-  if (!payload || !result) return null;
-  const product = payload.categoria || payload.producto || "Cotización";
-  const format = payload.formato || "formato no disponible";
-  const material = describeCurrentQuoteMaterial(payload);
-  const print = payload.caras || payload.caras_tarjetas_troq_circ || "impresión no disponible";
-  const quantity = payload.cantidad_unidades || result.cantidad_unidades || "cantidad no disponible";
-  const range = result.cantidad_rango_aplicado || payload.cantidad_rango || result.cantidad_unidades || "no disponible";
-  const addition = describeQuoteOperationalAdditions(payload, result);
-  const terminacion = describeQuoteTerminacion(payload);
-  const parts = [
-    readableTraceText(product),
-    readableTraceText(format),
-    readableTraceText(material),
-    `impresión ${print}`,
-    `cantidad ${quantity}`,
-    `rango ${range}`,
-    addition && addition !== "No aplica" ? addition : terminacion,
-  ].filter(Boolean);
-  const sourceKind = inferPriceSourceKind(result);
-  return {
-    sentence: `Esta cotización usa ${parts.join(", ")}.`,
-    source: sourceKindExplanation(sourceKind),
-    total: formatMoney(result.total_con_urgencia ?? result.total_sin_iva),
-  };
-}
-
-function simplifyCurrentQuoteGraph(graph) {
-  if (!graph?.nodes?.length) return graph || { nodes: [], edges: [], legend: {} };
-  if (!graph.nodes.some((node) => node.id === "entrada_usuario")) return graph;
-
-  const mainPathIds = new Set([
-    "entrada_usuario",
-    "material_cotizado",
-    "formato",
-    "caras",
-    "cantidad",
-    "rango",
-    "precio_base_unitario",
-    "base_total",
-    "sin_adicional",
-    "subtotal_con_adicionales",
-    "urgencia",
-    "total_final",
-  ]);
-
-  const stageById = {
-    entrada_usuario: ["entrada", 0, 0],
-    cantidad: ["entrada", 0, 1],
-    material_cotizado: ["parametros", 1, 0],
-    formato: ["parametros", 1, 1],
-    caras: ["parametros", 1, 2],
-    sin_adicional: ["parametros", 1, 3],
-    rango: ["fuente", 2, 0],
-    precio_base_unitario: ["fuente", 2, 1],
-    base_total: ["calculo", 3, 0],
-    subtotal_con_adicionales: ["calculo", 3, 1],
-    urgencia: ["calculo", 3, 2],
-    total_final: ["total", 4, 0],
-  };
-
-  let simpleVariableRow = 0;
-  const visibleNodes = graph.nodes.filter((node) => (
-    mainPathIds.has(node.id) ||
-    String(node.id || "").startsWith("adicional_") ||
-    (String(node.id || "").startsWith("variable_") && node.affects_current_quote !== false)
-  )).map((node) => {
-    const isVariable = String(node.id || "").startsWith("variable_");
-    const isAddition = String(node.id || "").startsWith("adicional_");
-    const [stage, lane, row] = stageById[node.id] || (isVariable
-      ? ["fuente", 2, 2]
-      : isAddition
-        ? ["parametros", 1, 3]
-        : [inferTraceBranch(node), 2, 0]);
-    const simpleColumn = isVariable ? 2 + simpleVariableRow : row;
-    if (isVariable) simpleVariableRow += 1;
-    return {
-      ...node,
-      branch: stage,
-      lane,
-      column: simpleColumn,
-      row: 0,
-      simple_stage: stage,
-      simple_label: shortTraceLabel(node),
-      simple_value: shortTraceValue(node),
-      simple_badge: traceNodeBadge(node, traceNodeVisualType(node)),
-      simple_weight: node.id === "total_final" ? "final" : (node.id === "sin_adicional" || node.id === "urgencia" ? "secondary" : "primary"),
-    };
-  });
-  const visibleIds = new Set(visibleNodes.map((node) => node.id));
-  return {
-    ...graph,
-    nodes: visibleNodes,
-    edges: (graph.edges || []).filter((edge) => visibleIds.has(edge.source) && visibleIds.has(edge.target)),
-    simple: true,
-    stages: TRACE_STAGE_LABELS,
-    legend: {
-      entrada: graph.legend?.entrada || TRACE_DEFAULT_LEGEND.entrada,
-      derivado: graph.legend?.derivado || TRACE_DEFAULT_LEGEND.derivado,
-      factor: graph.legend?.factor || TRACE_DEFAULT_LEGEND.factor,
-      tabla_pdf: graph.legend?.tabla_pdf || TRACE_DEFAULT_LEGEND.tabla_pdf,
-      variable_madre: graph.legend?.variable_madre || TRACE_DEFAULT_LEGEND.variable_madre,
-    },
-  };
-}
-
-function buildCurrentQuoteTraceGraph(payload, result, context = {}) {
-  if (!payload || !result) return null;
-  const editableRelations = context.editableRelations || [];
-  const variableByKey = context.variableByKey || new Map();
-  const quantity = Number(payload.cantidad_unidades || result.cantidad_unidades || 0);
-  const materialLabel = describeCurrentQuoteMaterial(payload);
-  const range = result.cantidad_rango_aplicado || payload.cantidad_rango || "Sin rango";
-  const baseUnit = result.precio_unitario_base_sin_iva ?? result.precio_base_unitario_sin_iva ?? result.precio_unitario_sin_iva ?? result.precio_sin_iva;
-  const baseTotal = result.total_base_sin_iva ?? result.total_sin_adicional_sin_iva ?? (Number.isFinite(baseUnit) && quantity ? baseUnit * quantity : null);
-  const totalFinal = result.total_con_urgencia ?? result.total_sin_iva ?? result.precio_con_recargo_urgencia ?? result.precio_sin_iva;
-  const urgencyValue = result.trazabilidad?.recargo_urgencia_aplicado ?? payload.urgencia ?? "normal";
-  const additions = collectCurrentQuoteAdditions(payload, result);
-  const additionsTotal = additions.reduce((sum, item) => sum + (Number(item.value) || 0), 0);
-  const subtotalWithAdditions = result.total_sin_iva ?? (Number.isFinite(baseTotal) ? baseTotal + additionsTotal : null);
-  const source = result.fuente || result.trazabilidad?.fuente_precio_final || "motor de cotización";
-  const rule = result.regla_aplicada || result.trazabilidad?.modo_calculo || "regla aplicada";
-  const modeColor = payload.modo_color || (String(payload.caras || "").startsWith("4") ? "fullcolor" : "blanco_y_negro");
-
-  const nodes = [
-    traceNode("entrada_usuario", "Entrada del usuario", "entrada", payload.categoria || "Cotización actual", null, `Cantidad: ${quantity || "-"}. Producto: ${payload.producto || payload.categoria || "-"}.`, "payload actual", "captura del formulario", "Nodo raíz: contiene la selección real calculada por el usuario.", { branch: "entrada", column: 0, lane: 3, row: 0 }),
-
-    traceNode("origen_material", "Origen papel/material", "preparada", payload.tipo_papel || payload.papel || payload.material || "material", null, "Fuente semántica del material seleccionado. Si hay variable madre conectada, aparece como origen; si no, queda como tabla/preparado.", "payload + configuración comercial", "define familia de material", "No reemplaza al material cotizado real; solo explica su origen.", { branch: "material", column: 0, lane: 0, row: 0 }),
-    traceNode("material_cotizado", `Material ${materialLabel}`, "derivado", materialLabel, null, "Material real de la cotización actual.", "lastPayload.material / lastPayload.papel / lastPayload.gramaje", "selección del usuario", "Debe coincidir con lo cotizado, por ejemplo Ilustracion 115g.", { branch: "material", column: 1, lane: 0, row: 0 }),
-
-    traceNode("click_base", `Click ${modeColor}`, "variable_madre", modeColor, null, "Rama de click/impresión usada para explicar el origen del costo de impresión.", "variables comerciales / motor de cotización", "define base de impresión", "Cuando el producto usa PDF fijo, el nodo queda como referencia lógica y el precio final sigue viniendo del resultado real.", { branch: "impresion", column: 0, lane: 1, row: 0, editable_en_sistema: false, impacta_hoy: true, editable_reason: "Nodo conceptual: si existe variable editable exacta, aparece como nodo propio en Base técnica editable." }),
-    traceNode("formato", `Formato ${payload.formato || "-"}`, "derivado", payload.formato || "-", null, "Formato cotizado y posible derivación proporcional del click/base.", "lastPayload.formato", "deriva tamaño/formato", "Debe coincidir con el formulario de la cotización actual.", { branch: "impresion", column: 1, lane: 1, row: 0 }),
-    traceNode("caras", `Impresión ${payload.caras || "-"}`, "derivado", payload.caras || "-", null, "Caras / impresión solicitada.", "lastPayload.caras", "define caras y modo color", "Separa visualmente la impresión de papel y cantidad.", { branch: "impresion", column: 2, lane: 1, row: 0 }),
-
-    traceNode("cantidad", "Cantidad ingresada", "entrada", quantity || "-", "u.", "Cantidad ingresada por el usuario.", "lastPayload.cantidad_unidades", "entrada directa", "Desde acá se define rango o cantidad de matriz.", { branch: "cantidad", column: 0, lane: 2, row: 0 }),
-    traceNode("rango", `Rango aplicado ${range}`, "factor", range, null, "Rango aplicado por cantidad.", "result.cantidad_rango_aplicado / lastPayload.cantidad_rango", "lookup por cantidad", "Si el producto usa matriz exacta, muestra la cantidad o rango devuelto.", { branch: "cantidad", column: 1, lane: 2, row: 0 }),
-
-    traceNode("precio_base_unitario", "Precio base unitario", "tabla_pdf", baseUnit, "ARS", "Precio base unitario de la cotización actual.", source, rule, "Se toma del resultado real, no de un caso fijo.", { branch: "resultado", column: 3, lane: 2, row: 0 }),
-    traceNode("base_total", "Base x cantidad", "derivado", baseTotal, "ARS", "Subtotal base antes de adicionales y urgencia.", "resultado actual", "precio base unitario x cantidad", "Convergencia de material, click, formato, impresión y rango.", { branch: "resultado", column: 4, lane: 2, row: 0 }),
-  ];
-
-  const edges = [
-    traceEdge("e_entrada_material", "entrada_usuario", "material_cotizado", "usa"),
-    traceEdge("e_origen_material", "origen_material", "material_cotizado", "define"),
-    traceEdge("e_material_base", "material_cotizado", "precio_base_unitario", "aporta"),
-
-    traceEdge("e_entrada_formato", "entrada_usuario", "formato", "usa"),
-    traceEdge("e_click_formato", "click_base", "formato", "deriva"),
-    traceEdge("e_formato_caras", "formato", "caras", "aplica"),
-    traceEdge("e_caras_base", "caras", "precio_base_unitario", "aporta"),
-
-    traceEdge("e_entrada_cantidad", "entrada_usuario", "cantidad", "usa"),
-    traceEdge("e_cantidad_rango", "cantidad", "rango", "lookup"),
-    traceEdge("e_rango_base", "rango", "precio_base_unitario", "define"),
-    traceEdge("e_base_total", "precio_base_unitario", "base_total", "x cantidad"),
-  ];
-
-  editableRelations.slice(0, 8).forEach((relation, index) => {
-    const variable = variableByKey.get(relation.variable);
-    const badge = relationContextBadge(relation);
-    const branch = (() => {
-      const text = `${badge} ${relation.componente || ""} ${relation.detalle || ""}`.toLowerCase();
-      if (text.includes("terminaci") || text.includes("laca") || text.includes("laminado") || text.includes("adicional")) return "adicionales";
-      if (text.includes("cantidad") || text.includes("rango")) return "cantidad";
-      if (text.includes("impresi") || text.includes("click") || text.includes("cara") || text.includes("formato")) return "impresion";
-      if (text.includes("papel") || text.includes("material") || text.includes("gramaje")) return "material";
-      return "material";
-    })();
-    const target = branch === "adicionales"
-      ? (additions.length ? "subtotal_con_adicionales" : "sin_adicional")
-      : branch === "cantidad"
-        ? "rango"
-        : branch === "impresion"
-          ? "precio_base_unitario"
-          : "material_cotizado";
-    const id = `variable_${relation.variable}`;
-    nodes.push(traceNode(
-      id,
-      relation.variable_label || variable?.label || relation.variable,
-      "variable_madre",
-      variable?.value ?? relation.valor_actual ?? null,
-      variable?.unit || "",
-      relation.detalle || variable?.description || "Variable editable conectada al caso actual.",
-      relation.fuente || variable?.source_file || "mapa de impacto",
-      badge,
-      quoteUsesFixedPdf(payload, result, relation)
-        ? "Afecta base técnica/trazabilidad; el precio final actual permanece validado por PDF/lista."
-        : "Participa en el cálculo del precio final actual.",
-      {
-        branch,
-        column: 2 + index,
-        lane: branch === "material" ? 0 : branch === "impresion" ? 1 : branch === "cantidad" ? 2 : 3,
-        row: index % 2,
-        editable_en_sistema: Boolean(relation.editable),
-        impacta_hoy: Boolean(relation.impacta_hoy),
-        variable_key: relation.variable,
-        variable_label: relation.variable_label || variable?.label,
-        variable_type: variable?.tipo || relation.tipo || "variable_madre",
-        source: relation.fuente || variable?.source_file || "mapa de impacto",
-        affects_current_quote: Boolean(relation.impacta_hoy),
-        context_badge: badge,
-        relation,
-      }
-    ));
-    edges.push(traceEdge(`e_variable_${relation.variable}`, id, target, badge));
-  });
-
-  if (additions.length) {
-    additions.forEach((addition, index) => {
-      const id = `adicional_${index + 1}`;
-      nodes.push(traceNode(id, `Adicional ${addition.label}`, "factor", addition.value, "ARS", addition.detail || "Adicional aplicado.", addition.source || "resultado actual", "suma al subtotal", "Adicional real de la cotización actual.", { branch: "adicionales", column: 1 + index, lane: 3, row: 0 }));
-      edges.push(traceEdge(`e_entrada_${id}`, "entrada_usuario", id, "elige"));
-      edges.push(traceEdge(`e_${id}_subtotal`, id, "subtotal_con_adicionales", "suma"));
-    });
-  } else {
-    nodes.push(traceNode("sin_adicional", "Sin adicional", "derivado", 0, "ARS", "La cotización actual no tiene adicionales aplicados.", "lastPayload/result", "sin suma adicional", "Nodo explícito para evitar ambigüedad.", { branch: "adicionales", column: 1, lane: 3, row: 0 }));
-    edges.push(traceEdge("e_entrada_sin_adicional", "entrada_usuario", "sin_adicional", "elige"));
-    edges.push(traceEdge("e_sin_adicional_subtotal", "sin_adicional", "subtotal_con_adicionales", "no suma"));
-  }
-
-  nodes.push(
-    traceNode("subtotal_con_adicionales", "Subtotal con adicionales", "derivado", subtotalWithAdditions, "ARS", "Subtotal antes de urgencia.", "resultado actual", "base + adicionales", "Punto de convergencia de base y extras.", { branch: "resultado", column: 5, lane: 2, row: 0 }),
-    traceNode("urgencia", `Urgencia ${payload.urgencia || "normal"}`, "factor", urgencyValue, typeof urgencyValue === "number" ? "factor" : null, "Recargo de urgencia aplicado.", "result.trazabilidad.recargo_urgencia_aplicado", "recarga o mantiene", "Urgencia normal funciona como factor neutro.", { branch: "urgencia", column: 6, lane: 4, row: 0 }),
-    traceNode("total_final", "Total final", "derivado", totalFinal, "ARS", "Total final de la cotización actual.", "result.total_con_urgencia / result.total_sin_iva", "subtotal + urgencia", "Valor que ve el usuario en el panel de resultado.", { branch: "resultado", column: 7, lane: 2, row: 0 })
-  );
-
-  edges.push(traceEdge("e_base_subtotal", "base_total", "subtotal_con_adicionales", "base"));
-  edges.push(traceEdge("e_entrada_urgencia", "entrada_usuario", "urgencia", "elige"));
-  edges.push(traceEdge("e_subtotal_urgencia", "subtotal_con_adicionales", "urgencia", "recarga"));
-  edges.push(traceEdge("e_urgencia_total", "urgencia", "total_final", "total"));
-
-  return {
-    ok: true,
-    producto: payload.categoria || "Cotización actual",
-    caso: "cotizacion_actual",
-    layout: "branched",
-    nodes,
-    edges,
-    legend: TRACE_DEFAULT_LEGEND,
-  };
-}
-
-function inferFromCaras(caras) {
-  const full = caras === "4/0" || caras === "4/4";
-  return {
-    modo_color: full ? "fullcolor" : "blanco_y_negro",
-    categoria: full ? "Bajadas Fullcolor" : "Bajadas Blanco y Negro",
-  };
-}
-
-function inferQuoteContext(form) {
-  if (form.categoria_ui === "Bajadas Autoadhesivas") {
-    return {
-      categoria: "Bajadas Autoadhesivas",
-      modo_color: "fullcolor",
-      formato: form.formato,
-      caras: "4/0",
-    };
-  }
-  if (form.categoria_ui === "Bajadas Kraft") {
-    const byCaras = inferFromCaras(form.caras);
-    return {
-      categoria: "Bajadas Kraft",
-      modo_color: byCaras.modo_color,
-      formato: form.formato,
-      caras: form.caras,
-    };
-  }
-  if (form.categoria_ui === "Tarjetas Personales 9x5") {
-    return {
-      categoria: "Tarjetas Personales",
-      modo_color: "fullcolor",
-      formato: "9x5",
-      caras: form.caras,
-    };
-  }
-  if (form.categoria_ui === "Tarjetas Postales") {
-    return { categoria: "Tarjetas Postales", modo_color: "fullcolor", formato: "postal", caras: form.caras };
-  }
-  if (form.categoria_ui === "Folletos") {
-    return { categoria: "Folletos", modo_color: form.modo_color_folleto, formato: form.formato, caras: form.caras };
-  }
-  if (form.categoria_ui === "Carpetas") {
-    return { categoria: "Carpetas", modo_color: "fullcolor", formato: "A4", caras: form.caras };
-  }
-  if (form.categoria_ui === "Sobres") {
-    return { categoria: "Sobres", modo_color: "fullcolor", formato: "sobre", caras: "4/0" };
-  }
-  if (form.categoria_ui === "Stickers Corte Recto") {
-    return { categoria: "Stickers Corte Recto", modo_color: "fullcolor", formato: form.formato, caras: "4/0" };
-  }
-  if (form.categoria_ui === "Imanes Corte Recto") {
-    return { categoria: "Imanes Corte Recto", modo_color: "fullcolor", formato: form.formato, caras: "4/0" };
-  }
-  if (form.categoria_ui === "Stickers Circulares") {
-    return { categoria: "Stickers Circulares", modo_color: "fullcolor", formato: form.formato, caras: "4/0" };
-  }
-  if (form.categoria_ui === "Tarjetas Troqueladas Circulares") {
-    return { categoria: "Tarjetas Troqueladas Circulares", modo_color: "fullcolor", formato: form.formato, caras: form.caras_tarjetas_troq_circ || "4/4" };
-  }
-  if (form.categoria_ui === "Plancha de Imán Impreso") {
-    return { categoria: "Plancha de Imán Impreso", modo_color: "fullcolor", formato: "30x46", caras: "4/0" };
-  }
-  if (form.categoria_ui === "Agendas / Cuadernos") {
-    return { categoria: "Agendas / Cuadernos", modo_color: "fullcolor", formato: form.formato_agendas || "A5", caras: "N/A" };
-  }
-  const byCaras = inferFromCaras(form.caras);
-  return {
-    categoria: byCaras.categoria,
-    modo_color: byCaras.modo_color,
-    formato: form.formato,
-    caras: form.caras,
-  };
-}
-
-function uniqueSorted(values) {
-  return [...new Set(values.filter(Boolean))].sort((a, b) => String(a).localeCompare(String(b)));
-}
-
-function parseRangeLabel(label) {
-  if (!label) return null;
-  const clean = String(label).trim();
-  if (clean === "1") return { label: clean, min: 1, max: 1 };
-  const match = clean.match(/^(\d+)\s*a\s*(\d+)$/i);
-  if (!match) return null;
-  const min = Number(match[1]);
-  const max = Number(match[2]);
-  if (!Number.isInteger(min) || !Number.isInteger(max) || min > max) return null;
-  return { label: clean, min, max };
-}
-
-function deriveRangeFromQuantity(quantity, availableRanges) {
-  if (!Number.isInteger(quantity) || quantity < 1) return null;
-  const parsed = availableRanges.map(parseRangeLabel).filter(Boolean);
-  const candidates = parsed.filter((r) => r.min <= quantity && quantity <= r.max);
-  if (!candidates.length) return null;
-  candidates.sort((a, b) => {
-    const spanA = a.max - a.min;
-    const spanB = b.max - b.min;
-    if (spanA !== spanB) return spanA - spanB;
-    if (a.min !== b.min) return b.min - a.min;
-    return a.max - b.max;
-  });
-  return candidates[0].label;
-}
-
-function formatMoney(value) {
-  if (typeof value !== "number") return "-";
-  const numeric = new Intl.NumberFormat("es-AR", { minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(value);
-  return `$${numeric} ARS`;
-}
-
-async function copyToClipboard(text) {
-  if (navigator?.clipboard?.writeText) {
-    try {
-      await navigator.clipboard.writeText(text);
-      return true;
-    } catch {
-      // fallback below
-    }
-  }
-  try {
-    const textArea = document.createElement("textarea");
-    textArea.value = text;
-    document.body.appendChild(textArea);
-    textArea.select();
-    const ok = document.execCommand("copy");
-    document.body.removeChild(textArea);
-    return Boolean(ok);
-  } catch {
-    return false;
-  }
-}
-
 export default function CotizadorBajadasV2() {
   const [activeTab, setActiveTab] = useState("Cotizar");
   const [viewMode, setViewMode] = useState(() => {
@@ -1203,392 +304,318 @@ export default function CotizadorBajadasV2() {
     }
   });
   const [understandMode, setUnderstandMode] = useState("detalle");
-  const [form, setForm] = useState(INITIAL_FORM);
-  const [result, setResult] = useState(null);
-  const [lastPayload, setLastPayload] = useState(null);
   const [metrics, setMetrics] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [copyStatus, setCopyStatus] = useState("");
-  const [apiConnected, setApiConnected] = useState(false);
-
-  const [cfg, setCfg] = useState(null);
-  const [cfgHistory, setCfgHistory] = useState([]);
-  const [cfgDiff, setCfgDiff] = useState([]);
-  const [cfgCandidates, setCfgCandidates] = useState([]);
-  const [cfgMsg, setCfgMsg] = useState("");
-  const [cfgValidation, setCfgValidation] = useState(null);
-  const [cfgSimulation, setCfgSimulation] = useState(null);
-  const [cfgActiveVersion, setCfgActiveVersion] = useState(null);
-  const [cfgBackups, setCfgBackups] = useState([]);
-  const [cfgBackupDetail, setCfgBackupDetail] = useState(null);
-  const [cfgBackupPreview, setCfgBackupPreview] = useState(null);
-  const [cfgBackupSimulation, setCfgBackupSimulation] = useState(null);
-  const [principalVariables, setPrincipalVariables] = useState(null);
-  const [principalDraft, setPrincipalDraft] = useState({});
-  const [principalAudit, setPrincipalAudit] = useState(null);
-  const [principalRanges, setPrincipalRanges] = useState(null);
-  const [principalMsg, setPrincipalMsg] = useState("");
-  const [excelImportFile, setExcelImportFile] = useState(null);
-  const [excelImportPreview, setExcelImportPreview] = useState(null);
-  const [excelImportLoading, setExcelImportLoading] = useState(false);
-  const [excelImportError, setExcelImportError] = useState("");
-  const [traceMode, setTraceMode] = useState("cotizacion_actual");
-  const [traceCase, setTraceCase] = useState("click_bajadas");
-  const [traceGraph, setTraceGraph] = useState(null);
-  const [traceLoading, setTraceLoading] = useState(false);
-  const [traceError, setTraceError] = useState("");
-  const [selectedTraceNodeId, setSelectedTraceNodeId] = useState(null);
-  const [traceZoom, setTraceZoom] = useState(1);
-  const [traceFullscreen, setTraceFullscreen] = useState(false);
-  const [traceShowTechnicalGraph, setTraceShowTechnicalGraph] = useState(false);
-  const traceGraphViewportRef = useRef(null);
-  const traceDragRef = useRef(null);
-  const [impactData, setImpactData] = useState(null);
-  const [impactLoading, setImpactLoading] = useState(false);
-  const [impactError, setImpactError] = useState("");
-  const [impactMode, setImpactMode] = useState("variable");
-  const [impactVariable, setImpactVariable] = useState("click_color");
-  const [impactProduct, setImpactProduct] = useState("bajadas_fullcolor_byn");
-  const [adminPrices, setAdminPrices] = useState(null);
-  const [adminHistory, setAdminHistory] = useState([]);
-  const [adminVariable, setAdminVariable] = useState("click_color");
-  const [adminNewValue, setAdminNewValue] = useState("");
-  const [adminPreview, setAdminPreview] = useState(null);
-  const [adminLoading, setAdminLoading] = useState(false);
-  const [adminMsg, setAdminMsg] = useState("");
-  const [adminError, setAdminError] = useState("");
-  const [adminWizardStep, setAdminWizardStep] = useState(1);
-  const [adminShowAdvancedVariables, setAdminShowAdvancedVariables] = useState(false);
-  const [adminRollbackPreview, setAdminRollbackPreview] = useState(null);
-  const [adminRollbackTargetId, setAdminRollbackTargetId] = useState(null);
   const isAdvancedMode = viewMode === "advanced";
   const isSimpleMode = viewMode === "simple";
 
-  const inferred = useMemo(() => inferQuoteContext(form), [form]);
-  const isAutoadhesivas = inferred.categoria === "Bajadas Autoadhesivas";
-  const isKraft = inferred.categoria === "Bajadas Kraft";
-  const isTarjetas = inferred.categoria === "Tarjetas Personales";
-  const isPostales = inferred.categoria === "Tarjetas Postales";
-  const isFolletos = inferred.categoria === "Folletos";
-  const isCarpetas = inferred.categoria === "Carpetas";
-  const isSobres = inferred.categoria === "Sobres";
-  const isStickers = inferred.categoria === "Stickers Corte Recto";
-  const isImanes = inferred.categoria === "Imanes Corte Recto";
-  const isStickersCirculares = inferred.categoria === "Stickers Circulares";
-  const isTarjetasTroqCirc = inferred.categoria === "Tarjetas Troqueladas Circulares";
-  const isPlanchaIman = inferred.categoria === "Plancha de Imán Impreso";
-  const isAgendasCuadernos = inferred.categoria === "Agendas / Cuadernos";
-  const isNoRangeProduct = isPlanchaIman || isAgendasCuadernos;
-  const isBajadasFlow = inferred.categoria.startsWith("Bajadas");
-  const isMatrixProduct =
-    isTarjetas || isPostales || isFolletos || isSobres || isStickers || isImanes || isStickersCirculares || isTarjetasTroqCirc;
-  const isLivianoBajadaNoAutoadhesiva =
-    (inferred.categoria === "Bajadas Fullcolor" || inferred.categoria === "Bajadas Blanco y Negro") &&
-    String(form.tipo_papel || "").toLowerCase() === "liviano";
-  const adicionalesDisponibles = useMemo(() => {
-    if (!isBajadasFlow) return ADICIONALES;
-    if (isAutoadhesivas) return ADICIONALES_LIVIANO;
-    if (isLivianoBajadaNoAutoadhesiva) return ADICIONALES_LIVIANO;
-    return ADICIONALES;
-  }, [isBajadasFlow, isAutoadhesivas, isLivianoBajadaNoAutoadhesiva]);
-  const formatoDataSource = useMemo(() => {
-    if (isKraft || isTarjetas || isPostales || isFolletos || isCarpetas || isSobres || isStickers || isImanes || isStickersCirculares || isTarjetasTroqCirc || isPlanchaIman || isAgendasCuadernos) return form.formato;
-    if (form.formato === "XA3") return "A3+";
-    return form.formato;
-  }, [form.formato, isKraft, isTarjetas, isPostales, isFolletos, isCarpetas, isSobres, isStickers, isImanes, isStickersCirculares, isTarjetasTroqCirc, isPlanchaIman, isAgendasCuadernos]);
-
-  const validRows = useMemo(
-    () =>
-      optionRows.filter(
-        (r) => r.categoria === inferred.categoria && r.modo_color === inferred.modo_color && r.caras === inferred.caras
-      ),
-    [inferred]
-  );
-  const formatoOptions = useMemo(() => uniqueSorted(validRows.map((r) => r.formato)), [validRows]);
-  const effectiveFormatoOptions = useMemo(() => {
-    if (isKraft) return KRAFT_FORMATOS;
-    if (isTarjetas) return TARJETAS_FORMATOS;
-    if (isPostales) return POSTALES_FORMATOS;
-    if (isFolletos) return FOLLETOS_FORMATOS;
-    if (isCarpetas) return CARPETAS_FORMATOS;
-    if (isSobres) return ["sobre"];
-    if (isStickers) return STICKERS_FORMATOS;
-    if (isImanes) return IMANES_FORMATOS;
-    if (isStickersCirculares) return STICKERS_CIRCULARES_FORMATOS;
-    if (isTarjetasTroqCirc) return TARJETAS_TROQ_CIRC_FORMATOS;
-    if (isPlanchaIman) return ["30x46"];
-    if (isAgendasCuadernos) return AGENDAS_FORMATOS;
-    if (isAutoadhesivas) return AUTOADH_FORMATOS;
-    if (formatoOptions.includes("A3+") && !formatoOptions.includes("XA3")) {
-      return uniqueSorted([...formatoOptions, "XA3"]);
-    }
-    return formatoOptions;
-  }, [isAutoadhesivas, isKraft, isTarjetas, isPostales, isFolletos, isCarpetas, isSobres, isStickers, isImanes, isStickersCirculares, isTarjetasTroqCirc, isPlanchaIman, isAgendasCuadernos, formatoOptions]);
-  const tipoPapelOptions = useMemo(
-    () => uniqueSorted(validRows.filter((r) => r.formato === formatoDataSource).map((r) => r.tipo_papel)),
-    [validRows, formatoDataSource]
-  );
-  const materialOptions = useMemo(
-    () => uniqueSorted(validRows.filter((r) => r.formato === formatoDataSource && r.tipo_papel === form.tipo_papel).map((r) => r.material)),
-    [validRows, formatoDataSource, form.tipo_papel]
-  );
-  const gramajeOptions = useMemo(
-    () =>
-      uniqueSorted(
-        validRows
-          .filter((r) => r.formato === formatoDataSource && r.tipo_papel === form.tipo_papel && r.material === form.material)
-          .map((r) => r.gramaje)
-      ),
-    [validRows, formatoDataSource, form.tipo_papel, form.material]
-  );
-  const cantidadOptions = useMemo(() => {
-    if (isKraft) return KRAFT_RANGOS;
-    if (isTarjetas) return TARJETAS_CANTIDADES;
-    if (isPostales) return POSTALES_CANTIDADES;
-    if (isFolletos) return FOLLETOS_CANTIDADES;
-    if (isCarpetas) return CARPETAS_RANGOS;
-    if (isSobres) return SOBRES_CANTIDADES;
-    if (isStickers) return STICKERS_CANTIDADES;
-    if (isImanes) return IMANES_CANTIDADES;
-    if (isStickersCirculares) return STICKERS_CIRCULARES_CANTIDADES;
-    if (isTarjetasTroqCirc) return TARJETAS_TROQ_CIRC_CANTIDADES;
-    if (isPlanchaIman) return PLANCHA_IMAN_CANTIDADES_SUGERIDAS;
-    if (isAgendasCuadernos) return ["2", "5", "10", "20"];
-    if (isAutoadhesivas) return AUTOADH_RANGOS;
-    return uniqueSorted(
-      validRows
-        .filter(
-          (r) =>
-            r.formato === formatoDataSource &&
-            r.tipo_papel === form.tipo_papel &&
-            r.material === form.material &&
-            r.gramaje === form.gramaje
-        )
-        .map((r) => r.cantidad_rango)
-    );
-  }, [isKraft, isTarjetas, isPostales, isFolletos, isCarpetas, isSobres, isStickers, isImanes, isStickersCirculares, isTarjetasTroqCirc, isPlanchaIman, isAgendasCuadernos, isAutoadhesivas, validRows, formatoDataSource, form.tipo_papel, form.material, form.gramaje]);
-  const cantidadUnidades = useMemo(() => Number(form.cantidad_unidades), [form.cantidad_unidades]);
-  const derivedRange = useMemo(() => deriveRangeFromQuantity(cantidadUnidades, cantidadOptions), [cantidadUnidades, cantidadOptions]);
-
-  const loadConfigData = async () => {
-    try {
-      const [conf, hist, diff, candidates, activeVersion, backups] = await Promise.all([
-        fetchBajadasConfig(),
-        fetchBajadasConfigHistory(),
-        fetchBajadasConfigDiff(),
-        fetchBajadasConfigCandidates(),
-        fetchBajadasActiveVersion(),
-        fetchBajadasBackups(),
-      ]);
-      setCfg(conf);
-      setCfgHistory(hist?.history || []);
-      setCfgDiff(diff?.diff || []);
-      setCfgCandidates(candidates?.candidates || []);
-      setCfgActiveVersion(activeVersion || null);
-      setCfgBackups(backups?.backups || []);
-    } catch {
-      setCfgMsg("No se pudo cargar configuración editable.");
-    }
-  };
-
-  const loadPrincipalVariables = async () => {
-    try {
-      setPrincipalMsg("");
-      const [variables, audit, ranges] = await Promise.all([
-        fetchPrincipalVariables(),
-        fetchPrincipalVariablesAudit(),
-        fetchPrincipalVariablesRanges(),
-      ]);
-      const draft = {};
-      ["tipo_cambio", "clicks", "papeles", "multiplicadores", "adicionales"].forEach((group) => {
-        (variables[group] || []).forEach((item) => {
-          draft[item.key] = item.value;
-        });
-      });
-      setPrincipalVariables(variables);
-      setPrincipalDraft(draft);
-      setPrincipalAudit(audit);
-      setPrincipalRanges(ranges);
-    } catch (err) {
-      setPrincipalMsg(err.message || "No se pudieron cargar las variables principales.");
-    }
-  };
-
-  const loadTraceGraph = async (selectedCase = traceCase) => {
-    try {
-      setTraceLoading(true);
-      setTraceError("");
-      const graph = await fetchTraceGraph({ caso: selectedCase });
-      setTraceGraph(graph);
-      setSelectedTraceNodeId(graph?.nodes?.[0]?.id || null);
-      setTraceZoom(initialTraceZoom(true));
+  const {
+    result,
+    setResult,
+    lastPayload,
+    setLastPayload,
+    loading,
+    setLoading,
+    error,
+    setError,
+    apiConnected,
+    copyStatus,
+    setCopyStatus,
+    principalVariables,
+    principalDraft,
+    setPrincipalDraft,
+    principalAudit,
+    principalRanges,
+    principalMsg,
+    setPrincipalMsg,
+    excelImportFile,
+    setExcelImportFile,
+    excelImportPreview,
+    excelImportLoading,
+    excelImportError,
+    loadPrincipalVariables,
+    downloadPricesPdf,
+    downloadPricesExcel,
+    previewExcelImport,
+    savePrincipalVariables,
+    handleCopy,
+    handleSubmit,
+  } = useCotizacionSubmit({
+    setMetrics,
+    getSubmitContext: () => ({
+      form,
+      inferred,
+      derivedRange,
+      cantidadUnidades,
+      missingFields,
+      isAutoadhesivas,
+      isKraft,
+      isTarjetas,
+      isPostales,
+      isFolletos,
+      isCarpetas,
+      isSobres,
+      isStickers,
+      isImanes,
+      isStickersCirculares,
+      isTarjetasTroqCirc,
+      isPlanchaIman,
+      isAgendasCuadernos,
+      isNoRangeProduct,
+      isBajadasFlow,
+      isMatrixProduct,
+    }),
+    resetTraceForSubmit: () => {
+      if (traceMode === "cotizacion_actual") {
+        setTraceGraph(null);
+        setSelectedTraceNodeId(null);
+      }
+    },
+    resetAdminAfterSubmit: () => {
+      setAdminWizardStep(1);
+      setAdminVariable("");
+      setAdminNewValue("");
+      setAdminPreview(null);
+      setAdminMsg("");
+      setAdminError("");
+      setAdminShowAdvancedVariables(false);
       setTraceShowTechnicalGraph(false);
-    } catch (err) {
-      setTraceGraph(null);
-      setSelectedTraceNodeId(null);
-      setTraceError(err.message || "No se pudo cargar la trazabilidad visual.");
-    } finally {
-      setTraceLoading(false);
-    }
-  };
+    },
+    constants: {
+      CARPETAS_GRAMAJE,
+      CARPETAS_PAPEL,
+      FOLLETOS_CANTIDADES,
+      FOLLETOS_PAPELES,
+      IMANES_CANTIDADES,
+      KRAFT_MATERIAL,
+      KRAFT_TIPO_PAPEL,
+      PLANCHA_IMAN_CANTIDADES_SUGERIDAS,
+      POSTALES_CANTIDADES,
+      SOBRES_CANTIDADES,
+      STICKERS_CANTIDADES,
+      STICKERS_CIRCULARES_CANTIDADES,
+      TARJETAS_CANTIDADES,
+      TARJETAS_TROQ_CIRC_CANTIDADES,
+    },
+  });
 
-  const loadVariablesImpacto = async () => {
-    try {
-      setImpactLoading(true);
-      setImpactError("");
-      const data = await fetchVariablesImpacto();
-      setImpactData(data);
-      if (data?.variables?.length && !data.variables.some((item) => item.key === impactVariable)) {
-        setImpactVariable(data.variables[0].key);
-      }
-      if (data?.productos?.length && !data.productos.some((item) => item.key === impactProduct)) {
-        setImpactProduct(data.productos[0].key);
-      }
-    } catch (err) {
-      setImpactData(null);
-      setImpactError(err.message || "No se pudo cargar el impacto de variables.");
-    } finally {
-      setImpactLoading(false);
-    }
-  };
+  const {
+    form,
+    setForm,
+    inferred,
+    isAutoadhesivas,
+    isKraft,
+    isTarjetas,
+    isPostales,
+    isFolletos,
+    isCarpetas,
+    isSobres,
+    isStickers,
+    isImanes,
+    isStickersCirculares,
+    isTarjetasTroqCirc,
+    isPlanchaIman,
+    isAgendasCuadernos,
+    isNoRangeProduct,
+    isBajadasFlow,
+    isMatrixProduct,
+    isLivianoBajadaNoAutoadhesiva,
+    adicionalesDisponibles,
+    formatoDataSource,
+    validRows,
+    formatoOptions,
+    effectiveFormatoOptions,
+    tipoPapelOptions,
+    materialOptions,
+    gramajeOptions,
+    cantidadOptions,
+    cantidadUnidades,
+    derivedRange,
+    missingFields,
+    updateField,
+    handleClear,
+  } = useCotizacionForm({
+    initialForm: INITIAL_FORM,
+    setResult,
+    setLastPayload,
+    setError,
+    setCopyStatus,
+    setLoading,
+    constants: {
+      ADICIONALES,
+      ADICIONALES_LIVIANO,
+      AGENDAS_FORMATOS,
+      AGENDAS_PAGINAS,
+      AGENDAS_PRODUCTOS,
+      AUTOADH_FORMATOS,
+      AUTOADH_RANGOS,
+      CARAS,
+      CARPETAS_CARAS,
+      CARPETAS_FORMATOS,
+      CARPETAS_GRAMAJE,
+      CARPETAS_PAPEL,
+      CARPETAS_RANGOS,
+      CARPETAS_TERMINACIONES,
+      FOLLETOS_CANTIDADES,
+      FOLLETOS_FORMATOS,
+      FOLLETOS_MODO_COLOR,
+      FOLLETOS_PAPELES,
+      IMANES_CANTIDADES,
+      IMANES_FORMATOS,
+      IMANES_TERMINACIONES,
+      KRAFT_FORMATOS,
+      KRAFT_GRAMAJES,
+      KRAFT_MATERIAL,
+      KRAFT_RANGOS,
+      KRAFT_TIPO_PAPEL,
+      PLANCHA_IMAN_CANTIDADES_SUGERIDAS,
+      PLANCHA_IMAN_VARIANTES,
+      POSTALES_CANTIDADES,
+      POSTALES_CARAS,
+      POSTALES_FORMATOS,
+      POSTALES_GRAMAJES,
+      POSTALES_TERMINACIONES,
+      SOBRES_CANTIDADES,
+      SOBRES_TIPOS,
+      STICKERS_CANTIDADES,
+      STICKERS_CIRCULARES_CANTIDADES,
+      STICKERS_CIRCULARES_FORMATOS,
+      STICKERS_CIRCULARES_MATERIALES,
+      STICKERS_CIRCULARES_TERMINACIONES,
+      STICKERS_FORMATOS,
+      STICKERS_TERMINACIONES,
+      TARJETAS_CANTIDADES,
+      TARJETAS_CARAS,
+      TARJETAS_FORMATOS,
+      TARJETAS_GRAMAJES,
+      TARJETAS_TERMINACIONES,
+      TARJETAS_TROQ_CIRC_CANTIDADES,
+      TARJETAS_TROQ_CIRC_FORMATOS,
+    },
+  });
 
-  const loadAdminPrices = async () => {
-    try {
-      setAdminLoading(true);
-      setAdminError("");
-      const [variables, history] = await Promise.all([
-        fetchAdminPreciosVariables(),
-        fetchAdminPreciosHistorial(),
-      ]);
-      setAdminPrices(variables);
-      setAdminHistory(history?.historial || []);
-      if (variables?.variables?.length) {
-        const selectedKey = variables.variables.some((item) => item.key === adminVariable)
-          ? adminVariable
-          : variables.variables[0].key;
-        const selectedItem = variables.variables.find((item) => item.key === selectedKey);
-        setAdminVariable(selectedKey);
-        if (adminNewValue === "" && selectedItem) {
-          setAdminNewValue(String(selectedItem.value));
-        }
-      }
-    } catch (err) {
-      setAdminError(err.message || "No se pudo cargar Administrador de precios.");
-    } finally {
-      setAdminLoading(false);
-    }
-  };
+  const {
+    cfg,
+    setCfg,
+    cfgHistory,
+    cfgDiff,
+    cfgCandidates,
+    cfgMsg,
+    cfgValidation,
+    cfgSimulation,
+    cfgActiveVersion,
+    cfgBackups,
+    cfgBackupDetail,
+    cfgBackupPreview,
+    cfgBackupSimulation,
+    runValidateConfig,
+    runSimulation,
+    createCandidate,
+    rejectCandidate,
+    approveCandidate,
+    promoteCandidate,
+    showBackupDetail,
+    restoreBackup,
+    previewRestoreBackup,
+    simulateBackupQuote,
+    updateCfgField,
+    saveCfgField,
+    saveScales,
+    restoreCfg,
+  } = useConfigManager({ lastPayload });
+  const {
+    impactData,
+    setImpactData,
+    impactLoading,
+    impactError,
+    impactMode,
+    setImpactMode,
+    impactVariable,
+    setImpactVariable,
+    impactProduct,
+    setImpactProduct,
+  } = useImpactMap({
+    activeTab,
+    lastPayload,
+    result,
+  });
 
-  const handleAdminPreview = async () => {
-    try {
-      setAdminLoading(true);
-      setAdminError("");
-      setAdminMsg("");
-      const preview = await previewAdminPrecio({ variable: adminVariable, nuevo_valor: Number(adminNewValue) });
-      setAdminPreview(preview);
-      setAdminMsg("Preview válido. Revisá impactos antes de guardar.");
-      setAdminWizardStep(5);
-    } catch (err) {
-      setAdminPreview(null);
-      setAdminError(err.message || "No se pudo previsualizar el cambio.");
-    } finally {
-      setAdminLoading(false);
-    }
-  };
-
-  const handleAdminApply = async () => {
-    if (!adminPreview || adminPreview.variable !== adminVariable || Number(adminPreview.nuevo_valor) !== Number(adminNewValue)) {
-      setAdminError("Primero generá un preview válido para este valor.");
-      return;
-    }
-    const selected = (adminPrices?.variables || []).find((item) => item.key === adminVariable);
-    const confirmed = window.confirm(
-      `Vas a cambiar ${selected?.label || adminVariable} de ${selected?.value ?? adminPreview.valor_actual} a ${adminNewValue}. Se creará backup e historial. ¿Confirmás?`
-    );
-    if (!confirmed) return;
-    try {
-      setAdminLoading(true);
-      setAdminError("");
-      const applied = await applyAdminPrecio({ variable: adminVariable, nuevo_valor: Number(adminNewValue), confirmado: true });
-      setAdminMsg(`Cambio guardado. Backup: ${(applied.backup || []).join(", ") || "-"}`);
-      setAdminPreview(null);
-      setAdminRollbackPreview(null);
-      setAdminRollbackTargetId(null);
-      setAdminWizardStep(6);
-      await loadAdminPrices();
-      await loadPrincipalVariables();
-      setImpactData(null);
-    } catch (err) {
-      setAdminError(err.message || "No se pudo guardar el cambio.");
-    } finally {
-      setAdminLoading(false);
-    }
-  };
-
-  const handleAdminRollbackPreview = async (historialId) => {
-    try {
-      setAdminLoading(true);
-      setAdminError("");
-      setAdminMsg("");
-      const preview = await previewAdminPrecioRollback({ historial_id: historialId });
-      setAdminRollbackPreview(preview);
-      setAdminRollbackTargetId(historialId);
-      setAdminMsg("Preview de restauración listo. Revisá antes de restaurar.");
-      setAdminWizardStep(6);
-    } catch (err) {
-      setAdminRollbackPreview(null);
-      setAdminRollbackTargetId(null);
-      setAdminError(err.message || "No se pudo previsualizar la restauración.");
-    } finally {
-      setAdminLoading(false);
-    }
-  };
-
-  const handleAdminRollbackApply = async () => {
-    if (!adminRollbackPreview || !adminRollbackTargetId) {
-      setAdminError("Primero previsualizá la restauración.");
-      return;
-    }
-    const confirmed = window.confirm(
-      `Vas a restaurar ${adminRollbackPreview.variable} de ${adminRollbackPreview.valor_actual} a ${adminRollbackPreview.valor_rollback}. Se creará un nuevo backup y se registrará el rollback.`
-    );
-    if (!confirmed) return;
-    try {
-      setAdminLoading(true);
-      setAdminError("");
-      const applied = await applyAdminPrecioRollback({ historial_id: adminRollbackTargetId, confirmado: true });
-      setAdminMsg(`Rollback aplicado. Backup: ${(applied.backup || []).join(", ") || "-"}`);
-      setAdminRollbackPreview(null);
-      setAdminRollbackTargetId(null);
-      setAdminPreview(null);
-      await loadAdminPrices();
-      await loadPrincipalVariables();
-      setImpactData(null);
-      setAdminWizardStep(6);
-    } catch (err) {
-      setAdminError(err.message || "No se pudo aplicar el rollback.");
-    } finally {
-      setAdminLoading(false);
-    }
-  };
-
-  const getCurrentEditableRelations = (sourceImpactData = impactData) => {
-    if (!lastPayload || !result || !sourceImpactData?.relaciones?.length) return [];
-    const productKey = getQuoteProductKey(lastPayload);
-    return (sourceImpactData.relaciones || [])
-      .filter((relation) => (
-        relation.producto_key === productKey &&
-        relation.editable &&
-        relationAppliesToCurrentQuote(relation, lastPayload, result)
-      ))
-      .reduce((acc, relation) => {
-        if (!acc.some((item) => item.variable === relation.variable)) acc.push(relation);
-        return acc;
-      }, []);
-  };
-
-  const getAdminVariableByKey = (key) => (adminPrices?.variables || []).find((item) => item.key === key) || null;
+  const {
+    adminPrices,
+    setAdminPrices,
+    adminHistory,
+    adminVariable,
+    setAdminVariable,
+    adminNewValue,
+    setAdminNewValue,
+    adminPreview,
+    setAdminPreview,
+    adminLoading,
+    adminMsg,
+    setAdminMsg,
+    adminError,
+    setAdminError,
+    adminWizardStep,
+    setAdminWizardStep,
+    adminShowAdvancedVariables,
+    setAdminShowAdvancedVariables,
+    adminRollbackPreview,
+    setAdminRollbackPreview,
+    adminRollbackTargetId,
+    setAdminRollbackTargetId,
+    handleAdminPreview,
+    handleAdminApply,
+    handleAdminRollbackPreview,
+    handleAdminRollbackApply,
+    getCurrentEditableRelations,
+    getAdminVariableByKey,
+  } = useAdminPrices({
+    activeTab,
+    lastPayload,
+    result,
+    impactData,
+    setImpactData,
+    loadPrincipalVariables,
+  });
+  const {
+    traceMode,
+    setTraceMode,
+    traceCase,
+    setTraceCase,
+    traceGraph,
+    setTraceGraph,
+    traceLoading,
+    traceError,
+    setTraceError,
+    selectedTraceNodeId,
+    setSelectedTraceNodeId,
+    traceZoom,
+    setTraceZoom,
+    traceFullscreen,
+    setTraceFullscreen,
+    traceShowTechnicalGraph,
+    setTraceShowTechnicalGraph,
+    traceGraphViewportRef,
+    loadTraceGraph,
+    handleLoadCurrentQuoteGraph,
+    setTraceZoomLevel,
+    resetTraceView,
+    fitTraceGraphToView,
+    handleTraceWheel,
+    handleTracePanStart,
+    handleTracePanMove,
+    stopTracePan,
+  } = useTraceGraph({
+    activeTab,
+    understandMode,
+    lastPayload,
+    result,
+    impactData,
+    setImpactData,
+    adminPrices,
+    setAdminPrices,
+    getCurrentEditableRelations,
+    traceZoomStep: TRACE_ZOOM_STEP,
+  });
 
   const handleTraceModifyVariable = (variableKey) => {
     if (!variableKey) return;
@@ -1621,347 +648,6 @@ export default function CotizadorBajadasV2() {
     setActiveTab("Entender un precio");
   };
 
-  const handleLoadCurrentQuoteGraph = async () => {
-    setTraceError("");
-
-    if (!result || !lastPayload) {
-      setTraceGraph(null);
-      setSelectedTraceNodeId(null);
-      setTraceError("Primero calculá una cotización para ver su trazabilidad visual.");
-      return;
-    }
-
-    try {
-      setTraceLoading(true);
-      let localImpactData = impactData;
-      let localAdminPrices = adminPrices;
-      try {
-        if (!localImpactData) {
-          localImpactData = await fetchVariablesImpacto();
-          setImpactData(localImpactData);
-        }
-        if (!localAdminPrices) {
-          localAdminPrices = await fetchAdminPreciosVariables();
-          setAdminPrices(localAdminPrices);
-        }
-      } catch {
-        // El grafo base de la cotización no debe depender de metadata editable.
-        localImpactData = localImpactData || { relaciones: [] };
-        localAdminPrices = localAdminPrices || { variables: [] };
-      }
-      const variableByKey = new Map((localAdminPrices?.variables || []).map((item) => [item.key, item]));
-      const graph = buildCurrentQuoteTraceGraph(lastPayload, result, {
-        editableRelations: getCurrentEditableRelations(localImpactData),
-        variableByKey,
-      });
-
-      if (!graph || !Array.isArray(graph.nodes) || graph.nodes.length === 0) {
-        setTraceGraph(null);
-        setSelectedTraceNodeId(null);
-        setTraceError("No se pudo construir el grafo de la cotización actual.");
-        return;
-      }
-
-      setTraceGraph(graph);
-      setSelectedTraceNodeId(graph.nodes[0]?.id ?? null);
-      setTraceZoom(initialTraceZoom(false));
-      setTraceShowTechnicalGraph(false);
-    } catch (err) {
-      setTraceGraph(null);
-      setSelectedTraceNodeId(null);
-      setTraceError(err.message || "No se pudo construir el grafo de la cotización actual.");
-    } finally {
-      setTraceLoading(false);
-    }
-  };
-
-  const setTraceZoomLevel = (nextZoom) => {
-    setTraceZoom(clampTraceZoom(nextZoom));
-  };
-
-  const resetTraceView = () => {
-    setTraceZoom(initialTraceZoom(traceShowTechnicalGraph || traceMode !== "cotizacion_actual"));
-    requestAnimationFrame(() => {
-      const viewport = traceGraphViewportRef.current;
-      if (!viewport) return;
-      viewport.scrollLeft = 0;
-      viewport.scrollTop = 0;
-    });
-  };
-
-  const fitTraceGraphToView = (graphWidth, graphHeight) => {
-    const viewport = traceGraphViewportRef.current;
-    if (!viewport || !graphWidth || !graphHeight) return;
-    const nextZoom = clampTraceZoom(Math.min(
-      (viewport.clientWidth - 48) / graphWidth,
-      (viewport.clientHeight - 48) / graphHeight
-    ));
-    setTraceZoom(nextZoom);
-    requestAnimationFrame(() => {
-      viewport.scrollLeft = Math.max(0, (graphWidth * nextZoom - viewport.clientWidth) / 2);
-      viewport.scrollTop = Math.max(0, (graphHeight * nextZoom - viewport.clientHeight) / 2);
-    });
-  };
-
-  const handleTraceWheel = (event) => {
-    if (!traceGraph?.nodes?.length) return;
-    event.preventDefault();
-    const direction = event.deltaY > 0 ? -1 : 1;
-    setTraceZoom((current) => clampTraceZoom(current + direction * TRACE_ZOOM_STEP));
-  };
-
-  const handleTracePanStart = (event) => {
-    if (event.button !== 0) return;
-    if (event.target?.closest?.(".trace-node")) return;
-    const viewport = traceGraphViewportRef.current;
-    if (!viewport) return;
-    traceDragRef.current = {
-      x: event.clientX,
-      y: event.clientY,
-      scrollLeft: viewport.scrollLeft,
-      scrollTop: viewport.scrollTop,
-    };
-    viewport.classList.add("is-panning");
-  };
-
-  const handleTracePanMove = (event) => {
-    const drag = traceDragRef.current;
-    const viewport = traceGraphViewportRef.current;
-    if (!drag || !viewport) return;
-    viewport.scrollLeft = drag.scrollLeft - (event.clientX - drag.x);
-    viewport.scrollTop = drag.scrollTop - (event.clientY - drag.y);
-  };
-
-  const stopTracePan = () => {
-    traceDragRef.current = null;
-    traceGraphViewportRef.current?.classList.remove("is-panning");
-  };
-
-  const downloadPricesPdf = async () => {
-    try {
-      setPrincipalMsg("Generando PDF...");
-      const { filename, blob } = await exportPricesPdf();
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = filename;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      URL.revokeObjectURL(url);
-      setPrincipalMsg("PDF exportado correctamente.");
-    } catch (err) {
-      setPrincipalMsg(err.message || "No se pudo exportar PDF. Revisar backend.");
-    }
-  };
-
-  const downloadPricesExcel = async () => {
-    try {
-      setPrincipalMsg("Generando Excel maestro...");
-      const { filename, blob } = await exportPricesExcel();
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = filename;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      URL.revokeObjectURL(url);
-      setPrincipalMsg("Excel maestro exportado correctamente.");
-    } catch (err) {
-      setPrincipalMsg(err.message || "No se pudo exportar Excel maestro. Revisar backend.");
-    }
-  };
-
-  const previewExcelImport = async () => {
-    if (!excelImportFile) {
-      setExcelImportError("Seleccioná un archivo .xlsx para previsualizar.");
-      setExcelImportPreview(null);
-      return;
-    }
-    try {
-      setExcelImportLoading(true);
-      setExcelImportError("");
-      const preview = await previewExcelMaestro(excelImportFile);
-      setExcelImportPreview(preview);
-      setPrincipalMsg("Preview de Excel maestro generado. No se aplicaron cambios.");
-    } catch (err) {
-      setExcelImportPreview(null);
-      setExcelImportError(err.message || "No se pudo previsualizar el Excel maestro.");
-    } finally {
-      setExcelImportLoading(false);
-    }
-  };
-
-  const savePrincipalVariables = async () => {
-    if (!principalVariables) return;
-    const updates = [];
-    ["tipo_cambio", "clicks", "papeles", "multiplicadores", "adicionales"].forEach((group) => {
-      (principalVariables[group] || []).forEach((item) => {
-        const value = Number(principalDraft[item.key]);
-        if (Number.isFinite(value) && value !== Number(item.value)) updates.push({ key: item.key, value });
-      });
-    });
-    if (!updates.length) {
-      setPrincipalMsg("No hay cambios para guardar.");
-      return;
-    }
-    try {
-      const response = await updatePrincipalVariables(updates);
-      const summary = (response.updates || [])
-        .map((item) => `${item.key}: ${item.previous_value} → ${item.new_value}`)
-        .join(" · ");
-      await loadPrincipalVariables();
-      setPrincipalMsg(`Variables actualizadas: ${summary}`);
-    } catch (err) {
-      setPrincipalMsg(err.message || "No se pudieron guardar las variables principales.");
-    }
-  };
-
-  const runValidateConfig = async () => {
-    try {
-      const res = await validateBajadasConfig();
-      setCfgValidation(res);
-      setCfgMsg(res.valid ? "Configuración válida." : "Configuración con errores.");
-    } catch (err) {
-      setCfgMsg(err.message || "No se pudo validar configuración.");
-    }
-  };
-
-  const runSimulation = async () => {
-    if (!lastPayload) {
-      setCfgMsg("Primero calculá una cotización para simular.");
-      return;
-    }
-    try {
-      const sim = await simulateBajadasConfig({ quote: lastPayload, use_config_editable: true });
-      setCfgSimulation(sim);
-      setCfgMsg("Simulación ejecutada.");
-    } catch (err) {
-      setCfgMsg(err.message || "No se pudo simular configuración.");
-    }
-  };
-
-  const createCandidate = async () => {
-    try {
-      setCfgMsg("");
-      await createBajadasConfigCandidate({ motivo: "staging_desde_ui" });
-      await loadConfigData();
-      setCfgMsg("Candidato creado en estado PENDIENTE_APROBACION.");
-    } catch (err) {
-      setCfgMsg(err.message || "No se pudo crear candidato.");
-    }
-  };
-
-  const rejectCandidate = async (candidateId) => {
-    try {
-      setCfgMsg("");
-      await rejectBajadasConfigCandidate(candidateId, "rechazo_desde_ui");
-      await loadConfigData();
-      setCfgMsg(`Candidato ${candidateId} rechazado.`);
-    } catch (err) {
-      setCfgMsg(err.message || "No se pudo rechazar candidato.");
-    }
-  };
-
-  const approveCandidate = async (candidateId) => {
-    try {
-      setCfgMsg("");
-      await approveBajadasConfigCandidate(candidateId, "aprobacion_desde_ui");
-      await loadConfigData();
-      setCfgMsg(`Candidato ${candidateId} aprobado. No se aplicaron cambios productivos.`);
-    } catch (err) {
-      setCfgMsg(err.message || "No se pudo aprobar candidato.");
-    }
-  };
-
-  const showBackupDetail = async (backupFilename) => {
-    try {
-      setCfgMsg("");
-      const detail = await fetchBajadasBackupDetail(backupFilename);
-      setCfgBackupDetail(detail);
-    } catch (err) {
-      setCfgMsg(err.message || "No se pudo leer detalle de backup.");
-    }
-  };
-
-  const restoreBackup = async (backupFilename) => {
-    const confirmation = window.prompt(
-      "Para restaurar escribí exactamente: RESTAURAR_BACKUP_BAJADAS_V2"
-    );
-    if (confirmation === null) return;
-    try {
-      setCfgMsg("");
-      const response = await restoreBajadasBackup(backupFilename, {
-        confirmacion: confirmation,
-        motivo: "restore_backup_desde_ui",
-        usuario: "local",
-      });
-      await loadConfigData();
-      setCfgMsg(
-        `Backup restaurado: ${response.backup_restaurado}. Pre-restore creado: ${response.backup_pre_restore_creado}.`
-      );
-    } catch (err) {
-      setCfgMsg(err.message || "No se pudo restaurar backup.");
-    }
-  };
-
-  const previewRestoreBackup = async (backupFilename) => {
-    try {
-      setCfgMsg("");
-      const preview = await previewRestoreBajadasBackup(backupFilename);
-      setCfgBackupPreview(preview);
-      setCfgMsg("Preview generado. Esta previsualización no modifica la configuración productiva.");
-    } catch (err) {
-      setCfgMsg(err.message || "No se pudo previsualizar restore.");
-    }
-  };
-
-  const simulateBackupQuote = async (backupFilename) => {
-    if (!lastPayload) {
-      setCfgMsg("Primero calculá una cotización para usarla como base de simulación.");
-      return;
-    }
-    try {
-      setCfgMsg("");
-      const simulation = await simulateRestoreBajadasBackup(backupFilename, lastPayload);
-      setCfgBackupSimulation(simulation);
-      setCfgMsg("Simulación ejecutada. Esta simulación no restaura el backup.");
-    } catch (err) {
-      setCfgMsg(err.message || "No se pudo simular cotización con backup.");
-    }
-  };
-
-  const promoteCandidate = async (candidateId) => {
-    const confirmation = window.prompt(
-      "Para promover escribí exactamente: PROMOVER_CONFIG_BAJADAS_V2"
-    );
-    if (confirmation === null) return;
-    try {
-      setCfgMsg("");
-      await promoteBajadasConfigCandidate(candidateId, {
-        confirmacion: confirmation,
-        motivo: "promocion_desde_ui",
-        usuario: "local",
-      });
-      await loadConfigData();
-      setCfgMsg(
-        `Candidato ${candidateId} promovido. Se reemplazó config productiva con backup automático.`
-      );
-    } catch (err) {
-      setCfgMsg(err.message || "No se pudo promover candidato.");
-    }
-  };
-
-  useEffect(() => {
-    fetchBajadasMetrics().then(setMetrics).catch(() => setMetrics(null));
-    fetchBajadasHealth()
-      .then((res) => setApiConnected(Boolean(res?.status === "ok" && Object.values(res?.checks ?? {}).every(Boolean))))
-      .catch(() => setApiConnected(false));
-    loadConfigData();
-    loadPrincipalVariables();
-  }, []);
-
   useEffect(() => {
     try {
       window.localStorage.setItem(VIEW_MODE_STORAGE_KEY, viewMode);
@@ -1972,746 +658,6 @@ export default function CotizadorBajadasV2() {
       setUnderstandMode("detalle");
     }
   }, [viewMode, understandMode]);
-
-  useEffect(() => {
-    setForm((prev) => {
-      const next = { ...prev };
-      if (next.categoria_ui === "Bajadas Autoadhesivas") {
-        if (!AUTOADH_FORMATOS.includes(next.formato)) next.formato = "A3+";
-        next.caras = "4/0";
-        next.tipo_papel = next.columna_precio || "papel";
-        next.material = next.columna_precio === "especial" ? "OPP blanco" : "Sticker";
-        next.gramaje = next.columna_precio === "especial" ? "N/A" : "N/A";
-        next.adicional_laminado_por_lado = "sin_adicional";
-        next.adicional_plastificado = false;
-        next.caras_adicional_laminado = "1";
-        next.adicional_laminado = "sin_adicional";
-        next.adicional_laca_uv = false;
-        next.adicional_tinta_blanca = false;
-        return next;
-      }
-      if (next.categoria_ui === "Bajadas Kraft") {
-        if (!KRAFT_FORMATOS.includes(next.formato)) next.formato = "A3";
-        if (!CARAS.includes(next.caras)) next.caras = "4/0";
-        next.tipo_papel = KRAFT_TIPO_PAPEL;
-        next.material = KRAFT_MATERIAL;
-        if (!KRAFT_GRAMAJES.includes(next.gramaje)) next.gramaje = KRAFT_GRAMAJES[0];
-        return next;
-      }
-      if (next.categoria_ui === "Tarjetas Personales 9x5") {
-        next.formato = "9x5";
-        if (!TARJETAS_CARAS.includes(next.caras)) next.caras = "4/0";
-        if (!TARJETAS_GRAMAJES.includes(next.gramaje_tarjetas)) next.gramaje_tarjetas = "300g";
-        next.tipo_papel = `${next.gramaje_tarjetas} Ilustracion`;
-        next.material = `${next.gramaje_tarjetas} Ilustracion`;
-        next.gramaje = next.gramaje_tarjetas;
-        if (!TARJETAS_CANTIDADES.includes(String(next.cantidad_unidades))) next.cantidad_unidades = "100";
-        if (!TARJETAS_TERMINACIONES.some((t) => t.value === next.terminacion_tarjetas)) next.terminacion_tarjetas = "sin_laminar";
-        next.adicional_laminado = "sin_adicional";
-        return next;
-      }
-      if (next.categoria_ui === "Tarjetas Postales") {
-        next.formato = "postal";
-        if (!POSTALES_CARAS.includes(next.caras)) next.caras = "4/0";
-        if (!POSTALES_GRAMAJES.includes(next.gramaje_tarjetas)) next.gramaje_tarjetas = "300g";
-        next.tipo_papel = `${next.gramaje_tarjetas} Ilustracion`;
-        next.material = `${next.gramaje_tarjetas} Ilustracion`;
-        next.gramaje = next.gramaje_tarjetas;
-        if (!POSTALES_CANTIDADES.includes(String(next.cantidad_unidades))) next.cantidad_unidades = "100";
-        if (!POSTALES_TERMINACIONES.some((t) => t.value === next.terminacion_tarjetas)) next.terminacion_tarjetas = "sin_laminar";
-        next.adicional_laminado = "sin_adicional";
-        return next;
-      }
-      if (next.categoria_ui === "Folletos") {
-        next.formato = "10x15";
-        if (!FOLLETOS_CANTIDADES.includes(String(next.cantidad_unidades))) next.cantidad_unidades = "100";
-        if (!FOLLETOS_MODO_COLOR.includes(next.modo_color_folleto)) next.modo_color_folleto = "fullcolor";
-        if (!FOLLETOS_PAPELES.find((p) => p.papel === next.papel_folleto)) next.papel_folleto = FOLLETOS_PAPELES[0].papel;
-        next.tipo_papel = next.papel_folleto;
-        next.material = next.papel_folleto;
-        next.gramaje = FOLLETOS_PAPELES.find((p) => p.papel === next.papel_folleto)?.gramaje || "150g";
-        const validCaras = next.modo_color_folleto === "fullcolor" ? ["4/0", "4/4"] : ["1/0", "1/1"];
-        if (!validCaras.includes(next.caras)) next.caras = validCaras[0];
-        next.adicional_laminado = "sin_adicional";
-        return next;
-      }
-      if (next.categoria_ui === "Carpetas") {
-        next.formato = "A4";
-        if (!CARPETAS_CARAS.includes(next.caras)) next.caras = "4/0";
-        next.tipo_papel = CARPETAS_PAPEL;
-        next.material = CARPETAS_PAPEL;
-        next.gramaje = CARPETAS_GRAMAJE;
-        if (!CARPETAS_TERMINACIONES.some((t) => t.value === next.terminacion_carpetas)) next.terminacion_carpetas = "sin_laminar";
-        if (!Number.isInteger(Number(next.cantidad_unidades)) || Number(next.cantidad_unidades) < 1) next.cantidad_unidades = "1";
-        next.adicional_laminado = "sin_adicional";
-        return next;
-      }
-      if (next.categoria_ui === "Sobres") {
-        next.formato = "sobre";
-        next.caras = "4/0";
-        next.tipo_papel = "63g";
-        next.material = "blanco";
-        next.gramaje = "63g";
-        if (!SOBRES_TIPOS.some((s) => s.value === next.tipo_sobre)) next.tipo_sobre = SOBRES_TIPOS[0].value;
-        if (!SOBRES_CANTIDADES.includes(String(next.cantidad_unidades))) next.cantidad_unidades = "100";
-        next.adicional_laminado = "sin_adicional";
-        return next;
-      }
-      if (next.categoria_ui === "Stickers Corte Recto") {
-        if (!STICKERS_FORMATOS.includes(next.formato)) next.formato = STICKERS_FORMATOS[0];
-        next.caras = "4/0";
-        next.tipo_papel = "sticker";
-        next.material = "Sticker";
-        next.gramaje = "N/A";
-        if (!STICKERS_CANTIDADES.includes(String(next.cantidad_unidades))) next.cantidad_unidades = "100";
-        if (!STICKERS_TERMINACIONES.some((t) => t.value === next.terminacion_stickers)) next.terminacion_stickers = "sin_laca_uv";
-        next.adicional_laminado = "sin_adicional";
-        return next;
-      }
-      if (next.categoria_ui === "Imanes Corte Recto") {
-        if (!IMANES_FORMATOS.includes(next.formato)) next.formato = IMANES_FORMATOS[0];
-        next.caras = "4/0";
-        next.tipo_papel = "300g Ilustracion";
-        next.material = "300g Ilustracion";
-        next.gramaje = "300g";
-        if (!IMANES_CANTIDADES.includes(String(next.cantidad_unidades))) next.cantidad_unidades = "100";
-        if (!IMANES_TERMINACIONES.some((t) => t.value === next.terminacion_imanes)) next.terminacion_imanes = "sin_laca_uv";
-        next.adicional_laminado = "sin_adicional";
-        return next;
-      }
-      if (next.categoria_ui === "Stickers Circulares") {
-        if (!STICKERS_CIRCULARES_FORMATOS.includes(next.formato)) next.formato = STICKERS_CIRCULARES_FORMATOS[0];
-        next.caras = "4/0";
-        next.tipo_papel = "sticker_circular";
-        next.material = next.material_stickers_circulares || STICKERS_CIRCULARES_MATERIALES[0].value;
-        next.gramaje = "N/A";
-        if (!STICKERS_CIRCULARES_CANTIDADES.includes(String(next.cantidad_unidades))) next.cantidad_unidades = "100";
-        if (!STICKERS_CIRCULARES_TERMINACIONES.some((t) => t.value === next.terminacion_stickers_circulares)) next.terminacion_stickers_circulares = "sin_laca_uv";
-        if (!STICKERS_CIRCULARES_MATERIALES.some((m) => m.value === next.material_stickers_circulares)) next.material_stickers_circulares = STICKERS_CIRCULARES_MATERIALES[0].value;
-        next.adicional_laminado = "sin_adicional";
-        return next;
-      }
-      if (next.categoria_ui === "Tarjetas Troqueladas Circulares") {
-        if (!TARJETAS_TROQ_CIRC_FORMATOS.includes(next.formato)) next.formato = TARJETAS_TROQ_CIRC_FORMATOS[0];
-        if (!["4/0", "4/4"].includes(next.caras_tarjetas_troq_circ)) next.caras_tarjetas_troq_circ = "4/4";
-        next.caras = next.caras_tarjetas_troq_circ;
-        next.tipo_papel = "300g Ilustracion";
-        next.material = "300g Ilustracion";
-        next.gramaje = "300g";
-        if (!TARJETAS_TROQ_CIRC_CANTIDADES.includes(String(next.cantidad_unidades))) next.cantidad_unidades = "100";
-        next.adicional_laminado = "sin_adicional";
-        if (!["sin_adicional", "laminado_brillo", "laminado_mate"].includes(next.adicional_laminado_troq_circ)) next.adicional_laminado_troq_circ = "sin_adicional";
-        if (!["0", "1", "2"].includes(String(next.caras_adicional_troq_circ))) next.caras_adicional_troq_circ = "0";
-        return next;
-      }
-      if (next.categoria_ui === "Plancha de Imán Impreso") {
-        next.formato = "30x46";
-        next.caras = "4/0";
-        next.tipo_papel = "300g Ilustracion";
-        next.material = "Imán 0.3mm";
-        next.gramaje = "N/A";
-        if (!PLANCHA_IMAN_VARIANTES.some((v) => v.value === next.variante_plancha_iman)) next.variante_plancha_iman = PLANCHA_IMAN_VARIANTES[0].value;
-        if (!PLANCHA_IMAN_CANTIDADES_SUGERIDAS.includes(String(next.cantidad_unidades))) next.cantidad_unidades = "1";
-        next.adicional_laminado = "sin_adicional";
-        return next;
-      }
-      if (next.categoria_ui === "Agendas / Cuadernos") {
-        if (!AGENDAS_PRODUCTOS.some((v) => v.value === next.producto_agendas)) next.producto_agendas = AGENDAS_PRODUCTOS[0].value;
-        if (!AGENDAS_FORMATOS.includes(next.formato_agendas)) next.formato_agendas = "A5";
-        if (!AGENDAS_PAGINAS.includes(String(next.paginas_agendas))) next.paginas_agendas = "24";
-        next.formato = next.formato_agendas;
-        next.caras = "N/A";
-        next.tipo_papel = "300g tapas";
-        next.material = "Promocional";
-        next.gramaje = "N/A";
-        if (Number(next.cantidad_unidades) < 2) next.cantidad_unidades = "2";
-        next.adicional_laminado = "sin_adicional";
-        next.adicional_troquelado = false;
-        return next;
-      }
-      if (!next.categoria_ui.startsWith("Bajadas")) {
-        next.adicional_laminado = "sin_adicional";
-        next.adicional_troquelado = false;
-      }
-      if (!effectiveFormatoOptions.includes(next.formato)) next.formato = effectiveFormatoOptions[0] || "";
-      return next;
-    });
-  }, [effectiveFormatoOptions]);
-
-  useEffect(() => {
-    setForm((prev) => {
-      const next = { ...prev };
-      if (
-        next.categoria_ui === "Bajadas Autoadhesivas" ||
-        next.categoria_ui === "Tarjetas Personales 9x5" ||
-        next.categoria_ui === "Tarjetas Postales" ||
-        next.categoria_ui === "Folletos" ||
-        next.categoria_ui === "Carpetas" ||
-        next.categoria_ui === "Sobres" ||
-        next.categoria_ui === "Stickers Corte Recto" ||
-        next.categoria_ui === "Imanes Corte Recto" ||
-        next.categoria_ui === "Stickers Circulares" ||
-        next.categoria_ui === "Tarjetas Troqueladas Circulares" ||
-        next.categoria_ui === "Plancha de Imán Impreso" ||
-        next.categoria_ui === "Agendas / Cuadernos"
-      ) {
-        return next;
-      }
-      if (next.categoria_ui === "Bajadas Kraft") {
-        next.tipo_papel = KRAFT_TIPO_PAPEL;
-        next.material = KRAFT_MATERIAL;
-        if (!KRAFT_GRAMAJES.includes(next.gramaje)) next.gramaje = KRAFT_GRAMAJES[0];
-        return next;
-      }
-      if (!tipoPapelOptions.includes(next.tipo_papel)) next.tipo_papel = tipoPapelOptions[0] || "";
-      if (!materialOptions.includes(next.material)) next.material = materialOptions[0] || "";
-      if (!gramajeOptions.includes(next.gramaje)) next.gramaje = gramajeOptions[0] || "";
-      return next;
-    });
-  }, [tipoPapelOptions, materialOptions, gramajeOptions]);
-
-  useEffect(() => {
-    setForm((prev) => {
-      const allowed = new Set(adicionalesDisponibles.map((a) => a.value));
-      if (!allowed.has(prev.adicional_laminado)) {
-        return { ...prev, adicional_laminado: "sin_adicional" };
-      }
-      return prev;
-    });
-  }, [adicionalesDisponibles]);
-
-  useEffect(() => {
-    if (!isFolletos) return;
-    setForm((prev) => {
-      const next = { ...prev };
-      const paper = FOLLETOS_PAPELES.find((p) => p.papel === next.papel_folleto) || FOLLETOS_PAPELES[0];
-      next.tipo_papel = paper.papel;
-      next.material = paper.papel;
-      next.gramaje = paper.gramaje;
-      const allowedCaras = next.modo_color_folleto === "fullcolor" ? ["4/0", "4/4"] : ["1/0", "1/1"];
-      if (!allowedCaras.includes(next.caras)) next.caras = allowedCaras[0];
-      return next;
-    });
-  }, [isFolletos, form.papel_folleto, form.modo_color_folleto]);
-
-  useEffect(() => {
-    if (!isTarjetasTroqCirc) return;
-    setForm((prev) => {
-      if (prev.adicional_laminado_troq_circ === "sin_adicional" && prev.caras_adicional_troq_circ !== "0") {
-        return { ...prev, caras_adicional_troq_circ: "0" };
-      }
-      if (prev.adicional_laminado_troq_circ !== "sin_adicional" && prev.caras_adicional_troq_circ === "0") {
-        return { ...prev, caras_adicional_troq_circ: "1" };
-      }
-      return prev;
-    });
-  }, [isTarjetasTroqCirc, form.adicional_laminado_troq_circ]);
-
-  const missingFields = useMemo(() => {
-    const required = isAutoadhesivas
-      ? ["urgencia", "columna_precio"]
-      : isTarjetas
-      ? ["formato", "tipo_papel", "material", "gramaje", "caras", "urgencia", "terminacion_tarjetas"]
-      : isPostales
-      ? ["formato", "tipo_papel", "material", "gramaje", "caras", "urgencia", "terminacion_tarjetas"]
-      : isFolletos
-      ? ["formato", "tipo_papel", "material", "gramaje", "caras", "urgencia", "modo_color_folleto"]
-      : isCarpetas
-      ? ["formato", "tipo_papel", "material", "gramaje", "caras", "urgencia", "terminacion_carpetas"]
-      : isSobres
-      ? ["tipo_sobre", "tipo_papel", "material", "gramaje", "caras", "urgencia"]
-      : isStickers
-      ? ["formato", "terminacion_stickers", "urgencia"]
-      : isImanes
-      ? ["formato", "tipo_papel", "material", "gramaje", "terminacion_imanes", "urgencia"]
-      : isStickersCirculares
-      ? ["formato", "material_stickers_circulares", "terminacion_stickers_circulares", "urgencia"]
-      : isTarjetasTroqCirc
-      ? ["formato", "caras_tarjetas_troq_circ", "urgencia"]
-      : isPlanchaIman
-      ? ["variante_plancha_iman", "urgencia"]
-      : isAgendasCuadernos
-      ? ["producto_agendas", "formato_agendas", "paginas_agendas", "urgencia"]
-      : ["formato", "tipo_papel", "material", "gramaje", "caras", "urgencia"];
-    return required.filter((field) => !String(form[field] ?? "").trim());
-  }, [form, isAutoadhesivas, isTarjetas, isPostales, isFolletos, isCarpetas, isSobres, isStickers, isImanes, isStickersCirculares, isTarjetasTroqCirc, isPlanchaIman, isAgendasCuadernos]);
-
-  const updateField = (field) => (event) => {
-    setCopyStatus("");
-    const value = event.target.value;
-    if (field === "categoria_ui" && value === "Bajadas Fullcolor/ByN") {
-      setForm((prev) => ({
-        ...prev,
-        categoria_ui: value,
-        formato: "A3+",
-      }));
-      return;
-    }
-    setForm((prev) => ({ ...prev, [field]: value }));
-  };
-
-  const updateCfgField = (field, value) => {
-    setCfg((prev) => {
-      if (!prev) return prev;
-      const next = structuredClone(prev);
-      const parts = field.split(".");
-      let target = next;
-      for (let i = 0; i < parts.length - 1; i += 1) target = target[parts[i]];
-      target[parts[parts.length - 1]] = value;
-      return next;
-    });
-  };
-
-  const saveCfgField = async (field, value) => {
-    try {
-      setCfgMsg("");
-      await updateBajadasConfig({ field, value, motivo: "edicion_ui" });
-      await loadConfigData();
-      setCfgMsg(`Guardado: ${field}`);
-    } catch (err) {
-      setCfgMsg(err.message || "No se pudo guardar configuración.");
-    }
-  };
-
-  const saveScales = async () => {
-    try {
-      setCfgMsg("");
-      await updateBajadasConfig({ field: "escalas_cantidad", value: cfg?.escalas_cantidad || [], motivo: "edicion_ui" });
-      await loadConfigData();
-      setCfgMsg("Escalas guardadas.");
-    } catch (err) {
-      setCfgMsg(err.message || "No se pudieron guardar escalas.");
-    }
-  };
-
-  const restoreCfg = async () => {
-    try {
-      setCfgMsg("");
-      await restoreBajadasConfig({ motivo: "restaurar_desde_ui" });
-      await loadConfigData();
-      setCfgMsg("Configuración restaurada desde config final.");
-    } catch (err) {
-      setCfgMsg(err.message || "No se pudo restaurar configuración.");
-    }
-  };
-
-  const handleClear = () => {
-    setForm((prev) => ({
-      ...prev,
-      cantidad_unidades:
-        prev.categoria_ui === "Tarjetas Personales 9x5" ||
-        prev.categoria_ui === "Tarjetas Postales" ||
-        prev.categoria_ui === "Folletos" ||
-        prev.categoria_ui === "Sobres" ||
-        prev.categoria_ui === "Stickers Corte Recto" ||
-        prev.categoria_ui === "Imanes Corte Recto" ||
-        prev.categoria_ui === "Stickers Circulares" ||
-        prev.categoria_ui === "Tarjetas Troqueladas Circulares"
-          ? "100"
-          : prev.categoria_ui === "Agendas / Cuadernos"
-          ? "2"
-          : "1",
-      urgencia: "normal",
-      adicional_laminado: "sin_adicional",
-      caras_adicional_laminado: "1",
-      adicional_tinta_blanca: false,
-      adicional_laca_uv: false,
-      adicional_troquelado: false,
-      complejidad_troquelado: "simple",
-      terminacion_tarjetas: "sin_laminar",
-      gramaje_tarjetas: "300g",
-      terminacion_carpetas: "sin_laminar",
-      terminacion_stickers: "sin_laca_uv",
-      terminacion_imanes: "sin_laca_uv",
-      material_stickers_circulares: STICKERS_CIRCULARES_MATERIALES[0].value,
-      terminacion_stickers_circulares: "sin_laca_uv",
-      caras_tarjetas_troq_circ: "4/4",
-      adicional_laminado_troq_circ: "sin_adicional",
-      caras_adicional_troq_circ: "0",
-      variante_plancha_iman: PLANCHA_IMAN_VARIANTES[0].value,
-      producto_agendas: AGENDAS_PRODUCTOS[0].value,
-      formato_agendas: "A5",
-      paginas_agendas: "24",
-      solapa_impresa: false,
-      tipo_sobre: SOBRES_TIPOS[0].value,
-      papel_folleto: "150g Ilustracion",
-      modo_color_folleto: "fullcolor",
-    }));
-    setResult(null);
-    setLastPayload(null);
-    setError("");
-    setCopyStatus("");
-    setLoading(false);
-  };
-
-  const handleCopy = async () => {
-    if (!result) {
-      setCopyStatus("Primero calculá una cotización.");
-      return;
-    }
-    const finalValue = Number(result.total_con_urgencia ?? result.total_sin_iva ?? 0);
-    const text = String(Math.round(finalValue));
-    try {
-      const copied = await copyToClipboard(text);
-      setCopyStatus(copied ? "Precio final copiado." : "No se pudo copiar automáticamente.");
-    } catch {
-      setCopyStatus("No se pudo copiar automáticamente.");
-    }
-  };
-
-  useEffect(() => {
-    if (activeTab !== "Entender un precio" || understandMode !== "trazabilidad" || traceGraph || traceLoading) return;
-    if (traceMode === "casos_generales") {
-      loadTraceGraph(traceCase);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab, understandMode, traceMode]);
-
-  useEffect(() => {
-    if (activeTab !== "Ver impacto de cambios" || impactData || impactLoading) return;
-    loadVariablesImpacto();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab]);
-
-  useEffect(() => {
-    if (activeTab !== "Ver impacto de cambios" || !impactData || !lastPayload || !result) return;
-    const productKey = getQuoteProductKey(lastPayload);
-    const suggested = (impactData.relaciones || []).find((relation) => (
-      relation.producto_key === productKey &&
-      relation.impacta_hoy &&
-      relation.editable &&
-      relationAppliesToCurrentQuote(relation, lastPayload, result)
-    ));
-    if (suggested && impactVariable !== suggested.variable) {
-      setImpactMode("variable");
-      setImpactVariable(suggested.variable);
-    }
-  }, [activeTab, impactData, impactVariable, lastPayload, result]);
-
-  useEffect(() => {
-    if (!["Modificar precios", "Historial y backups"].includes(activeTab) || adminPrices || adminLoading) return;
-    loadAdminPrices();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab]);
-
-  useEffect(() => {
-    if (activeTab !== "Modificar precios" || impactData || impactLoading) return;
-    loadVariablesImpacto();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab]);
-
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-    setError("");
-    setResult(null);
-    if (traceMode === "cotizacion_actual") {
-      setTraceGraph(null);
-      setSelectedTraceNodeId(null);
-    }
-    setCopyStatus("");
-
-    if (missingFields.length > 0) {
-      setError(`Faltan campos obligatorios: ${missingFields.join(", ")}`);
-      return;
-    }
-    if (!Number.isInteger(cantidadUnidades) || cantidadUnidades < 1) {
-      setError("Cantidad inválida. Ingresá un entero mayor o igual a 1.");
-      return;
-    }
-    if (!isMatrixProduct && !isNoRangeProduct && !derivedRange) {
-      setError("La cantidad ingresada no entra en ningún rango disponible para esta combinación.");
-      return;
-    }
-    if (isTarjetas && !TARJETAS_CANTIDADES.includes(String(cantidadUnidades))) {
-      setError("Tarjetas 9x5 solo permite cantidades: 100, 200, 300, 500 o 1000.");
-      return;
-    }
-    if (isPostales && !POSTALES_CANTIDADES.includes(String(cantidadUnidades))) {
-      setError("Tarjetas Postales solo permite cantidades: 100, 200, 300, 500 o 1000.");
-      return;
-    }
-    if (isFolletos && !FOLLETOS_CANTIDADES.includes(String(cantidadUnidades))) {
-      setError("Folletos solo permite cantidades: 100, 200, 300, 500 o 1000.");
-      return;
-    }
-    if (isCarpetas && cantidadUnidades > 1000) {
-      setError("Carpetas solo permite cantidades de 1 a 1000.");
-      return;
-    }
-    if (isSobres && !SOBRES_CANTIDADES.includes(String(cantidadUnidades))) {
-      setError("Sobres solo permite cantidades: 100, 200, 300, 500 o 1000.");
-      return;
-    }
-    if (isStickers && !STICKERS_CANTIDADES.includes(String(cantidadUnidades))) {
-      setError("Stickers Corte Recto solo permite cantidades: 100, 200, 300, 500 o 1000.");
-      return;
-    }
-    if (isImanes && !IMANES_CANTIDADES.includes(String(cantidadUnidades))) {
-      setError("Imanes Corte Recto solo permite cantidades: 100, 200, 300, 500 o 1000.");
-      return;
-    }
-    if (isStickersCirculares && !STICKERS_CIRCULARES_CANTIDADES.includes(String(cantidadUnidades))) {
-      setError("Stickers Circulares solo permite cantidades: 100, 200, 300, 500 o 1000.");
-      return;
-    }
-    if (isTarjetasTroqCirc && !TARJETAS_TROQ_CIRC_CANTIDADES.includes(String(cantidadUnidades))) {
-      setError("Tarjetas Troqueladas Circulares solo permite cantidades: 100, 200, 300, 500 o 1000.");
-      return;
-    }
-    if (isPlanchaIman && (cantidadUnidades < 1 || cantidadUnidades > 500)) {
-      setError("Plancha de Imán Impreso permite cantidades de 1 a 500.");
-      return;
-    }
-    if (isAgendasCuadernos && cantidadUnidades < 2) {
-      setError("Agendas / Cuadernos requiere mínimo 2 unidades.");
-      return;
-    }
-    if (isBajadasFlow && form.adicional_troquelado && !form.complejidad_troquelado) {
-      setError("Debés elegir complejidad de troquelado.");
-      return;
-    }
-
-    const payload = isTarjetas
-      ? {
-          categoria: "Tarjetas Personales",
-          producto: "9x5",
-          formato: "9x5",
-          papel: `${form.gramaje_tarjetas} Ilustracion`,
-          gramaje: form.gramaje_tarjetas,
-          terminacion: form.terminacion_tarjetas,
-          caras: inferred.caras,
-          cantidad_unidades: cantidadUnidades,
-          terminaciones_extra: {
-            puntas_redondeadas: false,
-            agujerado: false,
-          },
-          urgencia: form.urgencia,
-        }
-      : isPostales
-      ? {
-          categoria: "Tarjetas Postales",
-          producto: "postal",
-          formato: "postal",
-          papel: `${form.gramaje_tarjetas} Ilustracion`,
-          gramaje: form.gramaje_tarjetas,
-          terminacion: form.terminacion_tarjetas,
-          caras: inferred.caras,
-          cantidad_unidades: cantidadUnidades,
-          terminaciones_extra: {
-            puntas_redondeadas: false,
-            agujerado: false,
-          },
-          urgencia: form.urgencia,
-        }
-      : isFolletos
-      ? {
-          categoria: "Folletos",
-          producto: "folleto",
-          formato: form.formato,
-          papel: form.papel_folleto,
-          gramaje: FOLLETOS_PAPELES.find((p) => p.papel === form.papel_folleto)?.gramaje || "150g",
-          modo_color: form.modo_color_folleto,
-          caras: inferred.caras,
-          cantidad_unidades: cantidadUnidades,
-          urgencia: form.urgencia,
-        }
-      : isCarpetas
-      ? {
-          categoria: "Carpetas",
-          producto: "carpeta_a4",
-          formato: "A4",
-          papel: CARPETAS_PAPEL,
-          gramaje: CARPETAS_GRAMAJE,
-          terminacion: form.terminacion_carpetas,
-          caras: inferred.caras,
-          cantidad_unidades: cantidadUnidades,
-          solapa_impresa: Boolean(form.solapa_impresa),
-          urgencia: form.urgencia,
-        }
-      : isSobres
-      ? {
-          categoria: "Sobres",
-          producto: "sobre",
-          tipo_sobre: form.tipo_sobre,
-          papel: "63g",
-          color: "blanco",
-          caras: "4/0",
-          cantidad_unidades: cantidadUnidades,
-          urgencia: form.urgencia,
-        }
-      : isStickers
-      ? {
-          categoria: "Stickers Corte Recto",
-          producto: "sticker_corte_recto",
-          formato: form.formato,
-          terminacion: form.terminacion_stickers,
-          cantidad_unidades: cantidadUnidades,
-          urgencia: form.urgencia,
-        }
-      : isImanes
-      ? {
-          categoria: "Imanes Corte Recto",
-          producto: "iman_corte_recto",
-          formato: form.formato,
-          papel: "300g Ilustracion",
-          gramaje: "300g",
-          terminacion: form.terminacion_imanes,
-          cantidad_unidades: cantidadUnidades,
-          urgencia: form.urgencia,
-        }
-      : isStickersCirculares
-      ? {
-          categoria: "Stickers Circulares",
-          producto: "sticker_circular",
-          material: form.material_stickers_circulares,
-          formato: form.formato,
-          terminacion: form.terminacion_stickers_circulares,
-          cantidad_unidades: cantidadUnidades,
-          urgencia: form.urgencia,
-        }
-      : isTarjetasTroqCirc
-      ? {
-          categoria: "Tarjetas Troqueladas Circulares",
-          producto: "tarjeta_troquelada_circular",
-          formato: form.formato,
-          caras: form.caras_tarjetas_troq_circ,
-          adicional_laminado: form.adicional_laminado_troq_circ,
-          caras_adicional_laminado: Number(form.caras_adicional_troq_circ || 0),
-          cantidad_unidades: cantidadUnidades,
-          urgencia: form.urgencia,
-        }
-      : isPlanchaIman
-      ? {
-          categoria: "Plancha de Imán Impreso",
-          producto: "plancha_iman_impreso",
-          variante: form.variante_plancha_iman,
-          cantidad_unidades: cantidadUnidades,
-          urgencia: form.urgencia,
-        }
-      : isAgendasCuadernos
-      ? {
-          categoria: "Agendas / Cuadernos",
-          producto: form.producto_agendas,
-          formato: form.formato_agendas,
-          paginas: Number(form.paginas_agendas),
-          cantidad_unidades: cantidadUnidades,
-          urgencia: form.urgencia,
-        }
-      : {
-          categoria: inferred.categoria,
-          modo_color: inferred.modo_color,
-          formato: inferred.formato,
-          tipo_papel: isAutoadhesivas ? form.columna_precio : (isKraft ? KRAFT_TIPO_PAPEL : form.tipo_papel),
-          material: isAutoadhesivas ? (form.columna_precio === "especial" ? "OPP blanco" : "Sticker") : (isKraft ? KRAFT_MATERIAL : form.material),
-          gramaje: isAutoadhesivas ? "N/A" : (isKraft ? form.gramaje : form.gramaje),
-          cantidad_unidades: cantidadUnidades,
-          cantidad_rango: derivedRange,
-          caras: inferred.caras,
-          urgencia: form.urgencia,
-          adicional_laminado: form.adicional_laminado || "sin_adicional",
-          caras_adicional_laminado:
-            !isAutoadhesivas && ["laca", "laminado_brillo", "laminado_mate"].includes(form.adicional_laminado)
-              ? Number(form.caras_adicional_laminado || 1)
-              : 1,
-          adicional_laminado_por_lado:
-            !isAutoadhesivas && (inferred.formato === "A3+" || inferred.formato === "XA3")
-              ? (form.adicional_laminado_por_lado || "sin_adicional")
-              : "sin_adicional",
-          adicional_plastificado:
-            !isAutoadhesivas && (inferred.formato === "A3+" || inferred.formato === "XA3")
-              ? Boolean(form.adicional_plastificado)
-              : false,
-          adicional_tinta_blanca: isAutoadhesivas ? Boolean(form.adicional_tinta_blanca) : false,
-          adicional_laca_uv: isAutoadhesivas ? Boolean(form.adicional_laca_uv) : false,
-          adicional_troquelado: Boolean(form.adicional_troquelado),
-          complejidad_troquelado: form.adicional_troquelado ? form.complejidad_troquelado : undefined,
-          tipo_producto: isAutoadhesivas ? "autoadhesiva" : undefined,
-          columna_precio: isAutoadhesivas ? form.columna_precio : undefined,
-        };
-
-    setLoading(true);
-    try {
-      const response = isTarjetas
-        ? await cotizarTarjetas9x5(payload)
-        : isPostales
-        ? await cotizarTarjetasPostales(payload)
-        : isFolletos
-        ? await cotizarFolletos(payload)
-        : isCarpetas
-        ? await cotizarCarpetas(payload)
-        : isSobres
-        ? await cotizarSobres(payload)
-        : isStickers
-        ? await cotizarStickersCorteRecto(payload)
-        : isImanes
-        ? await cotizarImanesCorteRecto(payload)
-        : isStickersCirculares
-        ? await cotizarStickersCirculares(payload)
-        : isTarjetasTroqCirc
-        ? await cotizarTarjetasTroqueladasCirculares(payload)
-        : isPlanchaIman
-        ? await cotizarPlanchaImanImpreso(payload)
-        : isAgendasCuadernos
-        ? await cotizarAgendasCuadernos(payload)
-        : await cotizarBajadaV2(payload);
-      setResult(response);
-      setLastPayload(payload);
-      setAdminWizardStep(1);
-      setAdminVariable("");
-      setAdminNewValue("");
-      setAdminPreview(null);
-      setAdminMsg("");
-      setAdminError("");
-      setAdminShowAdvancedVariables(false);
-      setTraceShowTechnicalGraph(false);
-    } catch (err) {
-      if (err.code === "cantidad_fuera_de_matriz") {
-        setError("Cantidad fuera de matriz para este producto.");
-      } else if (err.code === "cantidad_minima_no_alcanzada") {
-        setError("Cantidad mínima no alcanzada para este producto.");
-      } else if (err.code === "terminacion_no_soportada") {
-        setError("Terminación no soportada.");
-      } else if (err.code === "formato_no_soportado") {
-        setError("Formato no soportado para Folletos.");
-      } else if (err.code === "caras_no_compatibles") {
-        setError("Caras incompatibles con modo color.");
-      } else if (err.code === "caras_no_soportadas") {
-        setError("Caras no soportadas para este producto.");
-      } else if (err.code === "tipo_sobre_no_soportado") {
-        setError("Tipo de sobre no soportado.");
-      } else if (err.code === "material_no_soportado") {
-        setError("Material no soportado para Stickers Circulares.");
-      } else if (err.code === "material_opp_pendiente_datos") {
-        setError("OPP pendiente de datos confiables para Stickers Circulares.");
-      } else if (err.code === "tinta_blanca_bloqueada_por_falta_de_datos") {
-        setError("Tinta blanca bloqueada por falta de datos confiables.");
-      } else if (err.code === "tinta_blanca_bloqueada_por_falta_de_valor_base_1_copia") {
-        setError("Tinta blanca bloqueada: falta valor base de 1 copia para cálculo proporcional.");
-      } else if (err.code === "adicional_no_soportado_para_liviano") {
-        setError("Para papel liviano solo se permite Sin adicional o Laca UV.");
-      } else if (err.code === "adicional_no_soportado_para_autoadhesivas") {
-        setError("Autoadhesivas no admite laminado por lado ni plastificado.");
-      } else if (err.code === "adicionales_hoja4_solo_a3plus_xa3") {
-        setError("Laminado por lado y plastificado solo aplican a A3+ o XA3.");
-      } else if (err.code === "complejidad_troquelado_requerida") {
-        setError("Debés elegir complejidad de troquelado.");
-      } else if (err.code === "complejidad_troquelado_no_soportada") {
-        setError("Complejidad de troquelado no soportada.");
-      } else if (err.code === "combinacion_no_encontrada") {
-        setError("La combinación seleccionada no existe en la tabla de Bajadas v2. Revisá formato, papel, gramaje y rango.");
-      } else if (err.code === "urgencia_invalida") {
-        setError("Urgencia inválida. Revisá el campo Urgencia.");
-      } else if (err.status >= 500) {
-        setError("La API respondió con error interno.");
-      } else if (err.status === 0 || err.message.includes("Failed to fetch")) {
-        setError("API caída o inaccesible en http://127.0.0.1:8000.");
-      } else {
-        setError(err.message || "No se pudo calcular.");
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const renderTreeTab = () => {
     if (!result || !lastPayload) {
@@ -3145,7 +1091,7 @@ export default function CotizadorBajadasV2() {
               </div>
               <div className="history-event-main">
                 <strong>{item.variable || "-"}</strong>
-                <span>{formatHistoryValue(item.valor_anterior)} → {formatHistoryValue(item.valor_nuevo)}</span>
+                <span>{formatHistoryValue(item.valor_anterior)} ? {formatHistoryValue(item.valor_nuevo)}</span>
               </div>
               <p className="range-hint">{item.descripcion || `${item.fuente || "sistema"} · ${historyId}`}</p>
               {isAdvancedMode ? (
@@ -4109,7 +2055,7 @@ export default function CotizadorBajadasV2() {
                     {previewChanges.length ? previewChanges.map((item) => (
                       <div key={item.key} className="diff-row">
                         <span>{item.key}</span>
-                        <span>{item.valor_actual} → {item.valor_excel}</span>
+                        <span>{item.valor_actual} ? {item.valor_excel}</span>
                         <span>{item.estado}</span>
                       </div>
                     )) : <p className="range-hint">Sin cambios importables.</p>}
@@ -4510,4 +2456,13 @@ export default function CotizadorBajadasV2() {
     </div>
   );
 }
+
+
+
+
+
+
+
+
+
 
