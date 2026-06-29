@@ -1,17 +1,5 @@
 import { useEffect, useState } from "react";
 import {
-  cotizarBajadaV2,
-  cotizarFolletos,
-  cotizarTarjetasTroqueladasCirculares,
-  cotizarPlanchaImanImpreso,
-  cotizarAgendasCuadernos,
-  cotizarImanesCorteRecto,
-  cotizarStickersCirculares,
-  cotizarCarpetas,
-  cotizarStickersCorteRecto,
-  cotizarSobres,
-  cotizarTarjetas9x5,
-  cotizarTarjetasPostales,
   fetchBajadasHealth,
   fetchBajadasMetrics,
   fetchPrincipalVariables,
@@ -22,6 +10,17 @@ import {
   previewExcelMaestro,
   updatePrincipalVariables,
 } from "../api/bajadasV2Api";
+import {
+  buildAgendasPayload,
+  buildBajadasPayload,
+  buildCarpetasPayload,
+  buildFolletosPayload,
+  buildImanesPayload,
+  buildSobresPayload,
+  buildStickersPayload,
+  buildTarjetasPayload,
+  dispatchCotizacion,
+} from "../lib/payloadBuilders";
 
 async function copyToClipboard(text) {
   if (navigator?.clipboard?.writeText) {
@@ -53,13 +52,8 @@ export default function useCotizacionSubmit({
   constants,
 }) {
   const {
-    CARPETAS_GRAMAJE,
-    CARPETAS_PAPEL,
     FOLLETOS_CANTIDADES,
-    FOLLETOS_PAPELES,
     IMANES_CANTIDADES,
-    KRAFT_MATERIAL,
-    KRAFT_TIPO_PAPEL,
     PLANCHA_IMAN_CANTIDADES_SUGERIDAS,
     POSTALES_CANTIDADES,
     SOBRES_CANTIDADES,
@@ -222,8 +216,6 @@ export default function useCotizacionSubmit({
       derivedRange,
       cantidadUnidades,
       missingFields,
-      isAutoadhesivas,
-      isKraft,
       isTarjetas,
       isPostales,
       isFolletos,
@@ -306,189 +298,48 @@ export default function useCotizacionSubmit({
       return;
     }
 
-    const payload = isTarjetas
-      ? {
-          categoria: "Tarjetas Personales",
-          producto: "9x5",
-          formato: "9x5",
-          papel: `${form.gramaje_tarjetas} Ilustracion`,
-          gramaje: form.gramaje_tarjetas,
-          terminacion: form.terminacion_tarjetas,
-          caras: inferred.caras,
-          cantidad_unidades: cantidadUnidades,
-          terminaciones_extra: {
-            puntas_redondeadas: false,
-            agujerado: false,
-          },
-          urgencia: form.urgencia,
-        }
+    const productKey = isTarjetas
+      ? "tarjetas_9x5"
       : isPostales
-      ? {
-          categoria: "Tarjetas Postales",
-          producto: "postal",
-          formato: "postal",
-          papel: `${form.gramaje_tarjetas} Ilustracion`,
-          gramaje: form.gramaje_tarjetas,
-          terminacion: form.terminacion_tarjetas,
-          caras: inferred.caras,
-          cantidad_unidades: cantidadUnidades,
-          terminaciones_extra: {
-            puntas_redondeadas: false,
-            agujerado: false,
-          },
-          urgencia: form.urgencia,
-        }
+      ? "tarjetas_postales"
       : isFolletos
-      ? {
-          categoria: "Folletos",
-          producto: "folleto",
-          formato: form.formato,
-          papel: form.papel_folleto,
-          gramaje: FOLLETOS_PAPELES.find((p) => p.papel === form.papel_folleto)?.gramaje || "150g",
-          modo_color: form.modo_color_folleto,
-          caras: inferred.caras,
-          cantidad_unidades: cantidadUnidades,
-          urgencia: form.urgencia,
-        }
+      ? "folletos"
       : isCarpetas
-      ? {
-          categoria: "Carpetas",
-          producto: "carpeta_a4",
-          formato: "A4",
-          papel: CARPETAS_PAPEL,
-          gramaje: CARPETAS_GRAMAJE,
-          terminacion: form.terminacion_carpetas,
-          caras: inferred.caras,
-          cantidad_unidades: cantidadUnidades,
-          solapa_impresa: Boolean(form.solapa_impresa),
-          urgencia: form.urgencia,
-        }
+      ? "carpetas"
       : isSobres
-      ? {
-          categoria: "Sobres",
-          producto: "sobre",
-          tipo_sobre: form.tipo_sobre,
-          papel: "63g",
-          color: "blanco",
-          caras: "4/0",
-          cantidad_unidades: cantidadUnidades,
-          urgencia: form.urgencia,
-        }
+      ? "sobres"
       : isStickers
-      ? {
-          categoria: "Stickers Corte Recto",
-          producto: "sticker_corte_recto",
-          formato: form.formato,
-          terminacion: form.terminacion_stickers,
-          cantidad_unidades: cantidadUnidades,
-          urgencia: form.urgencia,
-        }
+      ? "stickers_corte_recto"
       : isImanes
-      ? {
-          categoria: "Imanes Corte Recto",
-          producto: "iman_corte_recto",
-          formato: form.formato,
-          papel: "300g Ilustracion",
-          gramaje: "300g",
-          terminacion: form.terminacion_imanes,
-          cantidad_unidades: cantidadUnidades,
-          urgencia: form.urgencia,
-        }
+      ? "imanes_corte_recto"
       : isStickersCirculares
-      ? {
-          categoria: "Stickers Circulares",
-          producto: "sticker_circular",
-          material: form.material_stickers_circulares,
-          formato: form.formato,
-          terminacion: form.terminacion_stickers_circulares,
-          cantidad_unidades: cantidadUnidades,
-          urgencia: form.urgencia,
-        }
+      ? "stickers_circulares"
       : isTarjetasTroqCirc
-      ? {
-          categoria: "Tarjetas Troqueladas Circulares",
-          producto: "tarjeta_troquelada_circular",
-          formato: form.formato,
-          caras: form.caras_tarjetas_troq_circ,
-          adicional_laminado: form.adicional_laminado_troq_circ,
-          caras_adicional_laminado: Number(form.caras_adicional_troq_circ || 0),
-          cantidad_unidades: cantidadUnidades,
-          urgencia: form.urgencia,
-        }
+      ? "tarjetas_troqueladas_circulares"
       : isPlanchaIman
-      ? {
-          categoria: "Plancha de ImÃ¡n Impreso",
-          producto: "plancha_iman_impreso",
-          variante: form.variante_plancha_iman,
-          cantidad_unidades: cantidadUnidades,
-          urgencia: form.urgencia,
-        }
+      ? "plancha_iman_impreso"
       : isAgendasCuadernos
-      ? {
-          categoria: "Agendas / Cuadernos",
-          producto: form.producto_agendas,
-          formato: form.formato_agendas,
-          paginas: Number(form.paginas_agendas),
-          cantidad_unidades: cantidadUnidades,
-          urgencia: form.urgencia,
-        }
-      : {
-          categoria: inferred.categoria,
-          modo_color: inferred.modo_color,
-          formato: inferred.formato,
-          tipo_papel: isAutoadhesivas ? form.columna_precio : (isKraft ? KRAFT_TIPO_PAPEL : form.tipo_papel),
-          material: isAutoadhesivas ? (form.columna_precio === "especial" ? "OPP blanco" : "Sticker") : (isKraft ? KRAFT_MATERIAL : form.material),
-          gramaje: isAutoadhesivas ? "N/A" : (isKraft ? form.gramaje : form.gramaje),
-          cantidad_unidades: cantidadUnidades,
-          cantidad_rango: derivedRange,
-          caras: inferred.caras,
-          urgencia: form.urgencia,
-          adicional_laminado: form.adicional_laminado || "sin_adicional",
-          caras_adicional_laminado:
-            !isAutoadhesivas && ["laca", "laminado_brillo", "laminado_mate"].includes(form.adicional_laminado)
-              ? Number(form.caras_adicional_laminado || 1)
-              : 1,
-          adicional_laminado_por_lado:
-            !isAutoadhesivas && (inferred.formato === "A3+" || inferred.formato === "XA3")
-              ? (form.adicional_laminado_por_lado || "sin_adicional")
-              : "sin_adicional",
-          adicional_plastificado:
-            !isAutoadhesivas && (inferred.formato === "A3+" || inferred.formato === "XA3")
-              ? Boolean(form.adicional_plastificado)
-              : false,
-          adicional_tinta_blanca: isAutoadhesivas ? Boolean(form.adicional_tinta_blanca) : false,
-          adicional_laca_uv: isAutoadhesivas ? Boolean(form.adicional_laca_uv) : false,
-          adicional_troquelado: Boolean(form.adicional_troquelado),
-          complejidad_troquelado: form.adicional_troquelado ? form.complejidad_troquelado : undefined,
-          tipo_producto: isAutoadhesivas ? "autoadhesiva" : undefined,
-          columna_precio: isAutoadhesivas ? form.columna_precio : undefined,
-        };
+      ? "agendas_cuadernos"
+      : "bajadas";
 
+    const payload = (isTarjetas || isPostales || isTarjetasTroqCirc)
+      ? buildTarjetasPayload(form, inferred, derivedRange, cantidadUnidades)
+      : isFolletos
+      ? buildFolletosPayload(form, inferred, derivedRange, cantidadUnidades)
+      : isCarpetas
+      ? buildCarpetasPayload(form, inferred, derivedRange, cantidadUnidades)
+      : isSobres
+      ? buildSobresPayload(form, inferred, derivedRange, cantidadUnidades)
+      : (isStickers || isStickersCirculares)
+      ? buildStickersPayload(form, inferred, derivedRange, cantidadUnidades)
+      : (isImanes || isPlanchaIman)
+      ? buildImanesPayload(form, inferred, derivedRange, cantidadUnidades)
+      : isAgendasCuadernos
+      ? buildAgendasPayload(form, inferred, derivedRange, cantidadUnidades)
+      : buildBajadasPayload(form, inferred, derivedRange, cantidadUnidades);
     setLoading(true);
     try {
-      const response = isTarjetas
-        ? await cotizarTarjetas9x5(payload)
-        : isPostales
-        ? await cotizarTarjetasPostales(payload)
-        : isFolletos
-        ? await cotizarFolletos(payload)
-        : isCarpetas
-        ? await cotizarCarpetas(payload)
-        : isSobres
-        ? await cotizarSobres(payload)
-        : isStickers
-        ? await cotizarStickersCorteRecto(payload)
-        : isImanes
-        ? await cotizarImanesCorteRecto(payload)
-        : isStickersCirculares
-        ? await cotizarStickersCirculares(payload)
-        : isTarjetasTroqCirc
-        ? await cotizarTarjetasTroqueladasCirculares(payload)
-        : isPlanchaIman
-        ? await cotizarPlanchaImanImpreso(payload)
-        : isAgendasCuadernos
-        ? await cotizarAgendasCuadernos(payload)
-        : await cotizarBajadaV2(payload);
+      const response = await dispatchCotizacion(productKey, payload);
       setResult(response);
       setLastPayload(payload);
       resetAdminAfterSubmit?.();
