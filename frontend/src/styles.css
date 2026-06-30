@@ -420,6 +420,121 @@ select:focus {
   color: #eef2ff;
 }
 
+.quote-result-clean {
+  display: grid;
+  gap: 14px;
+}
+
+.quote-result-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(150px, 0.4fr);
+  gap: 12px;
+  align-items: stretch;
+  border: 1px solid rgba(96, 141, 255, 0.28);
+  border-radius: 18px;
+  padding: 16px;
+  background:
+    radial-gradient(circle at 10% 0%, rgba(47, 141, 255, 0.25), transparent 34%),
+    linear-gradient(145deg, rgba(14, 20, 35, 0.94), rgba(7, 10, 18, 0.9));
+}
+
+.quote-result-kicker,
+.quote-result-unit span {
+  color: var(--text-soft);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.quote-result-total {
+  margin: 6px 0;
+  color: #f8fbff;
+  font-size: clamp(2rem, 4vw, 3.1rem);
+  line-height: 1;
+}
+
+.quote-result-hero p,
+.quote-result-unit small {
+  margin: 0;
+  color: var(--text-soft);
+}
+
+.quote-result-unit {
+  display: grid;
+  align-content: center;
+  gap: 5px;
+  border-radius: 14px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.quote-result-unit strong {
+  color: #eaf0ff;
+  font-size: 1.35rem;
+}
+
+.result-breakdown-card,
+.result-technical-tree {
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: rgba(10, 12, 20, 0.62);
+  padding: 14px;
+}
+
+.result-breakdown-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.result-breakdown-head strong,
+.result-technical-tree summary {
+  color: #f3f6ff;
+  font-weight: 800;
+}
+
+.result-breakdown-head span {
+  color: var(--text-soft);
+  font-size: 0.82rem;
+  text-align: right;
+}
+
+.result-breakdown-line {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.result-breakdown-line span {
+  color: var(--text-soft);
+}
+
+.result-breakdown-line strong {
+  color: #edf2ff;
+  text-align: right;
+}
+
+.result-breakdown-line.muted strong {
+  color: #cdd7f7;
+}
+
+.result-technical-tree {
+  margin-top: 0;
+}
+
+.result-technical-tree summary {
+  cursor: pointer;
+}
+
+.result-technical-grid {
+  margin-top: 10px;
+}
+
 .total-panel {
   background: linear-gradient(120deg, rgba(42, 109, 255, 0.25), rgba(118, 70, 255, 0.22));
   border-color: rgba(122, 149, 255, 0.55);
@@ -2666,5 +2781,21 @@ select:focus {
 
   .family-price-actions button {
     flex: 1;
+  }
+
+  .quote-result-hero,
+  .result-breakdown-head,
+  .result-breakdown-line {
+    grid-template-columns: 1fr;
+    flex-direction: column;
+  }
+
+  .quote-result-hero {
+    grid-template-columns: 1fr;
+  }
+
+  .result-breakdown-head span,
+  .result-breakdown-line strong {
+    text-align: left;
   }
 }

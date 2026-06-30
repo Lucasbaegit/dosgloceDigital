@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+﻿import { useEffect, useMemo, useState } from "react";
 import EntenderPrecioPanel from "./cotizador/EntenderPrecioPanel";
 import NavigationTabs from "./cotizador/NavigationTabs";
+import ResultadoCotizacion from "./cotizador/ResultadoCotizacion";
 import ViewModeToggle from "./cotizador/ViewModeToggle";
 import AdminPricesTab from "./tabs/AdminPricesTab";
 import FamilyPriceAdjustTab from "./tabs/FamilyPriceAdjustTab";
@@ -667,7 +668,7 @@ export default function CotizadorBajadasV2() {
       return (
         <section className="card result-card">
           <div className="card-head"><h3>Detalle del cálculo</h3></div>
-          <div className="placeholder"><p>Completá los datos y presioná Calcular.</p></div>
+          <div className="placeholder"><p>Completá los datos y presionÃ¡ Calcular.</p></div>
         </section>
       );
     }
@@ -705,7 +706,7 @@ export default function CotizadorBajadasV2() {
           <details open><summary>Precio unitario</summary><ul><li>Sin IVA: {formatMoney(result.precio_unitario_sin_iva)}</li><li>Con urgencia: {formatMoney(result.precio_unitario_con_urgencia)}</li></ul></details>
           <details open><summary>Adicional laminado/laca</summary><ul><li>selección: {result.adicional_laminado ?? "sin_adicional"}</li><li>adicional_unitario_sin_iva: {formatMoney(result.adicional_unitario_sin_iva ?? 0)}</li><li>regla_adicional_aplicada: {result.regla_adicional_aplicada ?? "-"}</li><li>fuente_adicional: {result.fuente_adicional ?? "-"}</li><li>rango_aplicado: {result.trazabilidad?.adicional_laminado?.rango_aplicado ?? "-"}</li><li>nota: Laca / laminado se suma antes de urgencia.</li><li>no_combinable: true</li></ul></details>
           <details open><summary>Adicionales hoja 4</summary><ul><li>laminado_por_lado: {result.adicional_laminado_por_lado ?? "sin_adicional"}</li><li>plastificado: {result.adicional_plastificado ? "sí" : "no"}</li><li>unitario_total_hoja4: {formatMoney(result.adicional_hoja4_unitario_sin_iva ?? 0)}</li><li>subtotal_hoja4: {formatMoney(result.total_adicional_hoja4_sin_iva ?? 0)}</li><li>fuente: {result.trazabilidad?.adicionales_hoja4?.detalle?.laminado_por_lado?.fuente ?? result.trazabilidad?.adicionales_hoja4?.detalle?.plastificado?.fuente ?? "-"}</li><li>nota: solo A3+ / XA3; Oficio no aplica.</li></ul></details>
-          <details open><summary>Adicional Troquelado Digital</summary><ul><li>selección: {result.adicional_troquelado ? "sí" : "no"}</li><li>complejidad: {result.complejidad_troquelado ?? "-"}</li><li>precio_unitario_troquelado: {formatMoney(result.adicional_troquelado_unitario_sin_iva ?? 0)}</li><li>subtotal_troquelado: {formatMoney(result.total_adicional_troquelado_sin_iva ?? 0)}</li><li>rango_aplicado: {result.trazabilidad?.adicional_troquelado?.rango_aplicado ?? "-"}</li><li>regla_aplicada: {result.regla_troquelado_aplicada ?? "-"}</li><li>fuente: {result.fuente_troquelado ?? "-"}</li><li>nota: No incluye costo de impresión; se suma como adicional.</li></ul></details>
+          <details open><summary>Adicional Troquelado Digital</summary><ul><li>selección: {result.adicional_troquelado ? "sí" : "no"}</li><li>complejidad: {result.complejidad_troquelado ?? "-"}</li><li>precio_unitario_troquelado: {formatMoney(result.adicional_troquelado_unitario_sin_iva ?? 0)}</li><li>subtotal_troquelado: {formatMoney(result.total_adicional_troquelado_sin_iva ?? 0)}</li><li>rango_aplicado: {result.trazabilidad?.adicional_troquelado?.rango_aplicado ?? "-"}</li><li>regla_aplicada: {result.regla_troquelado_aplicada ?? "-"}</li><li>fuente: {result.fuente_troquelado ?? "-"}</li><li>nota: No incluye costo de impresiÃ³n; se suma como adicional.</li></ul></details>
           <details open><summary>Total</summary><ul><li>Sin IVA: {formatMoney(result.total_sin_iva)}</li><li>Con urgencia: {formatMoney(result.total_con_urgencia)}</li></ul></details>
           <details open data-testid="price-tree-rule-section"><summary>Regla</summary><ul><li>regla_aplicada: {result.regla_aplicada}</li><li>fuente: {result.fuente}</li><li>base_formato: {result.trazabilidad?.base_formato ?? "-"}</li><li>factor_aplicado: {result.trazabilidad?.factor_aplicado ?? "-"}</li><li>regla_especial: {result.trazabilidad?.regla_especial ?? "-"}</li><li>correccion_logica: {result.trazabilidad?.correccion_logica ?? "-"}</li></ul></details>
           <details open><summary>Origen</summary><ul><li>origen_excel: {result.trazabilidad?.origen_excel ?? "-"}</li><li>precio_objetivo_csv: {result.trazabilidad?.precio_objetivo_csv ?? result.trazabilidad?.precio_objetivo_pdf ?? "-"}</li><li>precio_unitario_csv: {result.trazabilidad?.precio_unitario_csv ?? "-"}</li><li>modelo_tecnico_referencia: {result.trazabilidad?.modelo_tecnico_referencia ?? "-"}</li><li>precio_b3_referencia: {result.trazabilidad?.precio_b3_referencia ?? "-"}</li><li>an40_estado: {result.trazabilidad?.an40_estado ?? "-"}</li></ul></details>
@@ -808,7 +809,7 @@ export default function CotizadorBajadasV2() {
           ) : null}
         </>
       ) : (
-        <p className="range-hint">El botón Restaurar queda deshabilitado hasta tener un preview válido.</p>
+        <p className="range-hint">El botón Restaurar queda deshabilitado hasta tener un preview vÃ¡lido.</p>
       )}
       <div className="principal-actions">
         <button
@@ -846,7 +847,7 @@ export default function CotizadorBajadasV2() {
                 <strong>{item.variable || "-"}</strong>
                 <span>{formatHistoryValue(item.valor_anterior)} ? {formatHistoryValue(item.valor_nuevo)}</span>
               </div>
-              <p className="range-hint">{item.descripcion || `${item.fuente || "sistema"} · ${historyId}`}</p>
+              <p className="range-hint">{item.descripcion || `${item.fuente || "sistema"} Â· ${historyId}`}</p>
               {isAdvancedMode ? (
                 <div className="history-event-meta" data-testid="history-advanced-meta">
                   <span>Fuente: {item.fuente || "sistema"}</span>
@@ -856,7 +857,7 @@ export default function CotizadorBajadasV2() {
                 </div>
               ) : (
                 <div className="history-event-meta simple-history-meta">
-                  <span>Estado: {isRollback ? "Restauración registrada" : "Restaurable con preview"}</span>
+                  <span>Estado: {isRollback ? "RestauraciÃ³n registrada" : "Restaurable con preview"}</span>
                 </div>
               )}
               <div className="history-event-actions">
@@ -1029,7 +1030,7 @@ export default function CotizadorBajadasV2() {
   const renderCotizador = () => (
     <div className="cotizador-layout" data-testid="cotizador-layout">
       <form className="card form-card compact-card" onSubmit={handleSubmit}>
-        <div className="card-head"><h3>1. Configura tu impresión</h3><span>Enter = calcular</span></div>
+        <div className="card-head"><h3>1. Configura tu impresiÃ³n</h3><span>Enter = calcular</span></div>
         <div className="form-grid compact-grid">
           <label><span>Categoría</span><select data-testid="categoria-select" value={form.categoria_ui} onChange={updateField("categoria_ui")}>{CATEGORIAS.map((v) => <option key={v} value={v}>{v}</option>)}</select></label>
           {!isAutoadhesivas && !isTarjetas && !isPostales && !isFolletos && !isCarpetas && !isSobres && !isStickers && !isImanes && !isStickersCirculares && !isTarjetasTroqCirc && !isPlanchaIman && !isAgendasCuadernos ? (
@@ -1157,7 +1158,7 @@ export default function CotizadorBajadasV2() {
               <label><span>Producto</span><input value="Plancha de Imán Impreso" readOnly /></label>
               <label><span>Variante</span><select value={form.variante_plancha_iman} onChange={updateField("variante_plancha_iman")}>{PLANCHA_IMAN_VARIANTES.map((v) => <option key={v.value} value={v.value}>{v.label}</option>)}</select></label>
               <label><span>Impresión</span><input value="4/0" readOnly /></label>
-              <label><span>Área imprimible</span><input value="30x46 cm" readOnly /></label>
+              <label><span>Ãrea imprimible</span><input value="30x46 cm" readOnly /></label>
             </>
           ) : isAgendasCuadernos ? (
             <>
@@ -1212,7 +1213,7 @@ export default function CotizadorBajadasV2() {
               <span>Plastificado (A3)</span>
               <select value={String(Boolean(form.adicional_plastificado))} onChange={(event) => setForm((prev) => ({ ...prev, adicional_plastificado: event.target.value === "true" }))}>
                 <option value="false">No</option>
-                <option value="true">Sí</option>
+                <option value="true">SÃ­</option>
               </select>
             </label>
           ) : null}
@@ -1221,7 +1222,7 @@ export default function CotizadorBajadasV2() {
               <span>Troquelado Digital</span>
               <select value={String(Boolean(form.adicional_troquelado))} onChange={(event) => setForm((prev) => ({ ...prev, adicional_troquelado: event.target.value === "true" }))}>
                 <option value="false">No</option>
-                <option value="true">Sí</option>
+                <option value="true">SÃ­</option>
               </select>
             </label>
           ) : null}
@@ -1237,7 +1238,7 @@ export default function CotizadorBajadasV2() {
           ) : null}
         </div>
         {isAutoadhesivas ? <div className="warning-box compact-note">Laca UV y Tinta blanca son adicionales independientes. Tinta blanca está sujeta a disponibilidad de valor base.</div> : null}
-        {isTarjetas || isPostales || isFolletos || isStickers || isImanes || isStickersCirculares || isTarjetasTroqCirc ? <div className="info-box compact-note">Este producto usa precio total por paquete/cantidad según PDF vigente.</div> : <div className="info-box compact-note">Laca / laminado se suma antes de urgencia. Troquelado digital también se suma como adicional y no incluye costo de impresión.</div>}
+        {isTarjetas || isPostales || isFolletos || isStickers || isImanes || isStickersCirculares || isTarjetasTroqCirc ? <div className="info-box compact-note">Este producto usa precio total por paquete/cantidad segÃºn PDF vigente.</div> : <div className="info-box compact-note">Laca / laminado se suma antes de urgencia. Troquelado digital también se suma como adicional y no incluye costo de impresiÃ³n.</div>}
         {error ? <div className="error-box">{error}</div> : null}
         {copyStatus ? <div className="info-box" data-testid="copy-status">{copyStatus}</div> : null}
         <div className="actions-row compact-actions">
@@ -1247,58 +1248,18 @@ export default function CotizadorBajadasV2() {
         </div>
       </form>
 
-      <section className="card result-card result-sticky" data-testid="result-panel">
-        <div className="card-head"><h3>2. Resultado</h3><span>{loading ? "Consultando API..." : "Actualizado"}</span></div>
-        {!result ? (
-          <div className="placeholder"><p>Completá los datos y presioná Calcular.</p></div>
-        ) : (
-          <>
-            <div className="result-main">
-              <div className="unit-panel"><h4>Precio unitario</h4><div className="unit-values"><p><span>Sin IVA</span><strong>{formatMoney(result.precio_unitario_sin_iva ?? result.precio_sin_iva)}</strong></p><p><span>Con urgencia</span><strong>{formatMoney(result.precio_unitario_con_urgencia ?? result.precio_con_recargo_urgencia)}</strong></p></div></div>
-              <div className="total-panel"><p>Total final con urgencia</p><h3>{formatMoney(result.total_con_urgencia ?? result.precio_con_recargo_urgencia)}</h3><small>Total sin IVA: {formatMoney(result.total_sin_iva ?? result.precio_sin_iva)}</small></div>
-            </div>
-            {isSimpleMode ? (
-              <div className="simple-summary-card" data-testid="quote-simple-summary">
-                <strong>Resumen simple del cálculo</strong>
-                <div className="detail-list compact-detail-list">
-                  <div><strong>Material / papel</strong><span>{lastPayload?.material ?? lastPayload?.papel ?? form.material ?? "-"}</span></div>
-                  <div><strong>Impresión</strong><span>{lastPayload?.caras ?? inferred.caras}</span></div>
-                  <div><strong>Cantidad</strong><span>{result.cantidad_unidades ?? form.cantidad_unidades}</span></div>
-                  <div><strong>{isMatrixProduct ? "Cantidad de matriz" : "Rango aplicado"}</strong><span>{isMatrixProduct ? (result.cantidad_unidades ?? form.cantidad_unidades) : (result.cantidad_rango_aplicado ?? derivedRange ?? "-")}</span></div>
-                  <div><strong>Terminación / adicionales</strong><span>{[describeQuoteTerminacion(lastPayload), describeQuoteOperationalAdditions(lastPayload, result)].filter((item, index, arr) => item && item !== "No aplica" && arr.indexOf(item) === index).join(" · ") || "Sin adicional"}</span></div>
-                  <div><strong>Total final</strong><span>{formatMoney(result.total_con_urgencia ?? result.total_sin_iva)}</span></div>
-                </div>
-                <p>Activá modo avanzado para ver reglas, fuentes, payload y trazabilidad técnica.</p>
-              </div>
-            ) : (
-              <div className="detail-list advanced-detail" data-testid="quote-advanced-details">
-                <div><strong>Precio base unitario</strong><span>{formatMoney(result.precio_unitario_base_sin_iva ?? result.precio_unitario_sin_iva ?? result.precio_sin_iva)}</span></div>
-                <div><strong>Terminación del producto</strong><span>{describeQuoteTerminacion(lastPayload)}</span></div>
-                <div><strong>Adicional operativo</strong><span>{describeQuoteOperationalAdditions(lastPayload, result)}</span></div>
-                {isBajadasFlow && !isAutoadhesivas ? <div><strong>Caras adicional laminado/laca</strong><span>{result.caras_adicional_laminado ?? 1}</span></div> : null}
-                {isBajadasFlow && !isAutoadhesivas ? <div><strong>Laminado por lado</strong><span>{result.adicional_laminado_por_lado && result.adicional_laminado_por_lado !== "sin_adicional" ? result.adicional_laminado_por_lado : "No aplica"}</span></div> : null}
-                {isBajadasFlow && !isAutoadhesivas ? <div><strong>Plastificado</strong><span>{result.adicional_plastificado ? "sí" : "No aplica"}</span></div> : null}
-                <div><strong>Adicional unitario sin IVA</strong><span>{formatMoney(result.adicional_unitario_sin_iva ?? 0)}</span></div>
-                <div><strong>Adicional hoja 4 unitario</strong><span>{formatMoney(result.adicional_hoja4_unitario_sin_iva ?? 0)}</span></div>
-                <div><strong>Troquelado adicional</strong><span>{result.adicional_troquelado ? `sí (${result.complejidad_troquelado ?? "-"})` : "no"}</span></div>
-                <div><strong>Troquelado unitario</strong><span>{formatMoney(result.adicional_troquelado_unitario_sin_iva ?? 0)}</span></div>
-                <div><strong>Precio unitario con adicional</strong><span>{formatMoney(result.precio_unitario_con_adicional_sin_iva ?? result.precio_unitario_sin_iva ?? result.precio_sin_iva)}</span></div>
-                <div><strong>Cantidad ingresada</strong><span>{result.cantidad_unidades ?? form.cantidad_unidades}</span></div>
-                {isMatrixProduct ? (
-                  <div><strong>Cantidad de matriz</strong><span>{result.cantidad_unidades ?? form.cantidad_unidades}</span></div>
-                ) : (
-                  <div><strong>Rango aplicado</strong><span>{result.cantidad_rango_aplicado ?? derivedRange ?? "-"}</span></div>
-                )}
-                <div><strong>Regla aplicada</strong><span>{result.regla_aplicada}</span></div>
-                <div><strong>Fuente</strong><span>{result.fuente}</span></div>
-                <div><strong>Regla adicional aplicada</strong><span>{result.regla_adicional_aplicada ?? "-"}</span></div>
-                <div><strong>Fuente adicional</strong><span>{result.fuente_adicional ?? "-"}</span></div>
-                <div><strong>Recargo aplicado</strong><span>{result.trazabilidad?.recargo_urgencia_aplicado ?? "-"}</span></div>
-              </div>
-            )}
-          </>
-        )}
-      </section>
+      <ResultadoCotizacion
+        result={result}
+        form={form}
+        inferred={inferred}
+        loading={loading}
+        lastPayload={lastPayload}
+        derivedRange={derivedRange}
+        isSimpleMode={isSimpleMode}
+        isMatrixProduct={isMatrixProduct}
+        isBajadasFlow={isBajadasFlow}
+        isAutoadhesivas={isAutoadhesivas}
+      />
     </div>
   );
 
@@ -1320,7 +1281,7 @@ export default function CotizadorBajadasV2() {
               isAdvancedMode={isAdvancedMode}
             />
             <div className={apiConnected ? "api-status ok" : "api-status down"}>{apiConnected ? "API conectada" : "API no disponible"}</div>
-            <div className="metrics-chip">{metrics ? `OK ${metrics.OK} · Alta ${metrics.DIFERENCIA_ALTA}` : "Métricas no disponibles"}</div>
+            <div className="metrics-chip">{metrics ? `OK ${metrics.OK} Â· Alta ${metrics.DIFERENCIA_ALTA}` : "Métricas no disponibles"}</div>
           </div>
         </header>
 
@@ -1338,6 +1299,10 @@ export default function CotizadorBajadasV2() {
     </div>
   );
 }
+
+
+
+
 
 
 
