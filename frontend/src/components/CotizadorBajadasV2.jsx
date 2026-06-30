@@ -3,6 +3,7 @@ import EntenderPrecioPanel from "./cotizador/EntenderPrecioPanel";
 import NavigationTabs from "./cotizador/NavigationTabs";
 import ViewModeToggle from "./cotizador/ViewModeToggle";
 import AdminPricesTab from "./tabs/AdminPricesTab";
+import FamilyPriceAdjustTab from "./tabs/FamilyPriceAdjustTab";
 import TraceVisualTab from "./tabs/TraceVisualTab";
 import VariableImpactTab from "./tabs/VariableImpactTab";
 import ConfigTab from "./tabs/ConfigTab";
@@ -563,6 +564,13 @@ export default function CotizadorBajadasV2() {
     handleAdminRollbackApply,
     getCurrentEditableRelations,
     getAdminVariableByKey,
+    familyBulkPercent,
+    setFamilyBulkPercent,
+    getFamilyPriceRows,
+    setFamilyAdjustment,
+    previewFamilyAdjustment,
+    applyFamilyAdjustment,
+    applyFamilyAdjustmentToAll,
   } = useAdminPrices({
     activeTab,
     lastPayload,
@@ -979,6 +987,20 @@ export default function CotizadorBajadasV2() {
       ADMIN_PRICE_STEPS={ADMIN_PRICE_STEPS}
     />
   );
+  const renderFamilyPriceAdjustTab = () => (
+    <FamilyPriceAdjustTab
+      adminLoading={adminLoading}
+      adminMsg={adminMsg}
+      adminError={adminError}
+      getFamilyPriceRows={getFamilyPriceRows}
+      setFamilyAdjustment={setFamilyAdjustment}
+      familyBulkPercent={familyBulkPercent}
+      setFamilyBulkPercent={setFamilyBulkPercent}
+      previewFamilyAdjustment={previewFamilyAdjustment}
+      applyFamilyAdjustment={applyFamilyAdjustment}
+      applyFamilyAdjustmentToAll={applyFamilyAdjustmentToAll}
+    />
+  );
   const renderPrincipalVariablesTab = () => (
     <PrincipalVariablesTab
       principalVariables={principalVariables}
@@ -1305,6 +1327,7 @@ export default function CotizadorBajadasV2() {
         <section className="content-grid content-grid-tabs">
           {activeTab === "Cotizar" ? renderCotizador() : null}
           {activeTab === "Modificar precios" ? renderAdminPricesTab() : null}
+          {activeTab === "Ajustar Precios por Familia" ? renderFamilyPriceAdjustTab() : null}
           {activeTab === "Entender un precio" ? renderUnderstandPriceTab() : null}
           {activeTab === "Ver impacto de cambios" ? renderVariableImpactTab() : null}
           {activeTab === "Historial y backups" ? renderHistoryBackupsTab() : null}

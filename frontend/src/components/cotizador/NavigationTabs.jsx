@@ -1,6 +1,7 @@
 ﻿const NAV_ITEMS = [
   "Cotizar",
   "Modificar precios",
+  "Ajustar Precios por Familia",
   "Entender un precio",
   "Ver impacto de cambios",
   "Historial y backups",
@@ -12,6 +13,7 @@ const TAB_KEYS = new Set(NAV_ITEMS);
 const NAV_TEST_IDS = {
   "Cotizar": "tab-quote",
   "Modificar precios": "tab-admin-prices",
+  "Ajustar Precios por Familia": "tab-family-price-adjust",
   "Entender un precio": "tab-understand-price",
   "Ver impacto de cambios": "tab-variable-impact",
   "Historial y backups": "tab-history-backups",

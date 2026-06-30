@@ -111,6 +111,30 @@ class TestAdminPreciosApi(unittest.TestCase):
         self.assertNotIn("tabla_pdf", keys)
         self.assertTrue(all(item["editable"] for item in body["variables"]))
 
+    def test_multiplicadores_comerciales_por_familia_expuestos(self):
+        status, body = self.call("GET", "/admin-precios/variables-editables")
+        self.assertEqual(status, 200)
+        variables = {item["key"]: item for item in body["variables"]}
+        expected = [
+            "multiplicador_comercial_bajadas",
+            "multiplicador_comercial_carpetas",
+            "multiplicador_comercial_folletos",
+            "multiplicador_comercial_sobres",
+            "multiplicador_comercial_agendas",
+            "multiplicador_comercial_tarjetas_9x5",
+            "multiplicador_comercial_tarjetas_postales",
+            "multiplicador_comercial_stickers_circulares",
+            "multiplicador_comercial_stickers_corte_recto",
+            "multiplicador_comercial_imanes_corte_recto",
+            "multiplicador_comercial_plancha_iman",
+        ]
+        for key in expected:
+            with self.subTest(key=key):
+                self.assertIn(key, variables)
+                self.assertTrue(variables[key]["editable"])
+                self.assertEqual(variables[key]["unit"], "factor")
+                self.assertGreater(float(variables[key]["value"]), 0)
+
     def test_preview_click_color_funciona(self):
         status, body = self.call("POST", "/admin-precios/preview", {"variable": "click_color", "nuevo_valor": 39})
         self.assertEqual(status, 200)

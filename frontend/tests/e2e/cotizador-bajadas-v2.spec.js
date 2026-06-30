@@ -15,6 +15,7 @@ test("UI muestra tabs nuevas y controles base", async ({ page }) => {
   await page.goto("/", { waitUntil: "domcontentloaded" });
   await expect(page.getByRole("button", { name: "Cotizar" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Modificar precios" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Ajustar Precios por Familia" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Entender un precio" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Ver impacto de cambios" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Historial y backups" })).toBeVisible();
@@ -553,6 +554,108 @@ test("Modificar precios exige preview antes de guardar y muestra historial", asy
   await expect(page.getByTestId("admin-rollback-preview")).toContainText("39");
   await expect(page.getByTestId("admin-rollback-preview")).toContainText("38");
   await expect(page.getByTestId("admin-rollback-apply-button")).toBeEnabled();
+});
+
+test("Ajustar Precios por Familia aplica multiplicadores comerciales por familia", async ({ page }) => {
+  const familyVariables = [
+    ["multiplicador_comercial_bajadas", "Multiplicador comercial Bajadas", "Bajadas"],
+    ["multiplicador_comercial_carpetas", "Multiplicador comercial Carpetas", "Carpetas"],
+    ["multiplicador_comercial_folletos", "Multiplicador comercial Folletos", "Folletos"],
+    ["multiplicador_comercial_sobres", "Multiplicador comercial Sobres", "Sobres"],
+    ["multiplicador_comercial_agendas", "Multiplicador comercial Agendas", "Agendas / Cuadernos"],
+    ["multiplicador_comercial_tarjetas_9x5", "Multiplicador comercial Tarjetas 9x5", "Tarjetas 9x5"],
+    ["multiplicador_comercial_tarjetas_postales", "Multiplicador comercial Tarjetas Postales", "Tarjetas Postales"],
+    ["multiplicador_comercial_stickers_circulares", "Multiplicador comercial Stickers Circulares", "Stickers Circulares"],
+    ["multiplicador_comercial_stickers_corte_recto", "Multiplicador comercial Stickers Corte Recto", "Stickers Corte Recto"],
+    ["multiplicador_comercial_imanes_corte_recto", "Multiplicador comercial Imanes Corte Recto", "Imanes Corte Recto"],
+    ["multiplicador_comercial_plancha_iman", "Multiplicador comercial Plancha Iman", "Plancha de Iman Impreso"],
+  ];
+  const previewCalls = [];
+  const applyCalls = [];
+
+  await page.route("**/admin-precios/variables-editables", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        ok: true,
+        variables: familyVariables.map(([key, label, product]) => ({
+          key,
+          label,
+          value: 1,
+          unit: "factor",
+          description: "Multiplicador comercial por familia",
+          impacta_hoy: true,
+          editable: true,
+          estado: "editable",
+          productos_afectados: [product],
+          min: 0.01,
+          max: 100,
+          step: 0.001,
+        })),
+      }),
+    });
+  });
+  await page.route("**/admin-precios/historial", async (route) => {
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, historial: [] }) });
+  });
+  await page.route("**/admin-precios/preview", async (route) => {
+    const payload = JSON.parse(route.request().postData() || "{}");
+    previewCalls.push(payload);
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        ok: true,
+        variable: payload.variable,
+        label: payload.variable,
+        valor_actual: 1,
+        nuevo_valor: payload.nuevo_valor,
+        unidad: "factor",
+        diferencia: payload.nuevo_valor - 1,
+        diferencia_porcentual: (payload.nuevo_valor - 1) * 100,
+        impactos: [{ variable: payload.variable, producto: "Familia", impacta_hoy: true }],
+        precios_ejemplo: [{ nombre: "Caso testigo", antes: 1000, despues: 1100, detalle: "Preview mock" }],
+        advertencias: [],
+        requiere_confirmacion: true,
+      }),
+    });
+  });
+  await page.route("**/admin-precios/aplicar", async (route) => {
+    const payload = JSON.parse(route.request().postData() || "{}");
+    applyCalls.push(payload);
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        ok: true,
+        aplicado: true,
+        variable: payload.variable,
+        backup: ["data/backups/variables_principales/mock.json"],
+        historial: { variable: payload.variable },
+      }),
+    });
+  });
+
+  page.on("dialog", (dialog) => dialog.accept());
+  await page.goto("/", { waitUntil: "domcontentloaded" });
+  await page.getByTestId("tab-family-price-adjust").click();
+  await expect(page.getByTestId("family-price-adjust-tab")).toContainText("Ajustar Precios por Familia");
+  await expect(page.getByTestId("family-price-table")).toContainText("Stickers Corte Recto");
+  await expect(page.getByTestId("family-price-table")).toContainText("Plancha de Iman Impreso");
+
+  await page.getByTestId("family-price-input-stickers_corte_recto").fill("+10%");
+  await page.getByTestId("family-price-preview-button-stickers_corte_recto").click();
+  await expect(page.getByTestId("family-price-preview-stickers_corte_recto")).toContainText("Nuevo 1.1");
+  await page.getByTestId("family-price-apply-button-stickers_corte_recto").click();
+  await expect(page.getByTestId("family-price-msg")).toContainText("Cambio guardado");
+  expect(previewCalls.some((payload) => payload.variable === "multiplicador_comercial_stickers_corte_recto" && payload.nuevo_valor === 1.1)).toBeTruthy();
+  expect(applyCalls.some((payload) => payload.variable === "multiplicador_comercial_stickers_corte_recto" && payload.nuevo_valor === 1.1 && payload.confirmado === true)).toBeTruthy();
+
+  await page.getByTestId("family-price-bulk-input").fill("+5%");
+  await page.getByTestId("family-price-apply-all").click();
+  await expect(page.getByTestId("family-price-msg")).toContainText("Cambio masivo aplicado");
+  expect(applyCalls.filter((payload) => payload.nuevo_valor === 1.05).length).toBe(11);
 });
 
 test("Modificar precios separa variables por cotización actual de Tarjetas 9x5", async ({ page }) => {
