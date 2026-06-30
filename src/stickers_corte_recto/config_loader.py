@@ -5,6 +5,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from pricing_variables import merge_global_base_costs
+
 
 @dataclass(frozen=True)
 class StickersCorteRectoBundle:
@@ -20,6 +22,7 @@ def load_stickers_corte_recto_bundle(project_root: Path) -> StickersCorteRectoBu
     rows = json.loads(data_path.read_text(encoding="utf-8-sig"))
     trace = json.loads(trace_path.read_text(encoding="utf-8-sig"))
     formula_config = json.loads(formula_path.read_text(encoding="utf-8-sig"))
+    formula_config = merge_global_base_costs(formula_config, project_root)
     if not isinstance(rows, list) or not rows:
         raise ValueError("Stickers Corte Recto dataset inválido.")
     return StickersCorteRectoBundle(rows=rows, excel_trace=trace, formula_config=formula_config)

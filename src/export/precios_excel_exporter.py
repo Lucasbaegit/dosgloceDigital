@@ -13,7 +13,7 @@ from openpyxl import Workbook
 from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 from openpyxl.utils import get_column_letter
 
-from pricing_variables import PrincipalVariablesService
+from pricing_variables import PrincipalVariablesService, merge_global_base_costs
 
 
 class PricesExcelExporter:
@@ -418,7 +418,10 @@ class PricesExcelExporter:
         ws.append(self.PRICE_TRACE_HEADERS)
         variable_by_key = {str(item.get("key")): item for item in self._mother_variables()}
         auto_config = self._read_json("data/bajadas_autoadhesivas/autoadhesivas_v1_config.json")
-        circular_config = self._read_json("data/stickers_circulares/formula_editable_config.json")
+        circular_config = merge_global_base_costs(
+            self._read_json("data/stickers_circulares/formula_editable_config.json"),
+            self.project_root,
+        )
         circular_factor = self._find_circular_factor("obra_ilustracion_90g", "10cm", "con_laca_uv", 1000)
         tinta_base = auto_config.get("adicional_tinta_blanca_base_1_copia")
 
@@ -753,7 +756,7 @@ class PricesExcelExporter:
                 valor_base=material_base,
                 unidad="USD",
                 operacion="participa en subtotal_formula_excel",
-                fuente_componente="data/stickers_circulares/formula_editable_config.json",
+                fuente_componente="data/variables_globales/costos_base.json",
                 editable_en_sistema=True,
                 editable_en_excel_maestro=True,
                 impacta_hoy=True,

@@ -1,10 +1,12 @@
 ﻿from __future__ import annotations
 
 from dataclasses import asdict
+import json
+from pathlib import Path
 from typing import Any
 
 from pricing_trace import build_pdf_matrix_trace
-from pricing_variables import load_pricing_variables_bundle
+from pricing_variables import load_pricing_variables_bundle, merge_global_base_costs
 
 from .config_loader import StickersCircularesBundle
 from .exceptions import PriceNotFoundError, QuoteInputError
@@ -33,6 +35,12 @@ class StickersCircularesPricingEngine:
 
         self._excel_trace = bundle.excel_trace
         self._formula_config = bundle.formula_config
+        self._project_root = Path(project_root) if project_root is not None else None
+        self._formula_config_path = (
+            self._project_root / "data" / "stickers_circulares" / "formula_editable_config.json"
+            if self._project_root is not None
+            else None
+        )
         self._variables_bundle = load_pricing_variables_bundle(project_root) if project_root is not None else None
 
     def quote(self, request: StickersCircularesQuoteInput) -> StickersCircularesQuoteResult:
@@ -231,7 +239,8 @@ class StickersCircularesPricingEngine:
             raise QuoteInputError("modo_precio_invalido")
 
     def _compute_formula_breakdown(self, request: StickersCircularesQuoteInput, overrides: dict[str, Any]) -> dict[str, float]:
-        cfg = self._formula_config.get("variables", {})
+        formula_config = self._current_formula_config()
+        cfg = formula_config.get("variables", {})
         material_map = dict(cfg.get("material_base", {}))
         coef_tamano_map = dict(cfg.get("coeficiente_tamano", {}))
         coef_cantidad_map = dict(cfg.get("coeficiente_cantidad", {}))
@@ -282,6 +291,12 @@ class StickersCircularesPricingEngine:
             "recargo_laca_uv_brillo_pct": round((laca_factor - 1.0) * 100.0, 6),
             "total_base_excel": total_base,
         }
+
+    def _current_formula_config(self) -> dict[str, Any]:
+        if self._formula_config_path is not None and self._formula_config_path.exists():
+            formula_config = json.loads(self._formula_config_path.read_text(encoding="utf-8-sig"))
+            return merge_global_base_costs(formula_config, self._project_root)
+        return merge_global_base_costs(self._formula_config, self._project_root)
 
     @staticmethod
     def _normalize_material(material: str) -> str:

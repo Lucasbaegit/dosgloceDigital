@@ -16,6 +16,7 @@ class TestAdminPreciosRollbackApi(unittest.TestCase):
     def setUpClass(cls):
         cls.paths = [
             ROOT / "data" / "bajadas_v2" / "bajadas_v2_config_final.json",
+            ROOT / "data" / "variables_globales" / "costos_base.json",
             ROOT / "data" / "stickers_circulares" / "formula_editable_config.json",
             ROOT / "data" / "bajadas_autoadhesivas" / "autoadhesivas_v1_config.json",
             ROOT / "data" / "variables_principales" / "variables_madre.json",

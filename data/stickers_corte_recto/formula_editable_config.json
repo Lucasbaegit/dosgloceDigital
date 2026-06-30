@@ -1,11 +1,13 @@
 {
   "version": "stickers_corte_recto_formula_editable_v1",
   "modo_precio_default": "formula_editable_calibrada",
-  "modos_soportados": ["formula_editable_calibrada", "pdf_fijo"],
+  "modos_soportados": [
+    "formula_editable_calibrada",
+    "pdf_fijo"
+  ],
   "convencion_precio": "precio_total_por_paquete",
   "variables": {
     "material_base": 12.0,
-    "click_color_base": 3.0,
     "laca_uv_factor": 1.18,
     "corte_recto_factor": 1.0,
     "coeficiente_tamano": {
@@ -30,7 +32,9 @@
   ],
   "fuente_excel": {
     "hoja": "Productos",
-    "referencias": ["stickers corte recto"],
+    "referencias": [
+      "stickers corte recto"
+    ],
     "nota": "Formula editable base preparada y calibrada contra PDF pagina 15"
   }
 }

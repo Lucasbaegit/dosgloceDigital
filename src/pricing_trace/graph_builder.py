@@ -6,7 +6,7 @@ import json
 from pathlib import Path
 from typing import Any
 
-from pricing_variables import PrincipalVariablesService
+from pricing_variables import PrincipalVariablesService, merge_global_base_costs
 
 
 class PriceTraceGraphBuilder:
@@ -120,7 +120,10 @@ class PriceTraceGraphBuilder:
 
     def _stickers_circulares_graph(self) -> dict[str, Any]:
         variables = self._variables_by_key()
-        config = self._read_json("data/stickers_circulares/formula_editable_config.json")
+        config = merge_global_base_costs(
+            self._read_json("data/stickers_circulares/formula_editable_config.json"),
+            self.project_root,
+        )
         factors = self._find_circular_factor()
         cfg_vars = config.get("variables", {})
         material_base = (cfg_vars.get("material_base") or {}).get("obra_ilustracion_90g")

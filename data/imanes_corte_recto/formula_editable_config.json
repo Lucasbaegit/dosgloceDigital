@@ -1,12 +1,14 @@
 {
   "version": "imanes_corte_recto_formula_editable_v1",
   "modo_precio_default": "formula_editable_calibrada",
-  "modos_soportados": ["formula_editable_calibrada", "pdf_fijo"],
+  "modos_soportados": [
+    "formula_editable_calibrada",
+    "pdf_fijo"
+  ],
   "convencion_precio": "precio_total_por_paquete",
   "variables": {
     "base_iman": 48.0,
     "papel_300g_ilustracion": 12.0,
-    "click_color_base": 3.0,
     "laca_uv_factor": 1.05,
     "corte_recto_factor": 1.0,
     "coeficiente_tamano": {
@@ -31,7 +33,9 @@
   ],
   "fuente_excel": {
     "hoja": "Productos",
-    "referencias": ["imanes corte recto"],
+    "referencias": [
+      "imanes corte recto"
+    ],
     "nota": "Formula editable base preparada y calibrada contra PDF pagina 15"
   }
 }

@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Any
 
 from pricing_trace import build_pdf_matrix_trace
-from pricing_variables import load_pricing_variables_bundle
+from pricing_variables import load_pricing_variables_bundle, merge_global_base_costs
 
 from .config_loader import ImanesCorteRectoBundle
 from .exceptions import PriceNotFoundError, QuoteInputError
@@ -177,8 +177,9 @@ class ImanesCorteRectoPricingEngine:
 
     def _current_formula_config(self) -> dict[str, Any]:
         if self._formula_config_path is not None and self._formula_config_path.exists():
-            return json.loads(self._formula_config_path.read_text(encoding="utf-8-sig"))
-        return self._formula_config
+            formula_config = json.loads(self._formula_config_path.read_text(encoding="utf-8-sig"))
+            return merge_global_base_costs(formula_config, self._project_root)
+        return merge_global_base_costs(self._formula_config, self._project_root)
 
     def _compute_formula_breakdown(self, request: ImanesCorteRectoQuoteInput, overrides: dict[str, Any], formula_config: dict[str, Any]) -> dict[str, float]:
         cfg = formula_config.get("variables", {})
