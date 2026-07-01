@@ -5,6 +5,7 @@ import ResultadoCotizacion from "./cotizador/ResultadoCotizacion";
 import ViewModeToggle from "./cotizador/ViewModeToggle";
 import AdminPricesTab from "./tabs/AdminPricesTab";
 import FamilyPriceAdjustTab from "./tabs/FamilyPriceAdjustTab";
+import MaestrosCostosTab from "./tabs/MaestrosCostosTab";
 import TraceVisualTab from "./tabs/TraceVisualTab";
 import VariableImpactTab from "./tabs/VariableImpactTab";
 import ConfigTab from "./tabs/ConfigTab";
@@ -1002,6 +1003,7 @@ export default function CotizadorBajadasV2() {
       applyFamilyAdjustmentToAll={applyFamilyAdjustmentToAll}
     />
   );
+  const renderMaestrosCostosTab = () => <MaestrosCostosTab />;
   const renderPrincipalVariablesTab = () => (
     <PrincipalVariablesTab
       principalVariables={principalVariables}
@@ -1289,6 +1291,7 @@ export default function CotizadorBajadasV2() {
           {activeTab === "Cotizar" ? renderCotizador() : null}
           {activeTab === "Modificar precios" ? renderAdminPricesTab() : null}
           {activeTab === "Ajustar Precios por Familia" ? renderFamilyPriceAdjustTab() : null}
+          {activeTab === "Maestros de Costos" ? renderMaestrosCostosTab() : null}
           {activeTab === "Entender un precio" ? renderUnderstandPriceTab() : null}
           {activeTab === "Ver impacto de cambios" ? renderVariableImpactTab() : null}
           {activeTab === "Historial y backups" ? renderHistoryBackupsTab() : null}

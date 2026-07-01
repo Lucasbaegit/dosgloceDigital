@@ -417,6 +417,34 @@ export async function fetchAdminPreciosHistorial() {
   return body;
 }
 
+export async function fetchCostosProduccion() {
+  const response = await fetch(`${API_BASE}/costos-produccion`);
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const error = new Error(body?.detail || "No se pudieron cargar costos de producción.");
+    error.status = response.status;
+    error.code = body?.error || "api_error";
+    throw error;
+  }
+  return body;
+}
+
+export async function saveCostosProduccion(payload) {
+  const response = await fetch(`${API_BASE}/costos-produccion`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const error = new Error(body?.detail || "No se pudieron guardar costos de producción.");
+    error.status = response.status;
+    error.code = body?.error || "api_error";
+    throw error;
+  }
+  return body;
+}
+
 export async function exportPricesPdf() {
   const response = await fetch(`${API_BASE}/export/precios/pdf`);
   if (!response.ok) throw new Error("No se pudo exportar PDF. Revisar backend.");

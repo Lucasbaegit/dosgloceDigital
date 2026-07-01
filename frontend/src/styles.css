@@ -2779,7 +2779,7 @@ select:focus {
     justify-content: stretch;
   }
 
-  .family-price-actions button {
+.family-price-actions button {
     flex: 1;
   }
 
@@ -2797,5 +2797,97 @@ select:focus {
   .result-breakdown-head span,
   .result-breakdown-line strong {
     text-align: left;
+  }
+}
+
+.masters-cost-card .card-head p {
+  margin: 6px 0 0;
+  color: var(--text-soft);
+  max-width: 760px;
+}
+
+.masters-pin-panel {
+  display: grid;
+  grid-template-columns: minmax(180px, 260px) auto;
+  align-items: end;
+  gap: 12px;
+  max-width: 460px;
+}
+
+.masters-pin-panel label,
+.masters-click-grid label {
+  display: grid;
+  gap: 8px;
+}
+
+.masters-pin-panel span,
+.masters-click-grid span {
+  color: #d5dcf2;
+  font-size: 14px;
+}
+
+.masters-cost-sections {
+  display: grid;
+  gap: 16px;
+}
+
+.masters-cost-table {
+  display: grid;
+  gap: 8px;
+}
+
+.masters-cost-row {
+  display: grid;
+  gap: 10px;
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 11px;
+  background: rgba(12, 21, 38, 0.58);
+}
+
+.masters-paper-table .masters-cost-row {
+  grid-template-columns: minmax(160px, 1fr) minmax(90px, 0.45fr) minmax(90px, 0.45fr) minmax(140px, 0.7fr) auto;
+}
+
+.masters-posturas-table .masters-cost-row,
+.masters-cm2-table .masters-cost-row {
+  grid-template-columns: minmax(220px, 1fr) minmax(140px, 0.7fr) minmax(140px, 0.7fr) auto;
+}
+
+.masters-cost-header {
+  color: #dff7ff;
+  background: rgba(56, 189, 248, 0.08);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.masters-cost-row strong {
+  color: #f8fbff;
+}
+
+.masters-cost-row span {
+  color: var(--text-soft);
+}
+
+.masters-click-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 12px;
+}
+
+@media (max-width: 900px) {
+  .masters-pin-panel,
+  .masters-paper-table .masters-cost-row,
+  .masters-posturas-table .masters-cost-row,
+  .masters-cm2-table .masters-cost-row {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+
+  .masters-cost-header {
+    display: none;
   }
 }

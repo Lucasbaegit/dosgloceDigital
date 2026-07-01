@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from datetime import datetime
 from email.parser import BytesParser
 from email.policy import default
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -103,6 +104,10 @@ class ApiHandler(BaseHTTPRequestHandler):
             return
         if path == "/admin-precios/historial":
             status, payload = self.service.admin_precios_historial()
+            self._send_json(status, payload)
+            return
+        if path == "/costos-produccion":
+            status, payload = self._load_costos_produccion()
             self._send_json(status, payload)
             return
         if path == "/trazabilidad/grafo":
@@ -246,6 +251,7 @@ class ApiHandler(BaseHTTPRequestHandler):
             "/admin-precios/aplicar",
             "/admin-precios/rollback/preview",
             "/admin-precios/rollback/aplicar",
+            "/costos-produccion",
         }
         is_candidate_reject = path.startswith("/bajadas-v2/config/candidate/") and path.endswith("/reject")
         is_candidate_approve = path.startswith("/bajadas-v2/config/candidate/") and path.endswith("/approve")
@@ -332,6 +338,8 @@ class ApiHandler(BaseHTTPRequestHandler):
             status, response = self.service.admin_precios_rollback_preview(payload)
         elif path == "/admin-precios/rollback/aplicar":
             status, response = self.service.admin_precios_rollback_aplicar(payload)
+        elif path == "/costos-produccion":
+            status, response = self._save_costos_produccion(payload)
         elif path == "/bajadas-v2/config/update":
             status, response = self.service.update_config(payload)
         elif path == "/bajadas-v2/config/validate":
@@ -343,6 +351,47 @@ class ApiHandler(BaseHTTPRequestHandler):
         else:
             status, response = self.service.restore_config_from_final(payload)
         self._send_json(status, response)
+
+    def _costos_produccion_path(self) -> Path:
+        if self.service is None:
+            return Path("data") / "variables_globales" / "costos_produccion.json"
+        return self.service.project_root / "data" / "variables_globales" / "costos_produccion.json"
+
+    def _load_costos_produccion(self) -> tuple[int, dict[str, Any]]:
+        path = self._costos_produccion_path()
+        if not path.exists():
+            return 404, {
+                "error": "costos_produccion_no_encontrado",
+                "detail": "No existe data/variables_globales/costos_produccion.json",
+            }
+        try:
+            return 200, json.loads(path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError as exc:
+            return 500, {
+                "error": "costos_produccion_json_invalido",
+                "detail": str(exc),
+            }
+
+    def _save_costos_produccion(self, payload: dict[str, Any]) -> tuple[int, dict[str, Any]]:
+        if not isinstance(payload, dict):
+            return 400, {"error": "validation_error", "detail": "El payload debe ser un objeto JSON"}
+        path = self._costos_produccion_path()
+        path.parent.mkdir(parents=True, exist_ok=True)
+        backup_filename = None
+        if path.exists():
+            backups_dir = path.parent / "backups"
+            backups_dir.mkdir(parents=True, exist_ok=True)
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            backup_path = backups_dir / f"costos_produccion_{timestamp}.json"
+            backup_path.write_text(path.read_text(encoding="utf-8"), encoding="utf-8")
+            backup_filename = str(backup_path.relative_to(path.parents[2]))
+        path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        return 200, {
+            "ok": True,
+            "data": payload,
+            "backup": backup_filename,
+            "detail": "Costos de producción guardados. No se modificó lógica de cotización.",
+        }
 
     def _handle_excel_maestro_preview(self) -> tuple[int, dict[str, Any]]:
         if self.service is None:
