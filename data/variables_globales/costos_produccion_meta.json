@@ -1,0 +1,172 @@
+{
+  "version": "1.0",
+  "fuente_excel": "original/Copia de DIGITAL sistema 2025.xlsx",
+  "notas": [
+    "Archivo documental preparado como fuente central futura. No esta conectado a ningun motor de precios.",
+    "Los valores null indican que no se encontro una celda confiable y explicita en las hojas revisadas.",
+    "Los valores de stickers_corte_recto.papel/click se mantienen con la estructura solicitada; en el Excel esos valores se encontraron explicitamente como componentes del bloque IMAN en STICKERS IMANES!L37:L38, mientras que el bloque STICKERS calcula costo_cm2 total en D43:G43."
+  ],
+  "papel_por_pliego": {
+    "ilustracion_90g_32x47": {
+      "sheet": "PAPEL US$",
+      "cell": "J10",
+      "formula": "=I10*J2",
+      "valor": 47.072025,
+      "descripcion": "ilustracion 90 grs. 65x95cm convertido a 32x47"
+    },
+    "ilustracion_115g_32x47": {
+      "sheet": "PAPEL US$",
+      "cell": "J11",
+      "formula": "=I11*J2",
+      "valor": 60.1475875,
+      "descripcion": "ilustracion 115 grs. 65x95cm convertido a 32x47"
+    },
+    "ilustracion_150g_32x47": {
+      "sheet": "PAPEL US$",
+      "cell": "J12",
+      "formula": "=I12*J2",
+      "valor": 78.453375,
+      "descripcion": "ilustracion 150 grs. 65x95cm convertido a 32x47"
+    },
+    "ilustracion_300g_32x47": {
+      "sheet": "PAPEL US$",
+      "cell": "J20",
+      "formula": "=I20*J2",
+      "valor": 156.90675,
+      "descripcion": "ilustracion 300 grs brillo 65x95 cm convertido a 32x47"
+    },
+    "ilustracion_350g_32x47": {
+      "sheet": "PAPEL US$",
+      "cell": "J23",
+      "formula": "=I23*J2",
+      "valor": 183.057875,
+      "descripcion": "ilustracion 350 grs mate 65x95 cm convertido a 32x47"
+    },
+    "obra_80g_32x47": {
+      "sheet": "PAPEL US$",
+      "cell": "J4",
+      "formula": "=I4*J2",
+      "valor": 41.8418,
+      "descripcion": "obra 80 grs. 65x95cm convertido a 32x47"
+    },
+    "obra_90g_32x47": {
+      "sheet": "PAPEL US$",
+      "cell": "J5",
+      "formula": "=I5*J2",
+      "valor": 47.072025,
+      "descripcion": "obra 90 grs. 65x95cm convertido a 32x47"
+    },
+    "autoadhesivo_90g_50x65": {
+      "sheet": "PAPEL US$",
+      "cell": "J31",
+      "formula": "=I31*J2",
+      "valor": 423.5,
+      "descripcion": "autoadhesivo 90 50x65"
+    },
+    "kraft_32x47": {
+      "sheet": null,
+      "cell": null,
+      "formula": null,
+      "valor": null,
+      "descripcion": "No se encontro costo por pliego 32x47 explicitamente asociado a Kraft en PAPEL US$ o Bajadas."
+    }
+  },
+  "clicks": {
+    "click_color_a3plus": {
+      "sheet": "Bajadas",
+      "cell": "AM42",
+      "formula": "=AK42*AN38",
+      "valor": 195.0
+    },
+    "click_bn_a3plus": {
+      "sheet": "Bajadas",
+      "cell": "AM45",
+      "formula": "=AK45*AM38",
+      "valor": 39.0
+    },
+    "click_color_a3plus_doble_cara": {
+      "sheet": "Bajadas",
+      "cell": "AM40",
+      "formula": "=AM42*AN40",
+      "valor": 390.0
+    }
+  },
+  "posturas_por_producto": {
+    "tarjetas_9x5": {
+      "sheet": "Productos",
+      "cell": "D7",
+      "valor": 24,
+      "descripcion": "Texto: cantidad de bajadas - 24 x postura"
+    },
+    "tarjetas_postales": {
+      "sheet": "Productos",
+      "cell": "D44",
+      "valor": 9,
+      "descripcion": "Texto: cantidad de bajadas - 9 x postura"
+    },
+    "folletos_10x10": {
+      "sheet": "Productos",
+      "cell": "C93",
+      "valor": 12,
+      "descripcion": "Fila de posturas para formato 10x10"
+    },
+    "folletos_10x15": {
+      "sheet": "Productos",
+      "cell": "E93",
+      "valor": 9,
+      "descripcion": "Fila de posturas para formato 10x15"
+    },
+    "folletos_15x21": {
+      "sheet": "Productos",
+      "cell": "G93",
+      "valor": 4,
+      "descripcion": "Fila de posturas para formato 15x21"
+    },
+    "folletos_a4": {
+      "sheet": "Productos",
+      "cell": "I93",
+      "valor": 2,
+      "descripcion": "Fila de posturas para formato A4"
+    }
+  },
+  "costo_cm2": {
+    "stickers_corte_recto": {
+      "papel": {
+        "sheet": "STICKERS IMANES",
+        "cell": "L37",
+        "valor": 0.090145,
+        "nota": "Valor explicito encontrado en bloque IMAN; el bloque STICKERS separa costo total por cm2 en D43:G43, no papel/click como componentes aislados."
+      },
+      "click": {
+        "sheet": "STICKERS IMANES",
+        "cell": "L38",
+        "valor": 0.1422858,
+        "nota": "Valor explicito encontrado en bloque IMAN; el bloque STICKERS separa costo total por cm2 en D43:G43, no papel/click como componentes aislados."
+      }
+    },
+    "stickers_circulares": {
+      "papel": {
+        "sheet": "circulares",
+        "cell": "P9",
+        "valor": 0.21175
+      },
+      "click": {
+        "sheet": "circulares",
+        "cell": "O9",
+        "valor": 0.147
+      }
+    },
+    "imanes_corte_recto": {
+      "papel": {
+        "sheet": "STICKERS IMANES",
+        "cell": "L37",
+        "valor": 0.090145
+      },
+      "click": {
+        "sheet": "STICKERS IMANES",
+        "cell": "L38",
+        "valor": 0.1422858
+      }
+    }
+  }
+}

@@ -1,0 +1,58 @@
+{
+  "version": "1.0",
+  "descripcion": "Costos reales de produccion por pliego y click",
+  "papel_por_pliego": {
+    "ilustracion_90g_32x47": 47.072025,
+    "ilustracion_115g_32x47": 60.1475875,
+    "ilustracion_150g_32x47": 78.453375,
+    "ilustracion_300g_32x47": 156.90675,
+    "ilustracion_350g_32x47": 183.057875,
+    "obra_80g_32x47": 41.8418,
+    "obra_90g_32x47": 47.072025,
+    "autoadhesivo_90g_50x65": 423.5,
+    "kraft_32x47": null
+  },
+  "click_color_a3plus": 195.0,
+  "click_bn_a3plus": 39.0,
+  "click_color_a3plus_doble_cara": 390.0,
+  "posturas_por_producto": {
+    "tarjetas_9x5": {
+      "pliego": "32x47",
+      "posturas": 24
+    },
+    "tarjetas_postales": {
+      "pliego": "32x47",
+      "posturas": 9
+    },
+    "folletos_10x10": {
+      "pliego": "32x47",
+      "posturas": 12
+    },
+    "folletos_10x15": {
+      "pliego": "32x47",
+      "posturas": 9
+    },
+    "folletos_15x21": {
+      "pliego": "32x47",
+      "posturas": 4
+    },
+    "folletos_a4": {
+      "pliego": "32x47",
+      "posturas": 2
+    }
+  },
+  "costo_cm2": {
+    "stickers_corte_recto": {
+      "papel": 0.090145,
+      "click": 0.1422858
+    },
+    "stickers_circulares": {
+      "papel": 0.21175,
+      "click": 0.147
+    },
+    "imanes_corte_recto": {
+      "papel": 0.090145,
+      "click": 0.1422858
+    }
+  }
+}
